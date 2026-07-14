@@ -1,0 +1,14 @@
+# Create the Next.js project
+npx create-next-app@latest zuri --typescript --tailwind --eslint --app --src-dir --import-alias "@/*"
+
+# Move into the folder
+cd zuri
+
+# Install all Zuri dependencies (let this run in background)
+npm install @supabase/supabase-js @supabase/ssr @google/generative-ai framer-motion lucide-react class-variance-authority clsx tailwind-merge tailwindcss-animate sonner resend zod date-fns
+
+# Install Radix UI components
+npm install @radix-ui/react-accordion @radix-ui/react-avatar @radix-ui/react-checkbox @radix-ui/react-dialog @radix-ui/react-dropdown-menu @radix-ui/react-label @radix-ui/react-progress @radix-ui/react-select @radix-ui/react-slot @radix-ui/react-switch @radix-ui/react-tabs @radix-ui/react-toast @radix-ui/react-tooltip
+
+# Install shadcn
+npx shadcn@latest init

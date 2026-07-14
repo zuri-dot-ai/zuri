@@ -1,0 +1,14 @@
+{
+  "name": "Zuri",
+  "short_name": "Zuri",
+  "description": "Your business, online. Beautifully.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0C0C0E",
+  "theme_color": "#e6b739",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/Zuri_Favicon.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/Zuri_Favicon.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
