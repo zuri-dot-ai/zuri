@@ -1,0 +1,70 @@
+{
+  "template_id": "editorial-bold-light-bold",
+  "archetype": "editorial-bold",
+  "mode": "light",
+  "lean": "international",
+  "display_name": "Editorial Light Bold",
+  "storage_path": "editorial-bold/light-bold.html",
+  "color_themes": [
+    {
+      "key": "theme-1",
+      "bg": "#FFFFFF",
+      "surface": "#F7F7F5",
+      "text": "#111111",
+      "text_muted": "#5B5B58",
+      "accent": "#E8542A",
+      "accent_text": "#FFFFFF"
+    },
+    null,
+    null
+  ],
+  "placeholder_fields": [
+    "about_body",
+    "address",
+    "business_name",
+    "email_address",
+    "instagram_url",
+    "phone_number",
+    "service_1_description",
+    "service_1_title",
+    "service_2_description",
+    "service_2_title",
+    "service_3_description",
+    "service_3_title",
+    "service_4_description",
+    "service_4_title",
+    "service_5_description",
+    "service_5_title",
+    "service_6_description",
+    "service_6_title",
+    "tagline",
+    "testimonial_1_name",
+    "testimonial_1_quote",
+    "testimonial_1_role",
+    "testimonial_2_name",
+    "testimonial_2_quote",
+    "testimonial_2_role",
+    "testimonial_3_name",
+    "testimonial_3_quote",
+    "testimonial_3_role",
+    "whatsapp_number"
+  ],
+  "image_slots": [
+    "about",
+    "gallery_1",
+    "gallery_2",
+    "gallery_3",
+    "gallery_4",
+    "gallery_5",
+    "gallery_6"
+  ],
+  "has_unique_section": true,
+  "unique_section_name": "Work / masonry grid",
+  "_extraction": {
+    "is_canonical": true,
+    "flags": [
+      "missing_multi_theme_only_root"
+    ],
+    "source_html": "editorial-bold/light-bold.html"
+  }
+}

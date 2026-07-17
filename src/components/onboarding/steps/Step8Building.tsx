@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
-import { ZuriSpinner } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { OnboardingState } from "@/lib/onboarding/types";
 import { ONBOARDING_STORAGE_KEY } from "@/lib/onboarding/types";
@@ -103,8 +102,6 @@ export function Step8Building({ state }: Step8BuildingProps) {
 
   return (
     <div className="flex flex-col items-center justify-center gap-8 py-8 text-center">
-      <ZuriSpinner size={64} label="Building your presence" />
-
       <div>
         <h1 className="font-heading text-2xl font-semibold text-foreground md:text-3xl">
           Building your presence
@@ -114,45 +111,47 @@ export function Step8Building({ state }: Step8BuildingProps) {
         )}
       </div>
 
-      <ul className="w-full max-w-sm space-y-3 text-left">
-        {BUILD_STEPS.map((label, i) => {
-          const done = i < activeIndex;
-          const active = i === activeIndex;
-          return (
-            <li
-              key={label}
-              className={cn(
-                "flex items-center gap-3 text-sm transition-opacity duration-300",
-                done || active ? "opacity-100" : "opacity-30"
-              )}
-            >
-              <span
+      <div className="surface w-full max-w-sm p-6 text-left">
+        <ul className="space-y-3">
+          {BUILD_STEPS.map((label, i) => {
+            const done = i < activeIndex;
+            const active = i === activeIndex;
+            return (
+              <li
+                key={label}
                 className={cn(
-                  "flex size-5 shrink-0 items-center justify-center rounded-full",
-                  done
-                    ? "bg-gold text-background"
-                    : active
-                      ? "border border-gold/50"
-                      : "border border-white/15"
+                  "flex items-center gap-3 text-sm transition-opacity duration-300",
+                  done || active ? "opacity-100" : "opacity-30"
                 )}
               >
-                {done ? (
-                  <Check className="size-3" strokeWidth={3} />
-                ) : active ? (
-                  <span className="size-1.5 animate-pulse rounded-full bg-gold" />
-                ) : null}
-              </span>
-              <span
-                className={cn(
-                  done || active ? "text-foreground" : "text-muted-foreground"
-                )}
-              >
-                {label}
-              </span>
-            </li>
-          );
-        })}
-      </ul>
+                <span
+                  className={cn(
+                    "flex size-5 shrink-0 items-center justify-center border",
+                    done
+                      ? "border-gold bg-gold text-background"
+                      : active
+                        ? "border-gold"
+                        : "border-[hsl(var(--border))]"
+                  )}
+                >
+                  {done ? (
+                    <Check className="size-3" strokeWidth={3} />
+                  ) : active ? (
+                    <span className="size-1.5 animate-pulse bg-gold" aria-hidden />
+                  ) : null}
+                </span>
+                <span
+                  className={cn(
+                    done || active ? "text-foreground" : "text-muted-foreground"
+                  )}
+                >
+                  {label}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     </div>
   );
 }

@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trust Light Modern — Community Health Practice</title>
+<meta name="description" content="A modern, trusted medical, dental, and pharmacy practice serving the community with warmth and expertise.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Karla:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FAFAF8;
+    --surface:#F0F3EF;
+    --accent:#5F8D6E;
+    --accent-dark:#4A7259;
+    --text:#171A16;
+    --text-soft:#4B564D;
+    --border:#E1E7DF;
+    --radius:14px;
+    --shadow:0 4px 20px rgba(23,26,22,0.06);
+    --shadow-lg:0 12px 40px rgba(23,26,22,0.10);
+    --ease:cubic-bezier(.4,0,.2,1);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Karla',sans-serif;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,h4{
+    font-family:'Merriweather',serif;
+    font-weight:700;
+    line-height:1.25;
+    color:var(--text);
+  }
+  a{text-decoration:none;color:inherit;}
+  ul{list-style:none;}
+  img{max-width:100%;display:block;}
+  .container{
+    max-width:1180px;
+    margin:0 auto;
+    padding:0 24px;
+  }
+  section{padding:96px 0;}
+  .eyebrow{
+    text-transform:uppercase;
+    letter-spacing:.12em;
+    font-size:13px;
+    font-weight:700;
+    color:var(--accent-dark);
+    margin-bottom:12px;
+    display:block;
+  }
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:14px 28px;
+    border-radius:100px;
+    font-family:'Karla',sans-serif;
+    font-weight:700;
+    font-size:15px;
+    cursor:pointer;
+    border:1px solid transparent;
+    transition:transform .18s var(--ease), box-shadow .18s var(--ease), background .18s var(--ease), color .18s var(--ease);
+  }
+  .btn-primary{
+    background:var(--accent);
+    color:#fff;
+  }
+  .btn-primary:hover{
+    background:var(--accent-dark);
+    transform:translateY(-2px);
+    box-shadow:var(--shadow-lg);
+  }
+  .btn-outline{
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--text);
+  }
+  .btn-outline:hover{
+    border-color:var(--accent);
+    color:var(--accent-dark);
+    transform:translateY(-2px);
+  }
+
+  /* fade-in on scroll */
+  .reveal{
+    opacity:0;
+    transform:translateY(16px);
+    transition:opacity .5s var(--ease), transform .5s var(--ease);
+  }
+  .reveal.is-visible{
+    opacity:1;
+    transform:translateY(0);
+  }
+
+  /* NAV */
+  header{
+    position:sticky;
+    top:0;
+    z-index:100;
+    background:rgba(250,250,248,0.88);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border);
+  }
+  nav{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:18px 24px;
+    max-width:1180px;
+    margin:0 auto;
+  }
+  .logo{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-family:'Merriweather',serif;
+    font-weight:700;
+    font-size:20px;
+  }
+  .logo-mark{
+    width:36px;height:36px;
+    border-radius:10px;
+    background:var(--accent);
+    color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;
+  }
+  .nav-links{
+    display:flex;
+    gap:36px;
+    align-items:center;
+  }
+  .nav-links a{
+    font-size:15px;
+    font-weight:500;
+    color:var(--text-soft);
+    transition:color .16s var(--ease);
+    position:relative;
+  }
+  .nav-links a:hover{color:var(--accent-dark);}
+  .nav-cta{display:flex;align-items:center;gap:16px;}
+  .nav-toggle{
+    display:none;
+    flex-direction:column;
+    gap:5px;
+    background:none;border:none;cursor:pointer;
+  }
+  .nav-toggle span{
+    width:24px;height:2px;background:var(--text);
+    transition:.2s var(--ease);
+  }
+
+  /* HERO */
+  .hero{
+    padding:80px 0 100px;
+  }
+  .hero-split{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:64px;
+    align-items:center;
+  }
+  .hero h1{
+    font-size:clamp(36px,4.5vw,54px);
+    margin-bottom:22px;
+    letter-spacing:-0.01em;
+  }
+  .hero h1 span{color:var(--accent-dark);}
+  .hero p{
+    font-size:18px;
+    color:var(--text-soft);
+    max-width:480px;
+    margin-bottom:32px;
+  }
+  .hero-actions{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:36px;}
+  .hero-meta{
+    display:flex;
+    gap:28px;
+    flex-wrap:wrap;
+  }
+  .hero-meta div{display:flex;flex-direction:column;}
+  .hero-meta strong{
+    font-family:'Merriweather',serif;
+    font-size:22px;
+    color:var(--accent-dark);
+  }
+  .hero-meta span{font-size:13px;color:var(--text-soft);}
+  .hero-visual{
+    position:relative;
+    border-radius:24px;
+    overflow:hidden;
+    background:linear-gradient(150deg,var(--surface),#e4ebe3);
+    aspect-ratio:4/4.4;
+    box-shadow:var(--shadow-lg);
+    display:flex;
+    align-items:flex-end;
+    padding:24px;
+  }
+  .hero-visual::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:
+      radial-gradient(circle at 30% 20%, rgba(95,141,110,0.28), transparent 55%),
+      radial-gradient(circle at 80% 80%, rgba(95,141,110,0.18), transparent 55%);
+  }
+  .hero-card{
+    position:relative;
+    background:#fff;
+    border-radius:16px;
+    padding:18px 20px;
+    box-shadow:var(--shadow);
+    display:flex;
+    align-items:center;
+    gap:14px;
+    width:100%;
+  }
+  .hero-card .dot{
+    width:44px;height:44px;border-radius:50%;
+    background:var(--accent);
+    flex-shrink:0;
+  }
+  .hero-card strong{display:block;font-family:'Merriweather',serif;font-size:15px;}
+  .hero-card span{font-size:13px;color:var(--text-soft);}
+
+  /* TRUST BAR */
+  .trust-bar{
+    padding:44px 0;
+    border-top:1px solid var(--border);
+    border-bottom:1px solid var(--border);
+    background:var(--surface);
+  }
+  .trust-bar .container{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:28px;
+  }
+  .trust-label{
+    font-size:13px;
+    text-transform:uppercase;
+    letter-spacing:.1em;
+    color:var(--text-soft);
+    font-weight:700;
+    white-space:nowrap;
+  }
+  .trust-items{
+    display:flex;
+    gap:40px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .trust-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-family:'Merriweather',serif;
+    font-weight:700;
+    font-size:15px;
+    color:var(--text-soft);
+    opacity:.85;
+  }
+  .trust-item svg{color:var(--accent);flex-shrink:0;}
+
+  /* ABOUT / STATS */
+  .about{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:72px;
+    align-items:center;
+  }
+  .about-text p{
+    color:var(--text-soft);
+    font-size:16px;
+    margin-bottom:18px;
+  }
+  .stats-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+  }
+  .stat-card{
+    background:var(--surface);
+    border-radius:var(--radius);
+    padding:28px 22px;
+    border:1px solid var(--border);
+    transition:transform .2s var(--ease), box-shadow .2s var(--ease);
+  }
+  .stat-card:hover{
+    transform:translateY(-4px);
+    box-shadow:var(--shadow);
+  }
+  .stat-card strong{
+    font-family:'Merriweather',serif;
+    font-size:36px;
+    color:var(--accent-dark);
+    display:block;
+    margin-bottom:6px;
+  }
+  .stat-card span{font-size:14px;color:var(--text-soft);}
+
+  /* SERVICES */
+  .section-head{
+    max-width:620px;
+    margin:0 auto 56px;
+    text-align:center;
+  }
+  .section-head p{color:var(--text-soft);font-size:16px;margin-top:14px;}
+  .services-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:24px;
+  }
+  .service-card{
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:32px 28px;
+    transition:transform .2s var(--ease), box-shadow .2s var(--ease), border-color .2s var(--ease);
+  }
+  .service-card:hover{
+    transform:translateY(-6px);
+    box-shadow:var(--shadow-lg);
+    border-color:var(--accent);
+  }
+  .service-icon{
+    width:52px;height:52px;
+    border-radius:12px;
+    background:var(--surface);
+    color:var(--accent-dark);
+    display:flex;align-items:center;justify-content:center;
+    margin-bottom:20px;
+  }
+  .service-card h3{font-size:19px;margin-bottom:10px;}
+  .service-card p{color:var(--text-soft);font-size:15px;margin-bottom:16px;}
+  .service-card .link{
+    font-size:14px;font-weight:700;color:var(--accent-dark);
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .services-more{
+    text-align:center;
+    margin-top:44px;
+  }
+
+  /* TESTIMONIALS */
+  .testimonials{background:var(--surface);}
+  .testi-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:24px;
+  }
+  .testi-card{
+    background:#fff;
+    border-radius:var(--radius);
+    padding:30px 28px;
+    border:1px solid var(--border);
+  }
+  .testi-stars{color:var(--accent);margin-bottom:16px;font-size:14px;letter-spacing:2px;}
+  .testi-card p{
+    font-size:15px;
+    color:var(--text);
+    margin-bottom:22px;
+  }
+  .testi-person{display:flex;align-items:center;gap:12px;}
+  .testi-avatar{
+    width:42px;height:42px;border-radius:50%;
+    background:linear-gradient(135deg,var(--accent),#8bb897);
+    flex-shrink:0;
+  }
+  .testi-person strong{font-size:14px;display:block;}
+  .testi-person span{font-size:13px;color:var(--text-soft);}
+
+  /* FAQ */
+  .faq-list{max-width:760px;margin:0 auto;}
+  .faq-item{
+    border-bottom:1px solid var(--border);
+  }
+  .faq-q{
+    width:100%;
+    background:none;
+    border:none;
+    text-align:left;
+    padding:22px 4px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    cursor:pointer;
+    font-family:'Merriweather',serif;
+    font-size:17px;
+    font-weight:700;
+    color:var(--text);
+  }
+  .faq-q .plus{
+    width:24px;height:24px;
+    flex-shrink:0;
+    position:relative;
+    margin-left:16px;
+  }
+  .faq-q .plus::before,.faq-q .plus::after{
+    content:"";
+    position:absolute;
+    background:var(--accent-dark);
+    transition:transform .25s var(--ease);
+  }
+  .faq-q .plus::before{width:16px;height:2px;top:11px;left:4px;}
+  .faq-q .plus::after{width:2px;height:16px;top:4px;left:11px;}
+  .faq-item.active .plus::after{transform:rotate(90deg);opacity:0;}
+  .faq-a{
+    max-height:0;
+    overflow:hidden;
+    transition:max-height .3s var(--ease);
+  }
+  .faq-a p{
+    padding:0 4px 22px;
+    color:var(--text-soft);
+    font-size:15px;
+    max-width:640px;
+  }
+
+  /* CONTACT */
+  .contact-wrap{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:56px;
+    background:var(--text);
+    border-radius:24px;
+    padding:56px;
+    color:#fff;
+  }
+  .contact-wrap h2{color:#fff;}
+  .contact-wrap .section-head{margin:0 0 24px;text-align:left;max-width:100%;}
+  .contact-wrap .section-head p{color:#C9D1C6;}
+  .contact-info-item{
+    display:flex;
+    gap:14px;
+    margin-bottom:22px;
+    align-items:flex-start;
+  }
+  .contact-info-item .ic{
+    width:40px;height:40px;
+    border-radius:10px;
+    background:rgba(255,255,255,0.08);
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+    color:#9FC2AB;
+  }
+  .contact-info-item strong{display:block;font-size:15px;margin-bottom:2px;}
+  .contact-info-item span{font-size:14px;color:#C9D1C6;}
+  .contact-form{
+    background:#fff;
+    border-radius:16px;
+    padding:32px;
+  }
+  .contact-form h3{color:var(--text);margin-bottom:20px;font-size:20px;}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+  .form-group{margin-bottom:14px;}
+  .form-group.full{grid-column:1/-1;}
+  label{
+    display:block;
+    font-size:13px;
+    font-weight:700;
+    margin-bottom:6px;
+    color:var(--text-soft);
+  }
+  input,textarea,select{
+    width:100%;
+    padding:12px 14px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    font-family:'Karla',sans-serif;
+    font-size:14px;
+    color:var(--text);
+    background:var(--bg);
+    transition:border-color .16s var(--ease);
+  }
+  input:focus,textarea:focus,select:focus{
+    outline:none;
+    border-color:var(--accent);
+  }
+  textarea{resize:vertical;min-height:90px;}
+  .contact-form .btn{width:100%;justify-content:center;margin-top:6px;}
+
+  /* FOOTER */
+  footer{
+    background:var(--surface);
+    padding:64px 0 28px;
+    border-top:1px solid var(--border);
+  }
+  .footer-grid{
+    display:grid;
+    grid-template-columns:1.4fr 1fr 1fr 1fr;
+    gap:40px;
+    margin-bottom:48px;
+  }
+  .footer-brand p{
+    color:var(--text-soft);
+    font-size:14px;
+    margin:16px 0 20px;
+    max-width:280px;
+  }
+  .footer-social{display:flex;gap:10px;}
+  .footer-social a{
+    width:38px;height:38px;
+    border-radius:50%;
+    background:#fff;
+    border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--text-soft);
+    transition:.18s var(--ease);
+  }
+  .footer-social a:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .footer-col h4{font-size:15px;margin-bottom:18px;}
+  .footer-col ul li{margin-bottom:11px;}
+  .footer-col ul li a{font-size:14px;color:var(--text-soft);transition:color .16s var(--ease);}
+  .footer-col ul li a:hover{color:var(--accent-dark);}
+  .footer-bottom{
+    border-top:1px solid var(--border);
+    padding-top:24px;
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:12px;
+    font-size:13px;
+    color:var(--text-soft);
+  }
+
+  /* WHATSAPP FLOAT */
+  .whatsapp-float{
+    position:fixed;
+    bottom:26px;
+    right:26px;
+    width:58px;height:58px;
+    border-radius:50%;
+    background:#25D366;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 8px 24px rgba(37,211,102,0.4);
+    z-index:200;
+    transition:transform .2s var(--ease);
+    animation:float-pulse 2.6s ease-in-out infinite;
+  }
+  .whatsapp-float:hover{transform:scale(1.08);}
+  @keyframes float-pulse{
+    0%,100%{box-shadow:0 8px 24px rgba(37,211,102,0.4);}
+    50%{box-shadow:0 8px 30px rgba(37,211,102,0.65);}
+  }
+
+  @media(max-width:900px){
+    .hero-split,.about,.contact-wrap,.services-grid,.testi-grid,.footer-grid{
+      grid-template-columns:1fr;
+    }
+    .stats-grid{grid-template-columns:1fr 1fr;}
+    .nav-links,.nav-cta .btn-outline{display:none;}
+    .nav-toggle{display:flex;}
+    .contact-wrap{padding:32px;}
+    .form-row{grid-template-columns:1fr;}
+    section{padding:64px 0;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <nav>
+    <a href="#" class="logo">
+      <span class="logo-mark">＋</span>
+      Trust Light Modern
+    </a>
+    <ul class="nav-links">
+      <li><a href="#about">About</a></li>
+      <li><a href="#services">Services</a></li>
+      <li><a href="#testimonials">Stories</a></li>
+      <li><a href="#faq">FAQ</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <div class="nav-cta">
+      <a href="#contact" class="btn btn-outline">Patient Portal</a>
+      <a href="#contact" class="btn btn-primary">Book Visit</a>
+    </div>
+    <button class="nav-toggle" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+  </nav>
+</header>
+
+<section class="hero">
+  <div class="container hero-split">
+    <div class="reveal">
+      <span class="eyebrow">Community Health, Done Right</span>
+      <h1>Care that feels <span>close to home,</span> backed by real expertise.</h1>
+      <p>Medical, dental, and pharmacy services under one roof — delivered with the warmth of a neighborhood practice and the precision of modern medicine.</p>
+      <div class="hero-actions">
+        <a href="#contact" class="btn btn-primary">Book an Appointment</a>
+        <a href="#services" class="btn btn-outline">Explore Services</a>
+      </div>
+      <div class="hero-meta">
+        <div><strong>18+</strong><span>Years serving the community</span></div>
+        <div><strong>32k</strong><span>Patients cared for</span></div>
+        <div><strong>4.9/5</strong><span>Average patient rating</span></div>
+      </div>
+    </div>
+    <div class="hero-visual reveal">
+      <div class="hero-card">
+        <div class="dot"></div>
+        <div>
+          <strong>Dr. Amara Odell</strong>
+          <span>Family Medicine · Available Today</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="trust-bar">
+  <div class="container">
+    <span class="trust-label">Accredited & Trusted By</span>
+    <div class="trust-items">
+      <div class="trust-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l7 4v6c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6l7-4z"/></svg>Board Certified</div>
+      <div class="trust-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>ISO 9001 Certified</div>
+      <div class="trust-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.4 6.6H21l-5.3 4 2 6.6L12 15l-5.7 4.2 2-6.6-5.3-4h6.6z"/></svg>Joint Commission Approved</div>
+      <div class="trust-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg>Licensed Pharmacy</div>
+    </div>
+  </div>
+</section>
+
+<section class="about" id="about">
+  <div class="container about" style="display:grid;">
+    <div class="about-text reveal">
+      <span class="eyebrow">Who We Are</span>
+      <h2>A practice built around people, not paperwork.</h2>
+      <p>Trust Light Modern brings together family medicine, dental care, and an on-site pharmacy so your whole family can be seen, treated, and cared for without the runaround.</p>
+      <p>Our clinicians take time with every patient — because good care starts with actually being heard.</p>
+      <a href="#services" class="btn btn-outline">Our Approach</a>
+    </div>
+    <div class="stats-grid reveal">
+      <div class="stat-card"><strong>24</strong><span>Specialists on staff</span></div>
+      <div class="stat-card"><strong>98%</strong><span>Patient satisfaction</span></div>
+      <div class="stat-card"><strong>7</strong><span>Days a week open</span></div>
+      <div class="stat-card"><strong>15min</strong><span>Average wait time</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="services">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">Services</span>
+      <h2>Everything your family needs, in one place</h2>
+      <p>From routine checkups to specialty dental work and prescription fulfillment — we've got it covered.</p>
+    </div>
+    <div class="services-grid">
+      <div class="service-card reveal">
+        <div class="service-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg></div>
+        <h3>Family Medicine</h3>
+        <p>Comprehensive checkups, diagnostics, and ongoing care for every stage of life.</p>
+        <a href="#" class="link">Learn more →</a>
+      </div>
+      <div class="service-card reveal">
+        <div class="service-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-4.35-9.5-8.5C.5 8.5 3 5 6.5 5c2 0 3.3 1.1 4 2 .7-.9 2-2 4-2 3.5 0 6 3.5 4 7.5C19 16.65 12 21 12 21z"/></svg></div>
+        <h3>Dental Care</h3>
+        <p>Cleanings, restorative work, and cosmetic dentistry from a gentle, experienced team.</p>
+        <a href="#" class="link">Learn more →</a>
+      </div>
+      <div class="service-card reveal">
+        <div class="service-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg></div>
+        <h3>On-Site Pharmacy</h3>
+        <p>Fast prescription fulfillment and medication counseling, right after your visit.</p>
+        <a href="#" class="link">Learn more →</a>
+      </div>
+    </div>
+    <div class="services-more reveal">
+      <a href="#" class="btn btn-outline">View All Services</a>
+    </div>
+  </div>
+</section>
+
+<section class="testimonials" id="testimonials">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">Patient Stories</span>
+      <h2>What our community says</h2>
+    </div>
+    <div class="testi-grid">
+      <div class="testi-card reveal">
+        <div class="testi-stars">★★★★★</div>
+        <p>"The whole team made my kids feel comfortable during their first dental visit. We've found our forever practice."</p>
+        <div class="testi-person">
+          <div class="testi-avatar"></div>
+          <div><strong>Priya Nandan</strong><span>Patient since 2021</span></div>
+        </div>
+      </div>
+      <div class="testi-card reveal">
+        <div class="testi-stars">★★★★★</div>
+        <p>"Being able to pick up my prescription right after my appointment saves me so much time. Genuinely well run."</p>
+        <div class="testi-person">
+          <div class="testi-avatar"></div>
+          <div><strong>Marcus Fell</strong><span>Patient since 2019</span></div>
+        </div>
+      </div>
+      <div class="testi-card reveal">
+        <div class="testi-stars">★★★★★</div>
+        <p>"Dr. Odell actually listens. It's rare to find a doctor who takes the time to explain things clearly."</p>
+        <div class="testi-person">
+          <div class="testi-avatar"></div>
+          <div><strong>Helena Cruz</strong><span>Patient since 2023</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">FAQ</span>
+      <h2>Common questions</h2>
+    </div>
+    <div class="faq-list reveal">
+      <div class="faq-item">
+        <button class="faq-q">Do you accept walk-in appointments?<span class="plus"></span></button>
+        <div class="faq-a"><p>Yes, we hold same-day slots for urgent needs every day we're open. We recommend calling ahead when possible so we can prepare for your visit.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Which insurance plans do you accept?<span class="plus"></span></button>
+        <div class="faq-a"><p>We work with most major insurance providers. Contact our front desk with your plan details and we'll confirm coverage before your visit.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Can the on-site pharmacy fill outside prescriptions?<span class="plus"></span></button>
+        <div class="faq-a"><p>Absolutely. Our pharmacy can fill prescriptions from any licensed provider, not just ones written during your visit with us.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Do you offer pediatric dental care?<span class="plus"></span></button>
+        <div class="faq-a"><p>Yes, our dental team is experienced with patients of all ages, including gentle first-visit care for young children.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="contact">
+  <div class="container">
+    <div class="contact-wrap">
+      <div class="reveal">
+        <div class="section-head">
+          <span class="eyebrow" style="color:#9FC2AB;">Get In Touch</span>
+          <h2>Ready when you are</h2>
+          <p>Reach out to schedule a visit or ask a question — our front desk responds within one business day.</p>
+        </div>
+        <div class="contact-info-item">
+          <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5a2 2 0 012-2h3l2 5-2.5 1.5a11 11 0 005 5L14 12l5 2v3a2 2 0 01-2 2A16 16 0 013 5z"/></svg></div>
+          <div><strong>Call Us</strong><span>(555) 214-7788</span></div>
+        </div>
+        <div class="contact-info-item">
+          <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M4 4l8 8 8-8"/></svg></div>
+          <div><strong>Email</strong><span>hello@trustlightmodern.care</span></div>
+        </div>
+        <div class="contact-info-item">
+          <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-4.35-9.5-8.5C.5 8.5 3 5 6.5 5c2 0 3.3 1.1 4 2 .7-.9 2-2 4-2 3.5 0 6 3.5 4 7.5C19 16.65 12 21 12 21z"/></svg></div>
+          <div><strong>Visit</strong><span>412 Willowmere Ave, Suite 2</span></div>
+        </div>
+      </div>
+      <form class="contact-form reveal">
+        <h3>Book an Appointment</h3>
+        <div class="form-row">
+          <div class="form-group"><label>First Name</label><input type="text" placeholder="Jordan"></div>
+          <div class="form-group"><label>Last Name</label><input type="text" placeholder="Reyes"></div>
+        </div>
+        <div class="form-group"><label>Email</label><input type="email" placeholder="jordan@email.com"></div>
+        <div class="form-group"><label>Service Needed</label>
+          <select>
+            <option>Family Medicine</option>
+            <option>Dental Care</option>
+            <option>Pharmacy</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Message</label><textarea placeholder="Tell us a bit about your visit..."></textarea></div>
+        <button type="submit" class="btn btn-primary">Request Appointment</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="#" class="logo"><span class="logo-mark">＋</span>Trust Light Modern</a>
+        <p>A community-rooted medical, dental, and pharmacy practice dedicated to accessible, attentive care.</p>
+        <div class="footer-social">
+          <a href="#" aria-label="Facebook"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 22v-8h2.7l.4-3.3h-3.1V8.6c0-1 .3-1.6 1.7-1.6h1.5V4c-.3 0-1.2-.1-2.3-.1-2.3 0-3.9 1.4-3.9 4v2.8H8v3.3h2.5V22h3z"/></svg></a>
+          <a href="#" aria-label="Instagram"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg></a>
+          <a href="#" aria-label="LinkedIn"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M4.98 3.5a2.5 2.5 0 11-.02 5 2.5 2.5 0 01.02-5zM3 9h4v12H3zM9 9h3.8v1.7h.05c.53-1 1.83-2 3.77-2 4 0 4.75 2.6 4.75 6V21h-4v-5.3c0-1.3-.02-3-1.83-3-1.83 0-2.1 1.4-2.1 2.9V21H9z"/></svg></a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Practice</h4>
+        <ul>
+          <li><a href="#about">About Us</a></li>
+          <li><a href="#services">Services</a></li>
+          <li><a href="#testimonials">Patient Stories</a></li>
+          <li><a href="#faq">FAQ</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Services</h4>
+        <ul>
+          <li><a href="#">Family Medicine</a></li>
+          <li><a href="#">Dental Care</a></li>
+          <li><a href="#">Pharmacy</a></li>
+          <li><a href="#">Preventive Care</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Contact</h4>
+        <ul>
+          <li><a href="#">(555) 214-7788</a></li>
+          <li><a href="#">hello@trustlightmodern.care</a></li>
+          <li><a href="#">412 Willowmere Ave</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Trust Light Modern. All rights reserved.</span>
+      <span>Privacy Policy · Terms of Service</span>
+    </div>
+  </div>
+</footer>
+
+<a href="https://wa.me/15552147788" class="whatsapp-float" aria-label="Chat on WhatsApp" target="_blank" rel="noopener">
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="#fff"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.28-1.39a9.9 9.9 0 004.76 1.21h.01c5.46 0 9.9-4.45 9.9-9.91S17.5 2 12.04 2zm0 18.15h-.01a8.2 8.2 0 01-4.19-1.15l-.3-.18-3.13.82.84-3.05-.2-.31a8.2 8.2 0 01-1.26-4.37c0-4.54 3.7-8.24 8.25-8.24 2.2 0 4.27.86 5.83 2.42a8.19 8.19 0 012.41 5.83c0 4.55-3.7 8.23-8.24 8.23zm4.52-6.16c-.25-.12-1.47-.72-1.7-.81-.23-.08-.39-.12-.56.13-.17.24-.64.8-.78.97-.15.17-.29.19-.54.06-.25-.12-1.05-.39-2-1.23-.74-.66-1.24-1.47-1.39-1.72-.14-.24-.01-.38.11-.5.11-.11.25-.29.37-.43.13-.14.17-.24.25-.4.08-.17.04-.31-.02-.44-.06-.12-.56-1.36-.77-1.86-.2-.48-.41-.42-.56-.43-.14 0-.31-.01-.48-.01a.9.9 0 00-.66.31c-.23.24-.87.85-.87 2.08 0 1.22.89 2.4 1.02 2.57.12.17 1.75 2.67 4.24 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.55.1.47-.07 1.47-.6 1.68-1.19.2-.58.2-1.08.14-1.19-.06-.1-.23-.17-.48-.29z"/></svg>
+</a>
+
+<script>
+  // scroll reveal
+  const revealEls = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        e.target.classList.add('is-visible');
+        io.unobserve(e.target);
+      }
+    });
+  },{threshold:0.15});
+  revealEls.forEach(el=>io.observe(el));
+
+  // FAQ accordion
+  document.querySelectorAll('.faq-item').forEach(item=>{
+    const q = item.querySelector('.faq-q');
+    const a = item.querySelector('.faq-a');
+    q.addEventListener('click',()=>{
+      const isActive = item.classList.contains('active');
+      document.querySelectorAll('.faq-item').forEach(i=>{
+        i.classList.remove('active');
+        i.querySelector('.faq-a').style.maxHeight = null;
+      });
+      if(!isActive){
+        item.classList.add('active');
+        a.style.maxHeight = a.scrollHeight + 'px';
+      }
+    });
+  });
+
+  // mobile nav toggle
+  const navToggle = document.querySelector('.nav-toggle');
+  const navLinks = document.querySelector('.nav-links');
+  navToggle.addEventListener('click',()=>{
+    navLinks.style.display = navLinks.style.display === 'flex' ? 'none' : 'flex';
+    navLinks.style.flexDirection = 'column';
+    navLinks.style.position='absolute';
+    navLinks.style.top='64px';
+    navLinks.style.left='0';
+    navLinks.style.right='0';
+    navLinks.style.background='#FAFAF8';
+    navLinks.style.padding='20px 24px';
+    navLinks.style.borderBottom='1px solid var(--border)';
+  });
+</script>
+
+</body>
+</html>

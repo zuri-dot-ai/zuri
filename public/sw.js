@@ -3,8 +3,10 @@ const CACHE_NAME = "zuri-v1";
 const STATIC_ASSETS = [
   "/",
   "/offline",
-  "/Zuri_Logo.png",
-  "/Zuri_Favicon.png",
+  "/favicon.ico",
+  "/favicon-32x32.png",
+  "/apple-touch-icon.png",
+  "/android-chrome-192x192.png",
 ];
 
 self.addEventListener("install", (e) => {

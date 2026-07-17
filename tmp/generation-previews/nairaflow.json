@@ -1,0 +1,49 @@
+{
+  "archetype": "clean-modern",
+  "template_id": "clean-modern-dark-emerging",
+  "validation": {
+    "valid": true,
+    "errors": [],
+    "warnings": []
+  },
+  "filled_placeholders": {
+    "about_body": "Local-currency settlements with developer-first APIs built for African banks",
+    "address": "NairaFlow",
+    "business_name": "NairaFlow",
+    "email_address": "NairaFlow",
+    "instagram_url": "NairaFlow",
+    "phone_number": "NairaFlow",
+    "service_1_description": "Professional Payment collection API from NairaFlow.",
+    "service_1_title": "Payment collection API",
+    "service_2_description": "Professional Merchant dashboard from NairaFlow.",
+    "service_2_title": "Merchant dashboard",
+    "service_3_description": "Professional Settlement reports from NairaFlow.",
+    "service_3_title": "Settlement reports",
+    "service_4_description": "Professional Fraud alerts from NairaFlow.",
+    "service_4_title": "Fraud alerts",
+    "service_5_description": "Professional Developer sandbox from NairaFlow.",
+    "service_5_title": "Developer sandbox",
+    "service_6_description": "",
+    "service_6_title": "",
+    "tagline": "Payments that settle overnight",
+    "testimonial_1_name": "Adaeze Okafor",
+    "testimonial_1_quote": "Working with NairaFlow was a great experience. Highly recommended.",
+    "testimonial_1_role": "Client",
+    "testimonial_2_name": "Chinedu Eze",
+    "testimonial_2_quote": "Working with NairaFlow was a great experience. Highly recommended.",
+    "testimonial_2_role": "Client",
+    "testimonial_3_name": "Fatima Bello",
+    "testimonial_3_quote": "Working with NairaFlow was a great experience. Highly recommended.",
+    "testimonial_3_role": "Client",
+    "whatsapp_number": "NairaFlow"
+  },
+  "filled_images": {
+    "hero": {
+      "url": "/images/fallbacks/clean-modern.jpg",
+      "source": "fallback",
+      "width": null,
+      "height": null,
+      "alt": "clean-modern fallback"
+    }
+  }
+}

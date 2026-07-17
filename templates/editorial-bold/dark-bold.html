@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{business_name}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --color-bg: #0A0A0A;
+    --color-surface: #151515;
+    --color-text: #F5F5F3;
+    --color-text-muted: #9C9C99;
+    --color-accent: #E8542A;
+    --color-accent-text: #0A0A0A;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, .display {
+    font-family: 'Bebas Neue', sans-serif;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    line-height: 0.95;
+  }
+
+  a { color: inherit; text-decoration: none; }
+  img { display: block; max-width: 100%; }
+  button { font-family: inherit; cursor: pointer; border: none; }
+
+  .container {
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible {
+    outline: 3px solid var(--color-accent);
+    outline-offset: 3px;
+  }
+
+  /* ===== NAV ===== */
+  header.site-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: transparent;
+    transition: background 0.3s ease, border-color 0.3s ease;
+    border-bottom: 1px solid transparent;
+  }
+
+  header.site-nav.scrolled {
+    background: rgba(10,10,10,0.96);
+    border-bottom: 1px solid #262626;
+  }
+
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  .nav-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.7rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .nav-links {
+    display: none;
+    gap: 36px;
+    list-style: none;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 500;
+  }
+
+  .nav-links a {
+    position: relative;
+    padding-bottom: 4px;
+  }
+  .nav-links a::after {
+    content: "";
+    position: absolute;
+    left: 0; bottom: 0;
+    width: 0;
+    height: 2px;
+    background: var(--color-accent);
+    transition: width 0.25s ease;
+  }
+  .nav-links a:hover::after { width: 100%; }
+
+  .nav-toggle {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    z-index: 1100;
+    position: relative;
+    width: 32px;
+  }
+  .nav-toggle span {
+    display: block;
+    height: 2px;
+    width: 100%;
+    background: var(--color-text);
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  .nav-toggle.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .nav-toggle.open span:nth-child(2) { opacity: 0; }
+  .nav-toggle.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  .nav-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    width: min(78vw, 340px);
+    background: var(--color-surface);
+    border-left: 1px solid #262626;
+    transform: translateX(100%);
+    transition: transform 0.35s ease;
+    z-index: 1050;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 28px;
+    padding: 24px;
+  }
+  .nav-drawer.open { transform: translateX(0); }
+  .nav-drawer a {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    text-transform: uppercase;
+  }
+
+  .nav-scrim {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 1040;
+  }
+  .nav-scrim.open { opacity: 1; pointer-events: auto; }
+
+  @media (min-width: 1025px) {
+    .nav-links { display: flex; }
+    .nav-toggle, .nav-drawer, .nav-scrim { display: none; }
+  }
+
+  /* ===== BUTTON ===== */
+  .btn {
+    display: inline-block;
+    padding: 16px 34px;
+    background: var(--color-accent);
+    color: var(--color-accent-text);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 0.85rem;
+    transition: transform 0.2s ease, background 0.2s ease;
+  }
+  .btn:hover { transform: translateY(-2px); background: #ff6b3d; }
+  .btn-outline {
+    background: transparent;
+    border: 1.5px solid var(--color-text);
+    color: var(--color-text);
+  }
+  .btn-outline:hover { border-color: var(--color-accent); color: var(--color-accent); background: transparent; }
+
+  /* ===== HERO ===== */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    padding: 140px 0 80px;
+    border-bottom: 1px solid #1c1c1c;
+  }
+  .hero-inner {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 48px;
+    align-items: center;
+  }
+  .hero-eyebrow {
+    color: var(--color-accent);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    font-size: 0.8rem;
+    margin-bottom: 18px;
+  }
+  .hero-headline {
+    font-size: clamp(3rem, 12vw, 6.5rem);
+    margin-bottom: 28px;
+  }
+  .hero-sub {
+    color: var(--color-text-muted);
+    font-size: 1.05rem;
+    max-width: 480px;
+    margin-bottom: 34px;
+  }
+  .hero-image-wrap {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 4/5;
+  }
+  .hero-image-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  @media (min-width: 1025px) {
+    .hero-inner {
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 64px;
+    }
+  }
+
+  /* ===== SECTION BASE ===== */
+  section { padding: 100px 0; border-bottom: 1px solid #1c1c1c; }
+  .section-label {
+    color: var(--color-accent);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    font-size: 0.8rem;
+    margin-bottom: 16px;
+    display: block;
+  }
+  .section-title {
+    font-size: clamp(2.2rem, 6vw, 3.6rem);
+    margin-bottom: 40px;
+  }
+
+  /* ===== REVEAL ===== */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px) scale(0.97);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.active { opacity: 1; transform: translateY(0) scale(1); }
+  .reveal-1 { transition-delay: 0.05s; }
+  .reveal-2 { transition-delay: 0.15s; }
+  .reveal-3 { transition-delay: 0.25s; }
+  .reveal-4 { transition-delay: 0.35s; }
+
+  /* ===== ABOUT ===== */
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 40px;
+    align-items: center;
+  }
+  .about-quote {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    text-transform: none;
+    line-height: 1.15;
+    border-left: 3px solid var(--color-accent);
+    padding-left: 24px;
+    margin-bottom: 24px;
+  }
+  .about-body { color: var(--color-text-muted); max-width: 520px; }
+  .about-image {
+    aspect-ratio: 3/4;
+    overflow: hidden;
+  }
+  .about-image img { width: 100%; height: 100%; object-fit: cover; }
+
+  @media (min-width: 1025px) {
+    .about-grid { grid-template-columns: 1fr 0.8fr; gap: 64px; }
+  }
+
+  /* ===== SERVICES ===== */
+  .services-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1px;
+    background: #1c1c1c;
+    border: 1px solid #1c1c1c;
+  }
+  .service-card {
+    background: var(--color-bg);
+    padding: 40px 28px;
+    border-top: 3px solid transparent;
+    transition: border-color 0.25s ease, background 0.25s ease;
+  }
+  .service-card:hover {
+    border-top-color: var(--color-accent);
+    background: var(--color-surface);
+  }
+  .service-num {
+    color: var(--color-accent);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.1em;
+    margin-bottom: 20px;
+    display: block;
+  }
+  .service-title { font-size: 1.5rem; margin-bottom: 14px; }
+  .service-desc { color: var(--color-text-muted); font-size: 0.95rem; }
+
+  @media (min-width: 481px) {
+    .services-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (min-width: 1025px) {
+    .services-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  /* ===== GALLERY ===== */
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .gallery-item {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 1/1;
+  }
+  .gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+  .gallery-item::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--color-accent);
+    opacity: 0;
+    mix-blend-mode: multiply;
+    transition: opacity 0.35s ease;
+  }
+  .gallery-item:hover::after { opacity: 0.55; }
+  .gallery-item:hover img { transform: scale(1.06); }
+
+  .gallery-item.large { grid-column: span 1; }
+
+  @media (min-width: 481px) {
+    .gallery-grid { grid-template-columns: repeat(2, 1fr); }
+    .gallery-item.large { grid-column: span 2; aspect-ratio: 2/1; }
+  }
+
+  /* ===== TESTIMONIALS ===== */
+  .testimonials-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 48px;
+  }
+  .testimonial {
+    position: relative;
+    padding-top: 20px;
+  }
+  .testimonial-mark {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 5rem;
+    color: var(--color-accent);
+    line-height: 1;
+    display: block;
+    margin-bottom: 8px;
+  }
+  .testimonial-quote {
+    font-size: 1.15rem;
+    margin-bottom: 20px;
+  }
+  .testimonial-name { font-weight: 700; }
+  .testimonial-role { color: var(--color-text-muted); font-size: 0.9rem; }
+
+  @media (min-width: 1025px) {
+    .testimonials-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  /* ===== CONTACT ===== */
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 48px;
+  }
+  .contact-statement {
+    font-size: clamp(2rem, 5vw, 3rem);
+  }
+  .contact-info { margin-top: 28px; color: var(--color-text-muted); }
+  .contact-info p { margin-bottom: 8px; }
+  .contact-info a:hover { color: var(--color-accent); }
+
+  form#contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  form#contact-form label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-muted);
+    margin-bottom: 6px;
+    display: block;
+  }
+  form#contact-form input,
+  form#contact-form textarea {
+    width: 100%;
+    background: var(--color-surface);
+    border: 1px solid #2a2a2a;
+    color: var(--color-text);
+    padding: 14px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+  }
+  form#contact-form textarea { resize: vertical; min-height: 120px; }
+  form#contact-form input:focus,
+  form#contact-form textarea:focus {
+    border-color: var(--color-accent);
+    outline: none;
+  }
+  .form-success {
+    display: none;
+    background: var(--color-surface);
+    border: 1px solid var(--color-accent);
+    padding: 20px;
+    font-weight: 700;
+  }
+  .form-success.show { display: block; }
+
+  @media (min-width: 1025px) {
+    .contact-grid { grid-template-columns: 1fr 1fr; gap: 64px; }
+  }
+
+  /* ===== FOOTER ===== */
+  footer {
+    padding: 60px 0 30px;
+  }
+  .footer-top {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    margin-bottom: 40px;
+  }
+  .footer-logo {
+    font-size: 2rem;
+  }
+  .footer-tagline { color: var(--color-text-muted); }
+  .footer-social a {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border-bottom: 1px solid var(--color-text-muted);
+    padding-bottom: 2px;
+  }
+  .footer-social a:hover { color: var(--color-accent); border-color: var(--color-accent); }
+  .footer-bottom {
+    text-align: center;
+    padding-top: 24px;
+    border-top: 1px solid #1c1c1c;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+  }
+  .footer-bottom a { text-decoration: underline; }
+
+  @media (min-width: 481px) {
+    .footer-top { flex-direction: row; justify-content: space-between; align-items: flex-end; }
+  }
+
+  /* ===== WHATSAPP FLOAT ===== */
+  #whatsapp-float {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 900;
+  }
+  #whatsapp-float a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    background: #25D366;
+    border-radius: 50%;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+    transition: transform 0.2s ease;
+  }
+  #whatsapp-float a:hover { transform: scale(1.08); }
+  #whatsapp-float svg { width: 28px; height: 28px; }
+</style>
+</head>
+<body>
+
+<header class="site-nav" id="site-nav">
+  <div class="nav-inner">
+    <a href="#top" class="nav-logo">{{business_name}}</a>
+    <ul class="nav-links">
+      <li><a href="#about">About</a></li>
+      <li><a href="#services">Work</a></li>
+      <li><a href="#gallery">Gallery</a></li>
+      <li><a href="#testimonials">Reviews</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<div class="nav-scrim" id="nav-scrim"></div>
+<nav class="nav-drawer" id="nav-drawer" aria-label="Mobile navigation">
+  <a href="#about">About</a>
+  <a href="#services">Work</a>
+  <a href="#gallery">Gallery</a>
+  <a href="#testimonials">Reviews</a>
+  <a href="#contact">Contact</a>
+</nav>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero" style="border-bottom:1px solid #1c1c1c; padding-bottom:80px;">
+    <div class="container hero-inner">
+      <div>
+        <span class="hero-eyebrow reveal reveal-1">{{tagline}}</span>
+        <h1 class="hero-headline reveal reveal-2">{{business_name}}</h1>
+        <p class="hero-sub reveal reveal-3">{{about_body}}</p>
+        <a href="#contact" class="btn reveal reveal-4">{{cta_primary_text}}</a>
+      </div>
+      <div class="hero-image-wrap reveal reveal-2">
+        <img src="https://picsum.photos/900/1100?random=101" data-image-slot="hero" alt="{{business_name}} hero visual">
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section id="about">
+    <div class="container about-grid">
+      <div class="reveal reveal-1">
+        <span class="section-label">About</span>
+        <p class="about-quote">{{tagline}}</p>
+        <p class="about-body">{{about_body}}</p>
+      </div>
+      <div class="about-image reveal reveal-2">
+        <img src="https://picsum.photos/700/900?random=102" data-image-slot="about" alt="About {{business_name}}">
+      </div>
+    </div>
+  </section>
+
+  <!-- SERVICES -->
+  <section id="services">
+    <div class="container">
+      <span class="section-label reveal reveal-1">What We Do</span>
+      <h2 class="section-title reveal reveal-1">Our Work</h2>
+      <div class="services-grid">
+        <div class="service-card reveal reveal-1">
+          <span class="service-num">01</span>
+          <h3 class="service-title">{{service_1_title}}</h3>
+          <p class="service-desc">{{service_1_description}}</p>
+        </div>
+        <div class="service-card reveal reveal-2">
+          <span class="service-num">02</span>
+          <h3 class="service-title">{{service_2_title}}</h3>
+          <p class="service-desc">{{service_2_description}}</p>
+        </div>
+        <div class="service-card reveal reveal-3">
+          <span class="service-num">03</span>
+          <h3 class="service-title">{{service_3_title}}</h3>
+          <p class="service-desc">{{service_3_description}}</p>
+        </div>
+        <div class="service-card" hidden data-optional-slot="4">
+          <span class="service-num">04</span>
+          <h3 class="service-title">{{service_4_title}}</h3>
+          <p class="service-desc">{{service_4_description}}</p>
+        </div>
+        <div class="service-card" hidden data-optional-slot="5">
+          <span class="service-num">05</span>
+          <h3 class="service-title">{{service_5_title}}</h3>
+          <p class="service-desc">{{service_5_description}}</p>
+        </div>
+        <div class="service-card" hidden data-optional-slot="6">
+          <span class="service-num">06</span>
+          <h3 class="service-title">{{service_6_title}}</h3>
+          <p class="service-desc">{{service_6_description}}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GALLERY -->
+  <section id="gallery">
+    <div class="container">
+      <span class="section-label reveal reveal-1">Gallery</span>
+      <h2 class="section-title reveal reveal-1">Selected Drops</h2>
+      <div class="gallery-grid">
+        <div class="gallery-item large reveal reveal-1">
+          <img src="https://picsum.photos/1200/600?random=103" data-image-slot="gallery_1" alt="{{business_name}} gallery image 1">
+        </div>
+        <div class="gallery-item reveal reveal-2">
+          <img src="https://picsum.photos/600/600?random=104" data-image-slot="gallery_2" alt="{{business_name}} gallery image 2">
+        </div>
+        <div class="gallery-item reveal reveal-3">
+          <img src="https://picsum.photos/600/600?random=105" data-image-slot="gallery_3" alt="{{business_name}} gallery image 3">
+        </div>
+        <div class="gallery-item large reveal reveal-4">
+          <img src="https://picsum.photos/1200/600?random=106" data-image-slot="gallery_4" alt="{{business_name}} gallery image 4">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section id="testimonials">
+    <div class="container">
+      <span class="section-label reveal reveal-1">Reviews</span>
+      <h2 class="section-title reveal reveal-1">What People Say</h2>
+      <div class="testimonials-grid">
+        <div class="testimonial reveal reveal-1">
+          <span class="testimonial-mark" aria-hidden="true">&ldquo;</span>
+          <p class="testimonial-quote">{{testimonial_1_quote}}</p>
+          <p class="testimonial-name">{{testimonial_1_name}}</p>
+          <p class="testimonial-role">{{testimonial_1_role}}</p>
+        </div>
+        <div class="testimonial reveal reveal-2">
+          <span class="testimonial-mark" aria-hidden="true">&ldquo;</span>
+          <p class="testimonial-quote">{{testimonial_2_quote}}</p>
+          <p class="testimonial-name">{{testimonial_2_name}}</p>
+          <p class="testimonial-role">{{testimonial_2_role}}</p>
+        </div>
+        <div class="testimonial reveal reveal-3">
+          <span class="testimonial-mark" aria-hidden="true">&ldquo;</span>
+          <p class="testimonial-quote">{{testimonial_3_quote}}</p>
+          <p class="testimonial-name">{{testimonial_3_name}}</p>
+          <p class="testimonial-role">{{testimonial_3_role}}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact">
+    <div class="container contact-grid">
+      <div class="reveal reveal-1">
+        <span class="section-label">Contact</span>
+        <p class="contact-statement">{{cta_primary_text}}. Let's talk.</p>
+        <div class="contact-info">
+          <p><a href="tel:{{phone_number}}">{{phone_number}}</a></p>
+          <p><a href="mailto:{{email_address}}">{{email_address}}</a></p>
+          <p>{{address}}</p>
+        </div>
+      </div>
+      <div class="reveal reveal-2">
+        <form id="contact-form" novalidate>
+          <div>
+            <label for="cf-name">Name</label>
+            <input type="text" id="cf-name" name="name" required>
+          </div>
+          <div>
+            <label for="cf-email">Email</label>
+            <input type="email" id="cf-email" name="email" required>
+          </div>
+          <div>
+            <label for="cf-message">Message</label>
+            <textarea id="cf-message" name="message" required></textarea>
+          </div>
+          <button type="submit" class="btn">Send Message</button>
+        </form>
+        <div class="form-success" id="form-success">Message sent. We'll be in touch soon.</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="container">
+    <div class="footer-top">
+      <div>
+        <p class="footer-logo display">{{business_name}}</p>
+        <p class="footer-tagline">{{tagline}}</p>
+      </div>
+      <div class="footer-social" id="footer-instagram" data-instagram-url="{{instagram_url}}">
+        <a href="{{instagram_url}}" target="_blank" rel="noopener">Instagram</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; <span id="footer-year"></span> {{business_name}}. All rights reserved. &middot; <a href="#" target="_blank" rel="noopener">Powered by Zuri</a></p>
+    </div>
+  </div>
+</footer>
+
+<div id="whatsapp-float" data-whatsapp-number="{{whatsapp_number}}">
+  <a href="#" aria-label="Chat with us on WhatsApp" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" fill="white" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.372-.025-.521-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12.001 2C6.478 2 2 6.478 2 12c0 1.86.505 3.641 1.463 5.201L2 22l4.938-1.44A9.958 9.958 0 0012 22c5.523 0 10-4.478 10-10S17.523 2 12 2zm0 18.062c-1.686 0-3.317-.454-4.744-1.312l-.34-.202-3.15.919.937-3.1-.222-.35A8.052 8.052 0 013.938 12c0-4.454 3.608-8.062 8.063-8.062S20.062 7.546 20.062 12 16.454 20.062 12 20.062z"/></svg>
+  </a>
+</div>
+
+<script>
+  // Nav scroll state
+  var nav = document.getElementById('site-nav');
+  window.addEventListener('scroll', function () {
+    if (window.scrollY > 40) { nav.classList.add('scrolled'); }
+    else { nav.classList.remove('scrolled'); }
+  });
+
+  // Mobile drawer
+  var toggle = document.getElementById('nav-toggle');
+  var drawer = document.getElementById('nav-drawer');
+  var scrim = document.getElementById('nav-scrim');
+  function closeDrawer() {
+    toggle.classList.remove('open');
+    drawer.classList.remove('open');
+    scrim.classList.remove('open');
+    toggle.setAttribute('aria-expanded', 'false');
+  }
+  toggle.addEventListener('click', function () {
+    var isOpen = drawer.classList.toggle('open');
+    toggle.classList.toggle('open', isOpen);
+    scrim.classList.toggle('open', isOpen);
+    toggle.setAttribute('aria-expanded', String(isOpen));
+  });
+  scrim.addEventListener('click', closeDrawer);
+  drawer.querySelectorAll('a').forEach(function (a) {
+    a.addEventListener('click', closeDrawer);
+  });
+
+  // Reveal on scroll
+  var revealEls = document.querySelectorAll('.reveal');
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('active');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  revealEls.forEach(function (el) { observer.observe(el); });
+
+  // Contact form
+  var form = document.getElementById('contact-form');
+  var success = document.getElementById('form-success');
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    form.style.display = 'none';
+    success.classList.add('show');
+  });
+
+  // Footer year
+  document.getElementById('footer-year').textContent = new Date().getFullYear();
+
+  // Instagram optional hide
+  (function () {
+    var el = document.getElementById('footer-instagram');
+    var url = el.getAttribute('data-instagram-url');
+    if (!url || url.trim() === '' || url.indexOf('{{') === 0) { el.remove(); }
+  })();
+
+  // WhatsApp float
+  (function(){
+    var el = document.getElementById('whatsapp-float');
+    var num = el.getAttribute('data-whatsapp-number');
+    if (!num || num.trim() === '' || num.indexOf('{{') === 0) { el.remove(); }
+    else { el.querySelector('a').href = 'https://wa.me/' + num.replace(/[^0-9]/g,''); }
+  })();
+</script>
+
+</body>
+</html>

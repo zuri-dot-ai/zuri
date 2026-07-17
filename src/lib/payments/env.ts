@@ -18,3 +18,9 @@ export function flutterwaveWebhookHash(): string {
 export function appUrl(): string {
   return process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 }
+
+/** In-app billing settings (logged-in upgrade / payment result redirects). */
+export function billingSettingsUrl(payment?: string): string {
+  const base = `${appUrl()}/settings?tab=billing`;
+  return payment ? `${base}&payment=${payment}` : base;
+}

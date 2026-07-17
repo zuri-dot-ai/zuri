@@ -1,7 +1,10 @@
 export function classifySupabaseError(error: {
   code?: string;
   message?: string;
-}) {
+} | null | undefined) {
+  if (!error) {
+    return { status: 500, message: "A database error occurred." };
+  }
   switch (error.code) {
     case "23505": // Unique constraint violation
       return {

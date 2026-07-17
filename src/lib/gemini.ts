@@ -1,25 +1,97 @@
 import { GoogleGenAI } from "@google/genai";
-import { parseGeminiJSON } from "./utils";
 import * as fs from "fs";
 import * as path from "path";
 
-// Load service account credentials
-const credentialsPath =
-  process.env.GOOGLE_APPLICATION_CREDENTIALS || "./zuri-service-account.json";
-const absolutePath = path.resolve(credentialsPath);
-const credentials = JSON.parse(fs.readFileSync(absolutePath, "utf-8"));
-
-const ai = new GoogleGenAI({
-  vertexai: true,
-  project: process.env.GEMINI_PROJECT_ID || credentials.project_id,
-  location: process.env.GEMINI_LOCATION || "us-central1",
-  googleAuthOptions: {
-    credentials,
-  },
-});
-
 export const FLASH = process.env.GEMINI_FLASH_MODEL || "gemini-2.0-flash";
 export const PRO = process.env.GEMINI_PRO_MODEL || "gemini-2.5-pro";
+
+let aiClient: GoogleGenAI | null = null;
+let aiMode: "api-key" | "vertex" | null = null;
+
+function looksLikePlaceholderApiKey(apiKey: string): boolean {
+  const k = apiKey.trim();
+  if (!k || k.length < 30) return true;
+  return /your_|xxxxx|changeme|example|placeholder/i.test(k);
+}
+
+function wantsVertex(): boolean {
+  const flag = process.env.GEMINI_USE_VERTEX?.trim().toLowerCase();
+  return flag === "true" || flag === "1" || flag === "yes";
+}
+
+function isNonRetryableGeminiError(err: unknown): boolean {
+  const msg = String(err);
+  return (
+    /PERMISSION_DENIED|UNAUTHENTICATED|SERVICE_DISABLED|API_KEY_INVALID|API key not valid|403|401/i.test(
+      msg
+    )
+  );
+}
+
+/**
+ * Gemini Developer API (API key) by default.
+ * Vertex AI only when GEMINI_USE_VERTEX=true and a service-account file is available.
+ */
+function getAI(): GoogleGenAI {
+  if (aiClient) return aiClient;
+
+  const apiKey = process.env.GEMINI_API_KEY?.trim();
+  const useVertex = wantsVertex();
+
+  if (!useVertex && apiKey && !looksLikePlaceholderApiKey(apiKey)) {
+    aiClient = new GoogleGenAI({ apiKey, vertexai: false });
+    aiMode = "api-key";
+    return aiClient;
+  }
+
+  if (!useVertex) {
+    if (apiKey && looksLikePlaceholderApiKey(apiKey)) {
+      throw new Error(
+        "GEMINI_API_KEY looks like a placeholder. Set a real key from https://aistudio.google.com/app/apikey (or set GEMINI_USE_VERTEX=true with a service account)."
+      );
+    }
+    throw new Error(
+      "GEMINI_API_KEY is missing. Set it in .env.local, or set GEMINI_USE_VERTEX=true with GOOGLE_APPLICATION_CREDENTIALS."
+    );
+  }
+
+  const credentialsPath =
+    process.env.GOOGLE_APPLICATION_CREDENTIALS || "./zuri-service-account.json";
+  const absolutePath = path.resolve(credentialsPath);
+
+  if (!fs.existsSync(absolutePath)) {
+    throw new Error(
+      `GEMINI_USE_VERTEX=true but credentials not found at ${absolutePath}. Set GOOGLE_APPLICATION_CREDENTIALS.`
+    );
+  }
+
+  const credentials = JSON.parse(fs.readFileSync(absolutePath, "utf-8"));
+  const project =
+    process.env.GEMINI_PROJECT_ID?.trim() || credentials.project_id;
+  const location = process.env.GEMINI_LOCATION?.trim() || "us-central1";
+
+  if (!project) {
+    throw new Error(
+      "Vertex mode requires GEMINI_PROJECT_ID or project_id in the service-account JSON."
+    );
+  }
+
+  aiClient = new GoogleGenAI({
+    vertexai: true,
+    project,
+    location,
+    googleAuthOptions: {
+      credentials,
+    },
+  });
+  aiMode = "vertex";
+  return aiClient;
+}
+
+/** Test helper / diagnostics — which backend the singleton is using. */
+export function getGeminiMode(): "api-key" | "vertex" | null {
+  return aiMode;
+}
 
 interface GenerateOptions {
   model?: string;
@@ -38,12 +110,13 @@ export async function geminiGenerate(
       : modelIdOrOpts;
 
   const {
-    model = FLASH,
+    model = process.env.GEMINI_FLASH_MODEL || FLASH,
     system,
     temperature = 0.7,
     json = false,
   } = opts;
 
+  const ai = getAI();
   const response = await ai.models.generateContent({
     model,
     contents: prompt,
@@ -72,12 +145,14 @@ export async function geminiJSON<T>(
   modelOrOpts: "flash" | "pro" | Omit<GenerateOptions, "json"> = {},
   maxRetries: number = 3
 ): Promise<T> {
+  const flashModel = process.env.GEMINI_FLASH_MODEL || FLASH;
+  const proModel = process.env.GEMINI_PRO_MODEL || PRO;
   const isAlias = modelOrOpts === "flash" || modelOrOpts === "pro";
   const modelId = isAlias
     ? modelOrOpts === "pro"
-      ? PRO
-      : FLASH
-    : (modelOrOpts as Omit<GenerateOptions, "json">).model ?? FLASH;
+      ? proModel
+      : flashModel
+    : (modelOrOpts as Omit<GenerateOptions, "json">).model ?? flashModel;
   const baseOpts: Omit<GenerateOptions, "json"> = isAlias
     ? { model: modelId }
     : { ...(modelOrOpts as Omit<GenerateOptions, "json">), model: modelId };
@@ -92,16 +167,25 @@ export async function geminiJSON<T>(
           : prompt,
         { ...baseOpts, json: true }
       );
-      return parseGeminiJSON<T>(raw);
+
+      const text = raw.trim();
+      const cleaned = text
+        .replace(/^```json\s*/i, "")
+        .replace(/^```\s*/i, "")
+        .replace(/\s*```$/i, "")
+        .trim();
+
+      return JSON.parse(cleaned) as T;
     } catch (err) {
       lastError = err;
-      if (attempt < maxRetries) {
-        await new Promise((r) => setTimeout(r, 1000 * attempt));
-      }
+      if (isNonRetryableGeminiError(err)) break;
+      if (attempt === maxRetries) break;
+      console.warn(`Gemini JSON parse attempt ${attempt} failed. Retrying...`);
+      await new Promise((r) => setTimeout(r, 500 * attempt));
     }
   }
 
   throw new Error(
-    `geminiJSON failed after ${maxRetries} attempts: ${String(lastError)}`
+    `geminiJSON: all retry attempts exhausted: ${String(lastError)}`
   );
 }

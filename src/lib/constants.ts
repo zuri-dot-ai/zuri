@@ -1,6 +1,10 @@
 export const BRAND = {
   name: "Zuri",
-  tagline: "Your business, online. Beautifully.",
+  /** Short headline — matches marketing hero */
+  tagline: "The operating system for modern businesses.",
+  /** Supporting sentence under the headline */
+  description:
+    "Launch your business online with Zuri. Instantly create a premium website, unlock a personalized 90-day content plan, and accelerate growth with AI.",
   colors: {
     background: "#0C0C0E",
     surface: "#161618",

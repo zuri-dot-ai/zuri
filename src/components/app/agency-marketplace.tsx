@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Star, MapPin, Clock, CheckCircle2, Sparkles, Loader2, X, Lock } from "lucide-react";
+import { Star, MapPin, Clock, CheckCircle2, Sparkles, X, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -57,15 +57,15 @@ export function AgencyMarketplace({ agencies, plan }: { agencies: AgencyRow[]; p
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
-      <div>
-        <h1 className="font-heading text-4xl font-semibold">Agency Marketplace</h1>
+      <header className="page-head">
+        <h1>Agency Marketplace</h1>
         <p className="mt-1 text-muted-foreground">
           Vetted execution partners, matched to your brand. Zuri writes the brief for you.
         </p>
-      </div>
+      </header>
 
       {!isGrowth && (
-        <div className="flex items-center gap-3 rounded-xl border border-gold/30 bg-gold/5 p-4">
+        <div className="surface flex items-center gap-3 border border-border p-4">
           <Lock className="size-5 text-gold" />
           <p className="text-sm">
             <span className="font-medium text-gold">Growth feature.</span>{" "}
@@ -81,7 +81,7 @@ export function AgencyMarketplace({ agencies, plan }: { agencies: AgencyRow[]; p
             key={s}
             onClick={() => setFilter(s)}
             className={cn(
-              "rounded-full border px-4 py-1.5 text-sm capitalize transition-all",
+              "rounded-none border px-4 py-1.5 text-sm capitalize transition-all",
               filter === s ? "border-gold bg-gold text-background" : "border-border text-muted-foreground hover:border-gold/40"
             )}
           >
@@ -133,11 +133,11 @@ export function AgencyMarketplace({ agencies, plan }: { agencies: AgencyRow[]; p
 
       {/* Brief drawer */}
       {active && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-background/60 backdrop-blur-sm" onClick={() => setActive(null)}>
+        <div className="fixed inset-0 z-50 flex justify-end bg-background/80" onClick={() => setActive(null)}>
           <div className="h-full w-full max-w-md overflow-y-auto border-l border-border bg-surface p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h2 className="font-heading text-2xl font-semibold">Match with {active.name}</h2>
-              <button onClick={() => setActive(null)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-background">
+              <button onClick={() => setActive(null)} className="rounded-none p-1.5 text-muted-foreground hover:bg-muted">
                 <X className="size-5" />
               </button>
             </div>
@@ -148,7 +148,7 @@ export function AgencyMarketplace({ agencies, plan }: { agencies: AgencyRow[]; p
 
             {loadingBrief ? (
               <div className="flex items-center gap-2 py-16 text-muted-foreground">
-                <Loader2 className="size-5 animate-spin text-gold" /> Writing your brief…
+                <span className="zuri-spinner" /> Writing your brief…
               </div>
             ) : brief ? (
               <div className="mt-5 space-y-4">
@@ -159,7 +159,7 @@ export function AgencyMarketplace({ agencies, plan }: { agencies: AgencyRow[]; p
                 <BriefField label="Budget range" value={brief.budget_range} />
                 <BriefField label="Timeline" value={brief.timeline} />
                 <Button className="w-full" onClick={submitMatch} disabled={submitting}>
-                  {submitting ? <Loader2 className="size-4 animate-spin" /> : null}
+                  {submitting ? <span className="zuri-spinner" /> : null}
                   Send brief to {active.name}
                 </Button>
               </div>

@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{business_name}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --color-bg:#FAF8F5;
+    --color-surface:#F0ECE4;
+    --color-text:#1C1A17;
+    --color-text-muted:#5C564C;
+    --color-accent:#A87B3F;
+    --color-accent-text:#FAF8F5;
+  }
+
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--color-bg);
+    color:var(--color-text);
+    font-family:'Montserrat',sans-serif;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,h4{
+    font-family:'Cormorant Garamond',serif;
+    color:var(--color-text);
+    line-height:1.2;
+    font-weight:600;
+  }
+  a{color:inherit;text-decoration:none;}
+  img{max-width:100%;display:block;}
+  .container{width:100%;max-width:1200px;margin:0 auto;padding:0 20px;}
+  section{padding:64px 0;}
+  .eyebrow{
+    text-transform:uppercase;
+    letter-spacing:2px;
+    font-size:.75rem;
+    color:var(--color-accent);
+    font-weight:600;
+    margin-bottom:12px;
+  }
+  .btn{
+    display:inline-block;
+    padding:14px 30px;
+    background:var(--color-accent);
+    color:var(--color-accent-text);
+    font-weight:600;
+    font-size:.9rem;
+    letter-spacing:.5px;
+    border-radius:2px;
+    transition:transform .3s ease, box-shadow .3s ease;
+    border:1px solid var(--color-accent);
+  }
+  .btn:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(168,123,63,.25);}
+  .btn-outline{
+    background:transparent;
+    color:var(--color-text);
+    border:1px solid var(--color-text);
+  }
+  .btn-outline:hover{background:var(--color-text);color:var(--color-bg);}
+
+  :focus-visible{outline:2px solid var(--color-accent);outline-offset:3px;}
+
+  /* NAV */
+  header#site-nav{
+    position:fixed;top:0;left:0;right:0;z-index:1000;
+    padding:22px 0;
+    transition:background .35s ease, padding .35s ease, box-shadow .35s ease;
+    background:transparent;
+  }
+  header#site-nav.scrolled{
+    background:rgba(250,248,245,.96);
+    backdrop-filter:blur(8px);
+    padding:14px 0;
+    box-shadow:0 2px 16px rgba(0,0,0,.06);
+  }
+  .nav-inner{display:flex;align-items:center;justify-content:space-between;}
+  .logo{
+    font-family:'Cormorant Garamond',serif;
+    font-size:1.5rem;
+    font-weight:700;
+    letter-spacing:.5px;
+  }
+  nav.primary-nav ul{
+    display:flex;gap:36px;list-style:none;
+  }
+  nav.primary-nav a{
+    font-size:.85rem;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    font-weight:500;
+    position:relative;
+    padding-bottom:4px;
+  }
+  nav.primary-nav a::after{
+    content:'';position:absolute;left:0;bottom:0;width:0;height:1px;
+    background:var(--color-accent);transition:width .3s ease;
+  }
+  nav.primary-nav a:hover::after{width:100%;}
+
+  .hamburger{
+    display:none;
+    flex-direction:column;
+    gap:5px;
+    background:none;border:none;cursor:pointer;
+    z-index:1100;
+    padding:8px;
+  }
+  .hamburger span{
+    width:24px;height:2px;background:var(--color-text);transition:all .3s ease;
+  }
+  .hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+  .hamburger.open span:nth-child(2){opacity:0;}
+  .hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+
+  .mobile-drawer{
+    position:fixed;top:0;right:-100%;
+    width:78%;max-width:340px;height:100vh;
+    background:var(--color-bg);
+    box-shadow:-4px 0 24px rgba(0,0,0,.12);
+    z-index:1050;
+    transition:right .35s ease;
+    padding:100px 32px 40px;
+  }
+  .mobile-drawer.open{right:0;}
+  .mobile-drawer ul{list-style:none;display:flex;flex-direction:column;gap:26px;}
+  .mobile-drawer a{font-size:1.1rem;font-family:'Cormorant Garamond',serif;}
+  .drawer-overlay{
+    position:fixed;inset:0;background:rgba(28,26,23,.4);
+    z-index:1040;opacity:0;pointer-events:none;transition:opacity .3s ease;
+  }
+  .drawer-overlay.open{opacity:1;pointer-events:auto;}
+
+  /* HERO */
+  .hero{
+    padding-top:160px;
+    padding-bottom:80px;
+  }
+  .hero .container{
+    display:grid;grid-template-columns:1fr;gap:48px;align-items:center;
+  }
+  .hero-copy .eyebrow{margin-bottom:16px;}
+  .hero-copy h1{
+    font-size:2.6rem;
+    margin-bottom:20px;
+  }
+  .hero-copy p{
+    color:var(--color-text-muted);
+    font-size:1.05rem;
+    max-width:480px;
+    margin-bottom:32px;
+  }
+  .hero-cta-group{display:flex;gap:16px;flex-wrap:wrap;}
+  .hero-image{
+    position:relative;
+    border-radius:4px;
+    overflow:hidden;
+  }
+  .hero-image img{width:100%;height:100%;object-fit:cover;aspect-ratio:4/3.2;}
+
+  /* ABOUT */
+  .about-section .container{
+    max-width:760px;
+    text-align:center;
+  }
+  .about-section h2{font-size:2rem;margin-bottom:18px;}
+  .about-section p{color:var(--color-text-muted);font-size:1.05rem;}
+
+  /* FEATURED PROPERTIES */
+  .properties-section{background:var(--color-surface);}
+  .properties-header{text-align:center;max-width:600px;margin:0 auto 44px;}
+  .properties-header h2{font-size:2rem;margin-bottom:12px;}
+  .properties-header p{color:var(--color-text-muted);}
+  .property-grid{
+    display:grid;grid-template-columns:1fr;gap:28px;
+  }
+  .property-card{
+    background:var(--color-bg);
+    border-radius:4px;
+    overflow:hidden;
+    box-shadow:0 4px 20px rgba(28,26,23,.06);
+    transition:transform .3s ease, box-shadow .3s ease;
+  }
+  .property-card:hover{transform:translateY(-4px);box-shadow:0 12px 30px rgba(28,26,23,.1);}
+  .property-image{aspect-ratio:4/3;overflow:hidden;}
+  .property-image img{width:100%;height:100%;object-fit:cover;}
+  .property-body{padding:26px;}
+  .property-price{
+    color:var(--color-accent);
+    font-weight:700;
+    font-size:1.15rem;
+    margin-bottom:6px;
+    font-family:'Cormorant Garamond',serif;
+  }
+  .property-body h3{font-size:1.4rem;margin-bottom:6px;}
+  .property-location{
+    color:var(--color-text-muted);
+    font-size:.9rem;
+    margin-bottom:18px;
+  }
+  .property-link{
+    font-size:.85rem;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    font-weight:600;
+    color:var(--color-text);
+    border-bottom:1px solid var(--color-accent);
+    padding-bottom:2px;
+  }
+
+  /* SERVICES LIST ELEGANT */
+  .services-section .container{max-width:900px;}
+  .services-header{text-align:center;margin-bottom:40px;}
+  .services-header h2{font-size:1.8rem;}
+  .services-list{
+    display:grid;grid-template-columns:1fr;gap:0;
+    border-top:1px solid rgba(28,26,23,.1);
+  }
+  .service-row{
+    display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start;
+    padding:26px 0;
+    border-bottom:1px solid rgba(28,26,23,.1);
+  }
+  .service-num{
+    font-family:'Cormorant Garamond',serif;
+    font-size:1.6rem;
+    color:var(--color-accent);
+    font-weight:600;
+  }
+  .service-row h3{font-size:1.2rem;margin-bottom:6px;}
+  .service-row p{color:var(--color-text-muted);font-size:.95rem;}
+
+  /* TESTIMONIALS */
+  .testimonials-section{background:var(--color-surface);}
+  .testimonials-header{text-align:center;margin-bottom:44px;}
+  .testimonials-header h2{font-size:2rem;}
+  .testimonial-grid{
+    display:grid;grid-template-columns:1fr;gap:24px;
+  }
+  .testimonial-card{
+    background:var(--color-bg);
+    padding:32px;
+    border-radius:4px;
+    border-left:3px solid var(--color-accent);
+  }
+  .testimonial-quote{
+    font-family:'Cormorant Garamond',serif;
+    font-size:1.2rem;
+    font-style:italic;
+    margin-bottom:20px;
+    color:var(--color-text);
+  }
+  .testimonial-name{font-weight:600;font-size:.95rem;}
+  .testimonial-role{color:var(--color-text-muted);font-size:.85rem;}
+
+  /* CONTACT */
+  .contact-section .container{
+    display:grid;grid-template-columns:1fr;gap:44px;
+  }
+  .contact-info h2{font-size:2rem;margin-bottom:18px;}
+  .contact-info p{color:var(--color-text-muted);margin-bottom:24px;}
+  .contact-detail{margin-bottom:14px;font-size:.95rem;}
+  .contact-detail strong{display:block;font-size:.75rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-accent);margin-bottom:2px;}
+  form#contact-form{
+    background:var(--color-surface);
+    padding:32px;
+    border-radius:4px;
+    display:flex;flex-direction:column;gap:16px;
+  }
+  form#contact-form label{
+    font-size:.8rem;text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-bottom:6px;display:block;
+  }
+  form#contact-form input,
+  form#contact-form textarea{
+    width:100%;padding:12px 14px;
+    border:1px solid rgba(28,26,23,.15);
+    border-radius:2px;
+    background:var(--color-bg);
+    font-family:'Montserrat',sans-serif;
+    font-size:.95rem;
+    color:var(--color-text);
+  }
+  form#contact-form textarea{resize:vertical;min-height:110px;}
+  form#contact-form input:focus,
+  form#contact-form textarea:focus{outline:2px solid var(--color-accent);outline-offset:2px;}
+  .form-success{
+    display:none;
+    background:var(--color-accent);
+    color:var(--color-accent-text);
+    padding:14px;border-radius:2px;font-size:.9rem;text-align:center;
+  }
+  .form-success.show{display:block;}
+  form#contact-form.submitted .form-fields{display:none;}
+
+  /* FOOTER */
+  footer{
+    background:var(--color-text);
+    color:var(--color-bg);
+    padding:56px 0 30px;
+  }
+  .footer-inner{
+    text-align:center;
+    display:flex;flex-direction:column;align-items:center;gap:14px;
+  }
+  footer .logo{color:var(--color-bg);}
+  footer p.tagline{color:rgba(250,248,245,.65);font-size:.9rem;max-width:400px;}
+  .footer-socials{display:flex;gap:18px;margin-top:6px;}
+  .footer-socials a{
+    font-size:.8rem;text-transform:uppercase;letter-spacing:1px;
+    color:var(--color-bg);
+    border-bottom:1px solid var(--color-accent);
+    padding-bottom:2px;
+  }
+  .powered-by{
+    margin-top:30px;
+    font-size:.75rem;
+    color:rgba(250,248,245,.4);
+  }
+  .powered-by a{border-bottom:1px solid rgba(250,248,245,.4);}
+
+  /* WHATSAPP FLOAT */
+  #whatsapp-float{
+    position:fixed;bottom:24px;right:24px;z-index:900;
+  }
+  #whatsapp-float a{
+    display:flex;align-items:center;justify-content:center;
+    width:56px;height:56px;border-radius:50%;
+    background:#25D366;
+    box-shadow:0 6px 20px rgba(37,211,102,.4);
+    transition:transform .3s ease;
+  }
+  #whatsapp-float a:hover{transform:scale(1.08);}
+  #whatsapp-float svg{width:28px;height:28px;fill:#fff;}
+
+  /* REVEAL ANIMATIONS */
+  .reveal{opacity:0;transform:translateY(20px);transition:opacity .35s ease, transform .35s ease;}
+  .reveal.active{opacity:1;transform:translateY(0);}
+  .reveal-stagger.active > *{transition-delay:calc(var(--i) * 80ms);}
+
+  /* TABLET */
+  @media (min-width:481px){
+    .property-grid{grid-template-columns:repeat(2,1fr);}
+    .hero-cta-group{flex-wrap:nowrap;}
+  }
+
+  /* DESKTOP */
+  @media (min-width:1025px){
+    .hamburger{display:none;}
+    .hero .container{grid-template-columns:1fr 1fr;}
+    .hero-copy h1{font-size:3.2rem;}
+    .contact-section .container{grid-template-columns:1fr 1fr;}
+    .service-row{padding:30px 0;}
+  }
+
+  @media (max-width:1024px){
+    nav.primary-nav{display:none;}
+    .hamburger{display:flex;}
+  }
+</style>
+</head>
+<body>
+
+<header id="site-nav">
+  <div class="container nav-inner">
+    <a href="#top" class="logo">{{business_name}}</a>
+    <nav class="primary-nav" aria-label="Primary navigation">
+      <ul>
+        <li><a href="#about">About</a></li>
+        <li><a href="#properties">Properties</a></li>
+        <li><a href="#services">Services</a></li>
+        <li><a href="#testimonials">Testimonials</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+    <button class="hamburger" id="hamburger-btn" aria-label="Toggle menu" aria-expanded="false" aria-controls="mobile-drawer">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<div class="drawer-overlay" id="drawer-overlay"></div>
+<nav class="mobile-drawer" id="mobile-drawer" aria-label="Mobile navigation">
+  <ul>
+    <li><a href="#about">About</a></li>
+    <li><a href="#properties">Properties</a></li>
+    <li><a href="#services">Services</a></li>
+    <li><a href="#testimonials">Testimonials</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<main id="top">
+
+  <section class="hero" aria-label="Hero">
+    <div class="container">
+      <div class="hero-copy reveal">
+        <p class="eyebrow">{{tagline}}</p>
+        <h1>{{business_name}}</h1>
+        <p>{{about_body}}</p>
+        <div class="hero-cta-group">
+          <a href="#properties" class="btn">View Properties</a>
+          <a href="#contact" class="btn btn-outline">Get In Touch</a>
+        </div>
+      </div>
+      <div class="hero-image reveal">
+        <img src="https://picsum.photos/900/720?random=101" data-image-slot="hero" alt="Featured property exterior">
+      </div>
+    </div>
+  </section>
+
+  <section class="about-section" id="about" aria-label="About">
+    <div class="container reveal">
+      <p class="eyebrow">Our Mission</p>
+      <h2>Trusted Property Advisory</h2>
+      <p>{{about_body}}</p>
+    </div>
+  </section>
+
+  <section class="properties-section" id="properties" aria-label="Featured Properties">
+    <div class="container">
+      <div class="properties-header reveal">
+        <p class="eyebrow">Featured Listings</p>
+        <h2>Properties Worth Your Attention</h2>
+        <p>A curated selection of our current premium listings.</p>
+      </div>
+      <div class="property-grid">
+        <article class="property-card reveal">
+          <div class="property-image">
+            <img src="https://picsum.photos/700/560?random=102" data-image-slot="property_1" alt="{{property_1_title}}">
+          </div>
+          <div class="property-body">
+            <p class="property-price">{{property_1_price}}</p>
+            <h3>{{property_1_title}}</h3>
+            <p class="property-location">{{property_1_location}}</p>
+            <a href="#contact" class="property-link">View Details</a>
+          </div>
+        </article>
+        <article class="property-card reveal">
+          <div class="property-image">
+            <img src="https://picsum.photos/700/560?random=103" data-image-slot="property_2" alt="{{property_2_title}}">
+          </div>
+          <div class="property-body">
+            <p class="property-price">{{property_2_price}}</p>
+            <h3>{{property_2_title}}</h3>
+            <p class="property-location">{{property_2_location}}</p>
+            <a href="#contact" class="property-link">View Details</a>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="services-section" id="services" aria-label="Services">
+    <div class="container">
+      <div class="services-header reveal">
+        <p class="eyebrow">What We Offer</p>
+        <h2>Our Services</h2>
+      </div>
+      <div class="services-list">
+        <div class="service-row reveal" data-optional-slot="1">
+          <span class="service-num">01</span>
+          <div>
+            <h3>{{service_1_title}}</h3>
+            <p>{{service_1_description}}</p>
+          </div>
+        </div>
+        <div class="service-row reveal" data-optional-slot="2">
+          <span class="service-num">02</span>
+          <div>
+            <h3>{{service_2_title}}</h3>
+            <p>{{service_2_description}}</p>
+          </div>
+        </div>
+        <div class="service-row reveal" data-optional-slot="3">
+          <span class="service-num">03</span>
+          <div>
+            <h3>{{service_3_title}}</h3>
+            <p>{{service_3_description}}</p>
+          </div>
+        </div>
+        <div class="service-row reveal" data-optional="true" data-optional-slot="4" hidden>
+          <span class="service-num">04</span>
+          <div>
+            <h3>{{service_4_title}}</h3>
+            <p>{{service_4_description}}</p>
+          </div>
+        </div>
+        <div class="service-row reveal" data-optional="true" data-optional-slot="5" hidden>
+          <span class="service-num">05</span>
+          <div>
+            <h3>{{service_5_title}}</h3>
+            <p>{{service_5_description}}</p>
+          </div>
+        </div>
+        <div class="service-row reveal" data-optional="true" data-optional-slot="6" hidden>
+          <span class="service-num">06</span>
+          <div>
+            <h3>{{service_6_title}}</h3>
+            <p>{{service_6_description}}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="testimonials-section" id="testimonials" aria-label="Testimonials">
+    <div class="container">
+      <div class="testimonials-header reveal">
+        <p class="eyebrow">Client Words</p>
+        <h2>What Clients Say</h2>
+      </div>
+      <div class="testimonial-grid">
+        <blockquote class="testimonial-card reveal">
+          <p class="testimonial-quote">"{{testimonial_1_quote}}"</p>
+          <p class="testimonial-name">{{testimonial_1_name}}</p>
+          <p class="testimonial-role">{{testimonial_1_role}}</p>
+        </blockquote>
+        <blockquote class="testimonial-card reveal">
+          <p class="testimonial-quote">"{{testimonial_2_quote}}"</p>
+          <p class="testimonial-name">{{testimonial_2_name}}</p>
+          <p class="testimonial-role">{{testimonial_2_role}}</p>
+        </blockquote>
+        <blockquote class="testimonial-card reveal">
+          <p class="testimonial-quote">"{{testimonial_3_quote}}"</p>
+          <p class="testimonial-name">{{testimonial_3_name}}</p>
+          <p class="testimonial-role">{{testimonial_3_role}}</p>
+        </blockquote>
+      </div>
+    </div>
+  </section>
+
+  <section class="contact-section" id="contact" aria-label="Contact">
+    <div class="container">
+      <div class="contact-info reveal">
+        <p class="eyebrow">Get In Touch</p>
+        <h2>Contact Us</h2>
+        <p>Reach out for a consultation or to schedule a viewing.</p>
+        <div class="contact-detail">
+          <strong>Address</strong>
+          {{address}}
+        </div>
+        <div class="contact-detail">
+          <strong>Phone</strong>
+          {{phone_number}}
+        </div>
+        <div class="contact-detail">
+          <strong>Email</strong>
+          {{email_address}}
+        </div>
+      </div>
+      <form id="contact-form" class="reveal" novalidate>
+        <div class="form-fields">
+          <div>
+            <label for="cf-name">Name</label>
+            <input type="text" id="cf-name" name="name" required>
+          </div>
+          <div>
+            <label for="cf-email">Email</label>
+            <input type="email" id="cf-email" name="email" required>
+          </div>
+          <div>
+            <label for="cf-message">Message</label>
+            <textarea id="cf-message" name="message" required></textarea>
+          </div>
+          <button type="submit" class="btn">Send Message</button>
+        </div>
+        <div class="form-success">Message sent. We'll be in touch soon.</div>
+      </form>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="container footer-inner">
+    <a href="#top" class="logo">{{business_name}}</a>
+    <p class="tagline">{{tagline}}</p>
+    <div class="footer-socials" id="footer-instagram-wrap" data-instagram-url="{{instagram_url}}">
+      <a href="{{instagram_url}}" id="footer-instagram-link" target="_blank" rel="noopener">Instagram</a>
+    </div>
+    <p class="powered-by">Powered by <a href="#">Zuri</a></p>
+  </div>
+</footer>
+
+<div id="whatsapp-float" data-whatsapp-number="{{whatsapp_number}}">
+  <a href="#" aria-label="Chat on WhatsApp">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12.001 2C6.478 2 2 6.477 2 12c0 1.876.52 3.63 1.42 5.13L2 22l4.99-1.31A9.95 9.95 0 0 0 12.001 22C17.524 22 22 17.523 22 12S17.524 2 12.001 2zm0 18.05a8.03 8.03 0 0 1-4.1-1.13l-.294-.175-3.02.792.81-2.943-.192-.303A8.05 8.05 0 1 1 20.05 12a8.05 8.05 0 0 1-8.049 8.05z"/></svg>
+  </a>
+</div>
+
+<script>
+  // Nav scroll state
+  var navEl = document.getElementById('site-nav');
+  window.addEventListener('scroll', function(){
+    if(window.scrollY > 40){ navEl.classList.add('scrolled'); }
+    else{ navEl.classList.remove('scrolled'); }
+  });
+
+  // Hamburger drawer
+  var hamburgerBtn = document.getElementById('hamburger-btn');
+  var drawer = document.getElementById('mobile-drawer');
+  var overlay = document.getElementById('drawer-overlay');
+  function closeDrawer(){
+    hamburgerBtn.classList.remove('open');
+    drawer.classList.remove('open');
+    overlay.classList.remove('open');
+    hamburgerBtn.setAttribute('aria-expanded','false');
+  }
+  hamburgerBtn.addEventListener('click', function(){
+    var isOpen = drawer.classList.toggle('open');
+    hamburgerBtn.classList.toggle('open', isOpen);
+    overlay.classList.toggle('open', isOpen);
+    hamburgerBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  });
+  overlay.addEventListener('click', closeDrawer);
+  drawer.querySelectorAll('a').forEach(function(a){
+    a.addEventListener('click', closeDrawer);
+  });
+
+  // Scroll reveal
+  var revealEls = document.querySelectorAll('.reveal');
+  var observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(entry.isIntersecting){
+        entry.target.classList.add('active');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  revealEls.forEach(function(el){ observer.observe(el); });
+
+  // Contact form
+  var form = document.getElementById('contact-form');
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    form.classList.add('submitted');
+    form.querySelector('.form-success').classList.add('show');
+  });
+
+  // Instagram optional hide
+  (function(){
+    var wrap = document.getElementById('footer-instagram-wrap');
+    var url = wrap.getAttribute('data-instagram-url');
+    if(!url || url.trim() === '' || url.indexOf('{{') === 0){ wrap.remove(); }
+  })();
+</script>
+
+<script>
+  (function(){
+    var el = document.getElementById('whatsapp-float');
+    var num = el.getAttribute('data-whatsapp-number');
+    if (!num || num.trim() === '' || num.indexOf('{{') === 0) { el.remove(); }
+    else { el.querySelector('a').href = 'https://wa.me/' + num.replace(/[^0-9]/g,''); }
+  })();
+</script>
+
+</body>
+</html>

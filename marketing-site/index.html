@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Open Graph / Facebook, LinkedIn, WhatsApp -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://buildzuri.com/">
+<meta property="og:title" content="Zuri — The operating system for modern businesses.">
+<meta property="og:description" content="Launch your business online in minutes with Zuri. Generate a premium website, receive a personalized 90-day content strategy, track your growth, and connect with trusted experts — all powered by AI.">
+<meta property="og:image" content="https://buildzuri.com/assets/images/zuri_meta.png">
+<meta property="og:image:width" content="1584">
+<meta property="og:image:height" content="792">
+<meta property="og:site_name" content="Zuri">
+
+<!-- Twitter / X -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="https://buildzuri.com/">
+<meta name="twitter:title" content="Zuri — The operating system for modern businesses.">
+<meta name="twitter:description" content="Launch your business online in minutes with Zuri. Generate a premium website, receive a personalized 90-day content strategy, track your growth, and connect with trusted experts — all powered by AI.">
+<meta name="twitter:image" content="https://buildzuri.com/assets/images/zuri_meta.png">
+
+<title>Zuri — The operating system for modern businesses.</title>
+<link rel="apple-touch-icon" sizes="180x180" href="assets/images/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon-16x16.png">
+<link rel="manifest" href="/site.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+<canvas id="dust-canvas"></canvas>
+
+<nav class="navbar home" id="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <img src="assets/images/zuri_logo.png" alt="Zuri" class="nav-logo-img">
+    </a>
+    <div class="nav-links">
+      <a href="#features" class="link-underline">Features</a>
+      <a href="#how-it-works" class="link-underline">How it works</a>
+      <a href="pricing.html" class="link-underline">Pricing</a>
+      <a href="about.html" class="link-underline">About</a>
+    </div>
+    <div class="nav-actions">
+      <a href="https://app.buildzuri.com/login" class="btn-ghost nav-login">Login</a>
+      <a href="https://app.buildzuri.com/signup" class="btn-gold nav-cta">Start free</a>
+    </div>
+    <button class="hamburger" id="hamburger" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<div class="drawer-backdrop" id="drawer-backdrop"></div>
+<div class="drawer" id="drawer">
+  <a href="#features" class="drawer-link">Features</a>
+  <a href="#how-it-works" class="drawer-link">How it works</a>
+  <a href="pricing.html" class="drawer-link">Pricing</a>
+  <a href="about.html" class="drawer-link">About</a>
+  <a href="https://app.buildzuri.com/signup" class="btn-gold" style="margin-top:1rem;width:100%;text-align:center;">Start free</a>
+</div>
+
+<section class="hero">
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-copy">
+    <div class="eyebrow">Powered by Gemini</div>
+    <h1>The operating system<br><em>for modern businesses.</em></h1>
+    <p>Launch your business online with Zuri. Instantly create a premium website, unlock a personalized 90-day content plan, and accelerate growth with AI.</p>
+    <div class="cta-row">
+      <a href="https://app.buildzuri.com/signup" class="btn-gold">Start free</a>
+      <a href="#how-it-works" class="btn-ghost">See how it works</a>
+    </div>
+  </div>
+</section>
+
+<section class="reveal" data-anim="stagger">
+  <div class="section-label">The Problem</div>
+  <h2 class="section-title">Most African businesses start online — then quit within two weeks.</h2>
+  <div class="pain-grid">
+    <div class="pain-item"><h3>No direction</h3><p>Without a clear roadmap, business owners get overwhelmed and lose focus.</p></div>
+    <div class="pain-item"><h3>No ready-made content</h3><p>Creating posts, images, and offers from scratch is a full-time job — not one they can afford.</p></div>
+    <div class="pain-item"><h3>No accountability</h3><p>Without tracking and reminders, momentum evaporates. They're on their own.</p></div>
+  </div>
+</section>
+
+<section class="reveal" data-anim="cascade" id="features">
+  <div class="section-label">What Zuri Delivers</div>
+  <h2 class="section-title">Everything your business needs to stay visible, every single day.</h2>
+  <div class="feature-grid" id="feature-grid">
+    <div class="feature-card"><div class="trace"></div><div class="feature-icon">◆</div><h3>Premium website in minutes</h3><p>A live, beautifully designed website generated from a single conversation — no code, no waiting.</p></div>
+    <div class="feature-card"><div class="trace"></div><div class="feature-icon">◆</div><h3>90-day content action plan</h3><p>AI-prepared content, posts, and assets delivered daily — so you always know what to publish next.</p></div>
+    <div class="feature-card"><div class="trace"></div><div class="feature-icon">◆</div><h3>Progress tracker</h3><p>Gamified consistency tracker that shows your growth, keeps you accountable, and prevents churn.</p></div>
+    <div class="feature-card"><div class="trace"></div><div class="feature-icon">◆</div><h3>Agency marketplace</h3><p>Connect with vetted Nigerian experts when you need human help — design, ads, or custom work.</p></div>
+  </div>
+  <div class="carousel-dots" id="feature-dots"></div>
+</section>
+
+<section class="reveal" data-anim="draw" id="how-it-works">
+  <div class="section-label">How It Works</div>
+  <h2 class="section-title">From zero to live in three simple steps.</h2>
+  <div class="steps">
+    <div class="step"><div class="step-num">01</div><div><h3>Start the conversation</h3><p>Answer a few questions about your business — Zuri's AI activation system guides you.</p></div></div>
+    <div class="step"><div class="step-num">02</div><div><h3>Your site & plan are built</h3><p>In under 10 minutes, you get a premium website and a 90-day content action plan.</p></div></div>
+    <div class="step"><div class="step-num">03</div><div><h3>Go live and stay consistent</h3><p>Publish, track your progress, and receive fresh content daily — so momentum never dies.</p></div></div>
+  </div>
+</section>
+
+<section class="reveal">
+  <div class="section-label">Trusted By</div>
+  <div class="proof-row">
+    <span>Kaduna Fabrics</span><span>Lagos Roasters</span><span>Abuja Leather Co.</span><span>Ibadan Studio</span>
+  </div>
+</section>
+
+<section class="reveal">
+  <div class="section-label">Pricing</div>
+  <h2 class="section-title">Plans that scale with your ambition.</h2>
+  <div class="toggle-row">
+    <span class="toggle-label">Monthly</span>
+    <div class="switch" id="billing-switch"><div class="knob"></div></div>
+    <span class="toggle-label">Annual <span style="color:var(--gold)">(2 months free)</span></span>
+  </div>
+  <div class="pricing-vault">
+    <div class="vault-panel">
+      <div class="plan-name">Free</div>
+      <div class="plan-price" data-monthly="0">₦0</div>
+      <ul class="plan-list">
+        <li>Website (preview only)</li>
+        <li>5 content ideas / month</li>
+      </ul>
+      <a href="https://app.buildzuri.com/signup" class="btn-ghost" style="width:100%;text-align:center;">Start free</a>
+    </div>
+    <div class="vault-panel">
+      <div class="plan-name">Pro</div>
+      <div class="plan-price" data-monthly="₦23,000" data-annual="₦230,000">₦23,000 <span>/mo</span></div>
+      <ul class="plan-list">
+        <li>1 site (yourname.buildzuri.com)</li>
+        <li>15 AI images / month</li>
+        <li>12 posts (2 platforms)</li>
+      </ul>
+      <a href="https://app.buildzuri.com/signup?plan=pro" class="btn-gold" style="width:100%;text-align:center;">Get Pro</a>
+    </div>
+    <div class="vault-panel featured">
+      <div class="plan-name">Growth</div>
+      <div class="plan-price" data-monthly="₦51,000" data-annual="₦510,000">₦51,000 <span>/mo</span></div>
+      <ul class="plan-list">
+        <li>1 site + custom domain</li>
+        <li>50 AI images / month</li>
+        <li>30 posts (4 platforms)</li>
+        <li>Meta & Search Console analytics</li>
+      </ul>
+      <a href="https://app.buildzuri.com/signup?plan=growth" class="btn-gold" style="width:100%;text-align:center;">Get Growth</a>
+    </div>
+    <div class="vault-panel">
+      <div class="plan-name">Premium</div>
+      <div class="plan-price" data-monthly="₦73,000" data-annual="₦730,000">₦73,000 <span>/mo</span></div>
+      <ul class="plan-list">
+        <li>3 sites</li>
+        <li>200 AI images / month</li>
+        <li>Unlimited posts, all platforms</li>
+        <li>Full analytics + dedicated support</li>
+      </ul>
+      <a href="https://app.buildzuri.com/signup?plan=premium" class="btn-gold" style="width:100%;text-align:center;">Get Premium</a>
+    </div>
+  </div>
+</section>
+
+<section class="reveal final-cta" data-anim="scale">
+  <h2>Your operating system for business growth is one conversation away.</h2>
+  <p>Join the Nigerian businesses already thriving with Zuri.</p>
+  <a href="https://app.buildzuri.com/signup" class="btn-gold">Get started free</a>
+</section>
+
+<footer class="site-footer">
+  <span>© 2026 Zuri — Built for African entrepreneurs</span>
+  <div class="footer-links">
+    <a href="about.html">About</a>
+    <a href="pricing.html">Pricing</a>
+    <a href="faq.html">FAQ</a>
+    <a href="contact.html">Contact</a>
+    <a href="terms.html">Terms &amp; Privacy</a>
+  </div>
+  <span>buildzuri.com</span>
+</footer>
+
+<script type="importmap">
+{ "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }}
+</script>
+<script type="module">
+  /* ============================================================
+   ZURI MARKETING SITE — HOME PAGE SCRIPT (index.html only)
+   Hero 3D chrome mark (Three.js), burst starfield, and the mobile
+   feature carousel. Loaded as a module in addition to script.js.
+   ============================================================ */
+
+  import * as THREE from 'three';
+  import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------------- Warp-speed starfield (burst on load, home page only) ---------------- */
+  (function(){
+    const c = document.getElementById('dust-canvas');
+    const ctx = c.getContext('2d');
+    let w,h,dpr,cx,cy;
+    function size(){
+      dpr = Math.min(window.devicePixelRatio,2);
+      w = window.innerWidth; h = window.innerHeight;
+      c.width = w*dpr; c.height = h*dpr;
+      c.style.width = w+'px'; c.style.height = h+'px';
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+      cx = w/2; cy = h/2;
+    }
+    size();
+    window.addEventListener('resize', size);
+
+    const COUNT = prefersReducedMotion ? 0 : 260;
+    const FOCAL = 260;
+    const BASE_SPEED = 0.09;
+    const BURST_MS = 2200;
+    const BURST_MULT = 7;
+
+    function spawnStar(){
+      return {
+        x: (Math.random()-0.5)*w*1.6,
+        y: (Math.random()-0.5)*h*1.6,
+        z: 0.15 + Math.random()*1,
+        gold: Math.random()<0.3,
+        tw: Math.random()*Math.PI*2
+      };
+    }
+    const stars = Array.from({length:COUNT}, spawnStar);
+
+    const start = performance.now();
+    function speedNow(now){
+      const elapsed = now - start;
+      if(elapsed >= BURST_MS) return BASE_SPEED;
+      const p = elapsed/BURST_MS;
+      const ease = 1 - Math.pow(1-p, 2);
+      return BASE_SPEED * (1 + (1-ease) * (BURST_MULT-1));
+    }
+
+    function draw(now){
+      const speed = speedNow(now);
+      ctx.fillStyle = 'rgba(10,10,10,0.35)';
+      ctx.fillRect(0,0,w,h);
+
+      for(const s of stars){
+        s.z -= speed * 0.016;
+        if(s.z <= 0.02){ Object.assign(s, spawnStar(), {z:1}); }
+        const sx = cx + (s.x/s.z) * (FOCAL/300);
+        const sy = cy + (s.y/s.z) * (FOCAL/300);
+        if(sx < -20 || sx > w+20 || sy < -20 || sy > h+20) continue;
+
+        const depth = 1 - s.z;
+        const r = Math.max(0.3, depth*1.8);
+        const tw = 0.5 + 0.4*Math.sin(now*0.002 + s.tw);
+        const alpha = Math.min(0.85, depth*0.9) * tw;
+
+        ctx.beginPath();
+        ctx.arc(sx, sy, r, 0, Math.PI*2);
+        ctx.fillStyle = s.gold ? `rgba(201,168,76,${alpha})` : `rgba(201,206,214,${alpha*0.85})`;
+        ctx.fill();
+      }
+      requestAnimationFrame(draw);
+    }
+    if(!prefersReducedMotion) requestAnimationFrame(draw);
+    else { ctx.fillStyle = '#0a0a0a'; ctx.fillRect(0,0,w,h); }
+  })();
+
+  /* ---------------- Navbar scroll fade (home variant — hero-relative threshold) ---------------- */
+  (function(){
+    const nav = document.getElementById('navbar');
+    const hero = document.querySelector('.hero');
+    function threshold(){
+      if(window.innerWidth <= 900 && hero){ return hero.offsetHeight * 0.10; }
+      return 40;
+    }
+    function onScroll(){
+      if(window.scrollY > threshold()) nav.classList.add('scrolled');
+      else nav.classList.remove('scrolled');
+    }
+    window.addEventListener('scroll', onScroll, {passive:true});
+    window.addEventListener('resize', onScroll);
+    onScroll();
+  })();
+
+  /* ---------------- Hamburger / drawer ---------------- */
+  (function(){
+    const hamburger = document.getElementById('hamburger');
+    const drawer = document.getElementById('drawer');
+    const backdrop = document.getElementById('drawer-backdrop');
+    if(!hamburger || !drawer || !backdrop) return;
+    function open(){
+      hamburger.classList.add('open'); drawer.classList.add('open'); backdrop.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function close(){
+      hamburger.classList.remove('open'); drawer.classList.remove('open'); backdrop.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+    hamburger.addEventListener('click', ()=>{ hamburger.classList.contains('open') ? close() : open(); });
+    backdrop.addEventListener('click', close);
+    drawer.querySelectorAll('a,button').forEach(el=> el.addEventListener('click', close));
+    window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') close(); });
+    window.addEventListener('resize', ()=>{ if(window.innerWidth > 900) close(); });
+  })();
+
+  /* ---------------- Ghost button auto-pulse CTA cycle ---------------- */
+  (function(){
+    if(prefersReducedMotion) return;
+    const HOLD_MS = 5000;
+    const FADE_MS = 2000;
+    document.querySelectorAll('.btn-ghost').forEach(btn=>{
+      let hovering = false;
+      let timer = null;
+      function activate(){
+        if(hovering) return;
+        btn.classList.remove('auto-fading');
+        void btn.offsetWidth;
+        btn.classList.add('auto-active');
+        timer = setTimeout(()=>{ if(!hovering) fade(); }, HOLD_MS);
+      }
+      function fade(){
+        btn.classList.remove('auto-active');
+        btn.classList.add('auto-fading');
+        timer = setTimeout(()=>{ btn.classList.remove('auto-fading'); activate(); }, FADE_MS);
+      }
+      function onEnter(){ hovering = true; clearTimeout(timer); btn.classList.remove('auto-active','auto-fading'); }
+      function onLeave(){ hovering = false; clearTimeout(timer); timer = setTimeout(activate, 500); }
+      btn.addEventListener('mouseenter', onEnter);
+      btn.addEventListener('mouseleave', onLeave);
+      btn.addEventListener('touchstart', onEnter, {passive:true});
+      btn.addEventListener('touchend', onLeave, {passive:true});
+      activate();
+    });
+  })();
+
+  /* ---------------- Feature carousel (mobile) — COVERFLOW, Jul-2026 rebuild ----------------
+    Design: native browser scroll-snap drives the actual dragging (so touch
+    response is 1:1 with the finger — no JS trying to fake a drag), while JS
+    applies per-card scale/opacity/z-index based on distance from center to
+    produce the coverflow look: active card large and on top, neighbors
+    visibly smaller and peeking at the sides. Autoplay kept, sped up. */
+  (function(){
+    const grid = document.getElementById('feature-grid');
+    const dotsWrap = document.getElementById('feature-dots');
+    if(!grid || !dotsWrap) return;
+    const cards = Array.from(grid.children);
+
+    cards.forEach((_,i)=>{
+      const d = document.createElement('div');
+      d.className = 'dot' + (i===0?' active':'');
+      dotsWrap.appendChild(d);
+    });
+    const dots = Array.from(dotsWrap.children);
+
+    function isCarouselActive(){ return window.innerWidth <= 900; }
+
+    let activeIndex = 0;
+    function updateActive(){
+      if(!isCarouselActive()) return;
+      const section = grid.closest('.reveal');
+      if(section && !section.classList.contains('in')) return;
+      const center = grid.scrollLeft + grid.clientWidth/2;
+      let closest = 0, closestDist = Infinity;
+
+      cards.forEach((c,i)=>{
+        const cCenter = c.offsetLeft + c.offsetWidth/2;
+        const d = Math.abs(cCenter - center);
+        if(d < closestDist){ closestDist = d; closest = i; }
+
+        // Coverflow curve: active card scales UP and sits on top; each step
+        // away scales down and drops behind, with a steep opacity falloff so
+        // only the active + immediate neighbors read clearly.
+        const norm = Math.min(1.6, d / (grid.clientWidth*0.62)); // can exceed 1 for far cards
+        const scale = Math.max(0.72, 1.1 - norm*0.28);
+        const opacity = Math.max(0.32, 1 - norm*0.68);
+        c.style.transform = `scale(${scale})`;
+        c.style.opacity = String(opacity);
+        c.style.zIndex = String(100 - Math.round(d));
+        c.classList.toggle('is-active', i === closest);
+      });
+
+      if(closest !== activeIndex){
+        activeIndex = closest;
+        dots.forEach((d,i)=> d.classList.toggle('active', i===activeIndex));
+      }
+    }
+
+    // Snappy eased scroll (used by autoplay only — manual swipes stay 100%
+    // native drag, this never runs during a user-initiated touch).
+    function easeOutBack(t){ const c=1.7; return 1+c*Math.pow(t-1,3)+ (c)*Math.pow(t-1,2); }
+    function animateScrollTo(target, duration){
+      const startX = grid.scrollLeft;
+      const delta = target - startX;
+      const startTime = performance.now();
+      function step(now){
+        const t = Math.min(1, (now - startTime) / duration);
+        grid.scrollLeft = startX + delta * easeOutBack(t);
+        updateActive();
+        if(t < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+
+    let ticking = false;
+    grid.addEventListener('scroll', ()=>{
+      if(!ticking){
+        requestAnimationFrame(()=>{ updateActive(); ticking=false; });
+        ticking = true;
+      }
+    }, {passive:true});
+    grid._updateActive = updateActive;
+    updateActive();
+
+    let autoTimer = null, resumeTimer = null;
+    function scrollToIndex(i){
+      const c = cards[(i+cards.length)%cards.length];
+      const target = c.offsetLeft - (grid.clientWidth - c.offsetWidth)/2;
+      animateScrollTo(target, 300);
+    }
+    function startAuto(){
+      if(prefersReducedMotion || !isCarouselActive()) return;
+      stopAuto();
+      autoTimer = setInterval(()=>{ scrollToIndex(activeIndex+1); }, 2800);
+    }
+    function stopAuto(){ if(autoTimer){ clearInterval(autoTimer); autoTimer=null; } }
+    function pauseThenResume(){
+      stopAuto();
+      clearTimeout(resumeTimer);
+      resumeTimer = setTimeout(startAuto, 3600);
+    }
+    ['touchstart','pointerdown','wheel'].forEach(evt=>{
+      grid.addEventListener(evt, pauseThenResume, {passive:true});
+    });
+    window.addEventListener('resize', ()=>{ isCarouselActive() ? startAuto() : stopAuto(); });
+    startAuto();
+  })();
+
+  /* ---------------- Micro-interactions (button magnetism, card tilt) ---------------- */
+  if(!prefersReducedMotion){
+    document.querySelectorAll('.btn-gold').forEach(btn=>{
+      btn.addEventListener('mousemove', (e)=>{
+        const r = btn.getBoundingClientRect();
+        const x = e.clientX - r.left - r.width/2;
+        const y = e.clientY - r.top - r.height/2;
+        btn.style.transform = `translate(${x*0.15}px, ${y*0.25}px)`;
+      });
+      btn.addEventListener('mouseleave', ()=>{ btn.style.transform = 'translate(0,0)'; });
+    });
+    document.querySelectorAll('.feature-card').forEach(card=>{
+      card.addEventListener('mousemove', (e)=>{
+        const r = card.getBoundingClientRect();
+        const px = (e.clientX - r.left)/r.width - 0.5;
+        const py = (e.clientY - r.top)/r.height - 0.5;
+        card.style.transform = `perspective(600px) rotateY(${px*6}deg) rotateX(${-py*6}deg)`;
+      });
+      card.addEventListener('mouseleave', ()=>{ card.style.transform = 'perspective(600px) rotateY(0) rotateX(0)'; });
+    });
+  }
+
+  /* ---------------- Pricing toggle — generic, data-attribute driven (shared logic, home-page instance) ---------------- */
+  (function(){
+    const sw = document.getElementById('billing-switch');
+    if(!sw) return;
+    const priceEls = document.querySelectorAll('.plan-price[data-monthly]');
+    sw.addEventListener('click', ()=>{
+      const on = sw.classList.toggle('on');
+      priceEls.forEach(el=>{
+        const monthly = el.getAttribute('data-monthly');
+        const annual = el.getAttribute('data-annual');
+        if(monthly === '0'){ return; }
+        el.innerHTML = on ? `${annual} <span>/yr</span>` : `${monthly} <span>/mo</span>`;
+      });
+    });
+  })();
+
+  /* ---------------- Scroll reveal ---------------- */
+  const revealEls = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        e.target.classList.add('in');
+        const fg = e.target.querySelector('#feature-grid');
+        if(fg && fg._updateActive) setTimeout(fg._updateActive, 400);
+      }
+    });
+  },{threshold:0.15});
+  revealEls.forEach(el=>io.observe(el));
+
+  /* ---------------- Hero: sculptural chrome mark ---------------- */
+  const canvas = document.getElementById('hero-canvas');
+  const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.1;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
+  camera.position.set(0, 0, 9);
+
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+  const keyLight = new THREE.DirectionalLight(0xffffff, 1.9);
+  keyLight.position.set(4, 5, 6);
+  scene.add(keyLight);
+  const goldRim = new THREE.PointLight(0xD4AF5C, 26, 22, 2);
+  goldRim.position.set(-3.2, -1.6, 3.5);
+  scene.add(goldRim);
+  const fillLight = new THREE.PointLight(0xc9ced6, 2.2, 20, 2);
+  fillLight.position.set(3, -3, -4);
+  scene.add(fillLight);
+  scene.add(new THREE.AmbientLight(0x1a1a1a, 1));
+
+  function buildFrameGeometry(){
+    const outer = new THREE.Shape();
+    outer.moveTo(0, 1.7);
+    outer.lineTo(0.58, 1.7);
+    outer.lineTo(0.58, 1.12);
+    outer.lineTo(1.42, -0.95);
+    outer.lineTo(-1.42, -0.95);
+    outer.closePath();
+
+    const inner = new THREE.Path();
+    inner.moveTo(0.02, 0.95);
+    inner.lineTo(0.78, -0.5);
+    inner.lineTo(-0.78, -0.5);
+    inner.closePath();
+    outer.holes.push(inner);
+
+    const geo = new THREE.ExtrudeGeometry(outer, {
+      depth: 0.55,
+      bevelEnabled: true,
+      bevelThickness: 0.07,
+      bevelSize: 0.05,
+      bevelSegments: 5,
+      curveSegments: 2
+    });
+    geo.center();
+    return geo;
+  }
+  function buildChipGeometry(){
+    const chip = new THREE.Shape();
+    chip.moveTo(0, 0.62);
+    chip.lineTo(0.5, -0.32);
+    chip.lineTo(-0.5, -0.32);
+    chip.closePath();
+    const geo = new THREE.ExtrudeGeometry(chip, {
+      depth: 0.3, bevelEnabled:true, bevelThickness:0.04, bevelSize:0.03, bevelSegments:3, curveSegments:2
+    });
+    geo.center();
+    return geo;
+  }
+
+  const markGeo = buildFrameGeometry();
+  const chromeMat = new THREE.MeshPhysicalMaterial({
+    color: 0xc4cad2,
+    metalness: 1,
+    roughness: 0.14,
+    clearcoat: 0.8,
+    clearcoatRoughness: 0.12,
+    envMapIntensity: 1.6
+  });
+  const mark = new THREE.Mesh(markGeo, chromeMat);
+  scene.add(mark);
+
+  const chipMat = new THREE.MeshPhysicalMaterial({
+    color: 0x050505,
+    metalness: 0.3,
+    roughness: 0.25,
+    clearcoat: 1,
+    clearcoatRoughness: 0.1,
+    envMapIntensity: 0.8
+  });
+  const chip = new THREE.Mesh(buildChipGeometry(), chipMat);
+  chip.position.set(0.03, 0.05, -0.28);
+  mark.add(chip);
+
+  const edgeGeo = new THREE.EdgesGeometry(markGeo, 20);
+  const edgeMat = new THREE.LineBasicMaterial({color:0xD4AF5C, transparent:true, opacity:0.6});
+  const edges3d = new THREE.LineSegments(edgeGeo, edgeMat);
+  mark.add(edges3d);
+
+  const pointerNDC = new THREE.Vector2(0,0);
+  let pointerActive = false;
+  canvas.addEventListener('mousemove', (e)=>{
+    const r = canvas.getBoundingClientRect();
+    pointerNDC.x = ((e.clientX-r.left)/r.width)*2-1;
+    pointerNDC.y = -(((e.clientY-r.top)/r.height)*2-1);
+    pointerActive = true;
+  });
+  canvas.addEventListener('mouseleave', ()=>{ pointerActive=false; });
+
+  let scrollT = 0;
+  function onScroll(){
+    const max = document.body.scrollHeight - window.innerHeight;
+    scrollT = Math.min(1, window.scrollY / Math.max(1,max*0.4));
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+
+  function resize(){
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    renderer.setSize(w,h,false);
+    camera.aspect = w/h;
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  const heroStart = performance.now();
+  const REVEAL_MS = 1900;
+  mark.scale.setScalar(0.001);
+  mark.rotation.set(0.6, -2.4, 0.3);
+  camera.position.z = 15;
+
+  let mx = 0, my = 0;
+
+  function animate(){
+    requestAnimationFrame(animate);
+    const now = performance.now();
+    const elapsed = now - heroStart;
+    const t = now/1000;
+
+    const tx = pointerActive ? pointerNDC.x : 0;
+    const ty = pointerActive ? pointerNDC.y : 0;
+    mx += (tx-mx)*0.06; my += (ty-my)*0.06;
+
+    if(elapsed < REVEAL_MS){
+      const p = elapsed/REVEAL_MS;
+      const ease = 1 - Math.pow(1-p, 3);
+      mark.scale.setScalar(THREE.MathUtils.lerp(0.001, 1, ease));
+      mark.rotation.y = THREE.MathUtils.lerp(-2.4, 0.5, ease);
+      mark.rotation.x = THREE.MathUtils.lerp(0.6, 0.12, ease);
+      mark.rotation.z = THREE.MathUtils.lerp(0.3, 0, ease);
+      camera.position.z = THREE.MathUtils.lerp(15, 9, ease);
+    } else {
+      const idle = (elapsed-REVEAL_MS)/1000;
+      mark.rotation.y = 0.5 + Math.sin(idle*0.19)*0.22 + mx*0.35;
+      mark.rotation.x = 0.12 + Math.cos(idle*0.13)*0.08 - my*0.25;
+      camera.position.z = 9 - scrollT*1.5;
+
+      const lightAngle = idle*0.11;
+      goldRim.position.x = Math.cos(lightAngle)*4.2 - 1 + mx*2;
+      goldRim.position.y = Math.sin(lightAngle*1.3)*2.4 - 1 + my*2;
+      goldRim.position.z = 3 + Math.sin(lightAngle*0.7)*1.5;
+    }
+
+    camera.position.x = mx*0.6;
+    camera.position.y = my*0.4;
+    camera.lookAt(0,0,0);
+
+    renderer.render(scene, camera);
+  }
+  animate();
+
+</script>
+
+</body>
+</html>

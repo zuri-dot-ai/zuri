@@ -31,8 +31,8 @@ export function Paywall({ required, current, feature, children }: PaywallProps) 
   const planLabel = required === "growth" ? "Growth" : "Starter";
 
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-gold/25 bg-gold/[0.04] px-6 py-16 text-center">
-      <div className="flex size-14 items-center justify-center rounded-full bg-gold/10">
+    <div className="surface flex flex-col items-center justify-center border border-border px-6 py-16 text-center">
+      <div className="flex size-14 items-center justify-center rounded-none border border-border bg-muted">
         <Lock className="size-6 text-gold" />
       </div>
       <h3 className="mt-5 font-heading text-2xl font-semibold">{feature}</h3>

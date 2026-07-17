@@ -1,9 +1,9 @@
-import { ZuriSpinner } from "@/components/ui/skeleton";
+import { DashboardSkeleton } from "@/components/ui/skeleton";
 
 export default function Loading() {
   return (
-    <div className="flex min-h-[60vh] items-center justify-center">
-      <ZuriSpinner size={48} />
+    <div className="mx-auto max-w-5xl py-2">
+      <DashboardSkeleton />
     </div>
   );
 }

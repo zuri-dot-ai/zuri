@@ -30,8 +30,8 @@ export const RATE_LIMITS: Record<string, RateLimitConfig> = {
   // Analytics tracking (per IP, per handle)
   "analytics:track": { limit: 30, windowSeconds: 60 },
 
-  // Forms
-  "contact_form:submit": { limit: 5, windowSeconds: 3600 },
+  // Forms — 10 submissions per IP per hour (docs/02_WEBSITE_BUILDER.md §10 / v1 §13)
+  "contact_form:submit": { limit: 10, windowSeconds: 3600 },
   "agency:inquire": { limit: 10, windowSeconds: 86400 },
   "agency:apply": { limit: 1, windowSeconds: 86400 },
 

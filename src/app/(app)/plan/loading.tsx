@@ -1,9 +1,12 @@
-import { ZuriSpinner } from "@/components/ui/skeleton";
+import { PlanRowSkeleton } from "@/components/ui/skeleton";
 
 export default function Loading() {
   return (
-    <div className="flex min-h-[60vh] items-center justify-center">
-      <ZuriSpinner size={48} />
+    <div className="mx-auto max-w-5xl space-y-4">
+      <div className="h-8 w-48 bg-muted" />
+      {Array.from({ length: 5 }).map((_, i) => (
+        <PlanRowSkeleton key={i} />
+      ))}
     </div>
   );
 }

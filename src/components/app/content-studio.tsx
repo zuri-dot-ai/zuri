@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { PenLine, Copy, Palette, RefreshCw, X, Loader2, Plus } from "lucide-react";
+import { PenLine, Copy, Palette, RefreshCw, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/app/empty-state";
@@ -72,7 +72,9 @@ export function ContentStudio({
   if (slots.length === 0) {
     return (
       <div className="mx-auto max-w-5xl">
-        <h1 className="mb-6 font-heading text-4xl font-semibold">Content Studio</h1>
+        <header className="page-head">
+          <h1>Content Studio</h1>
+        </header>
         <EmptyState
           icon={PenLine}
           title="No content yet"
@@ -86,9 +88,9 @@ export function ContentStudio({
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="font-heading text-4xl font-semibold">Content Studio</h1>
-      </div>
+      <header className="page-head">
+        <h1>Content Studio</h1>
+      </header>
 
       {/* Platform filters */}
       <div className="flex flex-wrap gap-2">
@@ -97,7 +99,7 @@ export function ContentStudio({
             key={f}
             onClick={() => setFilter(f)}
             className={cn(
-              "rounded-full border px-4 py-1.5 text-sm capitalize transition-all",
+              "rounded-none border px-4 py-1.5 text-sm capitalize transition-all",
               filter === f
                 ? "border-gold bg-gold text-background"
                 : "border-border text-muted-foreground hover:border-gold/40"
@@ -142,14 +144,14 @@ export function ContentStudio({
 
       {/* Slide-over drawer */}
       {active && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-background/60 backdrop-blur-sm" onClick={() => setActive(null)}>
+        <div className="fixed inset-0 z-50 flex justify-end bg-background/80" onClick={() => setActive(null)}>
           <div
             className="h-full w-full max-w-md overflow-y-auto border-l border-border bg-surface p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
               <Badge>{platformMeta(active.platform)?.emoji} {platformMeta(active.platform)?.label}</Badge>
-              <button onClick={() => setActive(null)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-background">
+              <button onClick={() => setActive(null)} className="rounded-none p-1.5 text-muted-foreground hover:bg-muted">
                 <X className="size-5" />
               </button>
             </div>
@@ -159,7 +161,7 @@ export function ContentStudio({
             </h2>
             {active.theme && <p className="mt-1 text-sm text-muted-foreground">{active.theme}</p>}
 
-            <div className="mt-5 rounded-lg border border-border bg-background p-4">
+            <div className="mt-5 rounded-none border border-border bg-background p-4">
               <p className="whitespace-pre-wrap text-sm leading-relaxed">
                 {active.ai_draft || "No draft yet — regenerate to create one."}
               </p>
@@ -184,7 +186,7 @@ export function ContentStudio({
             </div>
 
             <Button className="mt-3 w-full" onClick={() => regenerate(active)} disabled={regenerating}>
-              {regenerating ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+              {regenerating ? <span className="zuri-spinner" /> : <RefreshCw className="size-4" />}
               Regenerate draft
             </Button>
           </div>

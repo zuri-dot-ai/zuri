@@ -8,7 +8,6 @@ import {
   CreditCard,
   Bell,
   Trash2,
-  Loader2,
   Save,
   ExternalLink,
   LogOut,
@@ -44,7 +43,9 @@ export function SettingsView({
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <h1 className="font-heading text-4xl font-semibold">Settings</h1>
+      <header className="page-head">
+        <h1>Settings</h1>
+      </header>
 
       <div className="grid gap-6 md:grid-cols-[200px_1fr]">
         {/* Tab nav */}
@@ -53,7 +54,7 @@ export function SettingsView({
             <button
               key={id}
               onClick={() => setTab(id)}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors ${
+              className={`flex items-center gap-3 rounded-none px-3 py-2.5 text-left text-sm font-medium transition-colors ${
                 tab === id
                   ? "bg-surface text-gold"
                   : "text-muted-foreground hover:bg-surface hover:text-foreground"
@@ -123,7 +124,7 @@ function ProfileTab({ account }: { account: UserRow | null }) {
       </div>
 
       <Button onClick={save} disabled={saving}>
-        {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+        {saving ? <span className="zuri-spinner" /> : <Save className="size-4" />}
         Save changes
       </Button>
     </div>
@@ -225,7 +226,7 @@ function BusinessTab({ profile }: { profile: BusinessProfileRow | null }) {
         <select
           value={f.tone}
           onChange={(e) => setF({ ...f, tone: e.target.value })}
-          className="flex h-11 w-full rounded-lg border border-border bg-background px-4 text-sm focus:border-gold/60 focus:outline-none"
+          className="flex h-11 w-full rounded-none border border-border bg-background px-4 text-sm focus:border-gold/60 focus:outline-none"
         >
           {["professional", "warm", "bold", "playful"].map((t) => (
             <option key={t} value={t} className="capitalize">
@@ -236,7 +237,7 @@ function BusinessTab({ profile }: { profile: BusinessProfileRow | null }) {
       </div>
 
       <Button onClick={save} disabled={saving}>
-        {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+        {saving ? <span className="zuri-spinner" /> : <Save className="size-4" />}
         Save changes
       </Button>
     </div>
@@ -277,7 +278,7 @@ function BillingTab({ account }: { account: UserRow | null }) {
       </div>
 
       {/* Current plan */}
-      <div className="rounded-xl border border-border bg-background p-5">
+      <div className="surface rounded-none border border-border p-5">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs uppercase tracking-wider text-muted-foreground">
@@ -303,8 +304,8 @@ function BillingTab({ account }: { account: UserRow | null }) {
           {PRICING.map((p) => (
             <div
               key={p.id}
-              className={`rounded-xl border p-5 ${
-                p.highlight ? "border-gold/40 bg-gold/[0.03]" : "border-border"
+              className={`surface rounded-none border p-5 ${
+                p.highlight ? "border-gold bg-muted" : "border-border"
               }`}
             >
               <div className="flex items-start justify-between">
@@ -327,7 +328,7 @@ function BillingTab({ account }: { account: UserRow | null }) {
                   disabled={loadingCheckout === `${p.id}-monthly`}
                 >
                   {loadingCheckout === `${p.id}-monthly` ? (
-                    <Loader2 className="size-4 animate-spin" />
+                    <span className="zuri-spinner" />
                   ) : null}
                   Monthly
                 </Button>
@@ -338,7 +339,7 @@ function BillingTab({ account }: { account: UserRow | null }) {
                   disabled={loadingCheckout === `${p.id}-annual`}
                 >
                   {loadingCheckout === `${p.id}-annual` ? (
-                    <Loader2 className="size-4 animate-spin" />
+                    <span className="zuri-spinner" />
                   ) : null}
                   Annual (2 months free)
                 </Button>
@@ -417,7 +418,7 @@ function NotificationsTab() {
         ).map(({ key, label, desc }) => (
           <label
             key={key}
-            className="flex cursor-pointer items-start gap-4 rounded-lg border border-border p-4 transition-colors hover:bg-background/50"
+            className="flex cursor-pointer items-start gap-4 rounded-none border border-border p-4 transition-colors hover:bg-muted/50"
           >
             <div className="mt-0.5 flex-1">
               <p className="font-medium">{label}</p>
@@ -440,7 +441,7 @@ function NotificationsTab() {
       </div>
 
       <Button onClick={save} disabled={saving}>
-        {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+        {saving ? <span className="zuri-spinner" /> : <Save className="size-4" />}
         Save preferences
       </Button>
     </div>
@@ -476,7 +477,7 @@ function DangerTab() {
         </p>
       </div>
 
-      <div className="rounded-xl border border-error/30 bg-error/5 p-5">
+      <div className="surface rounded-none border border-error p-5">
         <p className="font-medium text-error">Delete account</p>
         <p className="mt-1 text-sm text-muted-foreground">
           Permanently deletes your account, website, content plan, and all data. Your published
@@ -502,7 +503,7 @@ function DangerTab() {
                 onClick={deleteAccount}
                 disabled={deleting}
               >
-                {deleting ? <Loader2 className="size-4 animate-spin" /> : null}
+                {deleting ? <span className="zuri-spinner" /> : null}
                 Yes, delete everything
               </Button>
               <Button variant="outline" onClick={() => setConfirming(false)}>

@@ -12,8 +12,8 @@ interface EmptyStateProps {
 
 export function EmptyState({ icon: Icon, title, description, actionLabel, actionHref }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface/50 py-20 text-center">
-      <div className="flex size-14 items-center justify-center rounded-full bg-gold/10 text-gold">
+    <div className="surface flex flex-col items-center justify-center border border-dashed py-20 text-center">
+      <div className="flex size-14 items-center justify-center rounded-none border border-border bg-muted text-gold">
         <Icon className="size-6" />
       </div>
       <h3 className="mt-5 font-heading text-2xl font-semibold">{title}</h3>

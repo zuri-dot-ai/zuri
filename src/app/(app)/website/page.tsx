@@ -2,21 +2,24 @@ import { createClient } from "@/lib/supabase/server";
 import { Globe } from "lucide-react";
 import { EmptyState } from "@/components/app/empty-state";
 import { WebsiteEditor } from "@/components/app/website-editor";
-import type { WebsiteComposition } from "@/types/website";
+import type { ActiveTheme, DesignArchetype } from "@/types/website";
 
 export default async function WebsitePage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
 
   const [{ data: website }, { data: account }] = await Promise.all([
-    supabase.from("websites").select("*").eq("user_id", user!.id).maybeSingle(),
-    supabase.from("users").select("subscription_plan").eq("id", user!.id).single(),
+    supabase.from("websites").select("*").eq("user_id", user.id).maybeSingle(),
+    supabase.from("users").select("subscription_plan").eq("id", user.id).single(),
   ]);
 
-  if (!website?.composition_json) {
+  if (!website?.template_html) {
     return (
       <div className="mx-auto max-w-5xl">
-        <h1 className="mb-6 font-heading text-4xl font-semibold">Your Website</h1>
+        <header className="page-head">
+          <h1>Your Website</h1>
+        </header>
         <EmptyState
           icon={Globe}
           title="No website yet"
@@ -28,12 +31,22 @@ export default async function WebsitePage() {
     );
   }
 
+  const isPublished =
+    website.status === "published" || website.is_published === true;
+  const slug =
+    (website.handle as string | null) ??
+    (website.published_slug as string | null) ??
+    null;
+
   return (
     <WebsiteEditor
       websiteId={website.id}
-      composition={website.composition_json as WebsiteComposition}
-      isPublished={website.is_published}
-      slug={website.published_slug}
+      templateHtml={website.template_html as string}
+      filledPlaceholders={(website.filled_placeholders as Record<string, string>) ?? {}}
+      activeTheme={(website.active_theme as ActiveTheme) ?? "theme-1"}
+      archetype={(website.archetype as DesignArchetype | null) ?? null}
+      isPublished={isPublished}
+      slug={slug}
       plan={account?.subscription_plan ?? "free"}
     />
   );

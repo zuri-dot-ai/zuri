@@ -12,13 +12,7 @@ import { AuthShell } from "@/components/auth/auth-shell";
 
 export default function LoginPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center text-white/50">
-          Loading…
-        </div>
-      }
-    >
+    <Suspense fallback={<div className="min-h-screen" aria-hidden />}>
       <LoginForm />
     </Suspense>
   );
@@ -87,18 +81,18 @@ function LoginForm() {
       eyebrow="Welcome back"
       headline={
         <>
-          Your business <span className="text-gradient-gold">missed you.</span>
+          The operating system
+          <br />
+          <em className="italic text-gold">for modern businesses.</em>
         </>
       }
-      tagline="Pick up where you left off — your draft website, your content queue, and your streak are all waiting."
-      socialProof="Join 10,000+ African entrepreneurs building their presence"
-      particleCount={8}
-      particleOpacity={0.04}
+      tagline="Launch your business online with Zuri. Instantly create a premium website, unlock a personalized 90-day content plan, and accelerate growth with AI."
+      socialProof="Pick up where you left off — website, content plan, and streak waiting"
     >
-      <div className="glass-card p-7 sm:p-8">
+      <div className="surface box-border w-full max-w-full p-7 sm:p-8">
         <div className="mb-6 md:hidden">
-          <h1 className="font-heading text-3xl font-semibold">Welcome back</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h1 className="font-heading text-3xl font-medium">Welcome back</h1>
+          <p className="mt-1 text-sm text-[var(--chrome-mid)]">
             Sign in to your Zuri workspace.
           </p>
         </div>
@@ -106,20 +100,22 @@ function LoginForm() {
         <Button
           type="button"
           variant="outline"
-          className="h-12 w-full border-white/10 bg-white/[0.02] hover:border-gold/40 hover:bg-white/[0.04]"
+          className="w-full"
           onClick={handleGoogle}
         >
           <GoogleIcon /> Continue with Google
         </Button>
 
-        <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
-          <span className="h-px flex-1 bg-border" /> or{" "}
-          <span className="h-px flex-1 bg-border" />
+        <div className="my-6 flex items-center gap-3 text-xs text-[var(--chrome-dark)]">
+          <span className="h-px flex-1 bg-[#222]" /> or{" "}
+          <span className="h-px flex-1 bg-[#222]" />
         </div>
 
         <form onSubmit={handleEmailLogin} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" className="field-label">
+              Email
+            </Label>
             <Input
               id="email"
               type="email"
@@ -132,10 +128,12 @@ function LoginForm() {
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="field-label">
+                Password
+              </Label>
               <Link
                 href="#"
-                className="text-xs text-gold/80 hover:text-gold hover:underline"
+                className="text-xs text-gold hover:underline"
               >
                 Forgot?
               </Link>
@@ -151,21 +149,14 @@ function LoginForm() {
               autoComplete="current-password"
             />
           </div>
-          <Button
-            type="submit"
-            className="h-12 w-full text-base font-semibold"
-            disabled={loading}
-          >
+          <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Signing in…" : "Sign in"}
           </Button>
         </form>
 
-        <p className="mt-7 text-center text-sm text-muted-foreground">
+        <p className="mt-7 text-center text-sm text-[var(--chrome-mid)]">
           New to Zuri?{" "}
-          <Link
-            href="/signup"
-            className="font-medium text-gold hover:underline"
-          >
+          <Link href="/signup" className="font-medium text-gold hover:underline">
             Create an account
           </Link>
         </p>

@@ -2,6 +2,8 @@
 //  ZURI — Flutterwave Helper (NGN-first subscriptions)
 // ════════════════════════════════════════════════════════
 
+import { BRAND } from "@/lib/constants";
+
 const FLW_BASE = "https://api.flutterwave.com/v3";
 
 function flwHeaders() {
@@ -57,8 +59,8 @@ export async function initCheckout(args: {
       },
       customizations: {
         title: "Zuri",
-        description: "Your business, online. Beautifully.",
-        logo: `${process.env.NEXT_PUBLIC_APP_URL}/logo.png`,
+        description: BRAND.description,
+        logo: `${process.env.NEXT_PUBLIC_APP_URL}/zuri_logo.png`,
       },
       meta: args.meta,
     }),

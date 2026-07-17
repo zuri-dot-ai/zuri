@@ -1,0 +1,100 @@
+{
+  "archetype": "luxury-aspirational",
+  "template_id": "luxury-aspirational-dark-editorial",
+  "validation": {
+    "valid": true,
+    "errors": [],
+    "warnings": []
+  },
+  "filled_placeholders": {
+    "about_body": "Quiet, appointment-only wellness suites with organic botanical products",
+    "address": "Aura Spa Ikoyi",
+    "business_name": "Aura Spa Ikoyi",
+    "email_address": "Aura Spa Ikoyi",
+    "founder_name": "Aura Spa Ikoyi",
+    "founder_title": "Aura Spa Ikoyi",
+    "instagram_url": "Aura Spa Ikoyi",
+    "phone_number": "Aura Spa Ikoyi",
+    "service_1_description": "Professional Deep tissue massage from Aura Spa Ikoyi.",
+    "service_1_title": "Deep tissue massage",
+    "service_2_description": "Professional Facial treatments from Aura Spa Ikoyi.",
+    "service_2_title": "Facial treatments",
+    "service_3_description": "Professional Bridal packages from Aura Spa Ikoyi.",
+    "service_3_title": "Bridal packages",
+    "service_4_description": "Professional Sauna & steam from Aura Spa Ikoyi.",
+    "service_4_title": "Sauna & steam",
+    "service_5_description": "",
+    "service_5_title": "",
+    "service_6_description": "",
+    "service_6_title": "",
+    "tagline": "Stillness, restored",
+    "testimonial_1_name": "Adaeze Okafor",
+    "testimonial_1_quote": "Working with Aura Spa Ikoyi was a great experience. Highly recommended.",
+    "testimonial_1_role": "Client",
+    "testimonial_2_name": "Chinedu Eze",
+    "testimonial_2_quote": "Working with Aura Spa Ikoyi was a great experience. Highly recommended.",
+    "testimonial_2_role": "Client",
+    "testimonial_3_name": "Fatima Bello",
+    "testimonial_3_quote": "Working with Aura Spa Ikoyi was a great experience. Highly recommended.",
+    "testimonial_3_role": "Client",
+    "whatsapp_number": "Aura Spa Ikoyi"
+  },
+  "filled_images": {
+    "about": {
+      "url": "/images/fallbacks/luxury-aspirational.jpg",
+      "source": "fallback",
+      "width": null,
+      "height": null,
+      "alt": "luxury-aspirational fallback"
+    },
+    "before_2": {
+      "url": "/images/fallbacks/luxury-aspirational.jpg",
+      "source": "fallback",
+      "width": null,
+      "height": null,
+      "alt": "luxury-aspirational fallback"
+    },
+    "before_1": {
+      "url": "/images/fallbacks/luxury-aspirational.jpg",
+      "source": "fallback",
+      "width": null,
+      "height": null,
+      "alt": "luxury-aspirational fallback"
+    },
+    "after_2": {
+      "url": "/images/fallbacks/luxury-aspirational.jpg",
+      "source": "fallback",
+      "width": null,
+      "height": null,
+      "alt": "luxury-aspirational fallback"
+    },
+    "hero": {
+      "url": "/images/fallbacks/luxury-aspirational.jpg",
+      "source": "fallback",
+      "width": null,
+      "height": null,
+      "alt": "luxury-aspirational fallback"
+    },
+    "after_1": {
+      "url": "/images/fallbacks/luxury-aspirational.jpg",
+      "source": "fallback",
+      "width": null,
+      "height": null,
+      "alt": "luxury-aspirational fallback"
+    },
+    "after_3": {
+      "url": "/images/fallbacks/luxury-aspirational.jpg",
+      "source": "fallback",
+      "width": null,
+      "height": null,
+      "alt": "luxury-aspirational fallback"
+    },
+    "before_3": {
+      "url": "/images/fallbacks/luxury-aspirational.jpg",
+      "source": "fallback",
+      "width": null,
+      "height": null,
+      "alt": "luxury-aspirational fallback"
+    }
+  }
+}

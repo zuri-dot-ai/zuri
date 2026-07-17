@@ -1,0 +1,75 @@
+{
+  "template_id": "luxury-aspirational-light-blush",
+  "archetype": "luxury-aspirational",
+  "mode": "light",
+  "lean": "international",
+  "display_name": "Luxury Aspirational Light Blush",
+  "storage_path": "luxury-aspirational/light-blush.html",
+  "color_themes": [
+    {
+      "key": "theme-1",
+      "bg": "#FBF5F3",
+      "surface": "#FFFFFF",
+      "text": "#2A231F",
+      "text_muted": "#7A6B65",
+      "accent": "#B98A9A",
+      "accent_text": "#FFFFFF"
+    },
+    null,
+    null
+  ],
+  "placeholder_fields": [
+    "about_body",
+    "address",
+    "business_name",
+    "email_address",
+    "founder_name",
+    "founder_title",
+    "instagram_url",
+    "phone_number",
+    "service_1_description",
+    "service_1_title",
+    "service_2_description",
+    "service_2_title",
+    "service_3_description",
+    "service_3_title",
+    "service_4_description",
+    "service_4_title",
+    "service_5_description",
+    "service_5_title",
+    "service_6_description",
+    "service_6_title",
+    "tagline",
+    "testimonial_1_name",
+    "testimonial_1_quote",
+    "testimonial_1_role",
+    "testimonial_2_name",
+    "testimonial_2_quote",
+    "testimonial_2_role",
+    "testimonial_3_name",
+    "testimonial_3_quote",
+    "testimonial_3_role",
+    "whatsapp_number"
+  ],
+  "image_slots": [
+    "about",
+    "after_1",
+    "after_2",
+    "after_3",
+    "before_1",
+    "before_2",
+    "before_3",
+    "hero"
+  ],
+  "has_unique_section": true,
+  "unique_section_name": "Before/After row",
+  "_extraction": {
+    "is_canonical": false,
+    "flags": [
+      "not_in_canonical_24",
+      "lean_defaulted_international_confirm",
+      "missing_multi_theme_only_root"
+    ],
+    "source_html": "luxury-aspirational/light-blush.html"
+  }
+}

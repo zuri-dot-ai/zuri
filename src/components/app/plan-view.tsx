@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Flame, Trophy, Clock, ChevronDown, CheckCircle2, Circle, Loader2 } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { Flame, Trophy, Clock, ChevronDown, CheckCircle2, Circle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { StatCard } from "@/components/app/stat-card";
 import { BADGES } from "@/lib/constants";
@@ -59,7 +58,9 @@ export function PlanView({
 
   return (
     <div className="mx-auto max-w-5xl space-y-8">
-      <h1 className="font-heading text-4xl font-semibold">Your 90-Day Plan</h1>
+      <header className="page-head">
+        <h1>Your 90-Day Plan</h1>
+      </header>
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-3">
@@ -70,21 +71,21 @@ export function PlanView({
 
       {/* Badges */}
       {earnedBadges.length > 0 && (
-        <Card className="p-6">
+        <div className="zuri-card">
           <p className="mb-4 text-sm font-medium">Badges earned</p>
           <div className="flex flex-wrap gap-3">
             {earnedBadges.map((b) => {
               const badge = BADGES[b];
               if (!badge) return null;
               return (
-                <div key={b} className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">
+                <div key={b} className="flex items-center gap-2 rounded-none border border-border bg-background px-3 py-2">
                   <span className="text-xl">{badge.emoji}</span>
                   <span className="text-sm font-medium">{badge.label}</span>
                 </div>
               );
             })}
           </div>
-        </Card>
+        </div>
       )}
 
       {/* Weekly accordion */}
@@ -94,10 +95,10 @@ export function PlanView({
           const isOpen = openWeek === week;
           const weekDone = weekTasks.filter((t) => t.is_completed).length;
           return (
-            <Card key={week} className="overflow-hidden">
+            <div key={week} className="zuri-card overflow-hidden p-0">
               <button
                 onClick={() => setOpenWeek(isOpen ? null : week)}
-                className="flex w-full items-center justify-between p-5 text-left transition-colors hover:bg-background/40"
+                className="flex w-full items-center justify-between p-5 text-left transition-colors hover:bg-muted/50"
               >
                 <div className="flex items-center gap-3">
                   <span className="font-heading text-lg font-semibold">Week {week}</span>
@@ -118,7 +119,7 @@ export function PlanView({
                         className="mt-0.5 shrink-0"
                       >
                         {busyId === task.id ? (
-                          <Loader2 className="size-5 animate-spin text-gold" />
+                          <span className="zuri-spinner" />
                         ) : task.is_completed ? (
                           <CheckCircle2 className="size-5 text-success" />
                         ) : (
@@ -144,7 +145,7 @@ export function PlanView({
                   ))}
                 </div>
               )}
-            </Card>
+            </div>
           );
         })}
       </div>

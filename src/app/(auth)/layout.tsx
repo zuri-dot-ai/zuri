@@ -1,8 +1,7 @@
-import { AuthParticleBackground } from "@/components/auth/auth-particle-background";
+import { StarfieldCanvas } from "@/components/ui/starfield-canvas";
 
 /**
- * Auth route group layout — no sidebar/topbar.
- * Dark background with full-screen particle canvas.
+ * Auth route group — marketing black + single starfield (no favicon particles).
  */
 export default function AuthLayout({
   children,
@@ -10,8 +9,8 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative min-h-screen bg-[#0C0C0E]">
-      <AuthParticleBackground />
+    <div className="auth-canvas relative min-h-screen">
+      <StarfieldCanvas />
       <div className="relative z-10">{children}</div>
     </div>
   );

@@ -1,0 +1,74 @@
+{
+  "template_id": "warm-sensory-light-airy",
+  "archetype": "warm-sensory",
+  "mode": "light",
+  "lean": "international",
+  "display_name": "Restaurant Light Airy",
+  "storage_path": "warm-sensory/light-airy.html",
+  "color_themes": [
+    {
+      "key": "theme-1",
+      "bg": "#FBF7F0",
+      "surface": "#F2E9DA",
+      "text": "#2A241C",
+      "text_muted": "#6B5F4E",
+      "accent": "#B8823A",
+      "accent_text": "#FFFFFF"
+    },
+    null,
+    null
+  ],
+  "placeholder_fields": [
+    "about_body",
+    "address",
+    "business_name",
+    "email_address",
+    "instagram_url",
+    "phone_number",
+    "service_1_description",
+    "service_1_title",
+    "service_2_description",
+    "service_2_title",
+    "service_3_description",
+    "service_3_title",
+    "service_4_description",
+    "service_4_title",
+    "service_5_description",
+    "service_5_title",
+    "service_6_description",
+    "service_6_title",
+    "tagline",
+    "testimonial_1_name",
+    "testimonial_1_quote",
+    "testimonial_1_role",
+    "testimonial_2_name",
+    "testimonial_2_quote",
+    "testimonial_2_role",
+    "testimonial_3_name",
+    "testimonial_3_quote",
+    "testimonial_3_role",
+    "whatsapp_number"
+  ],
+  "image_slots": [
+    "about",
+    "gallery_1",
+    "gallery_2",
+    "gallery_3",
+    "gallery_4",
+    "gallery_5",
+    "gallery_6",
+    "gallery_7",
+    "gallery_8",
+    "gallery_9",
+    "hero"
+  ],
+  "has_unique_section": true,
+  "unique_section_name": "Opening Hours strip",
+  "_extraction": {
+    "is_canonical": true,
+    "flags": [
+      "missing_multi_theme_only_root"
+    ],
+    "source_html": "warm-sensory/light-airy.html"
+  }
+}

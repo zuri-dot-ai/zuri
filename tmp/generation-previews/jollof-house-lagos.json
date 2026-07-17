@@ -1,0 +1,87 @@
+{
+  "archetype": "warm-sensory",
+  "template_id": "warm-sensory-dark-editorial",
+  "validation": {
+    "valid": true,
+    "errors": [],
+    "warnings": []
+  },
+  "filled_placeholders": {
+    "about_body": "Wood-fired jollof and coastal seafood in a lively Yaba courtyard",
+    "address": "Jollof House Lagos",
+    "business_name": "Jollof House Lagos",
+    "email_address": "Jollof House Lagos",
+    "founder_name": "Jollof House Lagos",
+    "founder_title": "Jollof House Lagos",
+    "instagram_url": "Jollof House Lagos",
+    "opening_hours": "Jollof House Lagos",
+    "phone_number": "Jollof House Lagos",
+    "service_1_description": "Professional Dine-in Nigerian cuisine from Jollof House Lagos.",
+    "service_1_title": "Dine-in Nigerian cuisine",
+    "service_2_description": "Professional Private event catering from Jollof House Lagos.",
+    "service_2_title": "Private event catering",
+    "service_3_description": "Professional Weekend brunch from Jollof House Lagos.",
+    "service_3_title": "Weekend brunch",
+    "service_4_description": "Professional Takeaway packs from Jollof House Lagos.",
+    "service_4_title": "Takeaway packs",
+    "service_5_description": "",
+    "service_5_title": "",
+    "service_6_description": "",
+    "service_6_title": "",
+    "tagline": "Fire, flavour, and Friday nights",
+    "testimonial_1_name": "Adaeze Okafor",
+    "testimonial_1_quote": "Working with Jollof House Lagos was a great experience. Highly recommended.",
+    "testimonial_1_role": "Client",
+    "testimonial_2_name": "Chinedu Eze",
+    "testimonial_2_quote": "Working with Jollof House Lagos was a great experience. Highly recommended.",
+    "testimonial_2_role": "Client",
+    "testimonial_3_name": "Fatima Bello",
+    "testimonial_3_quote": "Working with Jollof House Lagos was a great experience. Highly recommended.",
+    "testimonial_3_role": "Client",
+    "whatsapp_number": "Jollof House Lagos"
+  },
+  "filled_images": {
+    "gallery_2": {
+      "url": "/images/fallbacks/warm-sensory.jpg",
+      "source": "fallback",
+      "width": null,
+      "height": null,
+      "alt": "warm-sensory fallback"
+    },
+    "gallery_3": {
+      "url": "/images/fallbacks/warm-sensory.jpg",
+      "source": "fallback",
+      "width": null,
+      "height": null,
+      "alt": "warm-sensory fallback"
+    },
+    "hero": {
+      "url": "/images/fallbacks/warm-sensory.jpg",
+      "source": "fallback",
+      "width": null,
+      "height": null,
+      "alt": "warm-sensory fallback"
+    },
+    "gallery_4": {
+      "url": "/images/fallbacks/warm-sensory.jpg",
+      "source": "fallback",
+      "width": null,
+      "height": null,
+      "alt": "warm-sensory fallback"
+    },
+    "about": {
+      "url": "/images/fallbacks/warm-sensory.jpg",
+      "source": "fallback",
+      "width": null,
+      "height": null,
+      "alt": "warm-sensory fallback"
+    },
+    "gallery_1": {
+      "url": "/images/fallbacks/warm-sensory.jpg",
+      "source": "fallback",
+      "width": null,
+      "height": null,
+      "alt": "warm-sensory fallback"
+    }
+  }
+}

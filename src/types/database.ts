@@ -1,11 +1,22 @@
 // ════════════════════════════════════════════════════════
-//  ZURI — Database Types (mirrors supabase/schema.sql)
+//  ZURI — Database Types (row shapes + re-exports from website.ts)
+//  Website/template types: docs/02_WEBSITE_BUILDER.md §3, §11
 // ════════════════════════════════════════════════════════
 
-import type { WebsiteComposition } from "./website";
 import type { AgencyBrief } from "./brand";
 
-export type { WebsiteComposition } from "./website";
+export type {
+  ActiveTheme,
+  CategoryImageRow,
+  ColorTheme,
+  DesignArchetype,
+  ResolvedImage,
+  TemplateMetadata,
+  TemplateRow,
+  WebsiteImageRow,
+  WebsiteRow,
+  WebsiteStatus,
+} from "./website";
 export type { AgencyBrief } from "./brand";
 
 export type SubscriptionPlan = "free" | "starter" | "growth";
@@ -16,7 +27,6 @@ export type WebsiteType =
   | "portfolio" | "business" | "ecommerce" | "restaurant" | "salon_spa"
   | "consultant" | "creative" | "realestate" | "fitness" | "event"
   | "nonprofit" | "professional_services";
-export type MotionStyle = "slow_elegant" | "crisp_modern" | "bold_energetic";
 export type Platform =
   | "instagram" | "linkedin" | "facebook" | "tiktok" | "email"
   | "twitter" | "whatsapp";
@@ -59,20 +69,6 @@ export interface BusinessProfileRow {
   onboarding_method: OnboardingMethod | null;
   created_at: string;
   updated_at: string;
-}
-
-export interface WebsiteRow {
-  id: string;
-  user_id: string;
-  business_profile_id: string | null;
-  website_type: WebsiteType | null;
-  style_preference: string | null;
-  motion_style: MotionStyle;
-  composition_json: WebsiteComposition | null;
-  published_slug: string | null;
-  is_published: boolean;
-  last_edited: string;
-  created_at: string;
 }
 
 export interface ContentCalendarRow {

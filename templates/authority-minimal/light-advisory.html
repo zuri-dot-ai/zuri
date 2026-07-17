@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{business_name}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;1,400&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --color-bg:#FAF7F2;
+    --color-surface:#FFFFFF;
+    --color-text:#1D1A15;
+    --color-text-muted:#6B6459;
+    --color-accent:#3F5D45;
+    --color-accent-text:#FAF7F2;
+    --color-card:#F0EAE0;
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+
+  body{
+    background:var(--color-bg);
+    color:var(--color-text);
+    font-family:'Manrope',sans-serif;
+    font-weight:400;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  h1,h2,h3,h4{
+    font-family:'Spectral',serif;
+    font-weight:500;
+    line-height:1.15;
+  }
+
+  a{color:inherit;text-decoration:none;}
+  img{display:block;max-width:100%;}
+
+  :focus-visible{
+    outline:2px solid var(--color-accent);
+    outline-offset:3px;
+  }
+
+  .hairline{
+    border:none;
+    border-top:1px solid rgba(29,26,21,0.12);
+    width:100%;
+  }
+
+  .eyebrow{
+    font-family:'Manrope',sans-serif;
+    font-size:0.72rem;
+    letter-spacing:0.22em;
+    text-transform:uppercase;
+    color:var(--color-accent);
+    font-weight:600;
+  }
+
+  .container{
+    width:100%;
+    max-width:1120px;
+    margin:0 auto;
+    padding:0 24px;
+  }
+
+  /* ---------- Reveal animation ---------- */
+  .reveal{
+    opacity:0;
+    transform:translateY(20px);
+    transition:opacity 700ms ease-out, transform 700ms ease-out;
+  }
+  .reveal.active{
+    opacity:1;
+    transform:translateY(0);
+  }
+
+  /* ---------- Nav ---------- */
+  #site-nav{
+    position:fixed;
+    top:0;left:0;right:0;
+    z-index:1000;
+    background:transparent;
+    transition:background 600ms ease, border-color 600ms ease, padding 400ms ease;
+    border-bottom:1px solid transparent;
+  }
+  #site-nav.scrolled{
+    background:rgba(250,247,242,0.92);
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid rgba(29,26,21,0.08);
+  }
+  .nav-inner{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:26px 24px;
+    max-width:1120px;
+    margin:0 auto;
+    transition:padding 400ms ease;
+  }
+  #site-nav.scrolled .nav-inner{padding:16px 24px;}
+
+  .nav-logo{
+    font-family:'Spectral',serif;
+    font-style:italic;
+    font-weight:500;
+    font-size:1.35rem;
+    letter-spacing:0.01em;
+  }
+
+  .nav-links{
+    display:none;
+    align-items:center;
+    gap:40px;
+    font-size:0.85rem;
+    letter-spacing:0.03em;
+  }
+  .nav-links a{
+    position:relative;
+    padding:4px 0;
+  }
+  .nav-links a::after{
+    content:"";
+    position:absolute;
+    left:0;bottom:0;
+    width:0;height:1px;
+    background:var(--color-accent);
+    transition:width 300ms ease;
+  }
+  .nav-links a:hover::after{width:100%;}
+
+  .nav-cta{
+    display:none;
+    border:1px solid var(--color-text);
+    padding:10px 22px;
+    font-size:0.8rem;
+    letter-spacing:0.04em;
+    transition:background 300ms ease, color 300ms ease, border-color 300ms ease;
+    white-space:nowrap;
+  }
+  .nav-cta:hover{
+    background:var(--color-text);
+    color:var(--color-bg);
+  }
+
+  .hamburger{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+    background:none;
+    border:none;
+    cursor:pointer;
+    padding:8px;
+    z-index:1100;
+  }
+  .hamburger span{
+    display:block;
+    width:24px;height:1px;
+    background:var(--color-text);
+    transition:transform 300ms ease, opacity 300ms ease;
+  }
+  .hamburger.open span:nth-child(1){transform:translateY(6px) rotate(45deg);}
+  .hamburger.open span:nth-child(2){opacity:0;}
+  .hamburger.open span:nth-child(3){transform:translateY(-6px) rotate(-45deg);}
+
+  .drawer{
+    position:fixed;
+    top:0;right:0;
+    height:100vh;
+    width:78%;
+    max-width:340px;
+    background:var(--color-surface);
+    box-shadow:-8px 0 30px rgba(0,0,0,0.08);
+    transform:translateX(100%);
+    transition:transform 450ms ease;
+    z-index:1050;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding:40px;
+    gap:28px;
+  }
+  .drawer.open{transform:translateX(0);}
+  .drawer a{
+    font-family:'Spectral',serif;
+    font-size:1.4rem;
+  }
+  .drawer .nav-cta{
+    display:inline-block;
+    margin-top:16px;
+    text-align:center;
+  }
+
+  .drawer-backdrop{
+    position:fixed;
+    inset:0;
+    background:rgba(29,26,21,0.35);
+    opacity:0;
+    visibility:hidden;
+    transition:opacity 300ms ease;
+    z-index:1040;
+  }
+  .drawer-backdrop.open{
+    opacity:1;
+    visibility:visible;
+  }
+
+  @media (min-width:1025px){
+    .nav-links{display:flex;}
+    .nav-cta{display:inline-block;}
+    .hamburger{display:none;}
+  }
+
+  /* ---------- Hero ---------- */
+  #hero{
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:140px 24px 80px;
+  }
+  .hero-eyebrow{margin-bottom:22px;}
+  #hero h1{
+    font-size:2.6rem;
+    max-width:820px;
+    letter-spacing:-0.01em;
+  }
+  .hero-subhead{
+    margin-top:26px;
+    max-width:560px;
+    color:var(--color-text-muted);
+    font-size:1rem;
+    font-weight:300;
+  }
+  .hero-ctas{
+    margin-top:44px;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    align-items:center;
+  }
+  .btn-primary{
+    background:var(--color-accent);
+    color:var(--color-accent-text);
+    padding:15px 34px;
+    font-size:0.82rem;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    transition:background 300ms ease, transform 300ms ease;
+  }
+  .btn-primary:hover{background:#2f4735;}
+  .btn-secondary{
+    border-bottom:1px solid var(--color-text);
+    padding-bottom:4px;
+    font-size:0.82rem;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    transition:border-color 300ms ease, color 300ms ease;
+  }
+  .btn-secondary:hover{color:var(--color-accent);border-color:var(--color-accent);}
+
+  @media (min-width:481px){
+    #hero h1{font-size:3.4rem;}
+    .hero-ctas{flex-direction:row;gap:24px;}
+  }
+  @media (min-width:1025px){
+    #hero h1{font-size:4.4rem;}
+  }
+
+  /* ---------- Section generic ---------- */
+  section{padding:100px 0;}
+  .section-head{
+    text-align:center;
+    max-width:640px;
+    margin:0 auto 64px;
+  }
+  .section-head .eyebrow{margin-bottom:16px;display:block;}
+  .section-head h2{font-size:2rem;}
+
+  /* ---------- About / Mission ---------- */
+  #about{text-align:center;}
+  #about .about-inner{max-width:680px;margin:0 auto;}
+  #about p{
+    font-size:1.15rem;
+    font-weight:300;
+    color:var(--color-text);
+    line-height:1.8;
+  }
+  #about .hairline{
+    width:60px;
+    margin:0 auto 32px;
+    border-top:1px solid var(--color-accent);
+  }
+
+  /* ---------- Services ---------- */
+  #services{background:var(--color-surface);}
+  .services-list{
+    max-width:820px;
+    margin:0 auto;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+  .service-item{
+    padding:36px 32px;
+    background:var(--color-card);
+    border-radius:4px;
+  }
+  .service-item .hairline-top{
+    border:none;
+    border-top:1px solid var(--color-accent);
+    width:40px;
+    margin-bottom:20px;
+  }
+  .service-item h3{
+    font-size:1.5rem;
+    margin-bottom:12px;
+  }
+  .service-item p{
+    color:var(--color-text-muted);
+    font-weight:300;
+    max-width:640px;
+  }
+
+  /* ---------- Stats ---------- */
+  #stats .stats-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:48px;
+    text-align:center;
+  }
+  .stat-block h3{
+    font-size:2.6rem;
+    color:var(--color-accent);
+    font-weight:500;
+  }
+  .stat-block p{
+    margin-top:10px;
+    font-size:0.8rem;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--color-text-muted);
+  }
+  @media (min-width:481px){
+    #stats .stats-grid{grid-template-columns:repeat(2,1fr);}
+  }
+  @media (min-width:1025px){
+    #stats .stats-grid{grid-template-columns:repeat(4,1fr);}
+  }
+
+  /* ---------- Testimonials ---------- */
+  #testimonials{
+    background:var(--color-surface);
+    text-align:center;
+  }
+  .testimonial-wrap{
+    max-width:720px;
+    margin:0 auto;
+    position:relative;
+  }
+  .testimonial-slide{
+    display:none;
+    opacity:0;
+    transition:opacity 600ms ease;
+  }
+  .testimonial-slide.active{
+    display:block;
+    opacity:1;
+  }
+  .testimonial-slide blockquote{
+    font-family:'Spectral',serif;
+    font-size:1.6rem;
+    line-height:1.5;
+    font-style:italic;
+    font-weight:400;
+  }
+  .testimonial-slide .t-name{
+    margin-top:28px;
+    font-size:0.9rem;
+    font-weight:600;
+  }
+  .testimonial-slide .t-role{
+    font-size:0.8rem;
+    color:var(--color-text-muted);
+  }
+  .testimonial-nav{
+    display:flex;
+    justify-content:center;
+    gap:28px;
+    margin-top:40px;
+  }
+  .t-arrow{
+    background:none;
+    border:1px solid rgba(29,26,21,0.2);
+    width:42px;height:42px;
+    border-radius:50%;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:border-color 300ms ease, color 300ms ease;
+  }
+  .t-arrow:hover{border-color:var(--color-accent);color:var(--color-accent);}
+
+  /* ---------- Contact ---------- */
+  #contact .contact-inner{
+    max-width:520px;
+    margin:0 auto;
+    text-align:center;
+  }
+  #contact form{
+    text-align:left;
+    margin-top:48px;
+    display:flex;
+    flex-direction:column;
+    gap:22px;
+  }
+  .form-field label{
+    display:block;
+    font-size:0.75rem;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--color-text-muted);
+    margin-bottom:8px;
+  }
+  .form-field input,
+  .form-field textarea{
+    width:100%;
+    background:transparent;
+    border:none;
+    border-bottom:1px solid rgba(29,26,21,0.25);
+    padding:10px 2px;
+    font-family:'Manrope',sans-serif;
+    font-size:1rem;
+    color:var(--color-text);
+    transition:border-color 300ms ease;
+  }
+  .form-field input:focus,
+  .form-field textarea:focus{
+    border-color:var(--color-accent);
+  }
+  .form-field textarea{resize:vertical;min-height:100px;}
+
+  #contact .btn-primary{
+    align-self:flex-start;
+    border:none;
+    cursor:pointer;
+    margin-top:8px;
+  }
+
+  .contact-details{
+    margin-top:48px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    color:var(--color-text-muted);
+    font-size:0.92rem;
+  }
+
+  .form-confirm{
+    display:none;
+    padding:60px 0;
+    text-align:center;
+  }
+  .form-confirm h3{font-size:1.6rem;margin-bottom:12px;}
+  .form-confirm p{color:var(--color-text-muted);}
+
+  /* ---------- Footer ---------- */
+  footer{
+    padding:60px 24px 40px;
+    text-align:center;
+  }
+  footer .footer-name{
+    font-family:'Spectral',serif;
+    font-style:italic;
+    font-weight:500;
+    font-size:1.3rem;
+  }
+  footer .footer-tagline{
+    margin-top:8px;
+    color:var(--color-text-muted);
+    font-size:0.9rem;
+    font-weight:300;
+  }
+  footer .footer-social{
+    margin-top:22px;
+    font-size:0.85rem;
+    letter-spacing:0.04em;
+  }
+  footer .footer-social a{border-bottom:1px solid rgba(29,26,21,0.25);}
+  footer .powered-by{
+    margin-top:36px;
+    font-size:0.72rem;
+    color:var(--color-text-muted);
+    letter-spacing:0.03em;
+  }
+
+  /* ---------- WhatsApp Float ---------- */
+  #whatsapp-float{
+    position:fixed;
+    bottom:24px;
+    right:24px;
+    z-index:900;
+  }
+  #whatsapp-float a{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:56px;height:56px;
+    border-radius:50%;
+    background:var(--color-accent);
+    color:var(--color-accent-text);
+    box-shadow:0 6px 20px rgba(63,93,69,0.35);
+    transition:transform 300ms ease;
+  }
+  #whatsapp-float a:hover{transform:scale(1.06);}
+
+</style>
+</head>
+<body>
+
+<!-- ================= NAV ================= -->
+<nav id="site-nav">
+  <div class="nav-inner">
+    <a href="#hero" class="nav-logo">{{business_name}}</a>
+    <div class="nav-links">
+      <a href="#about">About</a>
+      <a href="#services">Services</a>
+      <a href="#testimonials">Testimonials</a>
+      <a href="#contact">Contact</a>
+    </div>
+    <a href="#contact" class="nav-cta">Book a Consultation</a>
+    <button class="hamburger" id="hamburger" aria-label="Open menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<div class="drawer-backdrop" id="drawer-backdrop"></div>
+<div class="drawer" id="drawer">
+  <a href="#about">About</a>
+  <a href="#services">Services</a>
+  <a href="#testimonials">Testimonials</a>
+  <a href="#contact">Contact</a>
+  <a href="#contact" class="nav-cta">Book a Consultation</a>
+</div>
+
+<!-- ================= HERO ================= -->
+<header id="hero">
+  <span class="eyebrow hero-eyebrow reveal">{{business_name}}</span>
+  <h1 class="reveal">{{tagline}}</h1>
+  <p class="hero-subhead reveal">{{about_body}}</p>
+  <div class="hero-ctas reveal">
+    <a href="#contact" class="btn-primary">Book a Consultation</a>
+    <a href="#services" class="btn-secondary">View Services</a>
+  </div>
+</header>
+
+<main>
+
+  <!-- ================= ABOUT / MISSION ================= -->
+  <section id="about">
+    <div class="container about-inner">
+      <hr class="hairline reveal">
+      <span class="eyebrow reveal">Our Approach</span>
+      <h2 class="reveal" style="margin-top:16px;font-size:2rem;">Grounded Guidance, Built on Trust</h2>
+      <p class="reveal" style="margin-top:28px;">{{about_body}}</p>
+    </div>
+  </section>
+
+  <!-- ================= SERVICES ================= -->
+  <section id="services">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow reveal">What We Do</span>
+        <h2 class="reveal">Services</h2>
+      </div>
+      <div class="services-list">
+
+        <div class="service-item reveal">
+          <hr class="hairline-top">
+          <h3>{{service_1_title}}</h3>
+          <p>{{service_1_description}}</p>
+        </div>
+
+        <div class="service-item reveal">
+          <hr class="hairline-top">
+          <h3>{{service_2_title}}</h3>
+          <p>{{service_2_description}}</p>
+        </div>
+
+        <div class="service-item reveal">
+          <hr class="hairline-top">
+          <h3>{{service_3_title}}</h3>
+          <p>{{service_3_description}}</p>
+        </div>
+
+        <div class="service-item" hidden data-optional-slot="4">
+          <hr class="hairline-top">
+          <h3>{{service_4_title}}</h3>
+          <p>{{service_4_description}}</p>
+        </div>
+
+        <div class="service-item" hidden data-optional-slot="5">
+          <hr class="hairline-top">
+          <h3>{{service_5_title}}</h3>
+          <p>{{service_5_description}}</p>
+        </div>
+
+        <div class="service-item" hidden data-optional-slot="6">
+          <hr class="hairline-top">
+          <h3>{{service_6_title}}</h3>
+          <p>{{service_6_description}}</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= STATS ================= -->
+  <section id="stats">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-block reveal">
+          <h3>{{stat_1_value}}</h3>
+          <p>{{stat_1_label}}</p>
+        </div>
+        <div class="stat-block reveal">
+          <h3>{{stat_2_value}}</h3>
+          <p>{{stat_2_label}}</p>
+        </div>
+        <div class="stat-block reveal">
+          <h3>{{stat_3_value}}</h3>
+          <p>{{stat_3_label}}</p>
+        </div>
+        <div class="stat-block reveal">
+          <h3>{{stat_4_value}}</h3>
+          <p>{{stat_4_label}}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TESTIMONIALS ================= -->
+  <section id="testimonials">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow reveal">Client Word</span>
+        <h2 class="reveal">Testimonials</h2>
+      </div>
+      <div class="testimonial-wrap reveal">
+        <div class="testimonial-slide active" data-slide="1">
+          <blockquote>&ldquo;{{testimonial_1_quote}}&rdquo;</blockquote>
+          <p class="t-name">{{testimonial_1_name}}</p>
+          <p class="t-role">{{testimonial_1_role}}</p>
+        </div>
+        <div class="testimonial-slide" data-slide="2">
+          <blockquote>&ldquo;{{testimonial_2_quote}}&rdquo;</blockquote>
+          <p class="t-name">{{testimonial_2_name}}</p>
+          <p class="t-role">{{testimonial_2_role}}</p>
+        </div>
+        <div class="testimonial-slide" data-slide="3">
+          <blockquote>&ldquo;{{testimonial_3_quote}}&rdquo;</blockquote>
+          <p class="t-name">{{testimonial_3_name}}</p>
+          <p class="t-role">{{testimonial_3_role}}</p>
+        </div>
+        <div class="testimonial-nav">
+          <button class="t-arrow" id="t-prev" aria-label="Previous testimonial">&#8592;</button>
+          <button class="t-arrow" id="t-next" aria-label="Next testimonial">&#8594;</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CONTACT ================= -->
+  <section id="contact">
+    <div class="container contact-inner">
+      <span class="eyebrow reveal">Get in Touch</span>
+      <h2 class="reveal" style="margin-top:16px;font-size:2rem;">Begin the Conversation</h2>
+
+      <form id="contact-form" class="reveal">
+        <div class="form-field">
+          <label for="name">Name</label>
+          <input type="text" id="name" name="name" required>
+        </div>
+        <div class="form-field">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required>
+        </div>
+        <div class="form-field">
+          <label for="message">Message</label>
+          <textarea id="message" name="message" required></textarea>
+        </div>
+        <button type="submit" class="btn-primary">Send Inquiry</button>
+      </form>
+
+      <div class="form-confirm" id="form-confirm">
+        <h3>Thank You</h3>
+        <p>Your inquiry has been received. We will be in touch shortly.</p>
+      </div>
+
+      <div class="contact-details reveal">
+        <p>{{phone_number}}</p>
+        <p>{{email_address}}</p>
+        <p>{{address}}</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ================= FOOTER ================= -->
+<footer>
+  <div class="footer-name">{{business_name}}</div>
+  <div class="footer-tagline">{{tagline}}</div>
+  <div class="footer-social">
+    <a href="{{instagram_url}}" id="footer-instagram">Instagram</a>
+  </div>
+  <div class="powered-by"><a href="#">Powered by Zuri</a></div>
+</footer>
+
+<!-- ================= WHATSAPP FLOAT ================= -->
+<div id="whatsapp-float" data-whatsapp-number="{{whatsapp_number}}">
+  <a href="#" aria-label="Chat on WhatsApp">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M17.6 6.32A7.85 7.85 0 0 0 12.05 4c-4.36 0-7.9 3.53-7.9 7.9 0 1.39.36 2.75 1.05 3.95L4 20l4.27-1.12a7.88 7.88 0 0 0 3.78.96h.01c4.36 0 7.9-3.53 7.9-7.9 0-2.11-.82-4.09-2.36-5.62zM12.06 18.4a6.5 6.5 0 0 1-3.32-.91l-.24-.14-2.53.66.68-2.47-.16-.25a6.55 6.55 0 0 1-1-3.49c0-3.62 2.95-6.57 6.58-6.57 1.76 0 3.41.68 4.65 1.93a6.53 6.53 0 0 1 1.93 4.65c0 3.63-2.95 6.59-6.59 6.59zm3.6-4.93c-.2-.1-1.17-.58-1.35-.64-.18-.07-.31-.1-.44.1-.13.2-.51.64-.62.77-.11.13-.23.14-.43.05-.2-.1-.85-.31-1.61-1-.6-.53-1-1.19-1.12-1.39-.12-.2-.01-.31.09-.4.09-.09.2-.23.3-.35.1-.11.13-.2.2-.33.07-.13.03-.25-.02-.35-.05-.1-.44-1.07-.61-1.46-.16-.39-.32-.33-.44-.34-.11-.01-.24-.01-.37-.01-.13 0-.34.05-.52.25-.18.2-.68.67-.68 1.63 0 .96.7 1.89.79 2.02.1.13 1.37 2.1 3.33 2.94.46.2.83.32 1.11.41.47.15.9.13 1.24.08.38-.06 1.17-.48 1.33-.94.16-.46.16-.86.12-.94-.05-.09-.18-.14-.38-.24z" fill="currentColor"/>
+    </svg>
+  </a>
+</div>
+
+<script>
+(function(){
+
+  // ---------- Nav scroll state ----------
+  var nav = document.getElementById('site-nav');
+  function updateNav(){
+    if (window.scrollY > 60) { nav.classList.add('scrolled'); }
+    else { nav.classList.remove('scrolled'); }
+  }
+  window.addEventListener('scroll', updateNav, { passive:true });
+  updateNav();
+
+  // ---------- Hamburger / Drawer ----------
+  var hamburger = document.getElementById('hamburger');
+  var drawer = document.getElementById('drawer');
+  var backdrop = document.getElementById('drawer-backdrop');
+
+  function openDrawer(){
+    drawer.classList.add('open');
+    backdrop.classList.add('open');
+    hamburger.classList.add('open');
+    hamburger.setAttribute('aria-expanded','true');
+  }
+  function closeDrawer(){
+    drawer.classList.remove('open');
+    backdrop.classList.remove('open');
+    hamburger.classList.remove('open');
+    hamburger.setAttribute('aria-expanded','false');
+  }
+  hamburger.addEventListener('click', function(){
+    if (drawer.classList.contains('open')) { closeDrawer(); } else { openDrawer(); }
+  });
+  backdrop.addEventListener('click', closeDrawer);
+  drawer.querySelectorAll('a').forEach(function(a){
+    a.addEventListener('click', closeDrawer);
+  });
+
+  // ---------- Scroll reveal (single shared observer) ----------
+  var revealEls = document.querySelectorAll('.reveal');
+  var observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if (entry.isIntersecting){
+        entry.target.classList.add('active');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  revealEls.forEach(function(el){ observer.observe(el); });
+
+  // ---------- Testimonial elegant fade transitions ----------
+  var slides = document.querySelectorAll('.testimonial-slide');
+  var current = 0;
+  var animating = false;
+  function showSlide(i){
+    if (animating) return;
+    animating = true;
+    var currentEl = slides[current];
+    var nextIndex = (i + slides.length) % slides.length;
+    var nextEl = slides[nextIndex];
+    currentEl.classList.remove('active');
+    setTimeout(function(){
+      currentEl.style.display = 'none';
+      nextEl.style.display = 'block';
+      requestAnimationFrame(function(){
+        nextEl.classList.add('active');
+      });
+      current = nextIndex;
+      animating = false;
+    }, 600);
+  }
+  document.getElementById('t-prev').addEventListener('click', function(){ showSlide(current - 1); });
+  document.getElementById('t-next').addEventListener('click', function(){ showSlide(current + 1); });
+
+  // ---------- Contact form ----------
+  var form = document.getElementById('contact-form');
+  var confirm = document.getElementById('form-confirm');
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    form.style.display = 'none';
+    confirm.style.display = 'block';
+  });
+
+  // ---------- WhatsApp float guard ----------
+  var el = document.getElementById('whatsapp-float');
+  var num = el.getAttribute('data-whatsapp-number');
+  if (!num || num.trim() === '' || num.indexOf('{{') === 0) { el.remove(); }
+  else { el.querySelector('a').href = 'https://wa.me/' + num.replace(/[^0-9]/g,''); }
+
+  // ---------- Instagram guard ----------
+  var ig = document.getElementById('footer-instagram');
+  var igUrl = ig.getAttribute('href');
+  if (!igUrl || igUrl.trim() === '' || igUrl.indexOf('{{') === 0) { ig.remove(); }
+
+})();
+</script>
+
+</body>
+</html>

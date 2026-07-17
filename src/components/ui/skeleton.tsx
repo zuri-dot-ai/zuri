@@ -28,8 +28,7 @@ export function Skeleton({
 }
 
 /**
- * Brand-aligned spinner — the metallic triangle rotates where a generic
- * Loader2 would normally appear. Replaces all `<Loader2 className="animate-spin" />`.
+ * Premium CSS ring spinner — never rotates the logo.
  */
 export function ZuriSpinner({
   size = 32,
@@ -40,19 +39,22 @@ export function ZuriSpinner({
   className?: string;
   label?: string;
 }) {
+  const lg = size >= 28;
   return (
-    <div className={cn("flex items-center justify-center", className)}>
-      <img
-        src="/Zuri_Favicon.png"
-        alt={`${label}…`}
-        width={size}
-        height={size}
-        className="animate-spin object-contain"
-        style={{
-          animationDuration: "1.5s",
-          animationTimingFunction: "linear",
-        }}
+    <div
+      className={cn("flex items-center justify-center", className)}
+      role="status"
+      aria-label={`${label}…`}
+    >
+      <span
+        className={cn("zuri-spinner", lg && "zuri-spinner--lg")}
+        style={
+          size !== 20 && size !== 32
+            ? { width: size, height: size }
+            : undefined
+        }
       />
+      <span className="sr-only">{label}…</span>
     </div>
   );
 }

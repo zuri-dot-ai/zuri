@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{business_name}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --color-bg:#0A0A0A;
+    --color-surface:#161616;
+    --color-text:#F5F1EA;
+    --color-text-muted:#A8A29A;
+    --color-accent:#E8542A;
+    --color-accent-text:#0A0A0A;
+    --color-accent-2:#F2B705;
+    --color-accent-3:#1B7A5E;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--color-bg);
+    color:var(--color-text);
+    font-family:'DM Sans',sans-serif;
+    line-height:1.6;
+    overflow-x:hidden;
+  }
+  h1,h2,h3,.logo-text{
+    font-family:'Bebas Neue',sans-serif;
+    letter-spacing:0.02em;
+    text-transform:uppercase;
+    line-height:1;
+  }
+  img{max-width:100%;display:block;}
+  a{color:inherit;text-decoration:none;}
+  ul{list-style:none;}
+  .container{max-width:1200px;margin:0 auto;padding:0 20px;}
+  section{padding:80px 0;}
+
+  a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible{
+    outline:3px solid var(--color-accent-2);
+    outline-offset:3px;
+  }
+
+  /* NAV */
+  header#site-nav{
+    position:fixed;top:0;left:0;width:100%;z-index:1000;
+    background:transparent;
+    transition:background .3s ease, box-shadow .3s ease, padding .3s ease;
+    padding:24px 0;
+  }
+  header#site-nav.scrolled{
+    background:rgba(10,10,10,0.95);
+    box-shadow:0 2px 20px rgba(0,0,0,0.4);
+    padding:14px 0;
+  }
+  .nav-inner{display:flex;align-items:center;justify-content:space-between;}
+  .logo-text{font-size:1.8rem;color:var(--color-text);}
+  .logo-text span{color:var(--color-accent);}
+  nav.desktop-links{display:none;}
+  nav.desktop-links ul{display:flex;gap:36px;}
+  nav.desktop-links a{
+    font-size:0.85rem;letter-spacing:0.12em;text-transform:uppercase;
+    font-weight:700;position:relative;padding:4px 0;
+  }
+  nav.desktop-links a::after{
+    content:'';position:absolute;left:0;bottom:0;width:0;height:2px;
+    background:var(--color-accent);transition:width .25s ease;
+  }
+  nav.desktop-links a:hover::after{width:100%;}
+  .hamburger{
+    display:flex;flex-direction:column;gap:5px;background:none;border:none;
+    cursor:pointer;padding:8px;z-index:1100;
+  }
+  .hamburger span{width:26px;height:2px;background:var(--color-text);display:block;transition:.3s ease;}
+  .hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+  .hamburger.open span:nth-child(2){opacity:0;}
+  .hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+
+  .drawer{
+    position:fixed;top:0;right:0;height:100vh;width:78%;max-width:340px;
+    background:var(--color-surface);z-index:1050;
+    transform:translateX(100%);transition:transform .35s ease;
+    display:flex;flex-direction:column;justify-content:center;padding:40px;
+    box-shadow:-10px 0 40px rgba(0,0,0,0.5);
+  }
+  .drawer.open{transform:translateX(0);}
+  .drawer ul{display:flex;flex-direction:column;gap:28px;}
+  .drawer a{font-size:1.5rem;font-family:'Bebas Neue',sans-serif;letter-spacing:0.03em;}
+  .drawer-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1040;
+    opacity:0;pointer-events:none;transition:opacity .3s ease;
+  }
+  .drawer-overlay.open{opacity:1;pointer-events:auto;}
+
+  @media (min-width:1025px){
+    nav.desktop-links{display:block;}
+    .hamburger{display:none;}
+  }
+
+  /* HERO */
+  .hero{
+    min-height:100vh;display:flex;align-items:center;position:relative;
+    padding-top:120px;overflow:hidden;
+  }
+  .hero::before{
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(180deg, rgba(10,10,10,0.4) 0%, rgba(10,10,10,0.9) 100%);
+    z-index:1;
+  }
+  .hero-bg-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;}
+  .hero-content{position:relative;z-index:2;}
+  .hero-eyebrow{
+    color:var(--color-accent);font-weight:700;letter-spacing:0.2em;
+    text-transform:uppercase;font-size:0.8rem;margin-bottom:18px;
+    opacity:0;transform:translateX(-30px);transition:opacity .7s ease, transform .7s ease;
+  }
+  .hero h1{
+    font-size:clamp(3rem,12vw,7.5rem);color:var(--color-text);
+    opacity:0;transform:translateX(-40px);transition:opacity .8s ease .1s, transform .8s ease .1s;
+  }
+  .hero h1 span{color:var(--color-accent);}
+  .hero p{
+    max-width:520px;margin-top:22px;color:var(--color-text-muted);font-size:1.1rem;
+    opacity:0;transform:translateX(-30px);transition:opacity .8s ease .25s, transform .8s ease .25s;
+  }
+  .hero-content.in-view .hero-eyebrow,
+  .hero-content.in-view h1,
+  .hero-content.in-view p,
+  .hero-content.in-view .hero-cta{
+    opacity:1;transform:translateX(0);
+  }
+  .hero-cta{
+    margin-top:36px;display:inline-block;
+    opacity:0;transform:translateX(-30px);transition:opacity .8s ease .4s, transform .8s ease .4s;
+  }
+  .btn{
+    display:inline-block;background:var(--color-accent);color:var(--color-accent-text);
+    font-weight:700;padding:16px 36px;text-transform:uppercase;letter-spacing:0.1em;
+    font-size:0.85rem;border:none;cursor:pointer;transition:transform .25s ease, background .25s ease;
+  }
+  .btn:hover{transform:translateY(-3px);background:var(--color-accent-2);}
+  .btn-outline{
+    background:transparent;border:2px solid var(--color-text);color:var(--color-text);
+    padding:14px 34px;
+  }
+  .btn-outline:hover{background:var(--color-text);color:var(--color-bg);}
+
+  /* REVEAL */
+  .reveal{opacity:0;transform:translateY(20px);transition:opacity .7s ease, transform .7s ease;}
+  .reveal.active{opacity:1;transform:translateY(0);}
+  .reveal-stagger.active > *{transition-delay:calc(var(--i) * 0.1s);}
+
+  .section-label{
+    color:var(--color-accent);font-weight:700;letter-spacing:0.2em;
+    text-transform:uppercase;font-size:0.8rem;margin-bottom:12px;display:block;
+  }
+  .section-title{
+    font-size:clamp(2.2rem,6vw,4rem);margin-bottom:20px;
+    opacity:0;transform:scale(0.95);transition:opacity .7s ease, transform .7s ease;
+  }
+  .section-title.active{opacity:1;transform:scale(1);}
+
+  /* ABOUT */
+  .about{background:var(--color-surface);}
+  .about-grid{display:grid;grid-template-columns:1fr;gap:50px;align-items:center;}
+  .about-img-wrap{overflow:hidden;position:relative;}
+  .about-img-wrap img{width:100%;height:100%;object-fit:cover;aspect-ratio:4/5;}
+  .about-body p{color:var(--color-text-muted);font-size:1.05rem;max-width:520px;}
+  @media (min-width:1025px){
+    .about-grid{grid-template-columns:1fr 1.2fr;}
+  }
+
+  /* SERVICES / WORK GRID */
+  .services-grid{
+    display:grid;grid-template-columns:1fr;gap:1px;background:var(--color-surface);
+    margin-top:50px;
+  }
+  .service-card{
+    background:var(--color-bg);padding:44px 34px;position:relative;
+    transition:background .3s ease;
+  }
+  .service-card:hover{background:var(--color-surface);}
+  .service-card .num{
+    font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--color-accent);
+    letter-spacing:0.1em;margin-bottom:18px;display:block;
+  }
+  .service-card h3{font-size:1.6rem;margin-bottom:12px;}
+  .service-card p{color:var(--color-text-muted);font-size:0.95rem;}
+  @media (min-width:481px){
+    .services-grid{grid-template-columns:1fr 1fr;}
+  }
+  @media (min-width:1025px){
+    .services-grid{grid-template-columns:repeat(3,1fr);}
+  }
+
+  /* STRIPE DIVIDER */
+  .stripe-divider{
+    position:relative;height:90px;overflow:hidden;
+    background:repeating-linear-gradient(
+      120deg,
+      var(--color-accent) 0px, var(--color-accent) 60px,
+      var(--color-accent-2) 60px, var(--color-accent-2) 100px,
+      var(--color-accent-3) 100px, var(--color-accent-3) 150px,
+      var(--color-bg) 150px, var(--color-bg) 190px
+    );
+    transform:scaleX(0);transform-origin:left center;
+    transition:transform 1s cubic-bezier(.65,0,.35,1);
+  }
+  .stripe-divider.active{transform:scaleX(1);}
+
+  /* GALLERY */
+  .gallery{background:var(--color-bg);}
+  .gallery-grid{
+    display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:40px;
+  }
+  .gallery-grid img{width:100%;height:100%;object-fit:cover;aspect-ratio:1/1;transition:transform .4s ease;}
+  .gallery-grid a{overflow:hidden;display:block;}
+  .gallery-grid a:hover img{transform:scale(1.06);}
+  @media (min-width:481px){
+    .gallery-grid{grid-template-columns:repeat(3,1fr);}
+    .gallery-grid a:nth-child(1){grid-column:span 2;grid-row:span 2;}
+  }
+
+  /* TESTIMONIALS */
+  .testimonials{background:var(--color-surface);}
+  .testi-grid{display:grid;grid-template-columns:1fr;gap:30px;margin-top:50px;}
+  .testi-card{
+    background:var(--color-bg);padding:36px;border-left:3px solid var(--color-accent);
+  }
+  .testi-card p.quote{font-size:1.15rem;color:var(--color-text);margin-bottom:22px;font-style:italic;}
+  .testi-name{font-weight:700;text-transform:uppercase;letter-spacing:0.05em;font-size:0.9rem;}
+  .testi-role{color:var(--color-text-muted);font-size:0.85rem;}
+  @media (min-width:1025px){
+    .testi-grid{grid-template-columns:repeat(3,1fr);}
+  }
+
+  /* CONTACT */
+  .contact-grid{display:grid;grid-template-columns:1fr;gap:50px;margin-top:50px;}
+  .contact-info p{color:var(--color-text-muted);margin-bottom:10px;}
+  .contact-info a{color:var(--color-accent);font-weight:700;}
+  form#contact-form{display:flex;flex-direction:column;gap:18px;}
+  form#contact-form input,
+  form#contact-form textarea{
+    background:var(--color-surface);border:1px solid #2A2A2A;color:var(--color-text);
+    padding:16px;font-family:'DM Sans',sans-serif;font-size:1rem;
+  }
+  form#contact-form textarea{min-height:130px;resize:vertical;}
+  form#contact-form input::placeholder,
+  form#contact-form textarea::placeholder{color:var(--color-text-muted);}
+  #form-success{
+    display:none;background:var(--color-accent);color:var(--color-accent-text);
+    padding:16px;font-weight:700;text-align:center;
+  }
+  #form-success.show{display:block;}
+  @media (min-width:1025px){
+    .contact-grid{grid-template-columns:1fr 1.3fr;}
+  }
+
+  /* FOOTER */
+  footer{background:var(--color-surface);padding:60px 0 30px;border-top:1px solid #222;}
+  .footer-top{display:flex;flex-direction:column;gap:30px;align-items:flex-start;}
+  .footer-tagline{color:var(--color-text-muted);max-width:400px;}
+  .footer-social{display:flex;gap:18px;}
+  .footer-social a{
+    border:1px solid #333;padding:10px 20px;font-size:0.8rem;letter-spacing:0.08em;
+    text-transform:uppercase;font-weight:700;transition:background .25s ease, color .25s ease;
+  }
+  .footer-social a:hover{background:var(--color-accent);color:var(--color-accent-text);border-color:var(--color-accent);}
+  .footer-bottom{
+    margin-top:50px;padding-top:24px;border-top:1px solid #222;
+    text-align:center;color:var(--color-text-muted);font-size:0.75rem;
+  }
+  .footer-bottom a{color:var(--color-text-muted);text-decoration:underline;}
+  @media (min-width:1025px){
+    .footer-top{flex-direction:row;justify-content:space-between;align-items:center;}
+  }
+
+  /* WHATSAPP FLOAT */
+  #whatsapp-float{
+    position:fixed;bottom:24px;right:24px;z-index:900;
+  }
+  #whatsapp-float a{
+    display:flex;align-items:center;justify-content:center;width:58px;height:58px;
+    background:#25D366;border-radius:50%;box-shadow:0 6px 20px rgba(0,0,0,0.4);
+    transition:transform .25s ease;
+  }
+  #whatsapp-float a:hover{transform:scale(1.08);}
+  #whatsapp-float svg{width:28px;height:28px;fill:#fff;}
+</style>
+</head>
+<body>
+
+<header id="site-nav">
+  <div class="container nav-inner">
+    <a href="#top" class="logo-text">{{business_name}}<span>.</span></a>
+    <nav class="desktop-links" aria-label="Primary navigation">
+      <ul>
+        <li><a href="#about">About</a></li>
+        <li><a href="#services">Work</a></li>
+        <li><a href="#gallery">Gallery</a></li>
+        <li><a href="#testimonials">Reviews</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+    <button class="hamburger" id="hamburger-btn" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-drawer">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<div class="drawer-overlay" id="drawer-overlay"></div>
+<nav class="drawer" id="mobile-drawer" aria-label="Mobile navigation">
+  <ul>
+    <li><a href="#about">About</a></li>
+    <li><a href="#services">Work</a></li>
+    <li><a href="#gallery">Gallery</a></li>
+    <li><a href="#testimonials">Reviews</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<main id="top">
+
+  <section class="hero" id="hero">
+    <img class="hero-bg-img" src="https://picsum.photos/1600/1200?random=101" alt="{{business_name}} hero visual" data-image-slot="hero">
+    <div class="container hero-content" id="hero-content">
+      <span class="hero-eyebrow">Made in Lagos</span>
+      <h1>{{tagline}} <span>Loud.</span></h1>
+      <p>{{about_body}}</p>
+      <a href="#contact" class="hero-cta btn">Get In Touch</a>
+    </div>
+  </section>
+
+  <section class="about" id="about">
+    <div class="container about-grid">
+      <div class="about-img-wrap reveal">
+        <img src="https://picsum.photos/700/900?random=102" alt="About {{business_name}}" data-image-slot="about">
+      </div>
+      <div class="about-body reveal">
+        <span class="section-label">Our Story</span>
+        <h2 class="section-title">Built On The Street, Refined For The World</h2>
+        <p>{{about_body}}</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="services" id="services">
+    <div class="container">
+      <span class="section-label reveal">What We Do</span>
+      <h2 class="section-title reveal">Services &amp; Work</h2>
+      <div class="services-grid reveal-stagger reveal">
+        <div class="service-card" style="--i:0">
+          <span class="num">01</span>
+          <h3>{{service_1_title}}</h3>
+          <p>{{service_1_description}}</p>
+        </div>
+        <div class="service-card" style="--i:1">
+          <span class="num">02</span>
+          <h3>{{service_2_title}}</h3>
+          <p>{{service_2_description}}</p>
+        </div>
+        <div class="service-card" style="--i:2">
+          <span class="num">03</span>
+          <h3>{{service_3_title}}</h3>
+          <p>{{service_3_description}}</p>
+        </div>
+        <div class="service-card" hidden data-optional-slot="4" style="--i:3">
+          <span class="num">04</span>
+          <h3>{{service_4_title}}</h3>
+          <p>{{service_4_description}}</p>
+        </div>
+        <div class="service-card" hidden data-optional-slot="5" style="--i:4">
+          <span class="num">05</span>
+          <h3>{{service_5_title}}</h3>
+          <p>{{service_5_description}}</p>
+        </div>
+        <div class="service-card" hidden data-optional-slot="6" style="--i:5">
+          <span class="num">06</span>
+          <h3>{{service_6_title}}</h3>
+          <p>{{service_6_description}}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="stripe-divider reveal" aria-hidden="true"></div>
+
+  <section class="gallery" id="gallery">
+    <div class="container">
+      <span class="section-label reveal">The Lookbook</span>
+      <h2 class="section-title reveal">Gallery</h2>
+      <div class="gallery-grid reveal-stagger reveal">
+        <a href="#" style="--i:0"><img src="https://picsum.photos/900/900?random=103" alt="{{business_name}} gallery image 1" data-image-slot="gallery_1"></a>
+        <a href="#" style="--i:1"><img src="https://picsum.photos/700/700?random=104" alt="{{business_name}} gallery image 2" data-image-slot="gallery_2"></a>
+        <a href="#" style="--i:2"><img src="https://picsum.photos/700/700?random=105" alt="{{business_name}} gallery image 3" data-image-slot="gallery_3"></a>
+        <a href="#" style="--i:3"><img src="https://picsum.photos/700/700?random=106" alt="{{business_name}} gallery image 4" data-image-slot="gallery_4"></a>
+        <a href="#" style="--i:4"><img src="https://picsum.photos/700/700?random=107" alt="{{business_name}} gallery image 5" data-image-slot="gallery_5"></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="testimonials" id="testimonials">
+    <div class="container">
+      <span class="section-label reveal">Word On The Street</span>
+      <h2 class="section-title reveal">Testimonials</h2>
+      <div class="testi-grid reveal-stagger reveal">
+        <div class="testi-card" style="--i:0">
+          <p class="quote">"{{testimonial_1_quote}}"</p>
+          <p class="testi-name">{{testimonial_1_name}}</p>
+          <p class="testi-role">{{testimonial_1_role}}</p>
+        </div>
+        <div class="testi-card" style="--i:1">
+          <p class="quote">"{{testimonial_2_quote}}"</p>
+          <p class="testi-name">{{testimonial_2_name}}</p>
+          <p class="testi-role">{{testimonial_2_role}}</p>
+        </div>
+        <div class="testi-card" style="--i:2">
+          <p class="quote">"{{testimonial_3_quote}}"</p>
+          <p class="testi-name">{{testimonial_3_name}}</p>
+          <p class="testi-role">{{testimonial_3_role}}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="contact" id="contact">
+    <div class="container">
+      <span class="section-label reveal">Reach Out</span>
+      <h2 class="section-title reveal">Let's Talk</h2>
+      <div class="contact-grid">
+        <div class="contact-info reveal">
+          <p>Phone: <a href="tel:{{phone_number}}">{{phone_number}}</a></p>
+          <p>Email: <a href="mailto:{{email_address}}">{{email_address}}</a></p>
+          <p>Address: {{address}}</p>
+        </div>
+        <div class="reveal">
+          <form id="contact-form" novalidate>
+            <label for="name" class="sr-only" style="position:absolute;left:-9999px;">Name</label>
+            <input type="text" id="name" name="name" placeholder="Your Name" required>
+            <label for="email" class="sr-only" style="position:absolute;left:-9999px;">Email</label>
+            <input type="email" id="email" name="email" placeholder="Your Email" required>
+            <label for="message" class="sr-only" style="position:absolute;left:-9999px;">Message</label>
+            <textarea id="message" name="message" placeholder="Your Message" required></textarea>
+            <button type="submit" class="btn">Send Message</button>
+            <div id="form-success" role="status">Message sent. We'll be in touch soon.</div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="container">
+    <div class="footer-top">
+      <div>
+        <a href="#top" class="logo-text">{{business_name}}<span style="color:var(--color-accent);">.</span></a>
+        <p class="footer-tagline">{{tagline}}</p>
+      </div>
+      <div class="footer-social" id="footer-social" data-instagram="{{instagram_url}}">
+        <a href="{{instagram_url}}" id="instagram-link" target="_blank" rel="noopener">Instagram</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; <span id="year"></span> {{business_name}}. All rights reserved. &nbsp;|&nbsp; <a href="#top">Powered by Zuri</a></p>
+    </div>
+  </div>
+</footer>
+
+<div id="whatsapp-float" data-whatsapp-number="{{whatsapp_number}}">
+  <a href="#" aria-label="Chat on WhatsApp" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.198.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12.001 2C6.478 2 2 6.477 2 12c0 1.888.525 3.657 1.437 5.163L2 22l4.955-1.398A9.94 9.94 0 0012 22c5.523 0 10-4.477 10-10S17.524 2 12.001 2zm0 18a8.01 8.01 0 01-4.079-1.116l-.293-.174-3.024.853.826-3.017-.19-.31A7.955 7.955 0 014 12c0-4.411 3.589-8 8.001-8C16.412 4 20 7.589 20 12s-3.588 8-7.999 8z"/></svg>
+  </a>
+</div>
+
+<script>
+  // Nav scroll state
+  var siteNav = document.getElementById('site-nav');
+  window.addEventListener('scroll', function(){
+    if (window.scrollY > 60) { siteNav.classList.add('scrolled'); }
+    else { siteNav.classList.remove('scrolled'); }
+  });
+
+  // Hamburger drawer
+  var hamburgerBtn = document.getElementById('hamburger-btn');
+  var drawer = document.getElementById('mobile-drawer');
+  var overlay = document.getElementById('drawer-overlay');
+  function closeDrawer(){
+    hamburgerBtn.classList.remove('open');
+    hamburgerBtn.setAttribute('aria-expanded','false');
+    drawer.classList.remove('open');
+    overlay.classList.remove('open');
+  }
+  hamburgerBtn.addEventListener('click', function(){
+    var isOpen = drawer.classList.toggle('open');
+    hamburgerBtn.classList.toggle('open', isOpen);
+    hamburgerBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    overlay.classList.toggle('open', isOpen);
+  });
+  overlay.addEventListener('click', closeDrawer);
+  drawer.querySelectorAll('a').forEach(function(a){ a.addEventListener('click', closeDrawer); });
+
+  // Hero entrance
+  window.addEventListener('DOMContentLoaded', function(){
+    setTimeout(function(){
+      document.getElementById('hero-content').classList.add('in-view');
+    }, 150);
+  });
+
+  // Scroll reveal
+  var revealEls = document.querySelectorAll('.reveal');
+  var titleEls = document.querySelectorAll('.section-title');
+  var stripeEl = document.querySelector('.stripe-divider');
+  var observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if (entry.isIntersecting) {
+        entry.target.classList.add('active');
+      }
+    });
+  }, { threshold: 0.15 });
+  revealEls.forEach(function(el){ observer.observe(el); });
+  titleEls.forEach(function(el){ observer.observe(el); });
+  if (stripeEl) { observer.observe(stripeEl); }
+
+  // Contact form
+  var contactForm = document.getElementById('contact-form');
+  var formSuccess = document.getElementById('form-success');
+  contactForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    formSuccess.classList.add('show');
+    contactForm.reset();
+  });
+
+  // Footer year
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  // Instagram optional hide
+  (function(){
+    var wrap = document.getElementById('footer-social');
+    var link = document.getElementById('instagram-link');
+    var url = wrap.getAttribute('data-instagram');
+    if (!url || url.trim() === '' || url.indexOf('{{') === 0) {
+      wrap.remove();
+    } else {
+      link.setAttribute('href', url);
+    }
+  })();
+
+  // WhatsApp float
+  (function(){
+    var el = document.getElementById('whatsapp-float');
+    var num = el.getAttribute('data-whatsapp-number');
+    if (!num || num.trim() === '' || num.indexOf('{{') === 0) { el.remove(); }
+    else { el.querySelector('a').href = 'https://wa.me/' + num.replace(/[^0-9]/g,''); }
+  })();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aura Spa Ikoyi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --color-bg:#12100E;
+    --color-surface:#1A1714;
+    --color-text:#F3EEE6;
+    --color-text-muted:#B8AFA2;
+    --color-accent:#D4B678;
+    --color-accent-text:#12100E;
+    --font-display:'Cormorant Garamond', serif;
+    --font-body:'Raleway', sans-serif;
+  }
+
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--color-bg);
+    color:var(--color-text);
+    font-family:var(--font-body);
+    font-weight:300;
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  img{max-width:100%;display:block;}
+  a{color:inherit;text-decoration:none;}
+  ul{list-style:none;}
+  button{font-family:inherit;cursor:pointer;}
+  h1,h2,h3,h4{font-family:var(--font-display);font-weight:400;letter-spacing:0.02em;}
+  .container{
+    width:100%;
+    max-width:1200px;
+    margin:0 auto;
+    padding:0 24px;
+  }
+  a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible{
+    outline:2px solid var(--color-accent);
+    outline-offset:3px;
+  }
+
+  /* ---------- NAV ---------- */
+  .nav{
+    position:fixed;
+    top:0;left:0;right:0;
+    z-index:1000;
+    padding:22px 0;
+    background:transparent;
+    transition:background .4s ease, padding .4s ease, box-shadow .4s ease;
+  }
+  .nav.scrolled{
+    background:rgba(18,16,14,0.94);
+    padding:14px 0;
+    box-shadow:0 4px 24px rgba(0,0,0,0.3);
+    backdrop-filter:blur(6px);
+  }
+  .nav-inner{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .nav-logo{
+    font-family:var(--font-display);
+    font-size:1.6rem;
+    letter-spacing:0.04em;
+    color:var(--color-text);
+  }
+  .nav-links{
+    display:none;
+    gap:36px;
+  }
+  .nav-links a{
+    font-size:0.82rem;
+    text-transform:uppercase;
+    letter-spacing:0.14em;
+    color:var(--color-text-muted);
+    transition:color .3s ease;
+    position:relative;
+  }
+  .nav-links a:hover{color:var(--color-accent);}
+  .hamburger{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+    background:none;
+    border:none;
+    padding:8px;
+    z-index:1100;
+  }
+  .hamburger span{
+    width:24px;height:1px;
+    background:var(--color-text);
+    transition:all .3s ease;
+  }
+  .hamburger.open span:nth-child(1){transform:translateY(6px) rotate(45deg);}
+  .hamburger.open span:nth-child(2){opacity:0;}
+  .hamburger.open span:nth-child(3){transform:translateY(-6px) rotate(-45deg);}
+
+  .drawer{
+    position:fixed;
+    top:0;right:0;
+    height:100vh;
+    width:min(320px, 80vw);
+    background:var(--color-surface);
+    z-index:1050;
+    transform:translateX(100%);
+    transition:transform .45s cubic-bezier(.77,0,.18,1);
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    justify-content:center;
+    gap:28px;
+    padding:40px;
+    box-shadow:-10px 0 40px rgba(0,0,0,0.4);
+  }
+  .drawer.open{transform:translateX(0);}
+  .drawer a{
+    font-size:1.2rem;
+    font-family:var(--font-display);
+    color:var(--color-text);
+    letter-spacing:0.03em;
+  }
+  .drawer a:hover{color:var(--color-accent);}
+  .drawer-overlay{
+    position:fixed;inset:0;
+    background:rgba(0,0,0,0.5);
+    z-index:1040;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .4s ease;
+  }
+  .drawer-overlay.open{opacity:1;pointer-events:auto;}
+
+  @media (min-width:1025px){
+    .nav-links{display:flex;}
+    .hamburger{display:none;}
+  }
+
+  /* ---------- BUTTONS ---------- */
+  .btn{
+    display:inline-block;
+    padding:14px 34px;
+    font-size:0.78rem;
+    text-transform:uppercase;
+    letter-spacing:0.16em;
+    border:1px solid var(--color-accent);
+    transition:all .35s ease;
+  }
+  .btn-primary{
+    background:var(--color-accent);
+    color:var(--color-accent-text);
+  }
+  .btn-primary:hover{
+    background:transparent;
+    color:var(--color-accent);
+  }
+  .btn-secondary{
+    background:transparent;
+    color:var(--color-text);
+    border-color:rgba(243,238,230,0.4);
+  }
+  .btn-secondary:hover{
+    border-color:var(--color-accent);
+    color:var(--color-accent);
+  }
+  .cta-row{
+    display:flex;
+    gap:18px;
+    flex-wrap:wrap;
+  }
+
+  /* ---------- HERO ---------- */
+  .hero{
+    position:relative;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    overflow:hidden;
+  }
+  .hero-bg{
+    position:absolute;inset:0;
+    width:100%;height:100%;
+    object-fit:cover;
+    filter:brightness(0.6);
+  }
+  .hero-overlay{
+    position:absolute;inset:0;
+    background:linear-gradient(180deg, rgba(18,16,14,0.35) 0%, rgba(18,16,14,0.55) 60%, rgba(18,16,14,0.95) 100%);
+  }
+  .hero-content{
+    position:relative;
+    z-index:2;
+    max-width:760px;
+    padding:0 24px;
+  }
+  .hero-content .eyebrow{
+    font-size:0.78rem;
+    text-transform:uppercase;
+    letter-spacing:0.3em;
+    color:var(--color-accent);
+    margin-bottom:22px;
+    display:block;
+  }
+  .hero-content h1{
+    font-size:clamp(2.4rem, 6vw, 4.6rem);
+    font-weight:400;
+    line-height:1.15;
+    margin-bottom:22px;
+  }
+  .hero-content p{
+    font-size:1rem;
+    color:var(--color-text-muted);
+    max-width:520px;
+    margin:0 auto 38px;
+  }
+  .hero-content .cta-row{
+    justify-content:center;
+  }
+
+  /* ---------- SECTION GENERIC ---------- */
+  section{
+    padding:110px 0;
+    position:relative;
+  }
+  .section-head{
+    text-align:center;
+    max-width:640px;
+    margin:0 auto 64px;
+  }
+  .section-head .eyebrow{
+    font-size:0.75rem;
+    text-transform:uppercase;
+    letter-spacing:0.3em;
+    color:var(--color-accent);
+    display:block;
+    margin-bottom:16px;
+  }
+  .section-head h2{
+    font-size:clamp(1.9rem, 4vw, 2.8rem);
+    font-weight:400;
+  }
+  .section-head p{
+    margin-top:18px;
+    color:var(--color-text-muted);
+  }
+
+  /* ---------- ABOUT ---------- */
+  .about{
+    background:var(--color-surface);
+  }
+  .about-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:50px;
+    align-items:center;
+  }
+  .about-image{
+    width:100%;
+    aspect-ratio:4/5;
+    object-fit:cover;
+  }
+  .about-text .eyebrow{
+    font-size:0.75rem;
+    text-transform:uppercase;
+    letter-spacing:0.3em;
+    color:var(--color-accent);
+    display:block;
+    margin-bottom:16px;
+  }
+  .about-text h2{
+    font-size:clamp(1.8rem, 4vw, 2.6rem);
+    margin-bottom:22px;
+  }
+  .about-text p{
+    color:var(--color-text-muted);
+    margin-bottom:26px;
+  }
+  .founder-line{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    border-top:1px solid rgba(212,182,120,0.25);
+    padding-top:18px;
+  }
+  .founder-line .name{
+    font-family:var(--font-display);
+    font-size:1.15rem;
+    color:var(--color-text);
+  }
+  .founder-line .title{
+    font-size:0.78rem;
+    text-transform:uppercase;
+    letter-spacing:0.14em;
+    color:var(--color-text-muted);
+  }
+
+  @media (min-width:768px){
+    .about-grid{
+      grid-template-columns:1fr 1fr;
+    }
+  }
+
+  /* ---------- BEFORE / AFTER ---------- */
+  .transform{
+    background:var(--color-bg);
+  }
+  .transform-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:44px;
+  }
+  .transform-pair{
+    text-align:center;
+  }
+  .transform-images{
+    display:flex;
+    align-items:stretch;
+    position:relative;
+  }
+  .transform-images img{
+    width:50%;
+    aspect-ratio:3/4;
+    object-fit:cover;
+  }
+  .transform-divider{
+    width:1px;
+    background:var(--color-accent);
+    flex-shrink:0;
+  }
+  .transform-labels{
+    display:flex;
+    justify-content:space-between;
+    font-size:0.68rem;
+    text-transform:uppercase;
+    letter-spacing:0.18em;
+    color:var(--color-text-muted);
+    margin-top:14px;
+  }
+  .transform-caption{
+    margin-top:10px;
+    font-family:var(--font-display);
+    font-size:1.1rem;
+    color:var(--color-text);
+  }
+
+  @media (min-width:768px){
+    .transform-grid{
+      grid-template-columns:repeat(3, 1fr);
+    }
+  }
+
+  /* ---------- SERVICES ---------- */
+  .services{
+    background:var(--color-surface);
+  }
+  .services-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:44px;
+  }
+  .service-card{
+    padding-top:26px;
+    border-top:1px solid rgba(212,182,120,0.3);
+  }
+  .service-card .num{
+    font-family:var(--font-display);
+    font-size:0.85rem;
+    color:var(--color-accent);
+    letter-spacing:0.1em;
+    display:block;
+    margin-bottom:14px;
+  }
+  .service-card h3{
+    font-size:1.4rem;
+    margin-bottom:12px;
+  }
+  .service-card p{
+    color:var(--color-text-muted);
+    font-size:0.92rem;
+  }
+
+  @media (min-width:481px) and (max-width:1024px){
+    .services-grid{grid-template-columns:repeat(2, 1fr);}
+  }
+  @media (min-width:1025px){
+    .services-grid{grid-template-columns:repeat(3, 1fr);}
+  }
+
+  /* ---------- TESTIMONIALS ---------- */
+  .testimonials{
+    background:var(--color-bg);
+  }
+  .testi-track{
+    display:flex;
+    gap:32px;
+    overflow-x:auto;
+    scroll-snap-type:x mandatory;
+    padding-bottom:12px;
+    -webkit-overflow-scrolling:touch;
+  }
+  .testi-track::-webkit-scrollbar{height:4px;}
+  .testi-track::-webkit-scrollbar-thumb{background:rgba(212,182,120,0.4);}
+  .testi-card{
+    flex:0 0 85%;
+    scroll-snap-align:start;
+    background:var(--color-surface);
+    padding:44px 34px;
+    border:1px solid rgba(212,182,120,0.15);
+  }
+  .testi-card .quote-mark{
+    font-family:var(--font-display);
+    font-size:3rem;
+    color:var(--color-accent);
+    line-height:1;
+    display:block;
+    margin-bottom:12px;
+  }
+  .testi-card p.quote{
+    font-family:var(--font-display);
+    font-size:1.25rem;
+    color:var(--color-text);
+    margin-bottom:26px;
+  }
+  .testi-card .name{
+    font-size:0.9rem;
+    letter-spacing:0.05em;
+    color:var(--color-text);
+  }
+  .testi-card .role{
+    font-size:0.75rem;
+    text-transform:uppercase;
+    letter-spacing:0.14em;
+    color:var(--color-text-muted);
+    margin-top:4px;
+  }
+
+  @media (min-width:768px){
+    .testi-card{flex:0 0 44%;}
+  }
+  @media (min-width:1025px){
+    .testi-card{flex:0 0 30%;}
+  }
+
+  /* ---------- CONTACT ---------- */
+  .contact{
+    background:var(--color-surface);
+  }
+  .contact-inner{
+    max-width:560px;
+    margin:0 auto;
+    text-align:center;
+  }
+  .contact-info{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin-bottom:48px;
+    color:var(--color-text-muted);
+    font-size:0.92rem;
+  }
+  .contact-info a{transition:color .3s ease;}
+  .contact-info a:hover{color:var(--color-accent);}
+  form#contact-form{
+    display:flex;
+    flex-direction:column;
+    gap:22px;
+    text-align:left;
+  }
+  .field{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .field label{
+    font-size:0.72rem;
+    text-transform:uppercase;
+    letter-spacing:0.14em;
+    color:var(--color-text-muted);
+  }
+  .field input,
+  .field textarea{
+    background:transparent;
+    border:none;
+    border-bottom:1px solid rgba(243,238,230,0.25);
+    color:var(--color-text);
+    font-family:var(--font-body);
+    font-size:0.95rem;
+    padding:10px 2px;
+    transition:border-color .3s ease;
+  }
+  .field input:focus,
+  .field textarea:focus{
+    border-color:var(--color-accent);
+  }
+  .field textarea{resize:vertical;min-height:100px;}
+  form#contact-form .btn{
+    align-self:center;
+    margin-top:10px;
+    border:1px solid var(--color-accent);
+    background:transparent;
+    color:var(--color-accent);
+  }
+  form#contact-form .btn:hover{
+    background:var(--color-accent);
+    color:var(--color-accent-text);
+  }
+  .form-success{
+    display:none;
+    text-align:center;
+    font-family:var(--font-display);
+    font-size:1.2rem;
+    color:var(--color-accent);
+    padding:20px 0;
+  }
+  .form-success.active{display:block;}
+  #contact-form.hidden-form{display:none;}
+
+  /* ---------- FOOTER ---------- */
+  footer{
+    background:var(--color-bg);
+    border-top:1px solid rgba(212,182,120,0.15);
+    padding:60px 0 34px;
+    text-align:center;
+  }
+  footer .footer-logo{
+    font-family:var(--font-display);
+    font-size:1.5rem;
+    margin-bottom:10px;
+  }
+  footer .footer-tagline{
+    color:var(--color-text-muted);
+    font-size:0.9rem;
+    margin-bottom:26px;
+  }
+  .footer-social{
+    display:flex;
+    justify-content:center;
+    gap:22px;
+    margin-bottom:36px;
+  }
+  .footer-social a{
+    font-size:0.75rem;
+    text-transform:uppercase;
+    letter-spacing:0.14em;
+    color:var(--color-text-muted);
+    border-bottom:1px solid transparent;
+    padding-bottom:2px;
+    transition:color .3s ease, border-color .3s ease;
+  }
+  .footer-social a:hover{
+    color:var(--color-accent);
+    border-color:var(--color-accent);
+  }
+  .powered-by{
+    font-size:0.72rem;
+    color:rgba(184,175,162,0.6);
+  }
+  .powered-by a{
+    color:rgba(184,175,162,0.8);
+    text-decoration:underline;
+  }
+
+  /* ---------- WHATSAPP FLOAT ---------- */
+  #whatsapp-float{
+    position:fixed;
+    bottom:26px;
+    right:26px;
+    z-index:1200;
+  }
+  #whatsapp-float a{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:56px;
+    height:56px;
+    background:#25D366;
+    border-radius:50%;
+    box-shadow:0 6px 20px rgba(0,0,0,0.35);
+    transition:transform .3s ease;
+  }
+  #whatsapp-float a:hover{transform:scale(1.08);}
+  #whatsapp-float svg{width:28px;height:28px;fill:#fff;}
+
+  /* ---------- REVEAL ANIMATIONS ---------- */
+  .reveal{
+    opacity:0;
+    transform:translateY(24px);
+    transition:opacity .9s ease, transform .9s ease;
+  }
+  .reveal.active{
+    opacity:1;
+    transform:translateY(0);
+  }
+  .reveal-stagger.active > *{
+    transition-delay:calc(var(--stagger-index, 0) * 0.12s);
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= NAV ================= -->
+<nav class="nav" id="site-nav">
+  <div class="container nav-inner">
+    <a href="#hero" class="nav-logo">Aura Spa Ikoyi</a>
+    <ul class="nav-links">
+      <li><a href="#services">Services</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#gallery">Gallery</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false" aria-controls="drawer">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<div class="drawer-overlay" id="drawer-overlay"></div>
+<div class="drawer" id="drawer">
+  <a href="#services" class="drawer-link">Services</a>
+  <a href="#about" class="drawer-link">About</a>
+  <a href="#gallery" class="drawer-link">Gallery</a>
+  <a href="#contact" class="drawer-link">Contact</a>
+</div>
+
+<!-- ================= HERO ================= -->
+<header class="hero" id="hero">
+  <img class="hero-bg" src="/images/fallbacks/luxury-aspirational.jpg" data-image-slot="hero" alt="Aura Spa Ikoyi interior">
+  <div class="hero-overlay"></div>
+  <div class="hero-content reveal">
+    <span class="eyebrow">Aura Spa Ikoyi</span>
+    <h1>Stillness, restored</h1>
+    <p>Quiet, appointment-only wellness suites with organic botanical products</p>
+    <div class="cta-row">
+      <a href="#contact" class="btn btn-primary">Book Your Experience</a>
+      <a href="#services" class="btn btn-secondary">Explore Services</a>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ================= ABOUT / FOUNDER ================= -->
+  <section class="about" id="about">
+    <div class="container about-grid">
+      <img class="about-image reveal" src="/images/fallbacks/luxury-aspirational.jpg" data-image-slot="about" alt="Founder of Aura Spa Ikoyi">
+      <div class="about-text reveal">
+        <span class="eyebrow">Our Story</span>
+        <h2>A Legacy of Refinement</h2>
+        <p>Quiet, appointment-only wellness suites with organic botanical products</p>
+        <div class="founder-line">
+          <span class="name">Aura Spa Ikoyi</span>
+          <span class="title">Aura Spa Ikoyi</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= BEFORE / AFTER ================= -->
+  <section class="transform" id="gallery">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">Transformations</span>
+        <h2>Before &amp; After</h2>
+        <p>A glimpse into the artistry and precision behind every visit.</p>
+      </div>
+      <div class="transform-grid">
+        <div class="transform-pair reveal">
+          <div class="transform-images">
+            <img src="/images/fallbacks/luxury-aspirational.jpg" data-image-slot="before_1" alt="Before transformation 1">
+            <div class="transform-divider"></div>
+            <img src="/images/fallbacks/luxury-aspirational.jpg" data-image-slot="after_1" alt="After transformation 1">
+          </div>
+          <div class="transform-labels"><span>Before</span><span>After</span></div>
+          <p class="transform-caption">Radiance Restored</p>
+        </div>
+        <div class="transform-pair reveal">
+          <div class="transform-images">
+            <img src="/images/fallbacks/luxury-aspirational.jpg" data-image-slot="before_2" alt="Before transformation 2">
+            <div class="transform-divider"></div>
+            <img src="/images/fallbacks/luxury-aspirational.jpg" data-image-slot="after_2" alt="After transformation 2">
+          </div>
+          <div class="transform-labels"><span>Before</span><span>After</span></div>
+          <p class="transform-caption">Timeless Elegance</p>
+        </div>
+        <div class="transform-pair reveal">
+          <div class="transform-images">
+            <img src="/images/fallbacks/luxury-aspirational.jpg" data-image-slot="before_3" alt="Before transformation 3">
+            <div class="transform-divider"></div>
+            <img src="/images/fallbacks/luxury-aspirational.jpg" data-image-slot="after_3" alt="After transformation 3">
+          </div>
+          <div class="transform-labels"><span>Before</span><span>After</span></div>
+          <p class="transform-caption">Effortless Renewal</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SERVICES ================= -->
+  <section class="services" id="services">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">What We Offer</span>
+        <h2>Signature Services</h2>
+      </div>
+      <div class="services-grid reveal-stagger">
+        <div class="service-card reveal" style="--stagger-index:0">
+          <span class="num">01</span>
+          <h3>Deep tissue massage</h3>
+          <p>Professional Deep tissue massage from Aura Spa Ikoyi.</p>
+        </div>
+        <div class="service-card reveal" style="--stagger-index:1">
+          <span class="num">02</span>
+          <h3>Facial treatments</h3>
+          <p>Professional Facial treatments from Aura Spa Ikoyi.</p>
+        </div>
+        <div class="service-card reveal" style="--stagger-index:2">
+          <span class="num">03</span>
+          <h3>Bridal packages</h3>
+          <p>Professional Bridal packages from Aura Spa Ikoyi.</p>
+        </div>
+        <div class="service-card reveal" style="--stagger-index:3" hidden data-optional-slot="4">
+          <span class="num">04</span>
+          <h3>Sauna &amp; steam</h3>
+          <p>Professional Sauna &amp; steam from Aura Spa Ikoyi.</p>
+        </div>
+        <div class="service-card reveal" style="--stagger-index:4" hidden data-optional-slot="5">
+          <span class="num">05</span>
+          <h3></h3>
+          <p></p>
+        </div>
+        <div class="service-card reveal" style="--stagger-index:5" hidden data-optional-slot="6">
+          <span class="num">06</span>
+          <h3></h3>
+          <p></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TESTIMONIALS ================= -->
+  <section class="testimonials" id="testimonials">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">Client Voices</span>
+        <h2>What They Say</h2>
+      </div>
+      <div class="testi-track reveal">
+        <article class="testi-card">
+          <span class="quote-mark" aria-hidden="true">&#8220;</span>
+          <p class="quote">Working with Aura Spa Ikoyi was a great experience. Highly recommended.</p>
+          <p class="name">Adaeze Okafor</p>
+          <p class="role">Client</p>
+        </article>
+        <article class="testi-card">
+          <span class="quote-mark" aria-hidden="true">&#8220;</span>
+          <p class="quote">Working with Aura Spa Ikoyi was a great experience. Highly recommended.</p>
+          <p class="name">Chinedu Eze</p>
+          <p class="role">Client</p>
+        </article>
+        <article class="testi-card">
+          <span class="quote-mark" aria-hidden="true">&#8220;</span>
+          <p class="quote">Working with Aura Spa Ikoyi was a great experience. Highly recommended.</p>
+          <p class="name">Fatima Bello</p>
+          <p class="role">Client</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CONTACT ================= -->
+  <section class="contact" id="contact">
+    <div class="container contact-inner">
+      <div class="section-head reveal" style="margin-bottom:36px;">
+        <span class="eyebrow">Get In Touch</span>
+        <h2>Reserve Your Visit</h2>
+      </div>
+      <div class="contact-info reveal">
+        <a href="tel:Aura Spa Ikoyi">Aura Spa Ikoyi</a>
+        <a href="mailto:Aura Spa Ikoyi">Aura Spa Ikoyi</a>
+        <span>Aura Spa Ikoyi</span>
+      </div>
+      <form id="contact-form" class="reveal" novalidate>
+        <div class="field">
+          <label for="name">Name</label>
+          <input type="text" id="name" name="name" required>
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required>
+        </div>
+        <div class="field">
+          <label for="message">Message</label>
+          <textarea id="message" name="message" required></textarea>
+        </div>
+        <button type="submit" class="btn">Send Message</button>
+      </form>
+      <div class="form-success reveal" id="form-success">Message sent. We'll be in touch shortly.</div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ================= FOOTER ================= -->
+<footer>
+  <div class="container">
+    <div class="footer-logo">Aura Spa Ikoyi</div>
+    <p class="footer-tagline">Stillness, restored</p>
+    <div class="footer-social" id="footer-social">
+      <a href="Aura Spa Ikoyi" id="instagram-link" target="_blank" rel="noopener">Instagram</a>
+    </div>
+    <p class="powered-by">Powered by <a href="#" target="_blank" rel="noopener">Zuri</a></p>
+  </div>
+</footer>
+
+<!-- ================= WHATSAPP FLOAT ================= -->
+<div id="whatsapp-float" data-whatsapp-number="Aura Spa Ikoyi">
+  <a href="#" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.6 6.32A7.85 7.85 0 0 0 12.05 4a7.94 7.94 0 0 0-6.9 11.9L4 20l4.2-1.1a7.9 7.9 0 0 0 3.85 1h.01a7.94 7.94 0 0 0 5.54-13.58zM12.05 18.4h-.01a6.55 6.55 0 0 1-3.35-.92l-.24-.14-2.5.66.67-2.43-.16-.25a6.6 6.6 0 1 1 12.24-3.5 6.56 6.56 0 0 1-6.65 6.58zm3.6-4.93c-.2-.1-1.17-.58-1.35-.64-.18-.07-.31-.1-.44.1-.13.2-.5.64-.62.77-.11.13-.23.15-.42.05-.2-.1-.85-.31-1.61-1-.6-.53-1-1.19-1.11-1.39-.12-.2-.01-.3.09-.4.09-.1.2-.24.3-.36.1-.12.13-.2.2-.34.07-.13.03-.25-.02-.35-.05-.1-.44-1.06-.6-1.45-.16-.38-.32-.33-.44-.34h-.38c-.13 0-.34.05-.52.25-.18.2-.68.66-.68 1.62s.7 1.88.8 2.01c.1.13 1.37 2.1 3.33 2.94.47.2.83.32 1.12.41.47.15.9.13 1.24.08.38-.06 1.17-.48 1.33-.94.16-.46.16-.85.11-.94-.05-.09-.18-.14-.38-.24z"/></svg>
+  </a>
+</div>
+
+<script>
+  // ---- Nav scroll state ----
+  var nav = document.getElementById('site-nav');
+  window.addEventListener('scroll', function(){
+    if(window.scrollY > 40){ nav.classList.add('scrolled'); }
+    else{ nav.classList.remove('scrolled'); }
+  });
+
+  // ---- Hamburger / drawer ----
+  var hamburger = document.getElementById('hamburger');
+  var drawer = document.getElementById('drawer');
+  var overlay = document.getElementById('drawer-overlay');
+
+  function closeDrawer(){
+    hamburger.classList.remove('open');
+    hamburger.setAttribute('aria-expanded','false');
+    drawer.classList.remove('open');
+    overlay.classList.remove('open');
+  }
+  function toggleDrawer(){
+    var isOpen = drawer.classList.toggle('open');
+    hamburger.classList.toggle('open', isOpen);
+    hamburger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    overlay.classList.toggle('open', isOpen);
+  }
+  hamburger.addEventListener('click', toggleDrawer);
+  overlay.addEventListener('click', closeDrawer);
+  document.querySelectorAll('.drawer-link').forEach(function(link){
+    link.addEventListener('click', closeDrawer);
+  });
+
+  // ---- Scroll reveal ----
+  var revealEls = document.querySelectorAll('.reveal');
+  var observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(entry.isIntersecting){
+        entry.target.classList.add('active');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  revealEls.forEach(function(el){ observer.observe(el); });
+
+  // ---- Contact form ----
+  var form = document.getElementById('contact-form');
+  var success = document.getElementById('form-success');
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    form.classList.add('hidden-form');
+    success.classList.add('active');
+  });
+
+  // ---- Instagram optional hide ----
+  (function(){
+    var igLink = document.getElementById('instagram-link');
+    var href = igLink.getAttribute('href');
+    if(!href || href.trim() === '' || href.indexOf('{{') === 0){
+      igLink.remove();
+    }
+  })();
+</script>
+
+<!-- WhatsApp float required script -->
+<script>
+  (function(){
+    var el = document.getElementById('whatsapp-float');
+    var num = el.getAttribute('data-whatsapp-number');
+    if (!num || num.trim() === '' || num.indexOf('{{') === 0) { el.remove(); }
+    else { el.querySelector('a').href = 'https://wa.me/' + num.replace(/[^0-9]/g,''); }
+  })();
+</script>
+
+</body>
+</html>

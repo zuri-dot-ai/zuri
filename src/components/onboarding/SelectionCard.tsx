@@ -35,17 +35,15 @@ export function SelectionCard({
       onClick={onSelect}
       aria-pressed={selected}
       className={cn(
-        "flex w-full flex-col items-start gap-2 rounded-xl border p-4 text-left transition-all duration-200",
-        "hover:border-gold/40 hover:bg-white/[0.03]",
+        "flex w-full flex-col items-start gap-2 border bg-[hsl(var(--surface))] p-4 text-left transition-colors duration-200",
+        "hover:border-gold/40",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/40",
-        selected
-          ? "border-gold bg-gold/10 shadow-[0_0_0_1px_rgba(201,168,76,0.25)]"
-          : "border-white/10 bg-white/[0.02]",
+        selected ? "border-gold" : "border-[hsl(var(--border))]",
         className
       )}
     >
       {swatches && swatches.length > 0 && (
-        <div className="mb-1 flex h-2 w-full overflow-hidden rounded-full">
+        <div className="mb-1 flex h-2 w-full overflow-hidden">
           {swatches.map((color) => (
             <span
               key={color}
@@ -60,8 +58,10 @@ export function SelectionCard({
         {Icon && (
           <span
             className={cn(
-              "flex size-9 shrink-0 items-center justify-center rounded-lg",
-              selected ? "bg-gold/20 text-gold" : "bg-white/5 text-white/60"
+              "flex size-9 shrink-0 items-center justify-center border",
+              selected
+                ? "border-gold/40 text-gold"
+                : "border-[hsl(var(--border))] text-muted-foreground"
             )}
           >
             <Icon className="size-4" />
@@ -85,10 +85,10 @@ export function SelectionCard({
         {multi && (
           <span
             className={cn(
-              "mt-0.5 size-4 shrink-0 rounded border transition-colors",
+              "mt-0.5 size-4 shrink-0 border transition-colors",
               selected
                 ? "border-gold bg-gold"
-                : "border-white/20 bg-transparent"
+                : "border-[hsl(var(--border))] bg-transparent"
             )}
             aria-hidden
           />

@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{business_name}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;0,6..96,600;1,6..96,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --color-bg:#FBF5F3;
+    --color-surface:#FFFFFF;
+    --color-text:#2A231F;
+    --color-text-muted:#7A6B65;
+    --color-accent:#B98A9A;
+    --color-accent-text:#FFFFFF;
+    --color-accent-2:#E8D8D2;
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--color-bg);
+    color:var(--color-text);
+    font-family:'Jost',sans-serif;
+    font-weight:300;
+    line-height:1.6;
+    overflow-x:hidden;
+  }
+  h1,h2,h3,h4{
+    font-family:'Bodoni Moda',serif;
+    font-weight:500;
+    letter-spacing:0.01em;
+    color:var(--color-text);
+  }
+  a{text-decoration:none;color:inherit;}
+  ul{list-style:none;}
+  img{display:block;max-width:100%;height:auto;}
+  button{font-family:'Jost',sans-serif;cursor:pointer;border:none;background:none;}
+  .container{width:100%;max-width:1200px;margin:0 auto;padding:0 24px;}
+  .eyebrow{
+    font-family:'Jost',sans-serif;
+    font-size:0.72rem;
+    letter-spacing:0.28em;
+    text-transform:uppercase;
+    color:var(--color-accent);
+  }
+
+  :focus-visible{
+    outline:2px solid var(--color-accent);
+    outline-offset:3px;
+  }
+
+  /* ===== NAV ===== */
+  #site-nav{
+    position:fixed;
+    top:0;left:0;right:0;
+    z-index:1000;
+    padding:20px 0;
+    transition:background 0.4s ease, padding 0.4s ease, box-shadow 0.4s ease;
+  }
+  #site-nav .nav-inner{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .nav-brand{
+    font-family:'Bodoni Moda',serif;
+    font-size:1.3rem;
+    letter-spacing:0.04em;
+    color:var(--color-bg);
+    transition:color 0.4s ease;
+  }
+  #site-nav.scrolled{
+    background:var(--color-bg);
+    padding:12px 0;
+    box-shadow:0 2px 18px rgba(42,35,31,0.06);
+  }
+  #site-nav.scrolled .nav-brand{color:var(--color-text);}
+  #site-nav.scrolled .nav-links a{color:var(--color-text);}
+  #site-nav.scrolled .hamburger span{background:var(--color-text);}
+
+  .nav-links{
+    display:flex;
+    gap:36px;
+  }
+  .nav-links a{
+    font-size:0.82rem;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--color-bg);
+    transition:color 0.4s ease, opacity 0.3s ease;
+    position:relative;
+    padding-bottom:4px;
+  }
+  .nav-links a::after{
+    content:'';
+    position:absolute;
+    bottom:0;left:0;
+    width:0%;
+    height:1px;
+    background:var(--color-accent);
+    transition:width 0.3s ease;
+  }
+  .nav-links a:hover::after{width:100%;}
+
+  .hamburger{
+    display:none;
+    flex-direction:column;
+    gap:5px;
+    width:28px;
+    z-index:1100;
+  }
+  .hamburger span{
+    display:block;
+    height:1px;
+    width:100%;
+    background:var(--color-bg);
+    transition:background 0.4s ease, transform 0.3s ease, opacity 0.3s ease;
+  }
+  .hamburger.open span:nth-child(1){transform:translateY(6px) rotate(45deg);}
+  .hamburger.open span:nth-child(2){opacity:0;}
+  .hamburger.open span:nth-child(3){transform:translateY(-6px) rotate(-45deg);}
+
+  .nav-drawer{
+    position:fixed;
+    top:0;right:0;
+    height:100vh;
+    width:78%;
+    max-width:340px;
+    background:var(--color-surface);
+    z-index:1050;
+    transform:translateX(100%);
+    transition:transform 0.4s ease;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    justify-content:center;
+    gap:28px;
+    padding:0 48px;
+  }
+  .nav-drawer.open{transform:translateX(0);}
+  .nav-drawer a{
+    font-family:'Bodoni Moda',serif;
+    font-size:1.3rem;
+    color:var(--color-text);
+  }
+  .drawer-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(42,35,31,0.35);
+    z-index:1040;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.4s ease;
+  }
+  .drawer-overlay.open{opacity:1;pointer-events:auto;}
+
+  @media (max-width:1024px){
+    .nav-links{display:none;}
+    .hamburger{display:flex;}
+  }
+
+  /* ===== HERO ===== */
+  .hero{
+    position:relative;
+    min-height:100vh;
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    overflow:hidden;
+  }
+  .hero img{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    z-index:0;
+  }
+  .hero::after{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:linear-gradient(180deg, rgba(42,35,31,0.42) 0%, rgba(42,35,31,0.22) 45%, rgba(42,35,31,0.5) 100%);
+    z-index:1;
+  }
+  .hero-content{
+    position:relative;
+    z-index:2;
+    padding:0 24px;
+    max-width:760px;
+  }
+  .hero-content .eyebrow{color:var(--color-accent-2);margin-bottom:18px;display:block;}
+  .hero-content h1{
+    font-size:clamp(2.1rem, 6vw, 4rem);
+    font-style:italic;
+    color:#FFFFFF;
+    line-height:1.2;
+    margin-bottom:32px;
+  }
+  .hero-ctas{
+    display:flex;
+    gap:16px;
+    justify-content:center;
+    flex-wrap:wrap;
+  }
+  .btn{
+    padding:15px 34px;
+    font-size:0.78rem;
+    letter-spacing:0.16em;
+    text-transform:uppercase;
+    transition:all 0.35s ease;
+    display:inline-block;
+  }
+  .btn-primary{
+    background:var(--color-accent);
+    color:var(--color-accent-text);
+  }
+  .btn-primary:hover{background:#a4788a;}
+  .btn-outline{
+    border:1px solid rgba(255,255,255,0.7);
+    color:#fff;
+  }
+  .btn-outline:hover{background:rgba(255,255,255,0.12);}
+
+  /* ===== REVEAL ===== */
+  .reveal{
+    opacity:0;
+    transform:translateY(20px);
+    transition:opacity 0.6s ease-out, transform 0.6s ease-out;
+  }
+  .reveal.active{
+    opacity:1;
+    transform:translateY(0);
+  }
+
+  /* ===== ABOUT ===== */
+  .about{
+    padding:110px 0;
+    background:var(--color-bg);
+  }
+  .about .container{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:48px;
+    align-items:center;
+  }
+  .about-image{
+    width:100%;
+    aspect-ratio:4/5;
+    overflow:hidden;
+  }
+  .about-image img{width:100%;height:100%;object-fit:cover;}
+  .about-text h2{
+    font-size:clamp(1.8rem,3.6vw,2.6rem);
+    font-style:italic;
+    margin:14px 0 24px;
+  }
+  .about-text p{
+    color:var(--color-text-muted);
+    font-size:1rem;
+    margin-bottom:28px;
+    max-width:50ch;
+  }
+  .founder-line{
+    border-top:1px solid var(--color-accent);
+    padding-top:16px;
+    display:inline-block;
+  }
+  .founder-name{
+    font-family:'Bodoni Moda',serif;
+    font-size:1.05rem;
+    font-style:italic;
+  }
+  .founder-title{
+    font-size:0.78rem;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--color-text-muted);
+  }
+  @media (min-width:1025px){
+    .about .container{grid-template-columns:1fr 1.1fr;gap:80px;}
+  }
+
+  /* ===== BEFORE/AFTER ===== */
+  .transform{
+    padding:110px 0;
+    background:var(--color-surface);
+    text-align:center;
+  }
+  .transform > .container > .eyebrow{display:block;}
+  .transform h2{
+    font-size:clamp(1.8rem,3.6vw,2.6rem);
+    font-style:italic;
+    margin:14px 0 60px;
+  }
+  .ba-row{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:56px;
+  }
+  .ba-pair{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    position:relative;
+  }
+  .ba-pair::after{
+    content:'';
+    position:absolute;
+    top:0;bottom:0;left:50%;
+    width:1px;
+    background:var(--color-accent);
+    transform:translateX(-0.5px);
+  }
+  .ba-item{position:relative;aspect-ratio:3/4;overflow:hidden;}
+  .ba-item img{width:100%;height:100%;object-fit:cover;}
+  .ba-label{
+    position:absolute;
+    bottom:14px;left:14px;
+    font-size:0.68rem;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:#fff;
+    background:rgba(42,35,31,0.55);
+    padding:5px 12px;
+  }
+  .ba-caption{
+    margin-top:18px;
+    font-size:0.85rem;
+    color:var(--color-text-muted);
+    font-style:italic;
+  }
+  @media (min-width:481px){
+    .ba-row{grid-template-columns:repeat(3,1fr);gap:32px;}
+  }
+
+  /* ===== SERVICES ===== */
+  .services{
+    padding:110px 0;
+    background:var(--color-bg);
+    text-align:center;
+  }
+  .services h2{
+    font-size:clamp(1.8rem,3.6vw,2.6rem);
+    font-style:italic;
+    margin:14px 0 60px;
+  }
+  .service-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:1px;
+    background:var(--color-accent-2);
+  }
+  .service-card{
+    background:var(--color-bg);
+    padding:44px 30px;
+    text-align:left;
+    position:relative;
+  }
+  .service-card::before{
+    content:'';
+    position:absolute;
+    top:0;left:30px;right:30px;
+    height:1px;
+    background:var(--color-accent);
+  }
+  .service-card .num{
+    font-family:'Bodoni Moda',serif;
+    font-style:italic;
+    color:var(--color-accent);
+    font-size:0.85rem;
+    margin-bottom:18px;
+    display:block;
+  }
+  .service-card h3{
+    font-size:1.25rem;
+    margin-bottom:12px;
+  }
+  .service-card p{
+    color:var(--color-text-muted);
+    font-size:0.92rem;
+  }
+  [data-optional-slot]{display:none;}
+  @media (min-width:481px){
+    .service-grid{grid-template-columns:repeat(3,1fr);}
+  }
+
+  /* ===== TESTIMONIALS ===== */
+  .testimonials{
+    padding:110px 0;
+    background:var(--color-surface);
+    text-align:center;
+    position:relative;
+  }
+  .testimonials h2{
+    font-size:clamp(1.8rem,3.6vw,2.6rem);
+    font-style:italic;
+    margin:14px 0 56px;
+  }
+  .t-track-wrap{
+    max-width:680px;
+    margin:0 auto;
+    position:relative;
+    min-height:220px;
+  }
+  .t-slide{
+    display:none;
+    animation:fadeInSlide 0.7s ease;
+  }
+  .t-slide.active{display:block;}
+  @keyframes fadeInSlide{from{opacity:0;}to{opacity:1;}}
+  .t-quote{
+    font-family:'Bodoni Moda',serif;
+    font-style:italic;
+    font-size:clamp(1.15rem,2.4vw,1.5rem);
+    line-height:1.5;
+    margin-bottom:26px;
+  }
+  .t-name{font-size:0.95rem;letter-spacing:0.04em;}
+  .t-role{font-size:0.76rem;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:0.1em;margin-top:4px;}
+  .t-dots{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    margin-top:40px;
+  }
+  .t-dot{
+    width:7px;height:7px;
+    border-radius:50%;
+    background:var(--color-accent-2);
+    transition:background 0.3s ease;
+  }
+  .t-dot.active{background:var(--color-accent);}
+
+  /* ===== CONTACT ===== */
+  .contact{
+    padding:110px 0;
+    background:var(--color-bg);
+    text-align:center;
+  }
+  .contact h2{
+    font-size:clamp(1.8rem,3.6vw,2.6rem);
+    font-style:italic;
+    margin:14px 0 20px;
+  }
+  .contact-sub{
+    color:var(--color-text-muted);
+    max-width:44ch;
+    margin:0 auto 50px;
+  }
+  .contact-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:50px;
+    max-width:900px;
+    margin:0 auto;
+    text-align:left;
+  }
+  .contact-info{display:flex;flex-direction:column;gap:22px;}
+  .contact-info .label{
+    font-size:0.72rem;
+    letter-spacing:0.16em;
+    text-transform:uppercase;
+    color:var(--color-accent);
+    margin-bottom:6px;
+    display:block;
+  }
+  .contact-info .value{font-size:1rem;}
+  #contact-form{display:flex;flex-direction:column;gap:18px;}
+  #contact-form input,
+  #contact-form textarea{
+    width:100%;
+    background:transparent;
+    border:none;
+    border-bottom:1px solid var(--color-text-muted);
+    padding:12px 2px;
+    font-family:'Jost',sans-serif;
+    font-size:0.95rem;
+    color:var(--color-text);
+    transition:border-color 0.3s ease;
+  }
+  #contact-form input::placeholder,
+  #contact-form textarea::placeholder{color:var(--color-text-muted);}
+  #contact-form input:focus,
+  #contact-form textarea:focus{border-color:var(--color-accent);}
+  #contact-form textarea{resize:vertical;min-height:100px;}
+  #contact-form .btn-primary{
+    align-self:flex-start;
+    border:none;
+    margin-top:8px;
+  }
+  .form-confirmation{
+    display:none;
+    padding:40px 20px;
+    text-align:center;
+    border:1px solid var(--color-accent-2);
+  }
+  .form-confirmation.show{display:block;}
+  .form-confirmation h3{font-style:italic;margin-bottom:10px;}
+  .form-confirmation p{color:var(--color-text-muted);}
+  @media (min-width:1025px){
+    .contact-grid{grid-template-columns:0.8fr 1.2fr;}
+  }
+
+  /* ===== FOOTER ===== */
+  footer{
+    padding:60px 0 40px;
+    background:var(--color-surface);
+    text-align:center;
+    border-top:1px solid var(--color-accent-2);
+  }
+  .footer-brand{
+    font-family:'Bodoni Moda',serif;
+    font-style:italic;
+    font-size:1.4rem;
+    margin-bottom:8px;
+  }
+  .footer-tagline{
+    color:var(--color-text-muted);
+    font-size:0.88rem;
+    margin-bottom:22px;
+  }
+  .footer-social a{
+    font-size:0.78rem;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--color-accent);
+    border-bottom:1px solid var(--color-accent);
+    padding-bottom:2px;
+  }
+  .footer-powered{
+    margin-top:34px;
+    font-size:0.72rem;
+    color:var(--color-text-muted);
+  }
+  .footer-powered a{color:var(--color-text-muted);text-decoration:underline;}
+
+  /* ===== WHATSAPP FLOAT ===== */
+  #whatsapp-float{
+    position:fixed;
+    bottom:24px;right:24px;
+    z-index:900;
+  }
+  #whatsapp-float a{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:56px;height:56px;
+    border-radius:50%;
+    background:#25D366;
+    box-shadow:0 4px 14px rgba(42,35,31,0.25);
+    transition:transform 0.3s ease;
+  }
+  #whatsapp-float a:hover{transform:scale(1.08);}
+  #whatsapp-float svg{width:28px;height:28px;fill:#fff;}
+</style>
+</head>
+<body>
+
+<nav id="site-nav">
+  <div class="container nav-inner">
+    <a href="#" class="nav-brand">{{business_name}}</a>
+    <ul class="nav-links">
+      <li><a href="#about">About</a></li>
+      <li><a href="#transform">Transformations</a></li>
+      <li><a href="#services">Services</a></li>
+      <li><a href="#testimonials">Testimonials</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <button class="hamburger" id="hamburger" aria-label="Open menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<div class="drawer-overlay" id="drawer-overlay"></div>
+<div class="nav-drawer" id="nav-drawer">
+  <a href="#about">About</a>
+  <a href="#transform">Transformations</a>
+  <a href="#services">Services</a>
+  <a href="#testimonials">Testimonials</a>
+  <a href="#contact">Contact</a>
+</div>
+
+<header class="hero">
+  <img src="https://picsum.photos/1600/1000?random=1" data-image-slot="hero" alt="{{business_name}} treatment room">
+  <div class="hero-content">
+    <span class="eyebrow">{{business_name}}</span>
+    <h1>{{tagline}}</h1>
+    <div class="hero-ctas">
+      <a href="#contact" class="btn btn-primary">Book Appointment</a>
+      <a href="#services" class="btn btn-outline">Explore Services</a>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <section class="about" id="about">
+    <div class="container">
+      <div class="about-image reveal">
+        <img src="https://picsum.photos/800/1000?random=2" data-image-slot="about" alt="{{business_name}} founder portrait">
+      </div>
+      <div class="about-text reveal">
+        <span class="eyebrow">Our Story</span>
+        <h2>The Art of Radiance</h2>
+        <p>{{about_body}}</p>
+        <div class="founder-line">
+          <div class="founder-name">{{founder_name}}</div>
+          <div class="founder-title">{{founder_title}}</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="transform" id="transform">
+    <div class="container">
+      <span class="eyebrow reveal">Real Results</span>
+      <h2 class="reveal">Transformations</h2>
+      <div class="ba-row">
+
+        <div class="ba-pair reveal">
+          <div class="ba-item">
+            <img src="https://picsum.photos/500/700?random=3" data-image-slot="before_1" alt="Client before treatment, set one">
+            <span class="ba-label">Before</span>
+          </div>
+          <div class="ba-item">
+            <img src="https://picsum.photos/500/700?random=4" data-image-slot="after_1" alt="Client after treatment, set one">
+            <span class="ba-label">After</span>
+          </div>
+        </div>
+
+        <div class="ba-pair reveal">
+          <div class="ba-item">
+            <img src="https://picsum.photos/500/700?random=5" data-image-slot="before_2" alt="Client before treatment, set two">
+            <span class="ba-label">Before</span>
+          </div>
+          <div class="ba-item">
+            <img src="https://picsum.photos/500/700?random=6" data-image-slot="after_2" alt="Client after treatment, set two">
+            <span class="ba-label">After</span>
+          </div>
+        </div>
+
+        <div class="ba-pair reveal">
+          <div class="ba-item">
+            <img src="https://picsum.photos/500/700?random=7" data-image-slot="before_3" alt="Client before treatment, set three">
+            <span class="ba-label">Before</span>
+          </div>
+          <div class="ba-item">
+            <img src="https://picsum.photos/500/700?random=8" data-image-slot="after_3" alt="Client after treatment, set three">
+            <span class="ba-label">After</span>
+          </div>
+        </div>
+
+      </div>
+      <p class="ba-caption reveal">Artistry captured, one radiant client at a time.</p>
+    </div>
+  </section>
+
+  <section class="services" id="services">
+    <div class="container">
+      <span class="eyebrow reveal">What We Offer</span>
+      <h2 class="reveal">Signature Services</h2>
+      <div class="service-grid">
+
+        <div class="service-card reveal">
+          <span class="num">01</span>
+          <h3>{{service_1_title}}</h3>
+          <p>{{service_1_description}}</p>
+        </div>
+
+        <div class="service-card reveal">
+          <span class="num">02</span>
+          <h3>{{service_2_title}}</h3>
+          <p>{{service_2_description}}</p>
+        </div>
+
+        <div class="service-card reveal">
+          <span class="num">03</span>
+          <h3>{{service_3_title}}</h3>
+          <p>{{service_3_description}}</p>
+        </div>
+
+        <div class="service-card reveal" hidden data-optional-slot="4">
+          <span class="num">04</span>
+          <h3>{{service_4_title}}</h3>
+          <p>{{service_4_description}}</p>
+        </div>
+
+        <div class="service-card reveal" hidden data-optional-slot="5">
+          <span class="num">05</span>
+          <h3>{{service_5_title}}</h3>
+          <p>{{service_5_description}}</p>
+        </div>
+
+        <div class="service-card reveal" hidden data-optional-slot="6">
+          <span class="num">06</span>
+          <h3>{{service_6_title}}</h3>
+          <p>{{service_6_description}}</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <section class="testimonials" id="testimonials">
+    <div class="container">
+      <span class="eyebrow reveal">Client Love</span>
+      <h2 class="reveal">Testimonials</h2>
+      <div class="t-track-wrap reveal">
+
+        <div class="t-slide active">
+          <p class="t-quote">"{{testimonial_1_quote}}"</p>
+          <div class="t-name">{{testimonial_1_name}}</div>
+          <div class="t-role">{{testimonial_1_role}}</div>
+        </div>
+
+        <div class="t-slide">
+          <p class="t-quote">"{{testimonial_2_quote}}"</p>
+          <div class="t-name">{{testimonial_2_name}}</div>
+          <div class="t-role">{{testimonial_2_role}}</div>
+        </div>
+
+        <div class="t-slide">
+          <p class="t-quote">"{{testimonial_3_quote}}"</p>
+          <div class="t-name">{{testimonial_3_name}}</div>
+          <div class="t-role">{{testimonial_3_role}}</div>
+        </div>
+
+        <div class="t-dots">
+          <span class="t-dot active" data-index="0"></span>
+          <span class="t-dot" data-index="1"></span>
+          <span class="t-dot" data-index="2"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="contact" id="contact">
+    <div class="container">
+      <span class="eyebrow reveal">Visit Us</span>
+      <h2 class="reveal">Reserve Your Ritual</h2>
+      <p class="contact-sub reveal">We welcome you by appointment for a bespoke consultation and treatment plan.</p>
+
+      <div class="contact-grid reveal">
+        <div class="contact-info">
+          <div>
+            <span class="label">Phone</span>
+            <span class="value">{{phone_number}}</span>
+          </div>
+          <div>
+            <span class="label">Email</span>
+            <span class="value">{{email_address}}</span>
+          </div>
+          <div>
+            <span class="label">Address</span>
+            <span class="value">{{address}}</span>
+          </div>
+        </div>
+
+        <div>
+          <form id="contact-form">
+            <input type="text" name="name" placeholder="Full Name" required>
+            <input type="email" name="email" placeholder="Email Address" required>
+            <textarea name="message" placeholder="Tell us what you're looking for..." required></textarea>
+            <button type="submit" class="btn btn-primary">Send Inquiry</button>
+          </form>
+          <div class="form-confirmation" id="form-confirmation">
+            <h3>Thank You</h3>
+            <p>Your inquiry has been received. Our team will be in touch shortly.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="container">
+    <div class="footer-brand">{{business_name}}</div>
+    <div class="footer-tagline">{{tagline}}</div>
+    <div class="footer-social" id="footer-social">
+      <a href="{{instagram_url}}" id="instagram-link" target="_blank" rel="noopener">Instagram</a>
+    </div>
+    <div class="footer-powered">Powered by <a href="#">Zuri</a></div>
+  </div>
+</footer>
+
+<div id="whatsapp-float" data-whatsapp-number="{{whatsapp_number}}">
+  <a href="#" aria-label="Chat on WhatsApp">
+    <svg viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.28-1.38a9.9 9.9 0 0 0 4.76 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm0 18.06c-1.5 0-2.97-.4-4.25-1.16l-.3-.18-3.15.82.84-3.07-.2-.32a8.16 8.16 0 0 1-1.25-4.24c0-4.51 3.67-8.18 8.19-8.18a8.13 8.13 0 0 1 5.79 2.4 8.13 8.13 0 0 1 2.39 5.79c0 4.52-3.68 8.14-8.06 8.14zm4.48-6.13c-.24-.12-1.45-.72-1.68-.8-.22-.08-.39-.12-.55.12-.16.24-.63.8-.78.96-.14.16-.29.18-.53.06-.24-.12-1.02-.38-1.94-1.2-.72-.64-1.2-1.43-1.35-1.67-.14-.24-.02-.37.11-.49.11-.11.24-.29.36-.43.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.55-1.32-.75-1.81-.2-.48-.4-.41-.55-.42h-.47c-.16 0-.42.06-.64.3-.22.24-.84.82-.84 2s.86 2.32.98 2.48c.12.16 1.7 2.6 4.13 3.64.58.25 1.03.4 1.38.51.58.18 1.11.16 1.53.1.47-.07 1.45-.59 1.65-1.16.2-.57.2-1.06.14-1.16-.06-.1-.22-.16-.46-.28z"/></svg>
+  </a>
+</div>
+
+<script>
+(function(){
+  // ---- Nav scroll state ----
+  var nav = document.getElementById('site-nav');
+  window.addEventListener('scroll', function(){
+    if (window.scrollY > 60) { nav.classList.add('scrolled'); }
+    else { nav.classList.remove('scrolled'); }
+  });
+
+  // ---- Hamburger / drawer ----
+  var hamburger = document.getElementById('hamburger');
+  var drawer = document.getElementById('nav-drawer');
+  var overlay = document.getElementById('drawer-overlay');
+
+  function closeDrawer(){
+    hamburger.classList.remove('open');
+    hamburger.setAttribute('aria-expanded','false');
+    drawer.classList.remove('open');
+    overlay.classList.remove('open');
+  }
+  function toggleDrawer(){
+    var isOpen = drawer.classList.toggle('open');
+    hamburger.classList.toggle('open', isOpen);
+    hamburger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    overlay.classList.toggle('open', isOpen);
+  }
+  hamburger.addEventListener('click', toggleDrawer);
+  overlay.addEventListener('click', closeDrawer);
+  drawer.querySelectorAll('a').forEach(function(link){
+    link.addEventListener('click', closeDrawer);
+  });
+
+  // ---- Shared IntersectionObserver for reveals ----
+  var revealEls = document.querySelectorAll('.reveal');
+  var observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if (entry.isIntersecting) {
+        entry.target.classList.add('active');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  revealEls.forEach(function(el){ observer.observe(el); });
+
+  // ---- Testimonial carousel ----
+  var slides = document.querySelectorAll('.t-slide');
+  var dots = document.querySelectorAll('.t-dot');
+  var current = 0;
+  function showSlide(i){
+    slides.forEach(function(s, idx){ s.classList.toggle('active', idx === i); });
+    dots.forEach(function(d, idx){ d.classList.toggle('active', idx === i); });
+    current = i;
+  }
+  dots.forEach(function(dot){
+    dot.addEventListener('click', function(){
+      showSlide(parseInt(dot.getAttribute('data-index'), 10));
+    });
+  });
+  setInterval(function(){
+    showSlide((current + 1) % slides.length);
+  }, 6000);
+
+  // ---- Contact form ----
+  var form = document.getElementById('contact-form');
+  var confirmation = document.getElementById('form-confirmation');
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    form.style.display = 'none';
+    confirmation.classList.add('show');
+  });
+})();
+
+(function(){
+  var el = document.getElementById('whatsapp-float');
+  var num = el.getAttribute('data-whatsapp-number');
+  if (!num || num.trim() === '' || num.indexOf('{{') === 0) { el.remove(); }
+  else { el.querySelector('a').href = 'https://wa.me/' + num.replace(/[^0-9]/g,''); }
+})();
+
+(function(){
+  var link = document.getElementById('instagram-link');
+  var url = link.getAttribute('href');
+  if (!url || url.trim() === '' || url.indexOf('{{') === 0) { link.remove(); }
+})();
+</script>
+
+</body>
+</html>

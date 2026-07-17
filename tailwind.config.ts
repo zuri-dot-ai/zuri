@@ -17,25 +17,25 @@ const config: Config = {
     },
     extend: {
       colors: {
-        // ── ZURI CORE BRAND ─────────────────────────────
-        background: "hsl(var(--background))",     // #0C0C0E near-black
-        surface: "hsl(var(--surface))",           // #161618 dark charcoal
-        foreground: "hsl(var(--foreground))",     // #F0EEE9 warm white
+        // ── ZURI CORE BRAND (System A — docs/13 §1) ─────
+        background: "hsl(var(--background))",     // #0e0e10
+        surface: "hsl(var(--surface))",           // #1a1a1d
+        foreground: "hsl(var(--foreground))",     // #f2f2f3
         muted: {
           DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))", // #888891 grey
+          foreground: "hsl(var(--muted-foreground))", // #a7a8ad text-mid
         },
-        border: "hsl(var(--border))",             // #2A2A2D subtle line
+        border: "hsl(var(--border))",             // #2b2b2f
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
 
-        // ── WARM GOLD ACCENT (signature) ────────────────
+        // ── WARM GOLD ACCENT (marketing-site match) ─────
         gold: {
-          DEFAULT: "#C9A84C",
-          hover: "#E2BC5A",
+          DEFAULT: "#d4a656",
+          hover: "#f0c878",
         },
         primary: {
-          DEFAULT: "hsl(var(--primary))",         // gold
+          DEFAULT: "hsl(var(--primary))",         // #d4a656
           foreground: "hsl(var(--primary-foreground))",
         },
 

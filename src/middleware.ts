@@ -1,10 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "zuri.com";
+const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "buildzuri.com";
 const APP_SUBDOMAINS = new Set(["app", "api", "www", "mail", "admin", "staging"]);
 
-const PROTECTED_PREFIXES = ["/dashboard", "/onboarding", "/settings"];
+const PROTECTED_PREFIXES = ["/dashboard", "/onboarding", "/settings", "/admin"];
 const AUTH_ROUTES = ["/login", "/signup"];
 
 export async function middleware(req: NextRequest) {
@@ -18,7 +18,7 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith("/static") ||
     pathname === "/favicon.ico";
 
-  // ── 1. Subdomain routing — handle.zuri.com → /sites/[handle] ─────────────
+  // ── 1. Subdomain routing — handle.buildzuri.com → /sites/[handle] ────────
   if (!isInternalPath) {
     if (hostname.endsWith(`.${ROOT_DOMAIN}`) && !hostname.startsWith("www.")) {
       const handle = hostname.split(`.${ROOT_DOMAIN}`)[0];

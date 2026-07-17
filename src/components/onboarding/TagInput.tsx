@@ -95,7 +95,7 @@ export function TagInput({
         {value.map((tag) => (
           <span
             key={tag}
-            className="inline-flex items-center gap-1.5 rounded-full border border-gold/50 bg-gold/10 px-3 py-1 text-sm text-gold"
+            className="inline-flex items-center gap-1.5 border border-gold bg-[hsl(var(--surface))] px-3 py-1 text-sm text-gold"
           >
             {tag}
             <button
@@ -104,7 +104,7 @@ export function TagInput({
                 onChange(value.filter((t) => t !== tag));
                 setError(null);
               }}
-              className="rounded-full p-0.5 hover:bg-gold/20"
+              className="p-0.5 hover:text-gold-hover"
               aria-label={`Remove ${tag}`}
             >
               <X className="size-3" />
@@ -125,7 +125,7 @@ export function TagInput({
         }}
         placeholder={placeholder}
         disabled={value.length >= MAX_SERVICES}
-        className="h-12 border-white/10 bg-white/[0.02]"
+        className="h-12"
       />
 
       <p className="text-xs text-muted-foreground">
@@ -141,7 +141,7 @@ export function TagInput({
               key={s}
               type="button"
               onClick={() => tryAdd(s)}
-              className="rounded-full border border-white/10 bg-transparent px-3 py-1 text-xs text-muted-foreground transition-colors hover:border-gold/40 hover:text-gold"
+              className="border border-[hsl(var(--border))] bg-[hsl(var(--surface))] px-3 py-1 text-xs text-muted-foreground transition-colors hover:border-gold/40 hover:text-gold"
             >
               + {s}
             </button>

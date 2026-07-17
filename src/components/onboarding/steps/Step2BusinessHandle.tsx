@@ -98,23 +98,25 @@ export function Step2BusinessHandle({
         What&apos;s your business called?
       </h1>
 
-      <div className="space-y-2">
-        <Input
-          value={businessName}
-          onChange={(e) => onBusinessNameChange(e.target.value)}
-          placeholder="e.g. Dan's Bakery"
-          autoFocus
-          className="h-14 border-white/10 bg-white/[0.02] text-lg"
-        />
-        {nameError && <p className="text-sm text-error">{nameError}</p>}
-      </div>
+      <div className="surface space-y-6 p-6 sm:p-7">
+        <div className="space-y-2">
+          <Input
+            value={businessName}
+            onChange={(e) => onBusinessNameChange(e.target.value)}
+            placeholder="e.g. Dan's Bakery"
+            autoFocus
+            className="h-14 text-lg"
+          />
+          {nameError && <p className="text-sm text-error">{nameError}</p>}
+        </div>
 
-      <HandleInput
-        businessName={businessName}
-        value={handle}
-        onChange={onHandleChange}
-        onAvailabilityChange={onAvailabilityChange}
-      />
+        <HandleInput
+          businessName={businessName}
+          value={handle}
+          onChange={onHandleChange}
+          onAvailabilityChange={onAvailabilityChange}
+        />
+      </div>
     </div>
   );
 }

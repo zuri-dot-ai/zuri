@@ -117,10 +117,10 @@ export function Step5Customers({
               type="button"
               onClick={() => onLocationChange(opt.id)}
               className={cn(
-                "rounded-full border px-3.5 py-1.5 text-sm transition-colors",
+                "border bg-[hsl(var(--surface))] px-3.5 py-1.5 text-sm transition-colors",
                 location === opt.id
-                  ? "border-gold bg-gold/15 text-gold"
-                  : "border-white/10 text-muted-foreground hover:border-gold/40"
+                  ? "border-gold text-gold"
+                  : "border-[hsl(var(--border))] text-muted-foreground hover:border-gold/40"
               )}
             >
               {opt.label}
@@ -133,7 +133,7 @@ export function Step5Customers({
               value={locationCity}
               onChange={(e) => onLocationCityChange(e.target.value)}
               placeholder="Which city?"
-              className="h-11 max-w-sm border-white/10 bg-white/[0.02]"
+              className="h-11 max-w-sm"
             />
             {cityError && <p className="text-sm text-error">{cityError}</p>}
           </div>

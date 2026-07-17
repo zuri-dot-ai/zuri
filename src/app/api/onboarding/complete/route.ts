@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { extractBrandProfile } from "@/lib/onboarding/brand-extractor";
 import {
   VALID_BUSINESS_TYPES,
   VALID_LOCATIONS,
   VALID_PLATFORMS,
+  isUnsupportedBusinessType,
 } from "@/lib/onboarding/types";
 import {
   RESERVED_HANDLES,
@@ -129,6 +131,13 @@ export async function POST(req: Request) {
       if (!(VALID_BUSINESS_TYPES as readonly string[]).includes(businessType)) {
         return { valid: false, error: "Invalid business type" };
       }
+      if (isUnsupportedBusinessType(businessType)) {
+        return {
+          valid: false,
+          error:
+            "This business type needs a custom build. Contact build@buildzuri.com.",
+        };
+      }
       return { valid: true };
     },
     (): ValidationResult => {
@@ -178,7 +187,8 @@ export async function POST(req: Request) {
   ]);
 
   // Handle uniqueness (race-condition safety) — allow if already this user's
-  const { data: existingHandle, error: handleLookupError } = await supabase
+  const service = createServiceClient();
+  const { data: existingHandle, error: handleLookupError } = await service
     .from("profiles")
     .select("id")
     .eq("handle", handle)
@@ -227,7 +237,59 @@ export async function POST(req: Request) {
   }
 
   // ── Persist profile ──────────────────────────────────────────────────────
-  const { error: profileError } = await supabase.from("profiles").upsert(
+  // Profiles: no INSERT grant/policy for authenticated (trigger + service_role only).
+  // Upsert via service role — same pattern as business_profiles / generation jobs.
+  // #region agent log
+  const agentLog = (payload: Record<string, unknown>) => {
+    const body = {
+      sessionId: "a3abb1",
+      runId: "post-fix",
+      timestamp: Date.now(),
+      ...payload,
+    };
+    fetch("http://127.0.0.1:7419/ingest/076876bf-f6bf-42a9-9aff-97004d9bbbbe", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "a3abb1",
+      },
+      body: JSON.stringify(body),
+    }).catch(() => {});
+    void import("node:fs/promises")
+      .then((fs) =>
+        fs.appendFile(
+          process.cwd() + "/debug-a3abb1.log",
+          JSON.stringify(body) + "\n"
+        )
+      )
+      .catch(() => {});
+  };
+  const { data: preProfile, error: preProfileErr } = await supabase
+    .from("profiles")
+    .select("id, handle, onboarding_completed")
+    .eq("id", user.id)
+    .maybeSingle();
+  agentLog({
+    hypothesisId: "H3",
+    location: "onboarding/complete/route.ts:pre-profile",
+    message: "Profile row before service upsert",
+    data: {
+      userIdPresent: Boolean(user.id),
+      profileExists: Boolean(preProfile),
+      preProfileErrCode: preProfileErr?.code ?? null,
+      preProfileErrMsg: preProfileErr?.message ?? null,
+      onboardingCompleted: preProfile?.onboarding_completed ?? null,
+    },
+  });
+  agentLog({
+    hypothesisId: "H1-H4",
+    location: "onboarding/complete/route.ts:before-upsert",
+    message: "About to upsert profiles via service client",
+    data: { client: "service_role", operation: "upsert" },
+  });
+  // #endregion
+
+  const { error: profileError } = await service.from("profiles").upsert(
     {
       id: user.id,
       full_name: firstName,
@@ -239,6 +301,20 @@ export async function POST(req: Request) {
   );
 
   if (profileError) {
+    console.error("Profile save error:", profileError);
+    // #region agent log
+    agentLog({
+      hypothesisId: "H1-H4",
+      location: "onboarding/complete/route.ts:profile-error",
+      message: "Profile service upsert failed",
+      data: {
+        code: profileError.code ?? null,
+        message: profileError.message ?? null,
+        hint: profileError.hint ?? null,
+        details: profileError.details ?? null,
+      },
+    });
+    // #endregion
     const classified = classifySupabaseError(profileError);
     return NextResponse.json(
       { error: classified.message },
@@ -246,7 +322,16 @@ export async function POST(req: Request) {
     );
   }
 
-  const { data: bizProfile, error: bizError } = await supabase
+  // #region agent log
+  agentLog({
+    hypothesisId: "H1-H4",
+    location: "onboarding/complete/route.ts:profile-ok",
+    message: "Profile service upsert succeeded",
+    data: { ok: true, client: "service_role" },
+  });
+  // #endregion
+
+  const { data: bizProfile, error: bizError } = await service
     .from("business_profiles")
     .upsert(
       {
@@ -272,7 +357,7 @@ export async function POST(req: Request) {
     .select()
     .single();
 
-  if (bizError) {
+  if (bizError || !bizProfile) {
     console.error("Business profile save error:", bizError);
     const classified = classifySupabaseError(bizError);
     return NextResponse.json(
@@ -281,22 +366,26 @@ export async function POST(req: Request) {
     );
   }
 
-  // ── Queue website generation ─────────────────────────────────────────────
-  const { data: job } = await supabase
+  // ── Queue website generation (service role — no user INSERT RLS policy) ──
+  const { data: job, error: jobError } = await service
     .from("website_generation_jobs")
     .insert({
       user_id: user.id,
       status: "queued",
       business_profile_id: bizProfile.id,
     })
-    .select()
+    .select("id")
     .maybeSingle();
+
+  if (jobError) {
+    console.error("Generation job insert error:", jobError);
+  }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
   const internalSecret = process.env.INTERNAL_API_SECRET;
 
   if (appUrl && internalSecret) {
-    fetch(`${appUrl}/api/ai/compose-website`, {
+    fetch(`${appUrl}/api/ai/generate-website`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -315,7 +404,11 @@ export async function POST(req: Request) {
       },
       body: JSON.stringify({ userId: user.id }),
     }).catch((err) => console.error("Calendar seed trigger failed:", err));
+  } else {
+    console.warn(
+      "Skipping website generation trigger: NEXT_PUBLIC_APP_URL or INTERNAL_API_SECRET missing"
+    );
   }
 
-  return NextResponse.json({ success: true, jobId: job?.id });
+  return NextResponse.json({ success: true, jobId: job?.id ?? null });
 }

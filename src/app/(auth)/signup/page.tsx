@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthShell } from "@/components/auth/auth-shell";
+import { marketingUrl } from "@/lib/marketing-url";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -99,43 +100,43 @@ export default function SignupPage() {
       eyebrow="Start your presence"
       headline={
         <>
-          Your business, <span className="text-gradient-gold">online.</span>
+          The operating system
           <br />
-          Beautifully.
+          <em className="italic text-gold">for modern businesses.</em>
         </>
       }
-      tagline="One conversation. A live premium website, a 90-day content plan, and vetted execution partners — in under 10 minutes."
-      socialProof="Join 10,000+ African entrepreneurs building their presence"
-      particleCount={8}
-      particleOpacity={0.04}
+      tagline="Launch your business online with Zuri. Instantly create a premium website, unlock a personalized 90-day content plan, and accelerate growth with AI."
+      socialProof="Join African entrepreneurs building lasting online presence"
     >
-      <div className="glass-card p-7 sm:p-8">
+      <div className="surface box-border w-full max-w-full p-7 sm:p-8">
         <div className="mb-6 md:hidden">
-          <h1 className="font-heading text-3xl font-semibold">
-            Build your presence
+          <h1 className="font-heading text-3xl font-medium">
+            The operating system for modern businesses.
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Your business, online. Beautifully.
+          <p className="mt-1 text-sm text-[var(--chrome-mid)]">
+            Launch your business online with Zuri.
           </p>
         </div>
 
         <Button
           type="button"
           variant="outline"
-          className="h-12 w-full border-white/10 bg-white/[0.02] hover:border-gold/40 hover:bg-white/[0.04]"
+          className="w-full"
           onClick={handleGoogle}
         >
           <GoogleIcon /> Continue with Google
         </Button>
 
-        <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
-          <span className="h-px flex-1 bg-border" /> or{" "}
-          <span className="h-px flex-1 bg-border" />
+        <div className="my-6 flex items-center gap-3 text-xs text-[var(--chrome-dark)]">
+          <span className="h-px flex-1 bg-[#222]" /> or{" "}
+          <span className="h-px flex-1 bg-[#222]" />
         </div>
 
         <form onSubmit={handleSignup} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Full name</Label>
+            <Label htmlFor="name" className="field-label">
+              Full name
+            </Label>
             <Input
               id="name"
               value={fullName}
@@ -146,7 +147,9 @@ export default function SignupPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" className="field-label">
+              Email
+            </Label>
             <Input
               id="email"
               type="email"
@@ -158,7 +161,9 @@ export default function SignupPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password" className="field-label">
+              Password
+            </Label>
             <Input
               id="password"
               type="password"
@@ -169,43 +174,52 @@ export default function SignupPage() {
               placeholder="At least 8 characters"
               autoComplete="new-password"
             />
-            <p className="text-xs text-white/30">
+            <p className="text-xs text-[var(--chrome-dark)]">
               At least 8 characters, with one uppercase letter and one number.
             </p>
           </div>
 
-          <div className="flex items-start gap-3 mt-4">
+          <div className="mt-4 flex items-start gap-3">
             <input
               type="checkbox"
               id="terms_consent"
               required
               checked={termsAccepted}
               onChange={(e) => setTermsAccepted(e.target.checked)}
-              className="mt-0.5 accent-[#C9A84C]"
+              className="mt-0.5 accent-[#d4a656]"
             />
-            <label htmlFor="terms_consent" className="text-sm text-white/60">
+            <label
+              htmlFor="terms_consent"
+              className="text-sm text-[var(--chrome-mid)]"
+            >
               I agree to Zuri&apos;s{" "}
-              <Link href="/terms" className="text-gold underline">
+              <a
+                href={marketingUrl("/terms.html")}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gold underline"
+              >
                 Terms of Service
-              </Link>{" "}
+              </a>{" "}
               and{" "}
-              <Link href="/privacy" className="text-gold underline">
+              <a
+                href={marketingUrl("/privacy.html")}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gold underline"
+              >
                 Privacy Policy
-              </Link>
+              </a>
               . I understand that my data will be processed as described.
             </label>
           </div>
 
-          <Button
-            type="submit"
-            className="btn-gold-glow h-12 w-full text-base font-semibold"
-            disabled={loading}
-          >
+          <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Creating account…" : "Create account"}
           </Button>
         </form>
 
-        <p className="mt-7 text-center text-sm text-muted-foreground">
+        <p className="mt-7 text-center text-sm text-[var(--chrome-mid)]">
           Already have an account?{" "}
           <Link href="/login" className="font-medium text-gold hover:underline">
             Sign in

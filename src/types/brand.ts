@@ -2,6 +2,28 @@
 //  ZURI — Brand & AI Domain Types
 // ════════════════════════════════════════════════════════
 
+/** Mirrors `business_profiles` + handle from `profiles` — used by the website generation pipeline. */
+export interface BusinessProfile {
+  id: string;
+  user_id: string;
+  /** From `profiles.handle` — required to upsert `websites.handle`. */
+  handle: string;
+  business_name: string;
+  industry: string;
+  business_type: string;
+  services: string[];
+  target_audience: string;
+  location: string;
+  location_city: string | null;
+  brand_tone: string;
+  unique_value: string;
+  tagline: string;
+  brand_vibe: string;
+  color_primary: string;
+  color_accent: string;
+  platforms: string[];
+}
+
 export type Tone = "professional" | "warm" | "bold" | "playful";
 
 /** Output of the Gemini brand-extraction agent */

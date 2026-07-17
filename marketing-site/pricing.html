@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pricing — Zuri</title>
+<meta name="description" content="Simple, transparent pricing for African businesses — Free, Pro, Growth, and Premium plans.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/styles.css">
+
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://buildzuri.com/pricing.html">
+<meta property="og:title" content="Pricing — Zuri">
+<meta property="og:description" content="Simple, transparent pricing for African businesses — Free, Pro, Growth, and Premium plans.">
+<meta property="og:image" content="https://buildzuri.com/assets/images/zuri_meta.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:site_name" content="Zuri">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Pricing — Zuri">
+<meta name="twitter:description" content="Simple, transparent pricing for African businesses — Free, Pro, Growth, and Premium plans.">
+<meta name="twitter:image" content="https://buildzuri.com/assets/images/zuri_meta.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/images/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon-16x16.png">
+<link rel="manifest" href="/site.webmanifest">
+</head>
+<body>
+<canvas id="dust-canvas"></canvas>
+
+<nav class="navbar" id="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo"><img src="assets/images/zuri_logo.png" alt="Zuri" class="nav-logo-img"></a>
+    <div class="nav-links">
+      <a href="index.html#features" class="link-underline">Features</a>
+      <a href="index.html#how-it-works" class="link-underline">How it works</a>
+      <a href="pricing.html" class="link-underline active">Pricing</a>
+      <a href="about.html" class="link-underline">About</a>
+    </div>
+    <div class="nav-actions">
+      <a href="https://app.buildzuri.com/login" class="btn-ghost nav-login">Login</a>
+      <a href="https://app.buildzuri.com/signup" class="btn-gold nav-cta">Start free</a>
+    </div>
+    <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+
+<div class="drawer-backdrop" id="drawer-backdrop"></div>
+<div class="drawer" id="drawer">
+  <a href="index.html#features" class="drawer-link">Features</a>
+  <a href="index.html#how-it-works" class="drawer-link">How it works</a>
+  <a href="pricing.html" class="drawer-link">Pricing</a>
+  <a href="about.html" class="drawer-link">About</a>
+  <a href="https://app.buildzuri.com/signup" class="btn-gold" style="margin-top:1rem;width:100%;text-align:center;">Start free</a>
+</div>
+
+<main>
+
+<section class="page-header reveal in">
+  <div class="page-eyebrow">Pricing</div>
+  <h1>Simple pricing, no surprises.</h1>
+  <p>Start free, upgrade when you're ready. No hidden fees, no long contracts.</p>
+</section>
+
+<section class="reveal">
+  <div class="toggle-row">
+    <span class="toggle-label">Monthly</span>
+    <div class="switch" id="billing-switch"><div class="knob"></div></div>
+    <span class="toggle-label">Annual <span style="color:var(--gold)">(2 months free)</span></span>
+  </div>
+  <div class="pricing-vault">
+    <div class="vault-panel">
+      <div class="plan-name">Free</div>
+      <div class="plan-price" data-monthly="0">₦0</div>
+      <ul class="plan-list">
+        <li>Website (preview only)</li>
+        <li>5 content ideas / month</li>
+      </ul>
+      <a href="https://app.buildzuri.com/signup" class="btn-ghost" style="width:100%;text-align:center;">Start free</a>
+    </div>
+    <div class="vault-panel">
+      <div class="plan-name">Pro</div>
+      <div class="plan-price" data-monthly="₦23,000" data-annual="₦230,000">₦23,000 <span>/mo</span></div>
+      <ul class="plan-list">
+        <li>1 site (yourname.buildzuri.com)</li>
+        <li>15 AI images / month</li>
+        <li>12 posts (2 platforms)</li>
+      </ul>
+      <a href="https://app.buildzuri.com/signup?plan=pro" class="btn-gold" style="width:100%;text-align:center;">Get Pro</a>
+    </div>
+    <div class="vault-panel featured">
+      <div class="plan-name">Growth</div>
+      <div class="plan-price" data-monthly="₦51,000" data-annual="₦510,000">₦51,000 <span>/mo</span></div>
+      <ul class="plan-list">
+        <li>1 site + custom domain</li>
+        <li>50 AI images / month</li>
+        <li>30 posts (4 platforms)</li>
+        <li>Meta & Search Console analytics</li>
+      </ul>
+      <a href="https://app.buildzuri.com/signup?plan=growth" class="btn-gold" style="width:100%;text-align:center;">Get Growth</a>
+    </div>
+    <div class="vault-panel">
+      <div class="plan-name">Premium</div>
+      <div class="plan-price" data-monthly="₦73,000" data-annual="₦730,000">₦73,000 <span>/mo</span></div>
+      <ul class="plan-list">
+        <li>3 sites</li>
+        <li>200 AI images / month</li>
+        <li>Unlimited posts, all platforms</li>
+        <li>Full analytics + dedicated support</li>
+      </ul>
+      <a href="https://app.buildzuri.com/signup?plan=premium" class="btn-gold" style="width:100%;text-align:center;">Get Premium</a>
+    </div>
+  </div>
+</section>
+
+<section class="reveal">
+  <div class="section-label">Common Questions</div>
+  <h2 class="section-title">Still deciding?</h2>
+  <p style="color:var(--chrome-mid); font-size:.95rem; margin-bottom:1.5rem;">Check our <a href="faq.html" class="link-underline" style="color:var(--gold);">full FAQ</a> or reach out — we're happy to help you pick the right plan.</p>
+  <a href="contact.html" class="btn-ghost">Contact us</a>
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <span>© 2026 Zuri</span>
+  <div class="footer-links">
+    <a href="about.html">About</a>
+    <a href="pricing.html">Pricing</a>
+    <a href="faq.html">FAQ</a>
+    <a href="contact.html">Contact</a>
+    <a href="terms.html">Terms &amp; Privacy</a>
+  </div>
+  <span>buildzuri.com</span>
+</footer>
+
+<script src="assets/js/script.js"></script>
+</body>
+</html>

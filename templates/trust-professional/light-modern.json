@@ -1,0 +1,35 @@
+{
+  "template_id": "trust-professional-light-modern",
+  "archetype": "trust-professional",
+  "mode": "light",
+  "lean": "international",
+  "display_name": "Trust Professional Light Modern",
+  "storage_path": "trust-professional/light-modern.html",
+  "color_themes": [
+    {
+      "key": "theme-1",
+      "bg": "",
+      "surface": "",
+      "text": "",
+      "text_muted": "",
+      "accent": "",
+      "accent_text": ""
+    },
+    null,
+    null
+  ],
+  "placeholder_fields": [],
+  "image_slots": [],
+  "has_unique_section": true,
+  "unique_section_name": "Credentials / trust bar",
+  "_extraction": {
+    "is_canonical": false,
+    "flags": [
+      "not_in_canonical_24",
+      "lean_defaulted_international_confirm",
+      "missing_multi_theme_only_root",
+      "root_missing_vars:bg,surface,text,text_muted,accent,accent_text"
+    ],
+    "source_html": "trust-professional/light-modern.html"
+  }
+}

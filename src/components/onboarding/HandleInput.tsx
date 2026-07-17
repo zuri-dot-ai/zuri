@@ -192,7 +192,7 @@ export function HandleInput({
             onChange(sanitizeHandleInput(e.target.value));
           }}
           placeholder="your-business"
-          className="h-11 border-white/10 bg-white/[0.02] pr-10 font-mono text-sm"
+          className="h-11 pr-10 font-mono text-sm"
           autoComplete="off"
           spellCheck={false}
         />
@@ -217,7 +217,7 @@ export function HandleInput({
         </span>
       </div>
       <p className="font-mono text-xs text-muted-foreground">
-        <span className="text-gold">{value || "handle"}</span>.zuri.com
+        <span className="text-gold">{value || "handle"}</span>.buildzuri.com
       </p>
       {availability.status === "unavailable" && (
         <div className="space-y-1.5">
@@ -232,7 +232,7 @@ export function HandleInput({
                     setUserEdited(true);
                     onChange(s);
                   }}
-                  className="rounded-full border border-gold/40 px-2.5 py-0.5 font-mono text-xs text-gold hover:bg-gold/10"
+                  className="border border-gold/40 bg-[hsl(var(--surface))] px-2.5 py-0.5 font-mono text-xs text-gold hover:border-gold"
                 >
                   {s}
                 </button>

@@ -40,7 +40,36 @@ export const VALID_BUSINESS_TYPES = [
   "health-medical",
   "events-booking",
   "other",
+  // Unsupported branches (§1) — show CustomSiteCTA, do not generate
+  "ecommerce",
+  "blog-publication",
+  "nonprofit-community",
 ] as const;
+
+/** Branch 2 / 4 / 7 — redirect to custom build team, never AI-generate. */
+export const UNSUPPORTED_BUSINESS_TYPES = [
+  "ecommerce",
+  "blog-publication",
+  "nonprofit-community",
+] as const;
+
+export type UnsupportedBusinessType =
+  (typeof UNSUPPORTED_BUSINESS_TYPES)[number];
+
+export const UNSUPPORTED_FEATURE_LABELS: Record<
+  UnsupportedBusinessType,
+  string
+> = {
+  ecommerce: "E-commerce",
+  "blog-publication": "Blog / Content",
+  "nonprofit-community": "Nonprofit / Community",
+};
+
+export function isUnsupportedBusinessType(
+  value: string
+): value is UnsupportedBusinessType {
+  return (UNSUPPORTED_BUSINESS_TYPES as readonly string[]).includes(value);
+}
 
 export const VALID_LOCATIONS = [
   "lagos",
@@ -143,5 +172,8 @@ export const SERVICE_SUGGESTIONS: Record<string, string[]> = {
     "Class bookings",
     "Workshop facilitation",
   ],
+  ecommerce: [],
+  "blog-publication": [],
+  "nonprofit-community": [],
   other: [],
 };

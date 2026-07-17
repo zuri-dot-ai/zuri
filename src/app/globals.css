@@ -3,45 +3,73 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    /* ── ZURI DARK THEME (V1 default) ──────────────── */
-    --background: 240 6% 5%;          /* #0C0C0E near-black */
-    --surface: 240 4% 9%;             /* #161618 dark charcoal */
-    --foreground: 44 23% 93%;         /* #F0EEE9 warm white */
+  /* Default = dark System A dashboard canvas */
+  :root,
+  html[data-theme="dark"] {
+    --background: 240 7% 6%;          /* #0e0e10 */
+    --surface: 0 0% 8%;               /* #141414 flat marketing panel */
+    --surface-form: 0 0% 6%;          /* #101010 */
+    --foreground: 0 0% 96%;           /* #f5f5f5 chrome-light */
+    --muted: 0 0% 10%;                /* #1a1a1a */
+    --muted-foreground: 210 5% 79%;   /* #c9ced6 chrome-mid */
+    --border: 0 0% 13%;               /* #222 hairline */
+    --input: 0 0% 15%;                /* #262626 */
+    --ring: 38 59% 58%;
+    --primary: 38 59% 58%;
+    --primary-foreground: 0 0% 4%;
+    --secondary: 0 0% 10%;
+    --accent: 0 0% 10%;
+    --radius: 0px;                    /* marketing square corners */
 
-    --muted: 240 4% 9%;
-    --muted-foreground: 240 5% 55%;   /* #888891 grey */
+    --gold: #d4a656;
+    --gold-bright: #f0c878;
+    --black: #0a0a0a;
+    --chrome-light: #f5f5f5;
+    --chrome-mid: #c9ced6;
+    --chrome-dark: #6b7178;
+    --logo-color: #d4af37;
 
-    --border: 240 4% 17%;             /* #2A2A2D subtle line */
-    --input: 240 4% 17%;
-    --ring: 44 56% 54%;               /* gold focus ring */
+    --elevation-1: none;
+    --elevation-2: none;
+    --elevation-3: 0 12px 32px rgba(0,0,0,.4);
 
-    /* Gold as primary */
-    --primary: 44 56% 54%;            /* #C9A84C warm gold */
-    --primary-foreground: 240 6% 5%;  /* near-black text on gold */
-
-    --secondary: 240 4% 12%;
-    --accent: 240 4% 12%;
-
-    --radius: 0.75rem;
-
-    /* Typography CSS variables */
     --font-cormorant: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
     --font-montserrat: 'Montserrat', system-ui, -apple-system, sans-serif;
     --font-jetbrains: 'JetBrains Mono', 'Courier New', monospace;
   }
 
-  /* V2 light mode placeholder — do not use in V1 */
-  .light {
-    --background: 44 23% 97%;
+  html[data-theme="light"],
+  html.light {
+    --background: 40 33% 97%;         /* #faf8f5 */
     --surface: 0 0% 100%;
-    --foreground: 240 6% 10%;
-    --muted: 240 5% 96%;
-    --muted-foreground: 240 4% 40%;
-    --border: 240 6% 90%;
-    --input: 240 6% 90%;
-    --primary: 44 56% 44%;
-    --primary-foreground: 0 0% 100%;
+    --surface-form: 40 25% 96%;
+    --foreground: 33 23% 8%;          /* #18140f */
+    --muted: 40 25% 94%;
+    --muted-foreground: 40 13% 32%;
+    --border: 40 25% 88%;             /* #e8e3d8 */
+    --input: 40 25% 88%;
+    --primary: 38 59% 58%;
+    --primary-foreground: 33 23% 8%;
+    --secondary: 40 25% 94%;
+    --accent: 40 25% 94%;
+    --logo-color: #0a0a0a;
+    --elevation-1: none;
+    --elevation-2: none;
+    --elevation-3: 0 12px 32px rgba(0,0,0,.12);
+  }
+
+  /* Auth canvas uses marketing pure black */
+  .auth-canvas {
+    --background: 0 0% 4%;            /* #0a0a0a */
+    --logo-color: #d4af37;
+    --foreground: 0 0% 96%;
+    --muted-foreground: 210 5% 79%;
+    --border: 0 0% 13%;
+    --surface: 0 0% 8%;
+    --surface-form: 0 0% 6%;
+    --input: 0 0% 15%;
+    background: #0a0a0a;
+    color: var(--chrome-light);
   }
 }
 
@@ -57,15 +85,23 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    font-weight: 300;
     font-feature-settings: "rlig" 1, "calt" 1;
     text-rendering: optimizeLegibility;
   }
 
-  h1, h2, h3, h4 {
-    @apply font-heading tracking-tight;
+  @media (max-width: 600px) {
+    body {
+      font-weight: 400;
+    }
   }
 
-  /* Premium scrollbar */
+  h1, h2, h3, h4 {
+    @apply font-heading tracking-tight;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -74,100 +110,273 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: rgba(201, 168, 76, 0.2);
+    background: rgba(212, 166, 86, 0.2);
     border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(201, 168, 76, 0.4);
+    background: rgba(212, 166, 86, 0.4);
   }
 
-  /* Gold text selection */
   ::selection {
-    background: #C9A84C;
-    color: #0C0C0E;
+    background: #d4a656;
+    color: #0a0a0a;
   }
 
-  /* Button base improvements */
   button, a {
-    transition: all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+    transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease,
+      box-shadow 0.3s ease, transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
-  /* Focus ring in gold */
   *:focus-visible {
-    outline: 2px solid #C9A84C;
+    outline: 2px solid #d4a656;
     outline-offset: 2px;
   }
 }
 
 @layer components {
-  /* Reusable premium container */
   .zuri-container {
     @apply mx-auto w-full max-w-7xl px-6 md:px-8;
   }
 
-  /* Card surface used across app */
-  .zuri-card {
-    @apply rounded-xl border border-border bg-surface p-6;
-  }
-
-  /* Gold gradient text for hero accents */
-  .text-gold-gradient {
-    @apply bg-gradient-to-r from-gold to-gold-hover bg-clip-text text-transparent;
-  }
-
-  /* ── NEW GLASS + GOLD + ANIMATION UTILITIES ──────── */
-
-  /* Glassmorphism card variant */
+  /* Flat hairline surface — replaces glass-card as default */
+  .surface,
+  .surface-hairline,
+  .zuri-card,
   .glass-card {
-    background: rgba(255, 255, 255, 0.02);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 1rem;
+    background: hsl(var(--surface));
+    border: 1px solid hsl(var(--border));
+    border-radius: 0;
+    box-shadow: none;
+    transition: border-color 0.2s ease, background 0.2s ease;
   }
 
-  /* Gold glow button effect */
-  .btn-gold-glow:hover {
-    box-shadow: 0 0 30px rgba(201, 168, 76, 0.35), 0 0 60px rgba(201, 168, 76, 0.15);
-    transform: translateY(-1px);
-    transition: all 0.3s ease;
+  .zuri-card,
+  .glass-card,
+  .surface {
+    padding: 1.5rem;
   }
 
-  /* Premium text gradient */
+  .surface-hairline {
+    padding: 0;
+  }
+
+  .text-gold-gradient,
   .text-gradient-gold {
-    background: linear-gradient(135deg, #C9A84C 0%, #E2BC5A 50%, #C9A84C 100%);
+    background: linear-gradient(135deg, #d4a656 0%, #f0c878 50%, #d4a656 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
-  /* Animated gradient mesh background */
-  .gradient-mesh {
-    background:
-      radial-gradient(ellipse at 20% 50%, rgba(201, 168, 76, 0.07) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 20%, rgba(201, 168, 76, 0.05) 0%, transparent 50%),
-      radial-gradient(ellipse at 50% 80%, rgba(201, 168, 76, 0.04) 0%, transparent 50%),
-      #0C0C0E;
-    animation: meshShift 15s ease-in-out infinite alternate;
+  .page-head h1 {
+    font-family: var(--font-cormorant);
+    font-weight: 500;
+    font-size: 1.8rem;
+    margin-bottom: 0.3rem;
   }
 
-  /* Page transition */
+  .eyebrow {
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+
+  /* Marketing button DNA */
+  .btn-gold {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: var(--gold);
+    color: var(--black);
+    padding: 0.95rem 2rem;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-weight: 500;
+    border: none;
+    border-radius: 0;
+    cursor: pointer;
+    transition: background 0.25s ease, transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1),
+      box-shadow 0.3s ease;
+  }
+  .btn-gold:hover {
+    background: var(--gold-bright);
+    box-shadow: 0 0 24px rgba(240, 200, 120, 0.25);
+  }
+  .btn-gold:active {
+    transform: scale(0.94) !important;
+  }
+  .btn-gold:disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    position: relative;
+    border: 1px solid transparent;
+    color: hsl(var(--foreground));
+    padding: 0.95rem 2rem;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-weight: 500;
+    background: transparent;
+    border-radius: 0;
+    cursor: pointer;
+    isolation: isolate;
+  }
+  .btn-ghost::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border: 1px solid var(--chrome-dark);
+    clip-path: inset(0 100% 100% 0);
+    transition: clip-path 0.45s ease, border-color 0.35s ease;
+    z-index: -1;
+  }
+  html[data-theme="light"] .btn-ghost::before {
+    border-color: hsl(var(--border));
+  }
+  .btn-ghost:hover::before {
+    border-color: var(--gold);
+    clip-path: inset(0 0 0 0);
+  }
+  .btn-ghost:disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  .btn-gold-glow:hover {
+    box-shadow: 0 0 24px rgba(240, 200, 120, 0.25);
+  }
+
+  /* Premium CSS ring spinner — never logo */
+  .zuri-spinner {
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 50%;
+    border: 1.5px solid hsl(var(--border));
+    border-top-color: var(--gold);
+    animation: zuriSpin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+  .zuri-spinner--lg {
+    width: 2rem;
+    height: 2rem;
+    border-width: 2px;
+  }
+
   .page-enter {
     animation: pageIn 0.4s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
   }
 
-  /* Shimmer skeleton loader */
   .skeleton {
-    @apply relative overflow-hidden bg-surface rounded-lg;
+    @apply relative overflow-hidden bg-muted;
   }
   .skeleton::after {
     @apply absolute inset-0 -translate-x-full animate-shimmer
       bg-gradient-to-r from-transparent via-white/5 to-transparent;
     content: "";
   }
+
+  .consistency-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+  .consistency-dot--done {
+    background: #d4a656;
+    box-shadow: 0 0 0 3px rgba(212, 166, 86, 0.2);
+  }
+  .consistency-dot--missed {
+    background: transparent;
+    border: 1.5px solid hsl(var(--muted-foreground) / 0.45);
+  }
+
+  .bar-chart-wrap {
+    width: 100%;
+  }
+  .bar-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.35rem;
+    height: 180px;
+  }
+  .bar-chart .bar {
+    width: 100%;
+    min-height: 4px;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    background: linear-gradient(180deg, #d4a656 0%, #f0c878 60%, #f0c878 100%);
+    border-radius: 3px 3px 0 0;
+    opacity: 0.9;
+    transition: opacity 0.15s ease, filter 0.15s ease;
+  }
+  .bar-chart .bar:hover,
+  .bar-chart .bar:focus-visible {
+    opacity: 1;
+    filter: brightness(1.08);
+    outline: none;
+  }
+  .bar-chart .bar-label {
+    font-size: 0.65rem;
+    color: hsl(var(--muted-foreground));
+    text-align: center;
+    margin-top: 0.4rem;
+    min-height: 1em;
+    font-family: var(--font-jetbrains);
+  }
+  .bar-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    height: 100%;
+    justify-content: flex-end;
+    position: relative;
+  }
+  .bar-tooltip {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: hsl(var(--surface));
+    border: 1px solid hsl(var(--border));
+    padding: 0.4rem 0.55rem;
+    font-size: 0.72rem;
+    color: hsl(var(--foreground));
+    white-space: nowrap;
+    z-index: 5;
+    pointer-events: none;
+    font-family: var(--font-jetbrains);
+  }
+
+  /* Form DNA */
+  .field-label {
+    font-size: 0.78rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--chrome-dark);
+    font-weight: 500;
+  }
+  html[data-theme="light"] .field-label {
+    color: hsl(var(--muted-foreground));
+  }
 }
 
-/* ── KEYFRAMES (from tailwind + new additions) ──────── */
+@keyframes zuriSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 @keyframes meshShift {
   0% { background-position: 0% 50%; }

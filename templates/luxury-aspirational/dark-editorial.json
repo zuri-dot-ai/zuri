@@ -1,0 +1,73 @@
+{
+  "template_id": "luxury-aspirational-dark-editorial",
+  "archetype": "luxury-aspirational",
+  "mode": "dark",
+  "lean": "international",
+  "display_name": "Luxury Dark Editorial",
+  "storage_path": "luxury-aspirational/dark-editorial.html",
+  "color_themes": [
+    {
+      "key": "theme-1",
+      "bg": "#12100E",
+      "surface": "#1A1714",
+      "text": "#F3EEE6",
+      "text_muted": "#B8AFA2",
+      "accent": "#D4B678",
+      "accent_text": "#12100E"
+    },
+    null,
+    null
+  ],
+  "placeholder_fields": [
+    "about_body",
+    "address",
+    "business_name",
+    "email_address",
+    "founder_name",
+    "founder_title",
+    "instagram_url",
+    "phone_number",
+    "service_1_description",
+    "service_1_title",
+    "service_2_description",
+    "service_2_title",
+    "service_3_description",
+    "service_3_title",
+    "service_4_description",
+    "service_4_title",
+    "service_5_description",
+    "service_5_title",
+    "service_6_description",
+    "service_6_title",
+    "tagline",
+    "testimonial_1_name",
+    "testimonial_1_quote",
+    "testimonial_1_role",
+    "testimonial_2_name",
+    "testimonial_2_quote",
+    "testimonial_2_role",
+    "testimonial_3_name",
+    "testimonial_3_quote",
+    "testimonial_3_role",
+    "whatsapp_number"
+  ],
+  "image_slots": [
+    "about",
+    "after_1",
+    "after_2",
+    "after_3",
+    "before_1",
+    "before_2",
+    "before_3",
+    "hero"
+  ],
+  "has_unique_section": true,
+  "unique_section_name": "Before/After row",
+  "_extraction": {
+    "is_canonical": true,
+    "flags": [
+      "missing_multi_theme_only_root"
+    ],
+    "source_html": "luxury-aspirational/dark-editorial.html"
+  }
+}

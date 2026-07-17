@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NairaFlow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --color-bg:#0B0E14;
+    --color-surface:#121623;
+    --color-text:#F3F5FA;
+    --color-text-muted:#9AA1B4;
+    --color-accent:#5B6FED;
+    --color-accent-text:#FFFFFF;
+    --color-amber:#E8A33D;
+    --border:#212636;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:'Inter',sans-serif;
+    background:var(--color-bg);
+    color:var(--color-text);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  img{max-width:100%;display:block;}
+  a{text-decoration:none;color:inherit;}
+  ul{list-style:none;}
+  .container{width:100%;max-width:1200px;margin:0 auto;padding:0 20px;}
+  section{padding:80px 0;}
+  h1,h2,h3{font-weight:800;line-height:1.15;letter-spacing:-0.02em;}
+  h2{font-size:clamp(28px,4vw,42px);margin-bottom:12px;}
+  .eyebrow{color:var(--color-accent);font-weight:600;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;display:block;}
+  .section-head{max-width:640px;margin:0 auto 48px;text-align:center;}
+  .section-head p{color:var(--color-text-muted);font-size:16px;}
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;
+    padding:14px 28px;border-radius:10px;font-weight:600;font-size:15px;
+    transition:all .25s ease;cursor:pointer;border:none;
+  }
+  .btn-primary{background:var(--color-accent);color:var(--color-accent-text);}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(91,111,237,0.35);}
+  .btn-outline{background:transparent;color:var(--color-text);border:1px solid var(--border);}
+  .btn-outline:hover{border-color:var(--color-accent);color:var(--color-accent);}
+
+  :focus-visible{outline:2px solid var(--color-accent);outline-offset:3px;}
+
+  /* NAV */
+  header#site-nav{
+    position:fixed;top:0;left:0;width:100%;z-index:1000;
+    padding:20px 0;transition:all .3s ease;background:transparent;
+  }
+  header#site-nav.scrolled{
+    background:rgba(11,14,20,0.85);backdrop-filter:blur(12px);
+    padding:14px 0;border-bottom:1px solid var(--border);
+  }
+  .nav-inner{display:flex;align-items:center;justify-content:space-between;}
+  .logo{font-size:20px;font-weight:800;letter-spacing:-0.01em;}
+  .logo span{color:var(--color-accent);}
+  .nav-links{display:flex;gap:32px;align-items:center;}
+  .nav-links a{font-size:14px;font-weight:500;color:var(--color-text-muted);transition:color .2s;}
+  .nav-links a:hover{color:var(--color-text);}
+  .nav-cta{display:none;}
+  .hamburger{
+    display:flex;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:8px;z-index:1100;
+  }
+  .hamburger span{width:22px;height:2px;background:var(--color-text);transition:all .3s ease;}
+  .hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+  .hamburger.open span:nth-child(2){opacity:0;}
+  .hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+
+  .drawer{
+    position:fixed;top:0;right:-100%;height:100vh;width:78%;max-width:340px;
+    background:var(--color-surface);border-left:1px solid var(--border);
+    z-index:1050;transition:right .35s ease;padding:100px 32px 32px;
+  }
+  .drawer.open{right:0;}
+  .drawer a{display:block;padding:14px 0;font-size:17px;font-weight:600;border-bottom:1px solid var(--border);}
+  .drawer .btn{margin-top:24px;width:100%;}
+  .backdrop{
+    position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1040;
+    opacity:0;pointer-events:none;transition:opacity .3s ease;
+  }
+  .backdrop.open{opacity:1;pointer-events:auto;}
+
+  @media(min-width:1025px){
+    .nav-links{display:flex;}
+    .nav-cta{display:inline-flex;}
+    .hamburger{display:none;}
+  }
+  @media(max-width:1024px){
+    .nav-links{display:none;}
+  }
+
+  /* HERO */
+  #hero{
+    min-height:100vh;display:flex;align-items:center;position:relative;
+    padding-top:120px;overflow:hidden;
+  }
+  #hero::before{
+    content:"";position:absolute;inset:0;
+    background:radial-gradient(600px circle at 80% 20%, rgba(91,111,237,0.18), transparent 60%);
+    pointer-events:none;
+  }
+  .hero-grid{display:grid;grid-template-columns:1fr;gap:48px;align-items:center;position:relative;z-index:1;}
+  .hero-copy h1{font-size:clamp(36px,6vw,60px);margin-bottom:20px;}
+  .hero-copy .accent{color:var(--color-accent);}
+  .hero-copy p{font-size:18px;color:var(--color-text-muted);max-width:520px;margin-bottom:32px;}
+  .hero-actions{display:flex;gap:16px;flex-wrap:wrap;}
+  .hero-visual img{border-radius:16px;border:1px solid var(--border);}
+  @media(min-width:1025px){
+    .hero-grid{grid-template-columns:1.1fr 1fr;}
+  }
+
+  /* STATS / ABOUT */
+  #about{background:var(--color-surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+  .about-grid{display:grid;grid-template-columns:1fr;gap:40px;align-items:center;}
+  .about-copy p{color:var(--color-text-muted);font-size:16px;margin-bottom:24px;}
+  .stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px;}
+  .stat-card{
+    background:var(--color-bg);border:1px solid var(--border);border-radius:14px;
+    padding:24px;text-align:left;
+  }
+  .stat-card .num{font-size:32px;font-weight:800;color:var(--color-amber);display:block;margin-bottom:6px;}
+  .stat-card .label{font-size:13px;color:var(--color-text-muted);}
+  @media(min-width:1025px){
+    .about-grid{grid-template-columns:1fr 1fr;}
+  }
+
+  /* SERVICES */
+  .services-grid{display:grid;grid-template-columns:1fr;gap:24px;}
+  .service-card{
+    background:var(--color-surface);border:1px solid var(--border);border-radius:16px;
+    padding:32px;transition:transform .25s ease,border-color .25s ease;
+  }
+  .service-card:hover{transform:translateY(-4px);border-color:var(--color-accent);}
+  .service-icon{
+    width:44px;height:44px;border-radius:10px;background:rgba(91,111,237,0.15);
+    display:flex;align-items:center;justify-content:center;margin-bottom:20px;color:var(--color-accent);font-weight:800;
+  }
+  .service-card h3{font-size:19px;margin-bottom:10px;}
+  .service-card p{color:var(--color-text-muted);font-size:15px;}
+  @media(min-width:481px) and (max-width:1024px){
+    .services-grid{grid-template-columns:repeat(2,1fr);}
+  }
+  @media(min-width:1025px){
+    .services-grid{grid-template-columns:repeat(3,1fr);}
+  }
+
+  /* TESTIMONIALS */
+  #testimonials{background:var(--color-surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+  .testi-grid{display:grid;grid-template-columns:1fr;gap:24px;}
+  .testi-card{
+    background:var(--color-bg);border:1px solid var(--border);border-radius:16px;padding:28px;
+  }
+  .testi-card p.quote{font-size:16px;margin-bottom:20px;color:var(--color-text);}
+  .testi-card .name{font-weight:700;font-size:14px;}
+  .testi-card .role{font-size:13px;color:var(--color-text-muted);}
+  @media(min-width:1025px){
+    .testi-grid{grid-template-columns:repeat(3,1fr);}
+  }
+
+  /* FAQ */
+  .faq-list{max-width:720px;margin:0 auto;}
+  .faq-item{border-bottom:1px solid var(--border);}
+  .faq-q{
+    width:100%;background:none;border:none;color:var(--color-text);
+    padding:20px 0;font-size:16px;font-weight:600;display:flex;justify-content:space-between;
+    align-items:center;cursor:pointer;text-align:left;
+  }
+  .faq-q .plus{transition:transform .25s ease;color:var(--color-accent);font-size:20px;}
+  .faq-item.open .plus{transform:rotate(45deg);}
+  .faq-a{max-height:0;overflow:hidden;transition:max-height .3s ease;}
+  .faq-a p{padding-bottom:20px;color:var(--color-text-muted);font-size:15px;}
+
+  /* CONTACT */
+  #contact{background:var(--color-surface);border-top:1px solid var(--border);}
+  .contact-grid{display:grid;grid-template-columns:1fr;gap:40px;}
+  .contact-info li{display:flex;gap:12px;margin-bottom:18px;color:var(--color-text-muted);font-size:15px;}
+  .contact-info li strong{color:var(--color-text);display:block;font-size:14px;}
+  form#contact-form{display:flex;flex-direction:column;gap:16px;}
+  .field{display:flex;flex-direction:column;gap:6px;}
+  .field label{font-size:13px;color:var(--color-text-muted);}
+  .field input, .field textarea{
+    background:var(--color-bg);border:1px solid var(--border);border-radius:10px;
+    padding:14px;color:var(--color-text);font-family:inherit;font-size:15px;
+  }
+  .field input:focus, .field textarea:focus{border-color:var(--color-accent);outline:none;}
+  .form-success{display:none;background:rgba(91,111,237,0.12);border:1px solid var(--color-accent);border-radius:10px;padding:16px;font-size:14px;color:var(--color-text);}
+  .form-success.show{display:block;}
+  @media(min-width:1025px){
+    .contact-grid{grid-template-columns:1fr 1.2fr;}
+  }
+
+  /* FOOTER */
+  footer{padding:56px 0 24px;border-top:1px solid var(--border);}
+  .footer-top{display:flex;flex-direction:column;gap:24px;align-items:flex-start;margin-bottom:32px;}
+  .footer-tagline{color:var(--color-text-muted);font-size:14px;max-width:360px;}
+  .footer-social a{
+    width:38px;height:38px;border:1px solid var(--border);border-radius:10px;
+    display:inline-flex;align-items:center;justify-content:center;margin-right:10px;font-size:13px;
+    transition:border-color .2s ease,color .2s ease;
+  }
+  .footer-social a:hover{border-color:var(--color-accent);color:var(--color-accent);}
+  .footer-bottom{border-top:1px solid var(--border);padding-top:20px;text-align:center;}
+  .footer-bottom a{color:var(--color-text-muted);font-size:12px;}
+  @media(min-width:1025px){
+    .footer-top{flex-direction:row;justify-content:space-between;align-items:center;}
+  }
+
+  /* WHATSAPP FLOAT */
+  #whatsapp-float{
+    position:fixed;bottom:24px;right:24px;z-index:900;
+  }
+  #whatsapp-float a{
+    width:56px;height:56px;background:#25D366;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;color:#fff;
+    box-shadow:0 8px 20px rgba(0,0,0,0.35);font-size:26px;transition:transform .25s ease;
+  }
+  #whatsapp-float a:hover{transform:scale(1.08);}
+
+  /* REVEAL ANIMATIONS - crisp/fast */
+  .reveal{opacity:0;transform:translateY(16px);transition:opacity .3s ease,transform .3s ease;}
+  .reveal.active{opacity:1;transform:translateY(0);}
+  .reveal-stagger.active > *{transition-delay:calc(var(--i,0) * 60ms);}
+</style>
+</head>
+<body>
+
+<header id="site-nav">
+  <div class="container nav-inner">
+    <a href="#hero" class="logo">NairaFlow<span>.</span></a>
+    <nav class="nav-links">
+      <a href="#about">About</a>
+      <a href="#services">Services</a>
+      <a href="#testimonials">Testimonials</a>
+      <a href="#faq">FAQ</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <a href="#contact" class="btn btn-primary nav-cta">Get Started</a>
+    <button class="hamburger" id="hamburger-btn" aria-label="Open menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<div class="backdrop" id="drawer-backdrop"></div>
+<nav class="drawer" id="mobile-drawer">
+  <a href="#about">About</a>
+  <a href="#services">Services</a>
+  <a href="#testimonials">Testimonials</a>
+  <a href="#faq">FAQ</a>
+  <a href="#contact">Contact</a>
+  <a href="#contact" class="btn btn-primary">Get Started</a>
+</nav>
+
+<main>
+
+  <section id="hero">
+    <div class="container hero-grid">
+      <div class="hero-copy reveal">
+        <span class="eyebrow">Built for Lagos. Built for scale.</span>
+        <h1>Payments that settle overnight <span class="accent">Powered by NairaFlow.</span></h1>
+        <p>Local-currency settlements with developer-first APIs built for African banks</p>
+        <div class="hero-actions">
+          <a href="#contact" class="btn btn-primary">Get Started Free</a>
+          <a href="#services" class="btn btn-outline">Explore Platform</a>
+        </div>
+      </div>
+      <div class="hero-visual reveal">
+        <img src="/images/fallbacks/clean-modern.jpg" data-image-slot="hero" alt="Team using NairaFlow platform in a modern Lagos office">
+      </div>
+    </div>
+  </section>
+
+  <section id="about">
+    <div class="container about-grid">
+      <div class="about-copy reveal">
+        <span class="eyebrow">About Us</span>
+        <h2>Building the infrastructure for Africa's next wave of tech</h2>
+        <p>Local-currency settlements with developer-first APIs built for African banks</p>
+        <a href="#contact" class="btn btn-outline">Talk to Our Team</a>
+      </div>
+      <div class="stats-grid reveal reveal-stagger">
+        <div class="stat-card" style="--i:0"><span class="num">120K+</span><span class="label">Businesses onboarded across Nigeria</span></div>
+        <div class="stat-card" style="--i:1"><span class="num">₦4.2B+</span><span class="label">Processed monthly on the platform</span></div>
+        <div class="stat-card" style="--i:2"><span class="num">99.9%</span><span class="label">Uptime across Lagos data centers</span></div>
+        <div class="stat-card" style="--i:3"><span class="num">24/7</span><span class="label">Local support, no outsourcing</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="services">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">What We Offer</span>
+        <h2>Tools built for how African startups actually move</h2>
+        <p>Everything you need to launch, operate, and scale — in one platform.</p>
+      </div>
+      <div class="services-grid reveal reveal-stagger">
+        <div class="service-card" style="--i:0">
+          <div class="service-icon">01</div>
+          <h3>Payment collection API</h3>
+          <p>Professional Payment collection API from NairaFlow.</p>
+        </div>
+        <div class="service-card" style="--i:1">
+          <div class="service-icon">02</div>
+          <h3>Merchant dashboard</h3>
+          <p>Professional Merchant dashboard from NairaFlow.</p>
+        </div>
+        <div class="service-card" style="--i:2">
+          <div class="service-icon">03</div>
+          <h3>Settlement reports</h3>
+          <p>Professional Settlement reports from NairaFlow.</p>
+        </div>
+        <div class="service-card" hidden data-optional-slot="4" style="--i:3">
+          <div class="service-icon">04</div>
+          <h3>Fraud alerts</h3>
+          <p>Professional Fraud alerts from NairaFlow.</p>
+        </div>
+        <div class="service-card" hidden data-optional-slot="5" style="--i:4">
+          <div class="service-icon">05</div>
+          <h3>Developer sandbox</h3>
+          <p>Professional Developer sandbox from NairaFlow.</p>
+        </div>
+        <div class="service-card" hidden data-optional-slot="6" style="--i:5">
+          <div class="service-icon">06</div>
+          <h3></h3>
+          <p></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="testimonials">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">Trusted by Founders</span>
+        <h2>What our customers are saying</h2>
+      </div>
+      <div class="testi-grid reveal reveal-stagger">
+        <div class="testi-card" style="--i:0">
+          <p class="quote">"Working with NairaFlow was a great experience. Highly recommended."</p>
+          <p class="name">Adaeze Okafor</p>
+          <p class="role">Client</p>
+        </div>
+        <div class="testi-card" style="--i:1">
+          <p class="quote">"Working with NairaFlow was a great experience. Highly recommended."</p>
+          <p class="name">Chinedu Eze</p>
+          <p class="role">Client</p>
+        </div>
+        <div class="testi-card" style="--i:2">
+          <p class="quote">"Working with NairaFlow was a great experience. Highly recommended."</p>
+          <p class="name">Fatima Bello</p>
+          <p class="role">Client</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">FAQ</span>
+        <h2>Common questions</h2>
+      </div>
+      <div class="faq-list reveal">
+        <div class="faq-item">
+          <button class="faq-q">How fast can we get set up? <span class="plus">+</span></button>
+          <div class="faq-a"><p>Most teams are live on NairaFlow within a single business day, with local onboarding support included.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q">Do you support local payment rails? <span class="plus">+</span></button>
+          <div class="faq-a"><p>Yes — full support for local bank transfers, cards, and mobile money alongside international rails.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q">Is there a free trial? <span class="plus">+</span></button>
+          <div class="faq-a"><p>Yes, you can get started free and upgrade as your business grows — no credit card required.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q">Where is support based? <span class="plus">+</span></button>
+          <div class="faq-a"><p>Our support team is based in Lagos and available around the clock via chat, email, and WhatsApp.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact">
+    <div class="container contact-grid">
+      <div class="contact-copy reveal">
+        <span class="eyebrow">Get In Touch</span>
+        <h2>Let's build something great together</h2>
+        <ul class="contact-info">
+          <li>📍<div><strong>Address</strong>NairaFlow</div></li>
+          <li>📞<div><strong>Phone</strong>NairaFlow</div></li>
+          <li>✉️<div><strong>Email</strong>NairaFlow</div></li>
+        </ul>
+      </div>
+      <form id="contact-form" class="reveal" aria-label="Contact form">
+        <div class="field">
+          <label for="cf-name">Name</label>
+          <input type="text" id="cf-name" name="name" required>
+        </div>
+        <div class="field">
+          <label for="cf-email">Email</label>
+          <input type="email" id="cf-email" name="email" required>
+        </div>
+        <div class="field">
+          <label for="cf-message">Message</label>
+          <textarea id="cf-message" name="message" rows="5" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Send Message</button>
+        <div class="form-success" id="form-success">Message sent — we'll get back to you within 24 hours.</div>
+      </form>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="container">
+    <div class="footer-top">
+      <div>
+        <div class="logo" style="margin-bottom:10px;">NairaFlow<span>.</span></div>
+        <p class="footer-tagline">Payments that settle overnight</p>
+      </div>
+      <div class="footer-social" id="social-links">
+        <a href="NairaFlow" data-social="instagram" aria-label="Instagram" target="_blank" rel="noopener">IG</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <a href="#" target="_blank" rel="noopener">Powered by Zuri</a>
+    </div>
+  </div>
+</footer>
+
+<div id="whatsapp-float" data-whatsapp-number="NairaFlow">
+  <a href="#" aria-label="Chat on WhatsApp" target="_blank" rel="noopener">💬</a>
+</div>
+
+<script>
+  // Nav scroll state
+  var nav = document.getElementById('site-nav');
+  window.addEventListener('scroll', function(){
+    if(window.scrollY > 40){ nav.classList.add('scrolled'); }
+    else { nav.classList.remove('scrolled'); }
+  });
+
+  // Hamburger drawer
+  var hamburger = document.getElementById('hamburger-btn');
+  var drawer = document.getElementById('mobile-drawer');
+  var backdrop = document.getElementById('drawer-backdrop');
+  function closeDrawer(){
+    hamburger.classList.remove('open');
+    hamburger.setAttribute('aria-expanded','false');
+    drawer.classList.remove('open');
+    backdrop.classList.remove('open');
+  }
+  hamburger.addEventListener('click', function(){
+    var isOpen = drawer.classList.toggle('open');
+    hamburger.classList.toggle('open');
+    backdrop.classList.toggle('open');
+    hamburger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  });
+  backdrop.addEventListener('click', closeDrawer);
+  drawer.querySelectorAll('a').forEach(function(a){ a.addEventListener('click', closeDrawer); });
+
+  // Scroll reveal
+  var revealEls = document.querySelectorAll('.reveal');
+  var observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(entry.isIntersecting){
+        entry.target.classList.add('active');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  revealEls.forEach(function(el){ observer.observe(el); });
+
+  // FAQ accordion
+  document.querySelectorAll('.faq-item').forEach(function(item){
+    var q = item.querySelector('.faq-q');
+    var a = item.querySelector('.faq-a');
+    q.addEventListener('click', function(){
+      var isOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item.open').forEach(function(openItem){
+        openItem.classList.remove('open');
+        openItem.querySelector('.faq-a').style.maxHeight = null;
+      });
+      if(!isOpen){
+        item.classList.add('open');
+        a.style.maxHeight = a.scrollHeight + 'px';
+      }
+    });
+  });
+
+  // Contact form
+  var form = document.getElementById('contact-form');
+  var success = document.getElementById('form-success');
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    success.classList.add('show');
+    form.reset();
+  });
+
+  // Instagram optional hide
+  (function(){
+    var ig = document.querySelector('[data-social="instagram"]');
+    var href = ig.getAttribute('href');
+    if(!href || href.trim() === '' || href.indexOf('{{') === 0){ ig.remove(); }
+  })();
+
+  // WhatsApp float
+  (function(){
+    var el = document.getElementById('whatsapp-float');
+    var num = el.getAttribute('data-whatsapp-number');
+    if (!num || num.trim() === '' || num.indexOf('{{') === 0) { el.remove(); }
+    else { el.querySelector('a').href = 'https://wa.me/' + num.replace(/[^0-9]/g,''); }
+  })();
+</script>
+
+</body>
+</html>

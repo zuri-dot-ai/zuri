@@ -33,11 +33,13 @@ export function Step4Services({
           Add your main services or products.
         </p>
       </div>
-      <TagInput
-        value={value}
-        onChange={onChange}
-        suggestions={suggestions}
-      />
+      <div className="surface p-6 sm:p-7">
+        <TagInput
+          value={value}
+          onChange={onChange}
+          suggestions={suggestions}
+        />
+      </div>
     </div>
   );
 }

@@ -2,6 +2,8 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Logo } from "@/components/ui/logo";
+import { marketingUrl } from "@/lib/marketing-url";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { cn } from "@/lib/utils";
 
@@ -17,7 +19,7 @@ function StepDots({ currentStep }: { currentStep: number }) {
               ? "size-2.5 bg-gold"
               : step === currentStep
                 ? "size-3 bg-gold ring-2 ring-gold/30"
-                : "size-2.5 bg-white/10"
+                : "size-2.5 bg-[hsl(var(--border))]"
           )}
         />
       ))}
@@ -33,7 +35,6 @@ interface OnboardingShellProps {
   onBack: () => void;
   onContinue: () => void;
   children: React.ReactNode;
-  /** Hide footer controls (used on Step 8) */
   hideControls?: boolean;
 }
 
@@ -63,6 +64,10 @@ export function OnboardingShell({
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-2xl flex-col px-5 py-8 md:py-12">
+      <div className="mb-8 flex justify-center">
+        <Logo variant="image" size="navbar" href={marketingUrl()} />
+      </div>
+
       {step < 8 && (
         <div className="mb-8 space-y-3">
           <StepDots currentStep={step} />
@@ -108,7 +113,7 @@ export function OnboardingShell({
             type="button"
             onClick={onContinue}
             disabled={!canContinue}
-            className="btn-gold-glow min-w-[140px]"
+            className="min-w-[140px]"
           >
             Continue
           </Button>

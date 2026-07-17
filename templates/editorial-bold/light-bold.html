@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{business_name}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --color-bg: #FFFFFF;
+    --color-surface: #F7F7F5;
+    --color-text: #111111;
+    --color-text-muted: #5B5B58;
+    --color-accent: #E8542A;
+    --color-accent-text: #FFFFFF;
+    --nav-h: 76px;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--color-bg);
+    color:var(--color-text);
+    font-family:'DM Sans',sans-serif;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{
+    font-family:'Bebas Neue',sans-serif;
+    letter-spacing:0.01em;
+    line-height:0.95;
+    text-transform:uppercase;
+  }
+  img{max-width:100%;display:block;}
+  a{color:inherit;text-decoration:none;}
+  ul{list-style:none;}
+  button{font-family:inherit;cursor:pointer;}
+
+  a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible{
+    outline:3px solid var(--color-accent);
+    outline-offset:2px;
+  }
+
+  .container{
+    max-width:1280px;
+    margin:0 auto;
+    padding:0 24px;
+  }
+
+  /* ---------- NAV ---------- */
+  header.nav{
+    position:fixed;
+    top:0;left:0;right:0;
+    z-index:1000;
+    height:var(--nav-h);
+    display:flex;
+    align-items:center;
+    background:transparent;
+    border-bottom:1px solid transparent;
+    transition:background .3s ease, border-color .3s ease;
+  }
+  header.nav.scrolled{
+    background:rgba(255,255,255,0.92);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid #EAEAE6;
+  }
+  .nav-inner{
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .logo{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:1.6rem;
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+  }
+  .nav-links{
+    display:none;
+    gap:2.5rem;
+  }
+  .nav-links a{
+    font-size:0.85rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    position:relative;
+    padding-bottom:4px;
+  }
+  .nav-links a::after{
+    content:"";
+    position:absolute;left:0;bottom:0;
+    width:0;height:2px;
+    background:var(--color-accent);
+    transition:width .25s ease;
+  }
+  .nav-links a:hover::after{width:100%;}
+
+  .hamburger{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+    background:none;
+    border:none;
+    z-index:1200;
+    padding:8px;
+  }
+  .hamburger span{
+    width:26px;height:2px;background:var(--color-text);
+    transition:transform .3s ease, opacity .3s ease;
+  }
+  .hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+  .hamburger.open span:nth-child(2){opacity:0;}
+  .hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+
+  .drawer{
+    position:fixed;
+    top:0;right:0;
+    height:100vh;
+    width:78%;
+    max-width:340px;
+    background:var(--color-bg);
+    border-left:1px solid #EAEAE6;
+    transform:translateX(100%);
+    transition:transform .35s cubic-bezier(.7,0,.3,1);
+    z-index:1100;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding:2rem;
+    gap:2rem;
+  }
+  .drawer.open{transform:translateX(0);}
+  .drawer a{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:2rem;
+    text-transform:uppercase;
+  }
+  .drawer-overlay{
+    position:fixed;inset:0;
+    background:rgba(17,17,17,0.3);
+    opacity:0;pointer-events:none;
+    transition:opacity .3s ease;
+    z-index:1050;
+  }
+  .drawer-overlay.open{opacity:1;pointer-events:auto;}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding:calc(var(--nav-h) + 2rem) 0 3rem;
+    border-bottom:1px solid #EAEAE6;
+  }
+  .hero-eyebrow{
+    font-size:0.8rem;
+    font-weight:700;
+    letter-spacing:0.15em;
+    text-transform:uppercase;
+    color:var(--color-accent);
+    margin-bottom:1rem;
+  }
+  .hero h1{
+    font-size:clamp(3rem, 12vw, 8.5rem);
+    color:var(--color-text);
+  }
+  .hero h1 span{color:var(--color-accent);}
+  .hero-tagline{
+    margin-top:1.5rem;
+    max-width:520px;
+    font-size:1.1rem;
+    color:var(--color-text-muted);
+  }
+  .hero-cta{
+    margin-top:2.5rem;
+    display:inline-flex;
+    align-items:center;
+    gap:0.6rem;
+    padding:1rem 1.8rem;
+    background:var(--color-text);
+    color:#fff;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    font-size:0.85rem;
+    border:2px solid var(--color-text);
+    transition:background .25s ease, color .25s ease;
+    width:fit-content;
+  }
+  .hero-cta:hover{
+    background:var(--color-accent);
+    border-color:var(--color-accent);
+  }
+
+  /* ---------- REVEAL ---------- */
+  .reveal{
+    opacity:0;
+    transform:translateY(24px);
+    transition:opacity .7s ease, transform .7s cubic-bezier(.2,.7,.3,1);
+  }
+  .reveal.active{opacity:1;transform:translateY(0);}
+  .reveal-scale{
+    opacity:0;
+    transform:scale(0.95);
+    transition:opacity .5s ease, transform .5s cubic-bezier(.2,.7,.3,1);
+  }
+  .reveal-scale.active{opacity:1;transform:scale(1);}
+  .stagger .reveal:nth-child(1){transition-delay:0s;}
+  .stagger .reveal:nth-child(2){transition-delay:.08s;}
+  .stagger .reveal:nth-child(3){transition-delay:.16s;}
+  .stagger .reveal:nth-child(4){transition-delay:.24s;}
+  .stagger .reveal:nth-child(5){transition-delay:.32s;}
+  .stagger .reveal:nth-child(6){transition-delay:.4s;}
+
+  /* ---------- SECTION SHELL ---------- */
+  section{padding:6rem 0;border-bottom:1px solid #EAEAE6;}
+  .section-head{
+    display:flex;
+    flex-direction:column;
+    gap:0.6rem;
+    margin-bottom:3rem;
+  }
+  .section-eyebrow{
+    font-size:0.8rem;
+    font-weight:700;
+    letter-spacing:0.15em;
+    text-transform:uppercase;
+    color:var(--color-accent);
+  }
+  .section-head h2{
+    font-size:clamp(2.4rem,6vw,4.2rem);
+  }
+
+  /* ---------- ABOUT ---------- */
+  .about{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:2.5rem;
+    align-items:center;
+  }
+  .about-copy p{
+    font-size:1.05rem;
+    color:var(--color-text-muted);
+    max-width:52ch;
+  }
+  .about-image{
+    aspect-ratio:4/5;
+    overflow:hidden;
+    border:2px solid var(--color-accent);
+  }
+  .about-image img{width:100%;height:100%;object-fit:cover;}
+
+  /* ---------- SERVICES / WORK GRID ---------- */
+  .cards-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:1.5rem;
+  }
+  .card{
+    border:2px solid var(--color-accent);
+    padding:2rem;
+    background:var(--color-bg);
+    transition:transform .25s ease, background .25s ease;
+  }
+  .card:hover{
+    transform:translateY(-6px);
+    background:var(--color-surface);
+  }
+  .card-index{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:1rem;
+    color:var(--color-accent);
+    margin-bottom:1rem;
+    letter-spacing:.05em;
+  }
+  .card h3{
+    font-size:1.7rem;
+    margin-bottom:0.75rem;
+  }
+  .card p{
+    color:var(--color-text-muted);
+    font-size:0.95rem;
+  }
+
+  /* ---------- GALLERY ---------- */
+  .gallery{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:0.75rem;
+  }
+  .gallery img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    aspect-ratio:1/1;
+    filter:grayscale(20%);
+    transition:filter .3s ease, transform .3s ease;
+  }
+  .gallery a{overflow:hidden;display:block;}
+  .gallery a:hover img{filter:grayscale(0);transform:scale(1.04);}
+
+  /* ---------- TESTIMONIALS ---------- */
+  .testimonials-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:2rem;
+  }
+  .testimonial{
+    border-top:2px solid var(--color-text);
+    padding-top:1.5rem;
+  }
+  .testimonial blockquote{
+    font-size:1.3rem;
+    font-weight:500;
+    margin-bottom:1.25rem;
+  }
+  .testimonial .name{font-weight:700;text-transform:uppercase;font-size:0.85rem;letter-spacing:.04em;}
+  .testimonial .role{color:var(--color-text-muted);font-size:0.85rem;}
+
+  /* ---------- CONTACT ---------- */
+  .contact-wrap{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:3rem;
+  }
+  .contact-info p{
+    color:var(--color-text-muted);
+    margin-bottom:1.5rem;
+  }
+  .contact-info a{
+    display:block;
+    font-family:'Bebas Neue',sans-serif;
+    font-size:1.6rem;
+    text-transform:uppercase;
+    margin-bottom:0.5rem;
+    width:fit-content;
+    border-bottom:2px solid transparent;
+    transition:border-color .2s ease;
+  }
+  .contact-info a:hover{border-color:var(--color-accent);}
+
+  form#contact-form{
+    display:flex;
+    flex-direction:column;
+    gap:1.2rem;
+  }
+  .field{
+    display:flex;
+    flex-direction:column;
+    gap:0.4rem;
+  }
+  .field label{
+    font-size:0.75rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--color-text-muted);
+  }
+  .field input, .field textarea{
+    border:none;
+    border-bottom:2px solid #DAD9D4;
+    background:transparent;
+    padding:0.75rem 0.25rem;
+    font-family:inherit;
+    font-size:1rem;
+    color:var(--color-text);
+    transition:border-color .2s ease;
+  }
+  .field input:focus, .field textarea:focus{
+    border-color:var(--color-accent);
+    outline:none;
+  }
+  .field textarea{resize:vertical;min-height:100px;}
+  .submit-btn{
+    margin-top:0.5rem;
+    padding:1rem 1.8rem;
+    background:var(--color-accent);
+    color:var(--color-accent-text);
+    border:2px solid var(--color-accent);
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    font-size:0.85rem;
+    width:fit-content;
+    transition:background .2s ease, color .2s ease;
+  }
+  .submit-btn:hover{background:var(--color-text);border-color:var(--color-text);color:#fff;}
+  .form-success{
+    display:none;
+    font-weight:700;
+    color:var(--color-accent);
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    font-size:0.9rem;
+  }
+  .form-success.visible{display:block;}
+
+  /* ---------- FOOTER ---------- */
+  footer{
+    padding:3.5rem 0 2rem;
+  }
+  .footer-top{
+    display:flex;
+    flex-direction:column;
+    gap:1.5rem;
+    align-items:flex-start;
+    margin-bottom:2.5rem;
+  }
+  .footer-logo{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:2rem;
+    text-transform:uppercase;
+  }
+  .footer-tagline{color:var(--color-text-muted);}
+  .footer-social a{
+    font-size:0.85rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    border-bottom:2px solid var(--color-accent);
+  }
+  .footer-bottom{
+    text-align:center;
+    padding-top:1.5rem;
+    border-top:1px solid #EAEAE6;
+  }
+  .footer-bottom a{
+    font-size:0.75rem;
+    color:var(--color-text-muted);
+  }
+
+  /* ---------- WHATSAPP FLOAT ---------- */
+  #whatsapp-float{
+    position:fixed;
+    bottom:24px;right:24px;
+    z-index:900;
+  }
+  #whatsapp-float a{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:58px;height:58px;
+    border-radius:50%;
+    background:#25D366;
+    color:#fff;
+    box-shadow:0 6px 20px rgba(0,0,0,0.18);
+    transition:transform .2s ease;
+  }
+  #whatsapp-float a:hover{transform:scale(1.08);}
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (min-width:481px){
+    .gallery{grid-template-columns:repeat(3,1fr);}
+  }
+
+  @media (min-width:1025px){
+    .nav-links{display:flex;}
+    .hamburger{display:none;}
+    .about{grid-template-columns:1fr 1fr;}
+    .cards-grid{grid-template-columns:repeat(3,1fr);}
+    .testimonials-grid{grid-template-columns:repeat(3,1fr);}
+    .contact-wrap{grid-template-columns:1fr 1fr;}
+    .footer-top{flex-direction:row;justify-content:space-between;align-items:center;}
+  }
+
+  @media (max-width:1024px){
+    .drawer{display:flex;}
+  }
+  @media (min-width:1025px){
+    .drawer{display:none;}
+    .drawer-overlay{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<header class="nav" id="siteNav">
+  <div class="container nav-inner">
+    <a href="#top" class="logo">{{business_name}}</a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="#about">About</a>
+      <a href="#work">Work</a>
+      <a href="#gallery">Gallery</a>
+      <a href="#testimonials">Reviews</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <button class="hamburger" id="hamburgerBtn" aria-label="Open menu" aria-expanded="false" aria-controls="drawer">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<div class="drawer-overlay" id="drawerOverlay"></div>
+<nav class="drawer" id="drawer" aria-label="Mobile">
+  <a href="#about">About</a>
+  <a href="#work">Work</a>
+  <a href="#gallery">Gallery</a>
+  <a href="#testimonials">Reviews</a>
+  <a href="#contact">Contact</a>
+</nav>
+
+<main id="top">
+
+  <section class="hero" aria-label="Hero">
+    <div class="container">
+      <p class="hero-eyebrow">{{tagline}}</p>
+      <h1>{{business_name}}</h1>
+      <p class="hero-tagline">{{about_body}}</p>
+      <a href="#contact" class="hero-cta">Get in touch →</a>
+    </div>
+  </section>
+
+  <section id="about" aria-labelledby="about-heading">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="section-eyebrow">About</span>
+        <h2 id="about-heading" class="reveal-scale">The Studio</h2>
+      </div>
+      <div class="about">
+        <div class="about-copy reveal">
+          <p>{{about_body}}</p>
+        </div>
+        <div class="about-image reveal">
+          <img src="https://picsum.photos/800/1000?random=101" data-image-slot="about" alt="{{business_name}} studio">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="work" aria-labelledby="work-heading">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="section-eyebrow">Services</span>
+        <h2 id="work-heading" class="reveal-scale">What We Do</h2>
+      </div>
+      <div class="cards-grid stagger">
+        <div class="card reveal">
+          <div class="card-index">01</div>
+          <h3>{{service_1_title}}</h3>
+          <p>{{service_1_description}}</p>
+        </div>
+        <div class="card reveal">
+          <div class="card-index">02</div>
+          <h3>{{service_2_title}}</h3>
+          <p>{{service_2_description}}</p>
+        </div>
+        <div class="card reveal">
+          <div class="card-index">03</div>
+          <h3>{{service_3_title}}</h3>
+          <p>{{service_3_description}}</p>
+        </div>
+        <div class="card reveal" hidden data-optional-slot="4">
+          <div class="card-index">04</div>
+          <h3>{{service_4_title}}</h3>
+          <p>{{service_4_description}}</p>
+        </div>
+        <div class="card reveal" hidden data-optional-slot="5">
+          <div class="card-index">05</div>
+          <h3>{{service_5_title}}</h3>
+          <p>{{service_5_description}}</p>
+        </div>
+        <div class="card reveal" hidden data-optional-slot="6">
+          <div class="card-index">06</div>
+          <h3>{{service_6_title}}</h3>
+          <p>{{service_6_description}}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="gallery" aria-labelledby="gallery-heading">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="section-eyebrow">Gallery</span>
+        <h2 id="gallery-heading" class="reveal-scale">Selected Work</h2>
+      </div>
+      <div class="gallery">
+        <a href="#" tabindex="-1"><img src="https://picsum.photos/600/600?random=102" data-image-slot="gallery_1" alt="Selected work 1"></a>
+        <a href="#" tabindex="-1"><img src="https://picsum.photos/600/600?random=103" data-image-slot="gallery_2" alt="Selected work 2"></a>
+        <a href="#" tabindex="-1"><img src="https://picsum.photos/600/600?random=104" data-image-slot="gallery_3" alt="Selected work 3"></a>
+        <a href="#" tabindex="-1"><img src="https://picsum.photos/600/600?random=105" data-image-slot="gallery_4" alt="Selected work 4"></a>
+        <a href="#" tabindex="-1"><img src="https://picsum.photos/600/600?random=106" data-image-slot="gallery_5" alt="Selected work 5"></a>
+        <a href="#" tabindex="-1"><img src="https://picsum.photos/600/600?random=107" data-image-slot="gallery_6" alt="Selected work 6"></a>
+      </div>
+    </div>
+  </section>
+
+  <section id="testimonials" aria-labelledby="testimonials-heading">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="section-eyebrow">Reviews</span>
+        <h2 id="testimonials-heading" class="reveal-scale">Word on the Street</h2>
+      </div>
+      <div class="testimonials-grid stagger">
+        <div class="testimonial reveal">
+          <blockquote>"{{testimonial_1_quote}}"</blockquote>
+          <p class="name">{{testimonial_1_name}}</p>
+          <p class="role">{{testimonial_1_role}}</p>
+        </div>
+        <div class="testimonial reveal">
+          <blockquote>"{{testimonial_2_quote}}"</blockquote>
+          <p class="name">{{testimonial_2_name}}</p>
+          <p class="role">{{testimonial_2_role}}</p>
+        </div>
+        <div class="testimonial reveal">
+          <blockquote>"{{testimonial_3_quote}}"</blockquote>
+          <p class="name">{{testimonial_3_name}}</p>
+          <p class="role">{{testimonial_3_role}}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact" aria-labelledby="contact-heading">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="section-eyebrow">Contact</span>
+        <h2 id="contact-heading" class="reveal-scale">Start a Project</h2>
+      </div>
+      <div class="contact-wrap">
+        <div class="contact-info reveal">
+          <p>{{address}}</p>
+          <a href="tel:{{phone_number}}">{{phone_number}}</a>
+          <a href="mailto:{{email_address}}">{{email_address}}</a>
+        </div>
+        <form id="contact-form" class="reveal" novalidate>
+          <div class="field">
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" required>
+          </div>
+          <div class="field">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required>
+          </div>
+          <div class="field">
+            <label for="message">Message</label>
+            <textarea id="message" name="message" required></textarea>
+          </div>
+          <button type="submit" class="submit-btn">Send message</button>
+          <p class="form-success" id="formSuccess" role="status">Message sent — we'll be in touch.</p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="container">
+    <div class="footer-top">
+      <div>
+        <p class="footer-logo">{{business_name}}</p>
+        <p class="footer-tagline">{{tagline}}</p>
+      </div>
+      <div class="footer-social" id="instagram-wrap">
+        <a href="{{instagram_url}}" id="instagram-link" target="_blank" rel="noopener">Instagram</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <a href="https://zuri.app" target="_blank" rel="noopener">Powered by Zuri</a>
+    </div>
+  </div>
+</footer>
+
+<div id="whatsapp-float" data-whatsapp-number="{{whatsapp_number}}">
+  <a href="#" aria-label="Chat on WhatsApp" target="_blank" rel="noopener">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.86 9.86 0 0012.04 2zm0 18.15h-.01c-1.48 0-2.94-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 01-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24 2.2 0 4.27.86 5.83 2.42a8.18 8.18 0 012.41 5.83c0 4.55-3.7 8.23-8.23 8.23zm4.52-6.17c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.16.25-.64.81-.78.97-.14.17-.29.19-.54.06-.25-.12-1.04-.38-1.99-1.22-.74-.65-1.23-1.46-1.38-1.71-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.13-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.35-.77-1.85-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31s-.87.85-.87 2.08.89 2.41 1.02 2.58c.13.17 1.75 2.67 4.24 3.74.59.26 1.05.41 1.41.53.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.08.15-1.18-.06-.1-.23-.16-.48-.28z"/></svg>
+  </a>
+</div>
+
+<script>
+  // Nav scroll state
+  (function(){
+    var nav = document.getElementById('siteNav');
+    function onScroll(){
+      if (window.scrollY > 40) nav.classList.add('scrolled');
+      else nav.classList.remove('scrolled');
+    }
+    window.addEventListener('scroll', onScroll, {passive:true});
+    onScroll();
+  })();
+
+  // Hamburger drawer
+  (function(){
+    var btn = document.getElementById('hamburgerBtn');
+    var drawer = document.getElementById('drawer');
+    var overlay = document.getElementById('drawerOverlay');
+    function closeDrawer(){
+      btn.classList.remove('open');
+      btn.setAttribute('aria-expanded','false');
+      drawer.classList.remove('open');
+      overlay.classList.remove('open');
+    }
+    function toggleDrawer(){
+      var isOpen = drawer.classList.toggle('open');
+      btn.classList.toggle('open', isOpen);
+      overlay.classList.toggle('open', isOpen);
+      btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    }
+    btn.addEventListener('click', toggleDrawer);
+    overlay.addEventListener('click', closeDrawer);
+    drawer.querySelectorAll('a').forEach(function(a){
+      a.addEventListener('click', closeDrawer);
+    });
+  })();
+
+  // Scroll reveal
+  (function(){
+    var targets = document.querySelectorAll('.reveal, .reveal-scale');
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (entry.isIntersecting){
+          entry.target.classList.add('active');
+          io.unobserve(entry.target);
+        }
+      });
+    }, {threshold:0.15});
+    targets.forEach(function(t){ io.observe(t); });
+  })();
+
+  // Contact form
+  (function(){
+    var form = document.getElementById('contact-form');
+    var success = document.getElementById('formSuccess');
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      success.classList.add('visible');
+      form.reset();
+    });
+  })();
+
+  // Instagram optional hide
+  (function(){
+    var wrap = document.getElementById('instagram-wrap');
+    var link = document.getElementById('instagram-link');
+    var url = link.getAttribute('href');
+    if (!url || url.trim() === '' || url.indexOf('{{') === 0) { wrap.remove(); }
+  })();
+</script>
+
+<script>
+  (function(){
+    var el = document.getElementById('whatsapp-float');
+    var num = el.getAttribute('data-whatsapp-number');
+    if (!num || num.trim() === '' || num.indexOf('{{') === 0) { el.remove(); }
+    else { el.querySelector('a').href = 'https://wa.me/' + num.replace(/[^0-9]/g,''); }
+  })();
+</script>
+
+</body>
+</html>

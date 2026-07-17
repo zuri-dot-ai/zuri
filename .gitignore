@@ -35,4 +35,4 @@ next-env.d.ts
 
 # secrets
 *keys.txt
-zuri-service-acccount.json
+zuri-service-account.json

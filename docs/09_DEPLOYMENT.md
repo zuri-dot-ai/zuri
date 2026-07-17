@@ -1135,10 +1135,8 @@ RESEND_API_KEY=re_...
 
 ### 11.5 Image Sources
 
-```env
-UNSPLASH_ACCESS_KEY=...             # From unsplash.com/developers
-PEXELS_API_KEY=...                  # From pexels.com/api
-```
+Images are served from the curated `category_images` library (Supabase Storage).
+Unsplash/Pexels live API keys are not used in v2.
 
 ### 11.6 Meta / Facebook
 

@@ -1,0 +1,71 @@
+{
+  "template_id": "portfolio-dramatic-light-serif",
+  "archetype": "portfolio-dramatic",
+  "mode": "light",
+  "lean": "international",
+  "display_name": "Portfolio Dramatic Light Serif",
+  "storage_path": "portfolio-dramatic/light-serif.html",
+  "color_themes": [
+    {
+      "key": "theme-1",
+      "bg": "#FFFFFF",
+      "surface": "#F7F5F3",
+      "text": "#181512",
+      "text_muted": "#6b6560",
+      "accent": "#5C3A5C",
+      "accent_text": "#FFFFFF"
+    },
+    null,
+    null
+  ],
+  "placeholder_fields": [
+    "about_body",
+    "address",
+    "business_name",
+    "case_study_body",
+    "case_study_headline",
+    "case_study_result",
+    "email_address",
+    "instagram_url",
+    "phone_number",
+    "tagline",
+    "testimonial_1_name",
+    "testimonial_1_quote",
+    "testimonial_1_role",
+    "testimonial_2_name",
+    "testimonial_2_quote",
+    "testimonial_2_role",
+    "testimonial_3_name",
+    "testimonial_3_quote",
+    "testimonial_3_role",
+    "whatsapp_number",
+    "work_1_title",
+    "work_2_title",
+    "work_3_title",
+    "work_4_title",
+    "work_5_title",
+    "work_6_title"
+  ],
+  "image_slots": [
+    "about",
+    "case_study",
+    "hero",
+    "work_1",
+    "work_2",
+    "work_3",
+    "work_4",
+    "work_5",
+    "work_6"
+  ],
+  "has_unique_section": true,
+  "unique_section_name": "Work / masonry grid",
+  "_extraction": {
+    "is_canonical": false,
+    "flags": [
+      "not_in_canonical_24",
+      "lean_defaulted_international_confirm",
+      "missing_multi_theme_only_root"
+    ],
+    "source_html": "portfolio-dramatic/light-serif.html"
+  }
+}

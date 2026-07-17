@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{business_name}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Mulish:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --color-bg:#FFFFFF;
+    --color-surface:#FFF6E9;
+    --color-text:#1A1712;
+    --color-text-muted:#7A6F60;
+    --color-accent:#FFB136;
+    --color-accent-text:#1A1712;
+    --color-accent-2:#FF8A3D;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--color-bg);
+    color:var(--color-text);
+    font-family:'Mulish',sans-serif;
+    font-weight:400;
+    line-height:1.6;
+    overflow-x:hidden;
+  }
+  h1,h2,h3,h4,.wordmark{
+    font-family:'Baloo 2',sans-serif;
+    font-weight:800;
+    line-height:1.15;
+  }
+  img{max-width:100%;display:block;}
+  a{color:inherit;text-decoration:none;}
+  section{padding:64px 20px;}
+  .container{max-width:1180px;margin:0 auto;}
+  .eyebrow{
+    display:inline-block;
+    font-family:'Baloo 2',sans-serif;
+    font-weight:700;
+    color:var(--color-accent-2);
+    background:var(--color-surface);
+    padding:6px 16px;
+    border-radius:999px;
+    font-size:0.8rem;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    margin-bottom:14px;
+  }
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    font-family:'Baloo 2',sans-serif;
+    font-weight:700;
+    font-size:1rem;
+    padding:14px 28px;
+    border-radius:999px;
+    border:2px solid transparent;
+    cursor:pointer;
+    transition:transform 0.2s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s ease;
+  }
+  .btn:hover{transform:translateY(-3px) scale(1.03);}
+  .btn-primary{
+    background:var(--color-accent);
+    color:var(--color-accent-text);
+    box-shadow:0 8px 0 0 var(--color-accent-2);
+  }
+  .btn-primary:hover{box-shadow:0 10px 0 0 var(--color-accent-2);}
+  .btn-secondary{
+    background:transparent;
+    color:var(--color-text);
+    border-color:var(--color-text);
+  }
+  .btn-secondary:hover{background:var(--color-text);color:#fff;}
+
+  :focus-visible{outline:3px solid var(--color-accent);outline-offset:3px;}
+
+  /* ---------- NAV ---------- */
+  header#site-nav{
+    position:fixed;
+    top:0;left:0;right:0;
+    z-index:1000;
+    padding:18px 20px;
+    background:transparent;
+    transition:background 0.3s ease, box-shadow 0.3s ease, padding 0.3s ease;
+  }
+  header#site-nav.scrolled{
+    background:rgba(255,255,255,0.95);
+    backdrop-filter:blur(8px);
+    box-shadow:0 4px 20px rgba(0,0,0,0.08);
+    padding:12px 20px;
+  }
+  .nav-inner{
+    max-width:1180px;
+    margin:0 auto;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .wordmark{font-size:1.5rem;color:var(--color-text);}
+  .wordmark span{color:var(--color-accent-2);}
+  nav.links{display:flex;align-items:center;gap:28px;}
+  nav.links a{font-weight:700;font-family:'Baloo 2',sans-serif;font-size:0.95rem;}
+  .nav-cta{padding:11px 22px;font-size:0.9rem;}
+  .hamburger{
+    display:none;
+    flex-direction:column;
+    gap:5px;
+    background:none;
+    border:none;
+    cursor:pointer;
+    z-index:1100;
+  }
+  .hamburger span{width:26px;height:3px;background:var(--color-text);border-radius:3px;transition:0.3s;}
+  .hamburger.open span:nth-child(1){transform:translateY(8px) rotate(45deg);}
+  .hamburger.open span:nth-child(2){opacity:0;}
+  .hamburger.open span:nth-child(3){transform:translateY(-8px) rotate(-45deg);}
+
+  .drawer{
+    position:fixed;
+    top:0;right:0;
+    width:78%;
+    max-width:320px;
+    height:100vh;
+    background:var(--color-bg);
+    box-shadow:-6px 0 30px rgba(0,0,0,0.15);
+    transform:translateX(100%);
+    transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    z-index:1050;
+    padding:100px 32px 32px;
+    display:flex;
+    flex-direction:column;
+    gap:26px;
+  }
+  .drawer.open{transform:translateX(0);}
+  .drawer a{font-family:'Baloo 2',sans-serif;font-weight:700;font-size:1.2rem;}
+  .drawer-overlay{
+    position:fixed;inset:0;
+    background:rgba(26,23,18,0.4);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.3s ease;
+    z-index:1040;
+  }
+  .drawer-overlay.open{opacity:1;pointer-events:auto;}
+
+  @media (max-width:1024px){
+    nav.links{display:none;}
+    .hamburger{display:flex;}
+  }
+
+  /* ---------- HERO ---------- */
+  #hero{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    position:relative;
+    padding:120px 20px 60px;
+    background:linear-gradient(180deg, var(--color-surface) 0%, var(--color-bg) 100%);
+    overflow:hidden;
+  }
+  .hero-grid{
+    max-width:1180px;
+    margin:0 auto;
+    display:grid;
+    grid-template-columns:1fr;
+    gap:40px;
+    align-items:center;
+    position:relative;
+    z-index:2;
+  }
+  .hero-copy .eyebrow{background:#fff;}
+  .hero-copy h1{
+    font-size:clamp(2.2rem,7vw,3.6rem);
+    margin-bottom:18px;
+  }
+  .hero-copy p{
+    font-size:1.1rem;
+    color:var(--color-text-muted);
+    margin-bottom:28px;
+    max-width:480px;
+  }
+  .hero-ctas{display:flex;flex-wrap:wrap;gap:14px;}
+  .hero-image-wrap{
+    position:relative;
+    border-radius:32px;
+    overflow:hidden;
+    box-shadow:0 20px 50px rgba(255,177,54,0.25);
+  }
+  .hero-image-wrap img{width:100%;height:420px;object-fit:cover;}
+  .hero-blob{
+    position:absolute;
+    width:340px;height:340px;
+    background:var(--color-accent);
+    border-radius:50%;
+    opacity:0.25;
+    top:-100px;right:-100px;
+    z-index:1;
+  }
+
+  @media (min-width:1025px){
+    .hero-grid{grid-template-columns:1.1fr 1fr;}
+    .hero-image-wrap img{height:520px;}
+  }
+
+  /* ---------- ABOUT ---------- */
+  #about .about-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:36px;
+    align-items:center;
+  }
+  #about .about-image{
+    border-radius:28px;
+    overflow:hidden;
+  }
+  #about .about-image img{width:100%;height:380px;object-fit:cover;}
+  #about h2{font-size:clamp(1.8rem,5vw,2.6rem);margin-bottom:16px;}
+  #about p.body-copy{color:var(--color-text-muted);margin-bottom:22px;}
+  .founder-tag{display:flex;align-items:center;gap:12px;}
+  .founder-tag .dot{width:10px;height:10px;border-radius:50%;background:var(--color-accent);}
+  .founder-name{font-family:'Baloo 2',sans-serif;font-weight:700;}
+  .founder-title{color:var(--color-text-muted);font-size:0.9rem;}
+
+  @media (min-width:1025px){
+    #about .about-grid{grid-template-columns:1fr 1.1fr;}
+    #about .about-image img{height:460px;}
+  }
+
+  /* ---------- RESULTS ---------- */
+  #results{background:var(--color-surface);}
+  .section-head{text-align:center;max-width:600px;margin:0 auto 40px;}
+  .section-head h2{font-size:clamp(1.8rem,5vw,2.6rem);}
+  .results-row{
+    display:flex;
+    gap:20px;
+    overflow-x:auto;
+    scroll-snap-type:x mandatory;
+    padding-bottom:12px;
+    -webkit-overflow-scrolling:touch;
+  }
+  .result-card{
+    flex:0 0 82%;
+    scroll-snap-align:center;
+    background:#fff;
+    border-radius:24px;
+    overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,0.06);
+  }
+  .result-images{display:grid;grid-template-columns:1fr 1fr;}
+  .result-images img{width:100%;height:220px;object-fit:cover;}
+  .result-images span{
+    display:block;
+    text-align:center;
+    font-family:'Baloo 2',sans-serif;
+    font-size:0.7rem;
+    font-weight:700;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    padding:6px;
+    background:var(--color-text);
+    color:#fff;
+  }
+  .result-caption{padding:18px 20px;font-weight:700;font-family:'Baloo 2',sans-serif;}
+
+  @media (min-width:1025px){
+    .results-row{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      overflow:visible;
+    }
+    .result-card{flex:auto;}
+  }
+
+  /* ---------- SCHEDULE ---------- */
+  #schedule{}
+  .schedule-list{
+    max-width:820px;
+    margin:0 auto;
+    border-radius:24px;
+    overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,0.06);
+  }
+  .schedule-row{
+    display:grid;
+    grid-template-columns:70px 1fr auto;
+    align-items:center;
+    gap:14px;
+    padding:18px 22px;
+    background:#fff;
+    border-bottom:1px solid var(--color-surface);
+  }
+  .schedule-row:last-child{border-bottom:none;}
+  .schedule-day{
+    font-family:'Baloo 2',sans-serif;
+    font-weight:800;
+    color:var(--color-accent-text);
+    background:var(--color-accent);
+    border-radius:12px;
+    padding:8px 0;
+    text-align:center;
+    font-size:0.85rem;
+  }
+  .schedule-class{font-weight:700;font-family:'Baloo 2',sans-serif;}
+  .schedule-time{color:var(--color-text-muted);font-size:0.9rem;white-space:nowrap;}
+
+  /* ---------- SERVICES ---------- */
+  #services{background:var(--color-surface);}
+  .services-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:22px;
+  }
+  .service-card{
+    background:#fff;
+    border-radius:24px;
+    padding:30px 26px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.05);
+  }
+  .service-card[hidden]{display:none;}
+  .service-icon{
+    width:52px;height:52px;
+    border-radius:16px;
+    background:var(--color-accent);
+    display:flex;align-items:center;justify-content:center;
+    margin-bottom:16px;
+    font-family:'Baloo 2',sans-serif;
+    font-weight:800;
+    color:var(--color-accent-text);
+  }
+  .service-card h3{font-size:1.2rem;margin-bottom:8px;}
+  .service-card p{color:var(--color-text-muted);font-size:0.95rem;}
+
+  @media (min-width:481px){
+    .services-grid{grid-template-columns:1fr 1fr;}
+  }
+  @media (min-width:1025px){
+    .services-grid{grid-template-columns:repeat(3,1fr);}
+  }
+
+  /* ---------- TESTIMONIALS ---------- */
+  .testimonial-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:20px;
+  }
+  .testimonial-card{
+    background:var(--color-text);
+    color:#fff;
+    border-radius:24px;
+    padding:30px 26px;
+    position:relative;
+  }
+  .testimonial-card::before{
+    content:"“";
+    font-family:'Baloo 2',sans-serif;
+    font-size:3rem;
+    color:var(--color-accent);
+    line-height:1;
+    display:block;
+    margin-bottom:6px;
+  }
+  .testimonial-quote{font-size:1.02rem;margin-bottom:18px;}
+  .testimonial-name{font-family:'Baloo 2',sans-serif;font-weight:700;}
+  .testimonial-role{color:#c9c2b6;font-size:0.85rem;}
+
+  @media (min-width:1025px){
+    .testimonial-grid{grid-template-columns:repeat(3,1fr);}
+  }
+
+  /* ---------- CONTACT ---------- */
+  #contact{background:var(--color-surface);}
+  .contact-wrap{
+    max-width:640px;
+    margin:0 auto;
+    background:#fff;
+    border-radius:28px;
+    padding:40px 30px;
+    box-shadow:0 15px 40px rgba(0,0,0,0.07);
+  }
+  .contact-wrap h2{font-size:clamp(1.7rem,5vw,2.2rem);margin-bottom:8px;text-align:center;}
+  .contact-wrap p.sub{color:var(--color-text-muted);text-align:center;margin-bottom:28px;}
+  form#contact-form{display:flex;flex-direction:column;gap:16px;}
+  form#contact-form label{
+    font-family:'Baloo 2',sans-serif;
+    font-weight:700;
+    font-size:0.85rem;
+    margin-bottom:6px;
+    display:block;
+  }
+  form#contact-form input, form#contact-form textarea{
+    width:100%;
+    padding:13px 16px;
+    border-radius:14px;
+    border:2px solid var(--color-surface);
+    background:var(--color-bg);
+    font-family:'Mulish',sans-serif;
+    font-size:1rem;
+    color:var(--color-text);
+  }
+  form#contact-form input:focus, form#contact-form textarea:focus{
+    border-color:var(--color-accent);
+    outline:none;
+  }
+  form#contact-form button{margin-top:6px;width:100%;}
+  .form-confirm{
+    display:none;
+    text-align:center;
+    padding:30px 10px;
+    font-family:'Baloo 2',sans-serif;
+    font-weight:700;
+    font-size:1.2rem;
+    color:var(--color-accent-2);
+  }
+  .contact-meta{
+    margin-top:26px;
+    padding-top:22px;
+    border-top:1px solid var(--color-surface);
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    text-align:center;
+    color:var(--color-text-muted);
+    font-size:0.92rem;
+  }
+
+  /* ---------- FOOTER ---------- */
+  footer{
+    padding:50px 20px 34px;
+    text-align:center;
+    background:var(--color-bg);
+  }
+  footer .wordmark{font-size:1.4rem;margin-bottom:8px;}
+  footer .tagline{color:var(--color-text-muted);margin-bottom:18px;}
+  footer .footer-insta{
+    display:inline-block;
+    margin-bottom:22px;
+    font-weight:700;
+    font-family:'Baloo 2',sans-serif;
+    color:var(--color-accent-2);
+  }
+  footer .powered{
+    font-size:0.78rem;
+    color:var(--color-text-muted);
+  }
+  footer .powered a{font-weight:700;color:var(--color-text-muted);}
+
+  /* ---------- WHATSAPP FLOAT ---------- */
+  #whatsapp-float{
+    position:fixed;
+    bottom:24px;right:24px;
+    z-index:1200;
+  }
+  #whatsapp-float a{
+    width:58px;height:58px;
+    border-radius:50%;
+    background:#25D366;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 8px 24px rgba(0,0,0,0.25);
+    transition:transform 0.2s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  #whatsapp-float a:hover{transform:scale(1.1);}
+  #whatsapp-float svg{width:28px;height:28px;fill:#fff;}
+
+  /* ---------- SCROLL REVEAL (bold/energetic) ---------- */
+  .reveal{
+    opacity:0;
+    transform:translateY(30px) scale(0.85);
+    transition:opacity 0.6s cubic-bezier(0.34,1.56,0.64,1), transform 0.6s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .reveal.active{
+    opacity:1;
+    transform:translateY(0) scale(1);
+  }
+</style>
+</head>
+<body>
+
+<header id="site-nav">
+  <div class="nav-inner">
+    <a href="#hero" class="wordmark">{{business_name}}</a>
+    <nav class="links">
+      <a href="#about">About</a>
+      <a href="#results">Results</a>
+      <a href="#schedule">Schedule</a>
+      <a href="#services">Services</a>
+      <a href="#contact" class="btn btn-primary nav-cta">Join Us Today</a>
+    </nav>
+    <button class="hamburger" id="hamburger" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<div class="drawer-overlay" id="drawer-overlay"></div>
+<div class="drawer" id="drawer">
+  <a href="#about">About</a>
+  <a href="#results">Results</a>
+  <a href="#schedule">Schedule</a>
+  <a href="#services">Services</a>
+  <a href="#contact" class="btn btn-primary">Join Us Today</a>
+</div>
+
+<main>
+
+  <section id="hero">
+    <div class="hero-blob"></div>
+    <div class="hero-grid">
+      <div class="hero-copy reveal">
+        <span class="eyebrow">Morning Energy, Real Results</span>
+        <h1>{{tagline}}</h1>
+        <p>{{about_body}}</p>
+        <div class="hero-ctas">
+          <a href="#contact" class="btn btn-primary">Join Us Today</a>
+          <a href="#schedule" class="btn btn-secondary">View Schedule</a>
+        </div>
+      </div>
+      <div class="hero-image-wrap reveal">
+        <img src="https://picsum.photos/900/1100?random=1" data-image-slot="hero" alt="{{business_name}} sunrise training session">
+      </div>
+    </div>
+  </section>
+
+  <section id="about">
+    <div class="container about-grid">
+      <div class="about-image reveal">
+        <img src="https://picsum.photos/800/900?random=2" data-image-slot="about" alt="{{business_name}} founder coaching a client">
+      </div>
+      <div class="reveal">
+        <span class="eyebrow">Our Story</span>
+        <h2>Built On Community & Sunrise Energy</h2>
+        <p class="body-copy">{{about_body}}</p>
+        <div class="founder-tag">
+          <span class="dot"></span>
+          <div>
+            <div class="founder-name">{{founder_name}}</div>
+            <div class="founder-title">{{founder_title}}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="results">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">Transformations</span>
+        <h2>Real Results</h2>
+      </div>
+      <div class="results-row">
+        <div class="result-card reveal">
+          <div class="result-images">
+            <div><img src="https://picsum.photos/400/400?random=3" data-image-slot="before_1" alt="Before transformation photo 1"><span>Before</span></div>
+            <div><img src="https://picsum.photos/400/400?random=4" data-image-slot="after_1" alt="After transformation photo 1"><span>After</span></div>
+          </div>
+          <div class="result-caption">{{result_1_caption}}</div>
+        </div>
+        <div class="result-card reveal">
+          <div class="result-images">
+            <div><img src="https://picsum.photos/400/400?random=5" data-image-slot="before_2" alt="Before transformation photo 2"><span>Before</span></div>
+            <div><img src="https://picsum.photos/400/400?random=6" data-image-slot="after_2" alt="After transformation photo 2"><span>After</span></div>
+          </div>
+          <div class="result-caption">{{result_2_caption}}</div>
+        </div>
+        <div class="result-card reveal">
+          <div class="result-images">
+            <div><img src="https://picsum.photos/400/400?random=7" data-image-slot="before_3" alt="Before transformation photo 3"><span>Before</span></div>
+            <div><img src="https://picsum.photos/400/400?random=8" data-image-slot="after_3" alt="After transformation photo 3"><span>After</span></div>
+          </div>
+          <div class="result-caption">{{result_3_caption}}</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="schedule">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">This Week</span>
+        <h2>Class Schedule</h2>
+      </div>
+      <div class="schedule-list">
+        <div class="schedule-row reveal">
+          <div class="schedule-day">{{class_1_day}}</div>
+          <div class="schedule-class">{{class_1_name}}</div>
+          <div class="schedule-time">{{class_1_time}}</div>
+        </div>
+        <div class="schedule-row reveal">
+          <div class="schedule-day">{{class_2_day}}</div>
+          <div class="schedule-class">{{class_2_name}}</div>
+          <div class="schedule-time">{{class_2_time}}</div>
+        </div>
+        <div class="schedule-row reveal">
+          <div class="schedule-day">{{class_3_day}}</div>
+          <div class="schedule-class">{{class_3_name}}</div>
+          <div class="schedule-time">{{class_3_time}}</div>
+        </div>
+        <div class="schedule-row reveal">
+          <div class="schedule-day">{{class_4_day}}</div>
+          <div class="schedule-class">{{class_4_name}}</div>
+          <div class="schedule-time">{{class_4_time}}</div>
+        </div>
+        <div class="schedule-row reveal">
+          <div class="schedule-day">{{class_5_day}}</div>
+          <div class="schedule-class">{{class_5_name}}</div>
+          <div class="schedule-time">{{class_5_time}}</div>
+        </div>
+        <div class="schedule-row reveal">
+          <div class="schedule-day">{{class_6_day}}</div>
+          <div class="schedule-class">{{class_6_name}}</div>
+          <div class="schedule-time">{{class_6_time}}</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="services">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">What We Offer</span>
+        <h2>Services</h2>
+      </div>
+      <div class="services-grid">
+        <div class="service-card reveal">
+          <div class="service-icon">01</div>
+          <h3>{{service_1_title}}</h3>
+          <p>{{service_1_description}}</p>
+        </div>
+        <div class="service-card reveal">
+          <div class="service-icon">02</div>
+          <h3>{{service_2_title}}</h3>
+          <p>{{service_2_description}}</p>
+        </div>
+        <div class="service-card reveal">
+          <div class="service-icon">03</div>
+          <h3>{{service_3_title}}</h3>
+          <p>{{service_3_description}}</p>
+        </div>
+        <div class="service-card reveal" hidden data-optional-slot="4">
+          <div class="service-icon">04</div>
+          <h3>{{service_4_title}}</h3>
+          <p>{{service_4_description}}</p>
+        </div>
+        <div class="service-card reveal" hidden data-optional-slot="5">
+          <div class="service-icon">05</div>
+          <h3>{{service_5_title}}</h3>
+          <p>{{service_5_description}}</p>
+        </div>
+        <div class="service-card reveal" hidden data-optional-slot="6">
+          <div class="service-icon">06</div>
+          <h3>{{service_6_title}}</h3>
+          <p>{{service_6_description}}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="testimonials">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">Community Voices</span>
+        <h2>What Our Members Say</h2>
+      </div>
+      <div class="testimonial-grid">
+        <div class="testimonial-card reveal">
+          <p class="testimonial-quote">{{testimonial_1_quote}}</p>
+          <div class="testimonial-name">{{testimonial_1_name}}</div>
+          <div class="testimonial-role">{{testimonial_1_role}}</div>
+        </div>
+        <div class="testimonial-card reveal">
+          <p class="testimonial-quote">{{testimonial_2_quote}}</p>
+          <div class="testimonial-name">{{testimonial_2_name}}</div>
+          <div class="testimonial-role">{{testimonial_2_role}}</div>
+        </div>
+        <div class="testimonial-card reveal">
+          <p class="testimonial-quote">{{testimonial_3_quote}}</p>
+          <div class="testimonial-name">{{testimonial_3_name}}</div>
+          <div class="testimonial-role">{{testimonial_3_role}}</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact">
+    <div class="contact-wrap reveal">
+      <h2>Join Us Today</h2>
+      <p class="sub">Start your first sunrise session with the community.</p>
+
+      <form id="contact-form">
+        <div>
+          <label for="cf-name">Name</label>
+          <input type="text" id="cf-name" name="name" required>
+        </div>
+        <div>
+          <label for="cf-email">Email</label>
+          <input type="email" id="cf-email" name="email" required>
+        </div>
+        <div>
+          <label for="cf-message">Message</label>
+          <textarea id="cf-message" name="message" rows="4" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Send Message</button>
+      </form>
+      <div class="form-confirm" id="form-confirm">You're in! We'll be in touch soon. 🌅</div>
+
+      <div class="contact-meta">
+        <span>{{phone_number}}</span>
+        <span>{{email_address}}</span>
+        <span>{{address}}</span>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wordmark">{{business_name}}</div>
+  <p class="tagline">{{tagline}}</p>
+  <a class="footer-insta" id="footer-insta" href="{{instagram_url}}">Follow us on Instagram</a>
+  <p class="powered">Powered by <a href="#">Zuri</a></p>
+</footer>
+
+<div id="whatsapp-float" data-whatsapp-number="{{whatsapp_number}}">
+  <a href="#" aria-label="Chat on WhatsApp">
+    <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.868-2.03-.967-.273-.099-.472-.148-.67.15-.198.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.372-.025-.521-.075-.148-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12.004 2.003c-5.514 0-9.997 4.483-9.997 9.997 0 1.764.464 3.487 1.345 5.005L2 22l5.117-1.334a9.96 9.96 0 0 0 4.887 1.28h.004c5.514 0 9.997-4.483 9.997-9.997 0-2.67-1.04-5.18-2.928-7.07a9.93 9.93 0 0 0-7.073-2.876zm0 18.174h-.003a8.19 8.19 0 0 1-4.174-1.14l-.3-.178-3.037.792.81-2.96-.195-.304a8.18 8.18 0 0 1-1.257-4.387c0-4.522 3.679-8.201 8.203-8.201a8.15 8.15 0 0 1 5.802 2.403 8.15 8.15 0 0 1 2.399 5.803c0 4.523-3.679 8.172-8.248 8.172z"/></svg>
+  </a>
+</div>
+
+<script>
+(function(){
+  // Nav scroll state
+  var nav = document.getElementById('site-nav');
+  window.addEventListener('scroll', function(){
+    if (window.scrollY > 60) nav.classList.add('scrolled');
+    else nav.classList.remove('scrolled');
+  });
+
+  // Hamburger drawer
+  var hamburger = document.getElementById('hamburger');
+  var drawer = document.getElementById('drawer');
+  var overlay = document.getElementById('drawer-overlay');
+  function closeDrawer(){
+    hamburger.classList.remove('open');
+    drawer.classList.remove('open');
+    overlay.classList.remove('open');
+  }
+  hamburger.addEventListener('click', function(){
+    hamburger.classList.toggle('open');
+    drawer.classList.toggle('open');
+    overlay.classList.toggle('open');
+  });
+  overlay.addEventListener('click', closeDrawer);
+  drawer.querySelectorAll('a').forEach(function(a){
+    a.addEventListener('click', closeDrawer);
+  });
+
+  // Scroll reveal — single shared IntersectionObserver, staggered fast (~100ms)
+  var revealEls = document.querySelectorAll('.reveal');
+  var counters = new Map();
+  var observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if (entry.isIntersecting){
+        var el = entry.target;
+        var parent = el.parentElement;
+        var count = counters.get(parent) || 0;
+        el.style.transitionDelay = (count * 100) + 'ms';
+        counters.set(parent, count + 1);
+        el.classList.add('active');
+        observer.unobserve(el);
+      }
+    });
+  }, { threshold: 0.15 });
+  revealEls.forEach(function(el){ observer.observe(el); });
+
+  // Contact form
+  var form = document.getElementById('contact-form');
+  var confirm = document.getElementById('form-confirm');
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    form.style.display = 'none';
+    confirm.style.display = 'block';
+  });
+})();
+</script>
+
+<script>
+(function(){
+  var el = document.getElementById('whatsapp-float');
+  var num = el.getAttribute('data-whatsapp-number');
+  if (!num || num.trim() === '' || num.indexOf('{{') === 0) { el.remove(); }
+  else { el.querySelector('a').href = 'https://wa.me/' + num.replace(/[^0-9]/g,''); }
+})();
+</script>
+
+<script>
+(function(){
+  var el = document.getElementById('footer-insta');
+  var url = el.getAttribute('href');
+  if (!url || url.trim() === '' || url.indexOf('{{') === 0) { el.remove(); }
+})();
+</script>
+
+</body>
+</html>

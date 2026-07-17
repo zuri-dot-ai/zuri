@@ -5,7 +5,11 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { activateSubscription } from "@/lib/payments/activate-subscription";
-import { appUrl, flutterwaveSecretKey } from "@/lib/payments/env";
+import {
+  appUrl,
+  billingSettingsUrl,
+  flutterwaveSecretKey,
+} from "@/lib/payments/env";
 
 export async function GET(req: Request) {
   const supabase = await createClient();
@@ -24,7 +28,7 @@ export async function GET(req: Request) {
 
   if (status !== "successful" || !transactionId) {
     // Payment was cancelled or failed — do NOT update subscription
-    return NextResponse.redirect(`${base}/pricing?payment=cancelled`);
+    return NextResponse.redirect(billingSettingsUrl("cancelled"));
   }
 
   const service = createServiceClient();
@@ -57,7 +61,7 @@ export async function GET(req: Request) {
     verifyData.status !== "success" ||
     verifyData.data?.status !== "successful"
   ) {
-    return NextResponse.redirect(`${base}/pricing?payment=failed`);
+    return NextResponse.redirect(billingSettingsUrl("failed"));
   }
 
   const { meta, amount, tx_ref: verifiedTxRef } = verifyData.data;
@@ -72,7 +76,7 @@ export async function GET(req: Request) {
   }
 
   if (!plan_id) {
-    return NextResponse.redirect(`${base}/pricing?payment=failed`);
+    return NextResponse.redirect(billingSettingsUrl("failed"));
   }
 
   // Activate subscription

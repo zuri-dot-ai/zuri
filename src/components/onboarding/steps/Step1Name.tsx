@@ -58,17 +58,17 @@ export function Step1Name({ value, onChange, onValidityChange }: Step1NameProps)
       <h1 className="font-heading text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
         Welcome to Zuri. What should we call you?
       </h1>
-      <div className="space-y-2">
+      <div className="surface p-6 sm:p-7">
         <Input
           value={value}
           onChange={(e) => handleChange(e.target.value)}
           placeholder="Your first name"
           autoFocus
           autoComplete="given-name"
-          className="h-14 border-white/10 bg-white/[0.02] text-lg"
+          className="h-14 text-lg"
         />
         {showError && (
-          <p className="text-sm text-error">
+          <p className="mt-2 text-sm text-error">
             Please enter your name using letters only.
           </p>
         )}

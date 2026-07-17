@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{business_name}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500;1,600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --color-bg: #0A0806;
+    --color-surface: #14110D;
+    --color-text: #F5F0E8;
+    --color-text-muted: #A69C8C;
+    --color-accent: #C9A84C;
+    --color-accent-text: #0A0806;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 400;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: 0.01em;
+  }
+
+  a { color: inherit; text-decoration: none; }
+  ul { list-style: none; }
+  img { max-width: 100%; display: block; }
+
+  .eyebrow {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+  }
+
+  .container {
+    width: 100%;
+    max-width: 1140px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible {
+    outline: 1px solid var(--color-accent);
+    outline-offset: 4px;
+  }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 15px 34px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.5s ease;
+    border: 1px solid transparent;
+    white-space: nowrap;
+  }
+
+  .btn-primary {
+    background: var(--color-accent);
+    color: var(--color-accent-text);
+  }
+  .btn-primary:hover { background: #ddbf6e; }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--color-text);
+    border: 1px solid rgba(245, 240, 232, 0.3);
+  }
+  .btn-outline:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  .btn-outline-gold {
+    background: transparent;
+    color: var(--color-accent);
+    border: 1px solid var(--color-accent);
+    padding: 11px 26px;
+  }
+  .btn-outline-gold:hover {
+    background: var(--color-accent);
+    color: var(--color-accent-text);
+  }
+
+  /* ---------- Reveal animation ---------- */
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .reveal.active { opacity: 1; transform: translateY(0); }
+  .reveal-delay-1.active { transition-delay: 0.12s; }
+  .reveal-delay-2.active { transition-delay: 0.24s; }
+  .reveal-delay-3.active { transition-delay: 0.36s; }
+
+  /* ================= NAV ================= */
+  header#site-nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 1000;
+    padding: 28px 0;
+    transition: background 0.5s ease, padding 0.5s ease, border-color 0.5s ease;
+    border-bottom: 1px solid transparent;
+  }
+  header#site-nav.scrolled {
+    background: rgba(10, 8, 6, 0.92);
+    backdrop-filter: blur(10px);
+    padding: 18px 0;
+    border-bottom: 1px solid rgba(201, 168, 76, 0.15);
+  }
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .nav-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-weight: 600;
+    font-size: 1.5rem;
+    letter-spacing: 0.02em;
+  }
+  .nav-links {
+    display: none;
+    align-items: center;
+    gap: 44px;
+  }
+  .nav-links a {
+    font-size: 0.76rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    transition: color 0.3s ease;
+  }
+  .nav-links a:hover { color: var(--color-accent); }
+  .nav-cta { display: none; }
+  .hamburger {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 32px;
+    height: 24px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    z-index: 1300;
+  }
+  .hamburger span {
+    display: block;
+    height: 1px;
+    width: 100%;
+    background: var(--color-text);
+    transition: transform 0.35s ease, opacity 0.35s ease;
+  }
+  .hamburger.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
+  .drawer {
+    position: fixed;
+    top: 0; right: 0;
+    height: 100vh;
+    width: min(78vw, 340px);
+    background: var(--color-surface);
+    border-left: 1px solid rgba(201, 168, 76, 0.15);
+    z-index: 1200;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 32px;
+    padding: 40px;
+    transform: translateX(100%);
+    transition: transform 0.5s ease;
+  }
+  .drawer.open { transform: translateX(0); }
+  .drawer a {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.6rem;
+    color: var(--color-text);
+  }
+  .drawer .btn { margin-top: 12px; align-self: flex-start; }
+  .drawer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+  }
+  .drawer-overlay.open { opacity: 1; pointer-events: auto; }
+
+  /* ================= HERO ================= */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 140px 0 80px;
+    position: relative;
+  }
+  .hero::after {
+    content: "";
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 1px;
+    height: 60%;
+    background: linear-gradient(to bottom, transparent, rgba(201,168,76,0.18), transparent);
+    transform: translate(-50%, -50%);
+    display: none;
+  }
+  .hero-eyebrow { margin-bottom: 26px; }
+  .hero h1 {
+    font-size: clamp(2.6rem, 7vw, 5.2rem);
+    max-width: 14ch;
+    margin-bottom: 32px;
+  }
+  .hero-sub {
+    font-size: 1.05rem;
+    color: var(--color-text-muted);
+    max-width: 42ch;
+    margin-bottom: 48px;
+    font-weight: 300;
+  }
+  .hero-ctas { display: flex; flex-wrap: wrap; gap: 18px; }
+
+  /* ================= SECTION GENERIC ================= */
+  section { padding: 120px 0; }
+  .section-head { margin-bottom: 64px; max-width: 60ch; }
+  .section-head .eyebrow { display: block; margin-bottom: 18px; }
+  .section-head h2 { font-size: clamp(1.9rem, 4vw, 2.8rem); }
+
+  /* ================= ABOUT ================= */
+  .about { text-align: center; }
+  .about-inner {
+    max-width: 62ch;
+    margin: 0 auto;
+  }
+  .about h2 {
+    font-size: clamp(1.9rem, 4vw, 2.8rem);
+    margin-bottom: 30px;
+  }
+  .about p {
+    font-size: 1.08rem;
+    line-height: 1.9;
+    color: var(--color-text-muted);
+    font-weight: 300;
+  }
+  .about-rule {
+    width: 44px;
+    height: 1px;
+    background: var(--color-accent);
+    margin: 0 auto 30px;
+  }
+
+  /* ================= SERVICES ================= */
+  .services-list { border-top: 1px solid rgba(245,240,232,0.08); }
+  .service-row {
+    border-bottom: 1px solid rgba(245,240,232,0.08);
+    padding: 40px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .service-rule {
+    width: 32px;
+    height: 1px;
+    background: var(--color-accent);
+  }
+  .service-row h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+  .service-row p {
+    color: var(--color-text-muted);
+    max-width: 60ch;
+    font-weight: 300;
+    font-size: 0.98rem;
+  }
+
+  /* ================= STATS ================= */
+  .stats {
+    background: var(--color-surface);
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 40px;
+    text-align: center;
+  }
+  .stat-value {
+    font-size: clamp(2.4rem, 5vw, 3.4rem);
+    color: var(--color-accent);
+    margin-bottom: 8px;
+  }
+  .stat-label {
+    font-size: 0.74rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  /* ================= TESTIMONIALS ================= */
+  .testimonials { text-align: center; }
+  .testimonial-slider {
+    max-width: 62ch;
+    margin: 0 auto;
+    position: relative;
+    min-height: 260px;
+  }
+  .testimonial-slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+    pointer-events: none;
+  }
+  .testimonial-slide.active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+    position: relative;
+  }
+  .testimonial-quote {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: clamp(1.35rem, 3vw, 1.9rem);
+    line-height: 1.5;
+    margin-bottom: 30px;
+  }
+  .testimonial-name {
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+  .testimonial-role {
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+    margin-top: 4px;
+  }
+  .testimonial-nav {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 44px;
+  }
+  .testimonial-arrow {
+    background: none;
+    border: 1px solid rgba(245,240,232,0.25);
+    color: var(--color-text);
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    transition: border-color 0.3s ease, color 0.3s ease;
+  }
+  .testimonial-arrow:hover { border-color: var(--color-accent); color: var(--color-accent); }
+
+  /* ================= CONTACT ================= */
+  .contact { background: var(--color-surface); }
+  .contact-inner {
+    max-width: 560px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  .contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    text-align: left;
+    margin-bottom: 56px;
+  }
+  .form-field label {
+    display: block;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin-bottom: 8px;
+  }
+  .form-field input,
+  .form-field textarea {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(245,240,232,0.25);
+    padding: 10px 2px;
+    color: var(--color-text);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.95rem;
+    transition: border-color 0.3s ease;
+  }
+  .form-field input:focus,
+  .form-field textarea:focus {
+    border-color: var(--color-accent);
+    outline: none;
+  }
+  .form-field textarea { resize: vertical; min-height: 100px; }
+  .contact-form .btn { align-self: flex-start; margin-top: 8px; }
+  #form-success {
+    display: none;
+    color: var(--color-accent);
+    font-size: 0.9rem;
+    letter-spacing: 0.05em;
+    margin-top: -30px;
+    margin-bottom: 40px;
+  }
+  #form-success.visible { display: block; }
+
+  .contact-details {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    color: var(--color-text-muted);
+    font-size: 0.95rem;
+  }
+  .contact-details a:hover { color: var(--color-accent); }
+
+  /* ================= FOOTER ================= */
+  footer {
+    padding: 64px 0 32px;
+    border-top: 1px solid rgba(245,240,232,0.08);
+    text-align: center;
+  }
+  .footer-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 1.4rem;
+    margin-bottom: 8px;
+  }
+  .footer-tagline {
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 24px;
+    font-weight: 300;
+  }
+  .footer-social {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 36px;
+  }
+  .footer-social a {
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    border-bottom: 1px solid transparent;
+  }
+  .footer-social a:hover { color: var(--color-accent); border-color: var(--color-accent); }
+  .powered-by {
+    font-size: 0.72rem;
+    color: rgba(166,156,140,0.5);
+  }
+  .powered-by a { border-bottom: 1px solid rgba(166,156,140,0.3); }
+
+  /* ================= WHATSAPP FLOAT ================= */
+  #whatsapp-float {
+    position: fixed;
+    bottom: 26px;
+    right: 26px;
+    z-index: 900;
+  }
+  #whatsapp-float a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #25D366;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+    transition: transform 0.3s ease;
+  }
+  #whatsapp-float a:hover { transform: scale(1.07); }
+  #whatsapp-float svg { width: 28px; height: 28px; }
+
+  /* ================= TABLET ================= */
+  @media (min-width: 481px) {
+    .stats-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+
+  /* ================= DESKTOP ================= */
+  @media (min-width: 1025px) {
+    .container { padding: 0 40px; }
+    .nav-links { display: flex; }
+    .nav-cta { display: inline-flex; }
+    .hamburger { display: none; }
+    .hero::after { display: block; }
+    .service-row {
+      flex-direction: row;
+      align-items: baseline;
+      gap: 40px;
+    }
+    .service-rule { align-self: center; }
+    .service-row h3 { flex: 0 0 280px; }
+    section { padding: 160px 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= NAV ================= -->
+<header id="site-nav">
+  <div class="container nav-inner">
+    <a href="#" class="nav-logo">{{business_name}}</a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="#about">About</a>
+      <a href="#services">Services</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <a href="#contact" class="btn btn-outline-gold nav-cta">Book a Consultation</a>
+    <button class="hamburger" id="hamburger-btn" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-drawer">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<div class="drawer-overlay" id="drawer-overlay"></div>
+<nav class="drawer" id="mobile-drawer" aria-label="Mobile">
+  <a href="#about">About</a>
+  <a href="#services">Services</a>
+  <a href="#contact">Contact</a>
+  <a href="#contact" class="btn btn-primary">Book a Consultation</a>
+</nav>
+
+<main>
+
+  <!-- ================= HERO ================= -->
+  <section class="hero container">
+    <p class="eyebrow hero-eyebrow reveal">STRATEGY · ADVISORY</p>
+    <h1 class="reveal reveal-delay-1">{{tagline}}</h1>
+    <p class="hero-sub reveal reveal-delay-2">{{about_body}}</p>
+    <div class="hero-ctas reveal reveal-delay-3">
+      <a href="#contact" class="btn btn-primary">Book a Consultation</a>
+      <a href="#about" class="btn btn-outline">Learn More</a>
+    </div>
+  </section>
+
+  <!-- ================= ABOUT ================= -->
+  <section class="about container" id="about">
+    <div class="about-inner">
+      <p class="eyebrow reveal">OUR MISSION</p>
+      <div class="about-rule reveal"></div>
+      <h2 class="reveal">Guidance built on judgment, not guesswork.</h2>
+      <p class="reveal reveal-delay-1">{{about_body}}</p>
+    </div>
+  </section>
+
+  <!-- ================= SERVICES ================= -->
+  <section id="services" class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">What We Offer</span>
+      <h2>Services</h2>
+    </div>
+    <div class="services-list">
+      <div class="service-row reveal">
+        <div class="service-rule"></div>
+        <h3>{{service_1_title}}</h3>
+        <p>{{service_1_description}}</p>
+      </div>
+      <div class="service-row reveal">
+        <div class="service-rule"></div>
+        <h3>{{service_2_title}}</h3>
+        <p>{{service_2_description}}</p>
+      </div>
+      <div class="service-row reveal">
+        <div class="service-rule"></div>
+        <h3>{{service_3_title}}</h3>
+        <p>{{service_3_description}}</p>
+      </div>
+      <div class="service-row" hidden data-optional-slot="4">
+        <div class="service-rule"></div>
+        <h3>{{service_4_title}}</h3>
+        <p>{{service_4_description}}</p>
+      </div>
+      <div class="service-row" hidden data-optional-slot="5">
+        <div class="service-rule"></div>
+        <h3>{{service_5_title}}</h3>
+        <p>{{service_5_description}}</p>
+      </div>
+      <div class="service-row" hidden data-optional-slot="6">
+        <div class="service-rule"></div>
+        <h3>{{service_6_title}}</h3>
+        <p>{{service_6_description}}</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= STATS ================= -->
+  <section class="stats">
+    <div class="container stats-grid">
+      <div class="reveal">
+        <div class="stat-value">{{stat_1_value}}</div>
+        <div class="stat-label">{{stat_1_label}}</div>
+      </div>
+      <div class="reveal reveal-delay-1">
+        <div class="stat-value">{{stat_2_value}}</div>
+        <div class="stat-label">{{stat_2_label}}</div>
+      </div>
+      <div class="reveal reveal-delay-2">
+        <div class="stat-value">{{stat_3_value}}</div>
+        <div class="stat-label">{{stat_3_label}}</div>
+      </div>
+      <div class="reveal reveal-delay-3">
+        <div class="stat-value">{{stat_4_value}}</div>
+        <div class="stat-label">{{stat_4_label}}</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TESTIMONIALS ================= -->
+  <section class="testimonials container">
+    <div class="section-head reveal" style="margin-left:auto; margin-right:auto; text-align:center;">
+      <span class="eyebrow">Client Voices</span>
+      <h2>Testimonials</h2>
+    </div>
+    <div class="testimonial-slider reveal" id="testimonial-slider">
+      <div class="testimonial-slide active" data-index="0">
+        <p class="testimonial-quote">&ldquo;{{testimonial_1_quote}}&rdquo;</p>
+        <p class="testimonial-name">{{testimonial_1_name}}</p>
+        <p class="testimonial-role">{{testimonial_1_role}}</p>
+      </div>
+      <div class="testimonial-slide" data-index="1">
+        <p class="testimonial-quote">&ldquo;{{testimonial_2_quote}}&rdquo;</p>
+        <p class="testimonial-name">{{testimonial_2_name}}</p>
+        <p class="testimonial-role">{{testimonial_2_role}}</p>
+      </div>
+      <div class="testimonial-slide" data-index="2">
+        <p class="testimonial-quote">&ldquo;{{testimonial_3_quote}}&rdquo;</p>
+        <p class="testimonial-name">{{testimonial_3_name}}</p>
+        <p class="testimonial-role">{{testimonial_3_role}}</p>
+      </div>
+    </div>
+    <div class="testimonial-nav reveal">
+      <button class="testimonial-arrow" id="testimonial-prev" aria-label="Previous testimonial">&#8592;</button>
+      <button class="testimonial-arrow" id="testimonial-next" aria-label="Next testimonial">&#8594;</button>
+    </div>
+  </section>
+
+  <!-- ================= CONTACT ================= -->
+  <section class="contact" id="contact">
+    <div class="container contact-inner">
+      <p class="eyebrow reveal">Get In Touch</p>
+      <h2 class="reveal" style="margin: 18px 0 44px;">Start the Conversation</h2>
+
+      <form id="contact-form" class="contact-form reveal" novalidate>
+        <div class="form-field">
+          <label for="name">Name</label>
+          <input type="text" id="name" name="name" required>
+        </div>
+        <div class="form-field">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required>
+        </div>
+        <div class="form-field">
+          <label for="message">Message</label>
+          <textarea id="message" name="message" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Send Message</button>
+      </form>
+      <p id="form-success" role="status">Message sent — thank you. We'll be in touch shortly.</p>
+
+      <div class="contact-details reveal">
+        <a href="tel:{{phone_number}}">{{phone_number}}</a>
+        <a href="mailto:{{email_address}}">{{email_address}}</a>
+        <span>{{address}}</span>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ================= FOOTER ================= -->
+<footer>
+  <div class="container">
+    <p class="footer-name">{{business_name}}</p>
+    <p class="footer-tagline">{{tagline}}</p>
+    <div class="footer-social" id="footer-social">
+      <a href="{{instagram_url}}" id="instagram-link" target="_blank" rel="noopener">Instagram</a>
+    </div>
+    <p class="powered-by">Powered by <a href="#">Zuri</a></p>
+  </div>
+</footer>
+
+<!-- ================= WHATSAPP FLOAT ================= -->
+<div id="whatsapp-float" data-whatsapp-number="{{whatsapp_number}}">
+  <a href="#" aria-label="Chat on WhatsApp" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+      <path d="M12.004 2C6.486 2 2 6.486 2 12.004c0 1.85.503 3.663 1.457 5.246L2.02 22l4.85-1.397a10.02 10.02 0 0 0 5.134 1.396h.004c5.518 0 10.004-4.486 10.004-10.004C21.996 6.486 17.522 2 12.004 2zm0 18.181h-.003a8.16 8.16 0 0 1-4.16-1.14l-.298-.177-3.09.89.825-3.014-.194-.31a8.15 8.15 0 0 1-1.257-4.426c0-4.503 3.665-8.168 8.18-8.168 4.503 0 8.168 3.665 8.168 8.168 0 4.505-3.665 8.177-8.17 8.177z"/>
+    </svg>
+  </a>
+</div>
+
+<script>
+  // ---------- Nav scroll state ----------
+  (function () {
+    var nav = document.getElementById('site-nav');
+    function onScroll() {
+      if (window.scrollY > 40) nav.classList.add('scrolled');
+      else nav.classList.remove('scrolled');
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  })();
+
+  // ---------- Hamburger drawer ----------
+  (function () {
+    var btn = document.getElementById('hamburger-btn');
+    var drawer = document.getElementById('mobile-drawer');
+    var overlay = document.getElementById('drawer-overlay');
+
+    function closeDrawer() {
+      btn.classList.remove('open');
+      drawer.classList.remove('open');
+      overlay.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+    }
+    function toggleDrawer() {
+      var isOpen = drawer.classList.toggle('open');
+      btn.classList.toggle('open', isOpen);
+      overlay.classList.toggle('open', isOpen);
+      btn.setAttribute('aria-expanded', String(isOpen));
+    }
+    btn.addEventListener('click', toggleDrawer);
+    overlay.addEventListener('click', closeDrawer);
+    drawer.querySelectorAll('a').forEach(function (a) {
+      a.addEventListener('click', closeDrawer);
+    });
+  })();
+
+  // ---------- Scroll reveal ----------
+  (function () {
+    var items = document.querySelectorAll('.reveal');
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('active');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+    items.forEach(function (item) { observer.observe(item); });
+  })();
+
+  // ---------- Testimonial slider ----------
+  (function () {
+    var slides = Array.prototype.slice.call(document.querySelectorAll('.testimonial-slide'));
+    var prev = document.getElementById('testimonial-prev');
+    var next = document.getElementById('testimonial-next');
+    var current = 0;
+
+    function show(index) {
+      slides[current].classList.remove('active');
+      current = (index + slides.length) % slides.length;
+      slides[current].classList.add('active');
+    }
+    prev.addEventListener('click', function () { show(current - 1); });
+    next.addEventListener('click', function () { show(current + 1); });
+  })();
+
+  // ---------- Contact form ----------
+  (function () {
+    var form = document.getElementById('contact-form');
+    var success = document.getElementById('form-success');
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      form.style.display = 'none';
+      success.classList.add('visible');
+    });
+  })();
+
+  // ---------- Instagram optional hide ----------
+  (function () {
+    var el = document.getElementById('instagram-link');
+    var href = el.getAttribute('href');
+    if (!href || href.trim() === '' || href.indexOf('{{') === 0) {
+      el.remove();
+    }
+  })();
+
+  // ---------- WhatsApp float (per spec) ----------
+  (function(){
+    var el = document.getElementById('whatsapp-float');
+    var num = el.getAttribute('data-whatsapp-number');
+    if (!num || num.trim() === '' || num.indexOf('{{') === 0) { el.remove(); }
+    else { el.querySelector('a').href = 'https://wa.me/' + num.replace(/[^0-9]/g,''); }
+  })();
+</script>
+
+</body>
+</html>

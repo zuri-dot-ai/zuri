@@ -1,0 +1,72 @@
+{
+  "template_id": "authority-minimal-light-real-estate",
+  "archetype": "authority-minimal",
+  "mode": "light",
+  "lean": "international",
+  "display_name": "Authority Light Real Estate",
+  "storage_path": "authority-minimal/light-real-estate.html",
+  "color_themes": [
+    {
+      "key": "theme-1",
+      "bg": "#FAF8F5",
+      "surface": "#F0ECE4",
+      "text": "#1C1A17",
+      "text_muted": "#5C564C",
+      "accent": "#A87B3F",
+      "accent_text": "#FAF8F5"
+    },
+    null,
+    null
+  ],
+  "placeholder_fields": [
+    "about_body",
+    "address",
+    "business_name",
+    "email_address",
+    "instagram_url",
+    "phone_number",
+    "property_1_location",
+    "property_1_price",
+    "property_1_title",
+    "property_2_location",
+    "property_2_price",
+    "property_2_title",
+    "service_1_description",
+    "service_1_title",
+    "service_2_description",
+    "service_2_title",
+    "service_3_description",
+    "service_3_title",
+    "service_4_description",
+    "service_4_title",
+    "service_5_description",
+    "service_5_title",
+    "service_6_description",
+    "service_6_title",
+    "tagline",
+    "testimonial_1_name",
+    "testimonial_1_quote",
+    "testimonial_1_role",
+    "testimonial_2_name",
+    "testimonial_2_quote",
+    "testimonial_2_role",
+    "testimonial_3_name",
+    "testimonial_3_quote",
+    "testimonial_3_role",
+    "whatsapp_number"
+  ],
+  "image_slots": [
+    "hero",
+    "property_1",
+    "property_2"
+  ],
+  "has_unique_section": true,
+  "unique_section_name": "Featured Properties",
+  "_extraction": {
+    "is_canonical": true,
+    "flags": [
+      "missing_multi_theme_only_root"
+    ],
+    "source_html": "authority-minimal/light-real-estate.html"
+  }
+}

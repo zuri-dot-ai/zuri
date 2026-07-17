@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{business_name}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Domine:wght@700&family=Mulish:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --color-bg:#F7F1E4;
+    --color-surface:#EFEAD9;
+    --color-text:#2A2620;
+    --color-text-muted:#6E6656;
+    --color-accent:#9C8438;
+    --color-accent-text:#F7F1E4;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+
+  body{
+    background:var(--color-bg);
+    color:var(--color-text);
+    font-family:'Mulish',sans-serif;
+    font-weight:400;
+    line-height:1.7;
+    overflow-x:hidden;
+  }
+
+  h1,h2,h3{
+    font-family:'Domine',serif;
+    font-weight:700;
+    line-height:1.2;
+    color:var(--color-text);
+  }
+
+  a{color:inherit;text-decoration:none;}
+  img{display:block;max-width:100%;}
+  button{font-family:'Mulish',sans-serif;cursor:pointer;border:none;}
+
+  .eyebrow{
+    font-family:'Mulish',sans-serif;
+    font-weight:600;
+    letter-spacing:0.2em;
+    text-transform:uppercase;
+    font-size:0.74rem;
+    color:var(--color-accent);
+    display:inline-block;
+    margin-bottom:1rem;
+  }
+
+  .rule-motif{
+    width:70px;
+    margin:1.2rem auto 0;
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+  }
+  .rule-motif.align-left{margin-left:0;}
+  .rule-motif span{
+    display:block;
+    height:1px;
+    background:var(--color-accent);
+  }
+  .rule-motif span:first-child{width:100%;}
+  .rule-motif span:last-child{width:40%;}
+
+  .btn{
+    display:inline-block;
+    padding:0.9rem 2.1rem;
+    font-family:'Mulish',sans-serif;
+    font-weight:600;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    font-size:0.78rem;
+    border:1px solid var(--color-accent);
+    transition:all 0.3s ease;
+  }
+  .btn-solid{
+    background:var(--color-accent);
+    color:var(--color-accent-text);
+  }
+  .btn-solid:hover{background:transparent;color:var(--color-accent);}
+  .btn-outline{
+    background:transparent;
+    color:var(--color-text);
+    border-color:var(--color-text);
+  }
+  .btn-outline:hover{background:var(--color-text);color:var(--color-bg);}
+
+  :focus-visible{
+    outline:3px solid var(--color-accent);
+    outline-offset:3px;
+  }
+
+  .container{
+    width:100%;
+    max-width:1200px;
+    margin:0 auto;
+    padding:0 1.5rem;
+  }
+
+  /* ---------- NAV ---------- */
+  #main-nav{
+    position:fixed;
+    top:0;left:0;right:0;
+    z-index:1000;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:1.4rem 1.5rem;
+    background:transparent;
+    transition:background 0.35s ease, padding 0.35s ease, box-shadow 0.35s ease;
+  }
+  #main-nav.scrolled{
+    background:var(--color-bg);
+    padding:0.9rem 1.5rem;
+    box-shadow:0 2px 12px rgba(42,38,32,0.07);
+  }
+  .nav-brand{
+    font-family:'Domine',serif;
+    font-size:1.25rem;
+    color:var(--color-text);
+    z-index:1001;
+  }
+  .nav-links{
+    display:none;
+    list-style:none;
+    gap:2.4rem;
+  }
+  .nav-links a{
+    font-size:0.8rem;
+    font-weight:600;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    position:relative;
+    padding-bottom:4px;
+  }
+  .nav-links a::after{
+    content:'';
+    position:absolute;
+    left:0;bottom:0;
+    width:0;height:1px;
+    background:var(--color-accent);
+    transition:width 0.3s ease;
+  }
+  .nav-links a:hover::after{width:100%;}
+
+  .hamburger{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+    background:none;
+    z-index:1001;
+    padding:0.5rem;
+  }
+  .hamburger span{
+    width:26px;height:1px;
+    background:var(--color-text);
+    transition:all 0.3s ease;
+  }
+  .hamburger.open span:nth-child(1){transform:translateY(6px) rotate(45deg);}
+  .hamburger.open span:nth-child(2){opacity:0;}
+  .hamburger.open span:nth-child(3){transform:translateY(-6px) rotate(-45deg);}
+
+  .nav-drawer{
+    position:fixed;
+    top:0;right:0;
+    height:100vh;
+    width:75%;
+    max-width:320px;
+    background:var(--color-surface);
+    z-index:1000;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    justify-content:center;
+    gap:2rem;
+    padding:2rem;
+    transform:translateX(100%);
+    transition:transform 0.4s ease;
+    box-shadow:-6px 0 24px rgba(42,38,32,0.1);
+  }
+  .nav-drawer.open{transform:translateX(0);}
+  .nav-drawer a{
+    font-family:'Domine',serif;
+    font-size:1.4rem;
+  }
+
+  @media (min-width:1025px){
+    .nav-links{display:flex;align-items:center;}
+    .hamburger{display:none;}
+  }
+
+  /* ---------- HERO ---------- */
+  .hero{
+    position:relative;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    overflow:hidden;
+  }
+  .hero-img{
+    position:absolute;
+    inset:0;
+    width:100%;height:100%;
+    object-fit:cover;
+  }
+  .hero-overlay{
+    position:absolute;
+    inset:0;
+    background:linear-gradient(180deg, rgba(42,38,32,0.5) 0%, rgba(42,38,32,0.28) 45%, rgba(42,38,32,0.6) 100%);
+  }
+  .hero-content{
+    position:relative;
+    z-index:2;
+    color:#F7F1E4;
+    padding:0 1.5rem;
+    max-width:800px;
+  }
+  .hero-content .eyebrow{color:#D9C98E;}
+  .hero-content h1{
+    font-size:clamp(2.4rem, 8vw, 4.6rem);
+    color:#F7F1E4;
+    margin-bottom:1.5rem;
+  }
+  .hero-ctas{
+    display:flex;
+    flex-wrap:wrap;
+    gap:1rem;
+    justify-content:center;
+    margin-top:1.5rem;
+  }
+  .hero-ctas .btn-outline{
+    color:#F7F1E4;
+    border-color:#F7F1E4;
+  }
+  .hero-ctas .btn-outline:hover{
+    background:#F7F1E4;
+    color:var(--color-text);
+  }
+
+  /* ---------- HOURS STRIP ---------- */
+  .hours-strip{
+    background:var(--color-text);
+    color:var(--color-bg);
+    padding:1.4rem 0;
+  }
+  .hours-strip .container{
+    display:flex;
+    flex-direction:column;
+    gap:1rem;
+    align-items:center;
+    text-align:center;
+  }
+  .hours-text{
+    font-size:0.9rem;
+    letter-spacing:0.02em;
+  }
+  .hours-text strong{color:var(--color-accent);}
+
+  @media (min-width:481px){
+    .hours-strip .container{
+      flex-direction:row;
+      justify-content:space-between;
+      text-align:left;
+    }
+  }
+
+  /* ---------- ABOUT ---------- */
+  .about{padding:6.5rem 0;}
+  .about .container{
+    display:grid;
+    gap:2.5rem;
+    align-items:center;
+  }
+  .about-img{
+    width:100%;
+    aspect-ratio:4/5;
+    object-fit:cover;
+  }
+  .about-copy h2{
+    font-size:clamp(1.9rem,5vw,2.7rem);
+    margin-bottom:0;
+  }
+  .about-copy p{
+    color:var(--color-text-muted);
+    font-size:1rem;
+    margin-top:1.4rem;
+  }
+
+  @media (min-width:1025px){
+    .about .container{
+      grid-template-columns:1fr 1fr;
+      gap:5.5rem;
+    }
+  }
+
+  /* ---------- SECTION HEADERS ---------- */
+  .section-head{
+    text-align:center;
+    max-width:640px;
+    margin:0 auto 3.5rem;
+  }
+  .section-head h2{
+    font-size:clamp(1.9rem,5vw,2.7rem);
+  }
+
+  /* ---------- MENU PREVIEW ---------- */
+  .menu-preview{
+    padding:6.5rem 0;
+    background:var(--color-surface);
+  }
+  .menu-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:1.75rem;
+  }
+  .menu-card{
+    background:var(--color-bg);
+    padding:2.3rem 1.8rem;
+    border-bottom:2px solid var(--color-accent);
+  }
+  .menu-card[hidden]{display:none;}
+  .menu-card h3{
+    font-size:1.3rem;
+    margin-bottom:0.7rem;
+  }
+  .menu-card p{
+    color:var(--color-text-muted);
+    font-size:0.94rem;
+  }
+
+  @media (min-width:481px){
+    .menu-grid{grid-template-columns:repeat(2,1fr);}
+  }
+  @media (min-width:1025px){
+    .menu-grid{grid-template-columns:repeat(3,1fr);}
+  }
+
+  /* ---------- GALLERY ---------- */
+  .gallery{padding:6.5rem 0;}
+  .gallery-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:1rem;
+  }
+  .gallery-item{
+    overflow:hidden;
+    aspect-ratio:1/1;
+  }
+  .gallery-item.span-two{
+    grid-column:span 2;
+    aspect-ratio:2/1;
+  }
+  .gallery-item img{
+    width:100%;height:100%;
+    object-fit:cover;
+    transition:transform 0.5s ease;
+  }
+  .gallery-item:hover img{transform:scale(1.06);}
+
+  @media (min-width:481px){
+    .gallery-grid{grid-template-columns:repeat(3,1fr);}
+    .gallery-item.span-two{aspect-ratio:1/1;}
+  }
+
+  /* ---------- TESTIMONIALS ---------- */
+  .testimonials{
+    padding:6.5rem 0;
+    background:var(--color-text);
+    color:var(--color-bg);
+    text-align:center;
+  }
+  .testimonials .section-head h2{color:var(--color-bg);}
+  .testimonial-track{
+    position:relative;
+    max-width:700px;
+    margin:0 auto;
+    min-height:220px;
+  }
+  .testimonial-slide{
+    display:none;
+    animation:fadein 0.5s ease;
+  }
+  .testimonial-slide.active{display:block;}
+  @keyframes fadein{from{opacity:0;}to{opacity:1;}}
+  .testimonial-slide p.quote{
+    font-family:'Domine',serif;
+    font-weight:700;
+    font-size:clamp(1.2rem,3.2vw,1.6rem);
+    line-height:1.5;
+    margin-bottom:1.5rem;
+  }
+  .testimonial-slide .quote-name{
+    font-weight:600;
+    letter-spacing:0.03em;
+  }
+  .testimonial-slide .quote-role{
+    color:#C7BC9F;
+    font-size:0.83rem;
+  }
+  .testimonial-dots{
+    display:flex;
+    justify-content:center;
+    gap:0.6rem;
+    margin-top:2rem;
+  }
+  .dot{
+    width:8px;height:8px;
+    border-radius:50%;
+    background:#5A5344;
+    border:none;
+    padding:0;
+  }
+  .dot.active{background:var(--color-accent);}
+
+  /* ---------- CONTACT ---------- */
+  .contact{padding:6.5rem 0;}
+  .contact .container{
+    display:grid;
+    gap:3rem;
+  }
+  .contact-details h2{
+    font-size:clamp(1.9rem,5vw,2.5rem);
+    margin-bottom:0.2rem;
+  }
+  .contact-details p{
+    color:var(--color-text-muted);
+    margin-bottom:0.5rem;
+  }
+  .map-placeholder{
+    width:100%;
+    aspect-ratio:4/3;
+    background:
+      repeating-linear-gradient(45deg, var(--color-surface), var(--color-surface) 10px, #E3DCC5 10px, #E3DCC5 20px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--color-text-muted);
+    font-size:0.82rem;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    margin-top:1.5rem;
+    border:1px solid var(--color-accent);
+  }
+
+  form#contact-form{
+    display:flex;
+    flex-direction:column;
+    gap:1.1rem;
+  }
+  form#contact-form input,
+  form#contact-form textarea{
+    width:100%;
+    padding:0.9rem 1rem;
+    background:var(--color-surface);
+    border:1px solid transparent;
+    color:var(--color-text);
+    font-family:'Mulish',sans-serif;
+    font-size:0.95rem;
+  }
+  form#contact-form input:focus,
+  form#contact-form textarea:focus{
+    border-color:var(--color-accent);
+    outline:none;
+  }
+  form#contact-form textarea{resize:vertical;min-height:120px;}
+  .form-confirmation{
+    display:none;
+    background:var(--color-surface);
+    border-left:3px solid var(--color-accent);
+    padding:1.5rem;
+    font-weight:600;
+  }
+  .form-confirmation.show{display:block;}
+
+  @media (min-width:1025px){
+    .contact .container{
+      grid-template-columns:1fr 1fr;
+    }
+  }
+
+  /* ---------- FOOTER ---------- */
+  footer{
+    background:var(--color-text);
+    color:var(--color-bg);
+    padding:3rem 0 2rem;
+    text-align:center;
+  }
+  footer .footer-brand{
+    font-family:'Domine',serif;
+    font-size:1.5rem;
+    margin-bottom:0.5rem;
+  }
+  footer .footer-tagline{
+    color:#C7BC9F;
+    font-size:0.88rem;
+    margin-bottom:1.2rem;
+  }
+  footer .footer-insta{
+    display:inline-block;
+    margin-bottom:1.5rem;
+    font-size:0.82rem;
+    font-weight:600;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    border-bottom:1px solid var(--color-accent);
+    padding-bottom:2px;
+  }
+  footer .powered{
+    font-size:0.76rem;
+    color:#89806A;
+  }
+  footer .powered a{
+    text-decoration:underline;
+  }
+
+  /* ---------- WHATSAPP FLOAT ---------- */
+  #whatsapp-float{
+    position:fixed;
+    bottom:1.5rem;
+    right:1.5rem;
+    z-index:1500;
+  }
+  #whatsapp-float a{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:58px;height:58px;
+    border-radius:50%;
+    background:#25D366;
+    box-shadow:0 4px 14px rgba(42,38,32,0.28);
+  }
+  #whatsapp-float svg{width:28px;height:28px;fill:#fff;}
+
+  /* ---------- SCROLL REVEAL ---------- */
+  .reveal{
+    opacity:0;
+    transform:translateY(20px);
+    transition:opacity 0.55s ease-out, transform 0.55s ease-out;
+  }
+  .reveal.active{
+    opacity:1;
+    transform:translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<nav id="main-nav">
+  <div class="nav-brand">{{business_name}}</div>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#menu">Menu</a></li>
+    <li><a href="#gallery">Gallery</a></li>
+    <li><a href="#testimonials">Testimonials</a></li>
+    <li><a href="#contact" class="btn btn-solid">Reserve</a></li>
+  </ul>
+  <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<div class="nav-drawer" id="nav-drawer">
+  <a href="#about">About</a>
+  <a href="#menu">Menu</a>
+  <a href="#gallery">Gallery</a>
+  <a href="#testimonials">Testimonials</a>
+  <a href="#contact">Reserve</a>
+</div>
+
+<header class="hero">
+  <img class="hero-img" src="https://picsum.photos/1600/1000?random=1" data-image-slot="hero" alt="{{business_name}} dining room and table spread">
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <span class="eyebrow">{{tagline}}</span>
+    <h1>{{business_name}}</h1>
+    <div class="hero-ctas">
+      <a href="#contact" class="btn btn-solid">Reserve a Table</a>
+      <a href="#menu" class="btn btn-outline">View Menu</a>
+    </div>
+  </div>
+</header>
+
+<section class="hours-strip">
+  <div class="container">
+    <p class="hours-text"><strong>Open Today</strong> — {{opening_hours}}</p>
+    <a href="#contact" class="btn btn-solid">Order / Reserve</a>
+  </div>
+</section>
+
+<section class="about" id="about">
+  <div class="container">
+    <img class="about-img reveal" src="https://picsum.photos/800/1000?random=2" data-image-slot="about" alt="{{business_name}} kitchen at work">
+    <div class="about-copy reveal">
+      <span class="eyebrow">Our Story</span>
+      <h2>A Table Worth Returning To</h2>
+      <div class="rule-motif align-left"><span></span><span></span></div>
+      <p>{{about_body}}</p>
+    </div>
+  </div>
+</section>
+
+<section class="menu-preview" id="menu">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">From the Kitchen</span>
+      <h2>Menu Preview</h2>
+      <div class="rule-motif"><span></span><span></span></div>
+    </div>
+    <div class="menu-grid">
+      <div class="menu-card reveal">
+        <h3>{{service_1_title}}</h3>
+        <p>{{service_1_description}}</p>
+      </div>
+      <div class="menu-card reveal">
+        <h3>{{service_2_title}}</h3>
+        <p>{{service_2_description}}</p>
+      </div>
+      <div class="menu-card reveal">
+        <h3>{{service_3_title}}</h3>
+        <p>{{service_3_description}}</p>
+      </div>
+      <div class="menu-card" hidden data-optional-slot="4">
+        <h3>{{service_4_title}}</h3>
+        <p>{{service_4_description}}</p>
+      </div>
+      <div class="menu-card" hidden data-optional-slot="5">
+        <h3>{{service_5_title}}</h3>
+        <p>{{service_5_description}}</p>
+      </div>
+      <div class="menu-card" hidden data-optional-slot="6">
+        <h3>{{service_6_title}}</h3>
+        <p>{{service_6_description}}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="gallery" id="gallery">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">A Look Inside</span>
+      <h2>Gallery</h2>
+      <div class="rule-motif"><span></span><span></span></div>
+    </div>
+    <div class="gallery-grid">
+      <div class="gallery-item span-two reveal">
+        <img src="https://picsum.photos/1000/500?random=3" data-image-slot="gallery_1" alt="{{business_name}} dining room overview">
+      </div>
+      <div class="gallery-item reveal">
+        <img src="https://picsum.photos/500/500?random=4" data-image-slot="gallery_2" alt="{{business_name}} plated dish detail">
+      </div>
+      <div class="gallery-item reveal">
+        <img src="https://picsum.photos/500/500?random=5" data-image-slot="gallery_3" alt="{{business_name}} bakery counter">
+      </div>
+      <div class="gallery-item reveal">
+        <img src="https://picsum.photos/500/500?random=6" data-image-slot="gallery_4" alt="{{business_name}} fresh ingredients">
+      </div>
+      <div class="gallery-item reveal">
+        <img src="https://picsum.photos/500/500?random=7" data-image-slot="gallery_5" alt="{{business_name}} outdoor seating">
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="testimonials" id="testimonials">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">Guest Words</span>
+      <h2>Testimonials</h2>
+      <div class="rule-motif"><span></span><span></span></div>
+    </div>
+    <div class="testimonial-track reveal">
+      <div class="testimonial-slide active" data-slide="1">
+        <p class="quote">"{{testimonial_1_quote}}"</p>
+        <p class="quote-name">{{testimonial_1_name}}</p>
+        <p class="quote-role">{{testimonial_1_role}}</p>
+      </div>
+      <div class="testimonial-slide" data-slide="2">
+        <p class="quote">"{{testimonial_2_quote}}"</p>
+        <p class="quote-name">{{testimonial_2_name}}</p>
+        <p class="quote-role">{{testimonial_2_role}}</p>
+      </div>
+      <div class="testimonial-slide" data-slide="3">
+        <p class="quote">"{{testimonial_3_quote}}"</p>
+        <p class="quote-name">{{testimonial_3_name}}</p>
+        <p class="quote-role">{{testimonial_3_role}}</p>
+      </div>
+      <div class="testimonial-dots">
+        <button class="dot active" data-dot="1" aria-label="Show testimonial 1"></button>
+        <button class="dot" data-dot="2" aria-label="Show testimonial 2"></button>
+        <button class="dot" data-dot="3" aria-label="Show testimonial 3"></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="contact" id="contact">
+  <div class="container">
+    <div class="reveal">
+      <form id="contact-form">
+        <input type="text" name="name" placeholder="Your Name" required>
+        <input type="email" name="email" placeholder="Your Email" required>
+        <textarea name="message" placeholder="Tell us about your reservation or event" required></textarea>
+        <button type="submit" class="btn btn-solid">Send Message</button>
+      </form>
+      <div class="form-confirmation" id="form-confirmation">
+        Thank you — your message has been received. We'll be in touch shortly.
+      </div>
+    </div>
+    <div class="contact-details reveal">
+      <span class="eyebrow">Get in Touch</span>
+      <h2>Reserve Your Table</h2>
+      <div class="rule-motif align-left"><span></span><span></span></div>
+      <p style="margin-top:1.2rem;">{{address}}</p>
+      <p>{{phone_number}}</p>
+      <p>{{email_address}}</p>
+      <div class="map-placeholder">Map Location</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-brand">{{business_name}}</div>
+    <p class="footer-tagline">{{tagline}}</p>
+    <a class="footer-insta" id="footer-instagram" href="{{instagram_url}}" target="_blank" rel="noopener">Instagram</a>
+    <p class="powered">Powered by <a href="#">Zuri</a></p>
+  </div>
+</footer>
+
+<div id="whatsapp-float" data-whatsapp-number="{{whatsapp_number}}">
+  <a href="#" aria-label="Chat on WhatsApp">
+    <svg viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.29-1.39a9.9 9.9 0 0 0 4.75 1.21h.01c5.46 0 9.9-4.45 9.9-9.91C21.96 6.45 17.5 2 12.04 2zm5.9 14.02c-.25.7-1.45 1.34-2 1.43-.53.08-1.14.11-1.84-.12-.42-.14-.96-.32-1.65-.63-2.9-1.25-4.8-4.17-4.94-4.36-.14-.19-1.17-1.56-1.17-2.97 0-1.41.74-2.1 1-2.39.26-.28.57-.36.76-.36.19 0 .38 0 .55.01.18.01.41-.07.64.49.25.6.84 2.06.91 2.21.08.15.13.32.03.51-.1.19-.15.31-.3.48-.14.17-.31.37-.44.5-.15.15-.3.31-.13.6.17.29.76 1.25 1.63 2.02 1.12.99 2.06 1.3 2.35 1.45.29.15.46.13.63-.08.17-.21.72-.84.91-1.13.19-.29.38-.24.63-.14.25.1 1.6.75 1.87.89.27.14.45.21.52.32.07.11.07.62-.18 1.32z"/></svg>
+  </a>
+</div>
+
+<script>
+(function(){
+  var nav = document.getElementById('main-nav');
+  window.addEventListener('scroll', function(){
+    if (window.scrollY > 60) { nav.classList.add('scrolled'); }
+    else { nav.classList.remove('scrolled'); }
+  });
+
+  var hamburger = document.getElementById('hamburger');
+  var drawer = document.getElementById('nav-drawer');
+  hamburger.addEventListener('click', function(){
+    var isOpen = drawer.classList.toggle('open');
+    hamburger.classList.toggle('open');
+    hamburger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  });
+  drawer.querySelectorAll('a').forEach(function(link){
+    link.addEventListener('click', function(){
+      drawer.classList.remove('open');
+      hamburger.classList.remove('open');
+      hamburger.setAttribute('aria-expanded', 'false');
+    });
+  });
+  document.addEventListener('click', function(e){
+    if (drawer.classList.contains('open') && !drawer.contains(e.target) && !hamburger.contains(e.target)) {
+      drawer.classList.remove('open');
+      hamburger.classList.remove('open');
+      hamburger.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  var revealEls = document.querySelectorAll('.reveal');
+  var observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if (entry.isIntersecting) {
+        entry.target.classList.add('active');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  revealEls.forEach(function(el){ observer.observe(el); });
+
+  var slides = document.querySelectorAll('.testimonial-slide');
+  var dots = document.querySelectorAll('.dot');
+  var current = 0;
+  function showSlide(i){
+    slides.forEach(function(s){ s.classList.remove('active'); });
+    dots.forEach(function(d){ d.classList.remove('active'); });
+    slides[i].classList.add('active');
+    dots[i].classList.add('active');
+    current = i;
+  }
+  dots.forEach(function(dot, i){
+    dot.addEventListener('click', function(){ showSlide(i); });
+  });
+  setInterval(function(){
+    showSlide((current + 1) % slides.length);
+  }, 6000);
+
+  var form = document.getElementById('contact-form');
+  var confirmation = document.getElementById('form-confirmation');
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    form.style.display = 'none';
+    confirmation.classList.add('show');
+  });
+
+  var insta = document.getElementById('footer-instagram');
+  var instaUrl = insta.getAttribute('href');
+  if (!instaUrl || instaUrl.trim() === '' || instaUrl.indexOf('{{') === 0) {
+    insta.remove();
+  }
+})();
+
+(function(){
+  var el = document.getElementById('whatsapp-float');
+  var num = el.getAttribute('data-whatsapp-number');
+  if (!num || num.trim() === '' || num.indexOf('{{') === 0) { el.remove(); }
+  else { el.querySelector('a').href = 'https://wa.me/' + num.replace(/[^0-9]/g,''); }
+})();
+</script>
+
+</body>
+</html>

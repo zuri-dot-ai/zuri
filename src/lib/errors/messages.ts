@@ -55,7 +55,7 @@ export const ERROR_MESSAGES = {
     "This domain is already connected to another Zuri site.",
   CUSTOM_DOMAIN_INVALID:
     "Please enter a valid domain name (e.g. mybusiness.com).",
-  CUSTOM_DOMAIN_ZURI: "You can't use a zuri.com address as a custom domain.",
+  CUSTOM_DOMAIN_ZURI: "You can't use a buildzuri.com address as a custom domain.",
   DNS_PROPAGATING:
     "Your domain DNS is still propagating. This can take up to 48 hours.",
   DNS_FAILED:

@@ -11,9 +11,17 @@ import {
   Stethoscope,
   Calendar,
   MoreHorizontal,
+  Store,
+  Newspaper,
+  HeartHandshake,
   type LucideIcon,
 } from "lucide-react";
 import { SelectionCard } from "@/components/onboarding/SelectionCard";
+import { CustomSiteCTA } from "@/components/website/CustomSiteCTA";
+import {
+  isUnsupportedBusinessType,
+  UNSUPPORTED_FEATURE_LABELS,
+} from "@/lib/onboarding/types";
 
 const BUSINESS_TYPES: Array<{
   id: string;
@@ -70,6 +78,24 @@ const BUSINESS_TYPES: Array<{
     descriptor: "Venue, planner, class, appointment",
   },
   {
+    id: "ecommerce",
+    icon: Store,
+    label: "Online Store",
+    descriptor: "E-commerce, inventory, checkout",
+  },
+  {
+    id: "blog-publication",
+    icon: Newspaper,
+    label: "Blog / Publication",
+    descriptor: "Content site, magazine, newsletter CMS",
+  },
+  {
+    id: "nonprofit-community",
+    icon: HeartHandshake,
+    label: "Nonprofit / Community",
+    descriptor: "Donations, membership, community hub",
+  },
+  {
     id: "other",
     icon: MoreHorizontal,
     label: "Other",
@@ -88,9 +114,12 @@ export function Step3BusinessType({
   onChange,
   onValidityChange,
 }: Step3BusinessTypeProps) {
+  const unsupported = isUnsupportedBusinessType(value);
+
   useEffect(() => {
-    onValidityChange(Boolean(value));
-  }, [value, onValidityChange]);
+    // Unsupported branches cannot continue onboarding — CustomSiteCTA only
+    onValidityChange(Boolean(value) && !unsupported);
+  }, [value, unsupported, onValidityChange]);
 
   function select(id: string) {
     onChange(id);
@@ -113,6 +142,12 @@ export function Step3BusinessType({
           />
         ))}
       </div>
+      {unsupported && (
+        <CustomSiteCTA
+          context="onboarding"
+          requestedFeature={UNSUPPORTED_FEATURE_LABELS[value]}
+        />
+      )}
     </div>
   );
 }

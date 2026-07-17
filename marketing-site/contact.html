@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact — Zuri</title>
+<meta name="description" content="Get in touch with the Zuri team.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/styles.css">
+
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://buildzuri.com/contact.html">
+<meta property="og:title" content="Contact — Zuri">
+<meta property="og:description" content="Get in touch with the Zuri team.">
+<meta property="og:image" content="https://buildzuri.com/assets/images/zuri_meta.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:site_name" content="Zuri">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Contact — Zuri">
+<meta name="twitter:description" content="Get in touch with the Zuri team.">
+<meta name="twitter:image" content="https://buildzuri.com/assets/images/zuri_meta.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/images/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon-16x16.png">
+<link rel="manifest" href="/site.webmanifest">
+</head>
+<body>
+<canvas id="dust-canvas"></canvas>
+
+<nav class="navbar" id="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo"><img src="assets/images/zuri_logo.png" alt="Zuri" class="nav-logo-img"></a>
+    <div class="nav-links">
+      <a href="index.html#features" class="link-underline">Features</a>
+      <a href="index.html#how-it-works" class="link-underline">How it works</a>
+      <a href="pricing.html" class="link-underline">Pricing</a>
+      <a href="about.html" class="link-underline">About</a>
+    </div>
+    <div class="nav-actions">
+      <a href="https://app.buildzuri.com/login" class="btn-ghost nav-login">Login</a>
+      <a href="https://app.buildzuri.com/signup" class="btn-gold nav-cta">Start free</a>
+    </div>
+    <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+
+<div class="drawer-backdrop" id="drawer-backdrop"></div>
+<div class="drawer" id="drawer">
+  <a href="index.html#features" class="drawer-link">Features</a>
+  <a href="index.html#how-it-works" class="drawer-link">How it works</a>
+  <a href="pricing.html" class="drawer-link">Pricing</a>
+  <a href="about.html" class="drawer-link">About</a>
+  <a href="https://app.buildzuri.com/signup" class="btn-gold" style="margin-top:1rem;width:100%;text-align:center;">Start free</a>
+</div>
+
+<main>
+
+<section class="page-header reveal in">
+  <div class="page-eyebrow">Contact</div>
+  <h1>Let's talk.</h1>
+  <p>Questions about Zuri, partnership ideas, or just want to say hello — we'd love to hear from you.</p>
+</section>
+
+<section class="reveal" style="display:grid; grid-template-columns:1.2fr 1fr; gap:4rem;">
+  <!-- NOTE: this form is currently non-functional markup only (onsubmit returns false).
+       Per 00_LANDING_SITE_ARCHITECTURE.md §4, this should POST to an app.buildzuri.com
+       API endpoint once one exists — flagged, not wired, pending confirmation of the
+       target endpoint. -->
+  <form class="contact-form" onsubmit="return false;">
+    <div class="form-field">
+      <label for="name">Name</label>
+      <input type="text" id="name" placeholder="Your name">
+    </div>
+    <div class="form-field">
+      <label for="email">Email</label>
+      <input type="email" id="email" placeholder="you@business.com">
+    </div>
+    <div class="form-field">
+      <label for="message">Message</label>
+      <textarea id="message" placeholder="How can we help?"></textarea>
+    </div>
+    <button class="btn-gold" style="align-self:flex-start;">Send message</button>
+  </form>
+  <div>
+    <h2 style="font-size:1.3rem; margin-bottom:1rem;">Other ways to reach us</h2>
+    <div class="contact-meta">
+      Email: <a href="mailto:hello@buildzuri.com">hello@buildzuri.com</a><br>
+      Based in Nigeria, building for all of Africa.<br><br>
+      For support with an existing website or account, please use the help center inside your dashboard for the fastest response.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <span>© 2026 Zuri</span>
+  <div class="footer-links">
+    <a href="about.html">About</a>
+    <a href="pricing.html">Pricing</a>
+    <a href="faq.html">FAQ</a>
+    <a href="contact.html">Contact</a>
+    <a href="terms.html">Terms &amp; Privacy</a>
+  </div>
+  <span>buildzuri.com</span>
+</footer>
+
+<script src="assets/js/script.js"></script>
+</body>
+</html>

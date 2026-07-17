@@ -4,6 +4,7 @@ import type { LucideIcon } from "lucide-react";
 interface StatCardProps {
   label: string;
   value: string | number;
+  hint?: string;
   icon?: LucideIcon;
   accent?: boolean;
   className?: string;
@@ -12,34 +13,32 @@ interface StatCardProps {
 export function StatCard({
   label,
   value,
+  hint,
   icon: Icon,
   accent,
   className,
 }: StatCardProps) {
   return (
-        <div
-      className={cn(
-        "glass-card flex items-center justify-between transition-all duration-200",
-        "hover:-translate-y-[2px] hover:border-gold/20 hover:shadow-[0_10px_30px_rgba(0,0,0,0.35)]",
-        className
-      )}
-    >
-      <div>
-        <p className="text-xs uppercase tracking-wider text-muted-foreground">
+    <div className={cn("surface flex items-start justify-between gap-3", className)}>
+      <div className="min-w-0">
+        <p className="stat-label text-xs font-medium uppercase tracking-wider text-muted-foreground">
           {label}
         </p>
         <p
           className={cn(
-            "mt-1 font-heading text-3xl font-semibold",
+            "stat-value mt-2 font-mono text-2xl font-semibold tracking-tight",
             accent && "text-gold"
           )}
         >
           {value}
         </p>
+        {hint && (
+          <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
+        )}
       </div>
       {Icon && (
-        <div className="flex size-11 items-center justify-center rounded-lg bg-gold/10 text-gold">
-          <Icon className="size-5" />
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-none border border-border bg-muted text-gold">
+          <Icon className="size-5" strokeWidth={1.75} />
         </div>
       )}
     </div>

@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{business_name}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --color-bg: #FBF7F0;
+    --color-surface: #F2E9DA;
+    --color-text: #2A241C;
+    --color-text-muted: #6B5F4E;
+    --color-accent: #B8823A;
+    --color-accent-text: #FFFFFF;
+    --shadow-soft: 0 4px 20px rgba(42, 36, 28, 0.08);
+    --shadow-med: 0 8px 30px rgba(42, 36, 28, 0.12);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: 'Lato', sans-serif;
+    font-weight: 400;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, .logo-text {
+    font-family: 'Playfair Display', serif;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  a { text-decoration: none; color: inherit; }
+  ul { list-style: none; }
+  img { max-width: 100%; display: block; }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; }
+
+  .container {
+    width: 100%;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+  }
+
+  .hairline {
+    height: 1px;
+    width: 100%;
+    background: rgba(42, 36, 28, 0.12);
+    border: none;
+  }
+
+  .eyebrow {
+    display: inline-block;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    margin-bottom: 14px;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 34px;
+    border: 1px solid var(--color-accent);
+    color: var(--color-accent);
+    font-size: 0.85rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+  .btn:hover { background: var(--color-accent); color: var(--color-accent-text); }
+  .btn-filled {
+    background: var(--color-accent);
+    color: var(--color-accent-text);
+  }
+  .btn-filled:hover { background: transparent; color: var(--color-accent); }
+
+  /* ---------- Reveal Animations ---------- */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .reveal.active { opacity: 1; transform: translateY(0); }
+  .reveal-stagger.active > * { transition-delay: calc(var(--i) * 0.1s); }
+
+  /* ---------- Navigation ---------- */
+  header#site-nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 1000;
+    padding: 24px 0;
+    background: transparent;
+    transition: background 0.35s ease, padding 0.35s ease, box-shadow 0.35s ease;
+  }
+  header#site-nav.scrolled {
+    background: rgba(251, 247, 240, 0.92);
+    backdrop-filter: blur(8px);
+    padding: 14px 0;
+    box-shadow: var(--shadow-soft);
+  }
+  header#site-nav .nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo-text {
+    font-size: 1.4rem;
+    color: var(--color-text);
+    letter-spacing: 0.02em;
+  }
+  header#site-nav.scrolled .logo-text,
+  body.dark-hero-off header#site-nav .logo-text { color: var(--color-text); }
+
+  nav#desktop-nav ul {
+    display: flex;
+    gap: 40px;
+  }
+  nav#desktop-nav a {
+    font-size: 0.82rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-text);
+    position: relative;
+    padding-bottom: 4px;
+  }
+  nav#desktop-nav a::after {
+    content: '';
+    position: absolute;
+    left: 0; bottom: 0;
+    width: 0; height: 1px;
+    background: var(--color-accent);
+    transition: width 0.3s ease;
+  }
+  nav#desktop-nav a:hover::after { width: 100%; }
+
+  .nav-cta { display: flex; align-items: center; gap: 20px; }
+  .nav-cta .btn { padding: 10px 24px; font-size: 0.75rem; }
+
+  #hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    width: 28px;
+    z-index: 1100;
+  }
+  #hamburger span {
+    display: block;
+    height: 2px;
+    background: var(--color-text);
+    transition: all 0.3s ease;
+  }
+  #hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  #hamburger.open span:nth-child(2) { opacity: 0; }
+  #hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  #mobile-drawer {
+    position: fixed;
+    top: 0; right: 0;
+    height: 100vh;
+    width: min(320px, 80vw);
+    background: var(--color-bg);
+    box-shadow: -6px 0 30px rgba(0,0,0,0.15);
+    z-index: 1050;
+    transform: translateX(100%);
+    transition: transform 0.4s ease;
+    padding: 100px 36px 40px;
+  }
+  #mobile-drawer.open { transform: translateX(0); }
+  #mobile-drawer ul { display: flex; flex-direction: column; gap: 28px; }
+  #mobile-drawer a {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+  }
+  #drawer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(42,36,28,0.35);
+    z-index: 1040;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+  }
+  #drawer-overlay.open { opacity: 1; pointer-events: auto; }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #fff;
+    overflow: hidden;
+  }
+  .hero img {
+    position: absolute;
+    inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.25);
+  }
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 720px;
+    padding: 0 24px;
+  }
+  .hero .eyebrow { color: #F2E0BE; }
+  .hero h1 {
+    font-size: clamp(2.4rem, 6vw, 4.2rem);
+    margin-bottom: 20px;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.25);
+  }
+  .hero p {
+    font-size: 1.1rem;
+    max-width: 520px;
+    margin: 0 auto 34px;
+    color: #F7F1E4;
+  }
+  .hero-actions { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; }
+  .hero .btn-filled { border-color: var(--color-accent); }
+  .hero .btn:not(.btn-filled) { border-color: #fff; color: #fff; }
+  .hero .btn:not(.btn-filled):hover { background: #fff; color: var(--color-text); }
+
+  .scroll-cue {
+    position: absolute;
+    bottom: 34px; left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    width: 22px; height: 36px;
+    border: 1px solid rgba(255,255,255,0.7);
+    border-radius: 20px;
+  }
+  .scroll-cue::before {
+    content: '';
+    position: absolute;
+    top: 6px; left: 50%;
+    width: 4px; height: 4px;
+    background: #fff;
+    border-radius: 50%;
+    transform: translateX(-50%);
+    animation: scrollDot 1.8s infinite;
+  }
+  @keyframes scrollDot {
+    0% { top: 6px; opacity: 1; }
+    70% { top: 20px; opacity: 0; }
+    100% { top: 6px; opacity: 0; }
+  }
+
+  /* ---------- Hours/Reserve Strip ---------- */
+  .strip {
+    background: var(--color-surface);
+    padding: 34px 0;
+  }
+  .strip .container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .strip-item { display: flex; align-items: center; gap: 14px; }
+  .strip-icon {
+    width: 40px; height: 40px;
+    border: 1px solid var(--color-accent);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--color-accent);
+    flex-shrink: 0;
+  }
+  .strip-label { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-text-muted); }
+  .strip-value { font-family: 'Playfair Display', serif; font-size: 1.05rem; }
+
+  /* ---------- Generic Section ---------- */
+  section { padding: 110px 0; position: relative; }
+  .section-head {
+    text-align: center;
+    max-width: 620px;
+    margin: 0 auto 64px;
+  }
+  .section-head h2 { font-size: clamp(2rem, 4vw, 2.8rem); }
+  .section-head p { color: var(--color-text-muted); margin-top: 16px; font-size: 1.02rem; }
+
+  /* ---------- About ---------- */
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 50px;
+    align-items: center;
+  }
+  .about-image { position: relative; }
+  .about-image img {
+    width: 100%;
+    aspect-ratio: 4/5;
+    object-fit: cover;
+    box-shadow: var(--shadow-med);
+  }
+  .about-text .eyebrow { display: block; }
+  .about-text h2 { font-size: clamp(1.9rem, 4vw, 2.6rem); margin-bottom: 22px; }
+  .about-text p { color: var(--color-text-muted); margin-bottom: 18px; font-size: 1.02rem; }
+  .about-stats {
+    display: flex;
+    gap: 40px;
+    margin-top: 30px;
+    padding-top: 30px;
+    border-top: 1px solid rgba(42,36,28,0.12);
+  }
+  .about-stat .num { font-family: 'Playfair Display', serif; font-size: 1.9rem; color: var(--color-accent); }
+  .about-stat .label { font-size: 0.78rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+
+  /* ---------- Menu Preview ---------- */
+  .menu-section { background: var(--color-surface); }
+  .menu-grid {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: 30px;
+  }
+  .menu-card {
+    background: var(--color-bg);
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+    transition: transform 0.35s ease, box-shadow 0.35s ease;
+  }
+  .menu-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-med); }
+  .menu-card[hidden] { display: none; }
+  .menu-card-img { aspect-ratio: 4/3; overflow: hidden; }
+  .menu-card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+  .menu-card:hover .menu-card-img img { transform: scale(1.06); }
+  .menu-card-body { padding: 26px 24px 30px; }
+  .menu-card-body h3 { font-size: 1.25rem; margin-bottom: 10px; }
+  .menu-card-body p { color: var(--color-text-muted); font-size: 0.95rem; }
+
+  /* ---------- Gallery ---------- */
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  .gallery-grid img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    aspect-ratio: 1/1;
+    box-shadow: var(--shadow-soft);
+    transition: transform 0.5s ease;
+  }
+  .gallery-grid a:hover img { transform: scale(1.04); }
+  .gallery-grid .tall { grid-row: span 2; aspect-ratio: 1/2.05; }
+
+  /* ---------- Testimonials ---------- */
+  .testimonial-section { text-align: center; }
+  .testimonial-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+  .testimonial-card {
+    background: var(--color-surface);
+    padding: 42px 32px;
+    box-shadow: var(--shadow-soft);
+  }
+  .testimonial-card .quote-mark {
+    font-family: 'Playfair Display', serif;
+    font-size: 3rem;
+    color: var(--color-accent);
+    line-height: 1;
+    margin-bottom: 10px;
+    display: block;
+  }
+  .testimonial-card p.quote {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 1.08rem;
+    margin-bottom: 22px;
+    color: var(--color-text);
+  }
+  .testimonial-card .t-name { font-weight: 700; font-size: 0.95rem; }
+  .testimonial-card .t-role { color: var(--color-text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; }
+
+  /* ---------- Contact ---------- */
+  .contact-section { background: var(--color-surface); }
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 50px;
+  }
+  .contact-info h2 { font-size: clamp(1.9rem, 4vw, 2.6rem); margin-bottom: 18px; }
+  .contact-info p { color: var(--color-text-muted); margin-bottom: 30px; }
+  .contact-detail { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+  .contact-detail .strip-icon { background: var(--color-bg); }
+  .contact-detail a, .contact-detail span { font-size: 0.98rem; }
+
+  form#contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    background: var(--color-bg);
+    padding: 36px;
+    box-shadow: var(--shadow-soft);
+  }
+  form#contact-form label {
+    display: block;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin-bottom: 8px;
+  }
+  form#contact-form input,
+  form#contact-form textarea {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(42,36,28,0.2);
+    padding: 10px 2px;
+    font-family: 'Lato', sans-serif;
+    font-size: 1rem;
+    color: var(--color-text);
+    transition: border-color 0.3s ease;
+  }
+  form#contact-form input:focus,
+  form#contact-form textarea:focus { border-color: var(--color-accent); outline: none; }
+  form#contact-form textarea { resize: vertical; min-height: 100px; }
+  form#contact-form button {
+    margin-top: 8px;
+  }
+  #form-success {
+    display: none;
+    text-align: center;
+    padding: 30px;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    color: var(--color-accent);
+  }
+  #form-success.show { display: block; }
+  form#contact-form.hidden-form { display: none; }
+
+  /* ---------- Footer ---------- */
+  footer {
+    background: #2A241C;
+    color: #F2E9DA;
+    padding: 70px 0 30px;
+    text-align: center;
+  }
+  footer .logo-text { color: #F2E9DA; font-size: 1.6rem; margin-bottom: 10px; }
+  footer .footer-tagline { color: #C9BDA9; margin-bottom: 30px; font-size: 0.95rem; }
+  footer .social-links {
+    display: flex;
+    justify-content: center;
+    gap: 22px;
+    margin-bottom: 40px;
+  }
+  footer .social-links a {
+    width: 42px; height: 42px;
+    border: 1px solid rgba(242,233,218,0.3);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color 0.3s ease, background 0.3s ease;
+  }
+  footer .social-links a:hover { border-color: var(--color-accent); background: rgba(184,130,58,0.15); }
+  footer .footer-bottom {
+    border-top: 1px solid rgba(242,233,218,0.15);
+    padding-top: 26px;
+    font-size: 0.75rem;
+    color: #9C907C;
+  }
+  footer .footer-bottom a { color: #C9BDA9; }
+  footer .footer-bottom a:hover { color: var(--color-accent); }
+
+  /* ---------- WhatsApp Float ---------- */
+  #whatsapp-float {
+    position: fixed;
+    bottom: 26px;
+    right: 26px;
+    z-index: 900;
+  }
+  #whatsapp-float a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 58px; height: 58px;
+    background: #25D366;
+    border-radius: 50%;
+    box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
+    transition: transform 0.3s ease;
+  }
+  #whatsapp-float a:hover { transform: scale(1.08); }
+
+  /* ---------- Tablet ---------- */
+  @media (min-width: 481px) {
+    .menu-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* ---------- Desktop ---------- */
+  @media (min-width: 1025px) {
+    #hamburger { display: none; }
+    nav#desktop-nav { display: block; }
+    .about-grid { grid-template-columns: 1fr 1fr; }
+    .menu-grid { grid-template-columns: repeat(3, 1fr); }
+    .testimonial-grid { grid-template-columns: repeat(3, 1fr); }
+    .contact-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 1024px) {
+    nav#desktop-nav { display: none; }
+    #hamburger { display: flex; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= NAVIGATION ================= -->
+<header id="site-nav">
+  <div class="container nav-inner">
+    <a href="#top" class="logo-text">{{business_name}}</a>
+    <nav id="desktop-nav" aria-label="Primary navigation">
+      <ul>
+        <li><a href="#about">About</a></li>
+        <li><a href="#menu">Menu</a></li>
+        <li><a href="#gallery">Gallery</a></li>
+        <li><a href="#testimonials">Testimonials</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+    <div class="nav-cta">
+      <a href="#contact" class="btn btn-filled">Reserve a Table</a>
+      <button id="hamburger" aria-label="Toggle menu" aria-expanded="false" aria-controls="mobile-drawer">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div id="drawer-overlay"></div>
+<nav id="mobile-drawer" aria-label="Mobile navigation">
+  <ul>
+    <li><a href="#about">About</a></li>
+    <li><a href="#menu">Menu</a></li>
+    <li><a href="#gallery">Gallery</a></li>
+    <li><a href="#testimonials">Testimonials</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- ================= HERO ================= -->
+<section class="hero" id="top">
+  <img src="https://picsum.photos/1800/1200?random=101" alt="{{business_name}} signature dining atmosphere" data-image-slot="hero">
+  <div class="hero-content">
+    <span class="eyebrow">{{tagline}}</span>
+    <h1>{{business_name}}</h1>
+    <p>Sunlit dining, honest ingredients, and a table always waiting for you.</p>
+    <div class="hero-actions">
+      <a href="#contact" class="btn btn-filled">Reserve a Table</a>
+      <a href="#menu" class="btn">View Menu</a>
+    </div>
+  </div>
+  <div class="scroll-cue" aria-hidden="true"></div>
+</section>
+
+<!-- ================= HOURS / RESERVE STRIP ================= -->
+<div class="strip reveal">
+  <div class="container strip-item-wrap" style="display:flex;flex-wrap:wrap;gap:24px;justify-content:space-between;align-items:center;">
+    <div class="strip-item">
+      <div class="strip-icon" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+      </div>
+      <div>
+        <div class="strip-label">Opening Hours</div>
+        <div class="strip-value">Mon–Sun, 11:00 – 22:00</div>
+      </div>
+    </div>
+    <div class="strip-item">
+      <div class="strip-icon" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5h4l2 5-2.5 1.5a11 11 0 0 0 5 5L13 14l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 7a2 2 0 0 1 2-2z"/></svg>
+      </div>
+      <div>
+        <div class="strip-label">Call Us</div>
+        <div class="strip-value">{{phone_number}}</div>
+      </div>
+    </div>
+    <a href="#contact" class="btn">Book Your Table</a>
+  </div>
+</div>
+
+<!-- ================= ABOUT ================= -->
+<section id="about">
+  <div class="container about-grid">
+    <div class="about-image reveal">
+      <img src="https://picsum.photos/800/1000?random=102" alt="Interior of {{business_name}}" data-image-slot="about">
+    </div>
+    <div class="about-text reveal">
+      <span class="eyebrow">Our Story</span>
+      <h2>{{about_body}}</h2>
+      <p>Every dish leaving our kitchen begins with ingredients chosen that same morning — nothing rushed, nothing wasted, everything considered.</p>
+      <p>Step inside and you'll find sunlight pouring across warm wood tables, quiet conversation, and a menu that changes with the season.</p>
+      <div class="about-stats">
+        <div class="about-stat">
+          <div class="num">12+</div>
+          <div class="label">Years Serving</div>
+        </div>
+        <div class="about-stat">
+          <div class="num">40</div>
+          <div class="label">Seasonal Dishes</div>
+        </div>
+        <div class="about-stat">
+          <div class="num">4.9</div>
+          <div class="label">Guest Rating</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= MENU PREVIEW ================= -->
+<section id="menu" class="menu-section">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">From the Kitchen</span>
+      <h2>Menu Highlights</h2>
+      <p>A small selection of the dishes our guests return for again and again.</p>
+    </div>
+    <div class="menu-grid reveal reveal-stagger">
+      <div class="menu-card" style="--i:0">
+        <div class="menu-card-img"><img src="https://picsum.photos/500/400?random=103" alt="{{service_1_title}}" data-image-slot="gallery_1"></div>
+        <div class="menu-card-body">
+          <h3>{{service_1_title}}</h3>
+          <p>{{service_1_description}}</p>
+        </div>
+      </div>
+      <div class="menu-card" style="--i:1">
+        <div class="menu-card-img"><img src="https://picsum.photos/500/400?random=104" alt="{{service_2_title}}" data-image-slot="gallery_2"></div>
+        <div class="menu-card-body">
+          <h3>{{service_2_title}}</h3>
+          <p>{{service_2_description}}</p>
+        </div>
+      </div>
+      <div class="menu-card" style="--i:2">
+        <div class="menu-card-img"><img src="https://picsum.photos/500/400?random=105" alt="{{service_3_title}}" data-image-slot="gallery_3"></div>
+        <div class="menu-card-body">
+          <h3>{{service_3_title}}</h3>
+          <p>{{service_3_description}}</p>
+        </div>
+      </div>
+      <div class="menu-card" hidden data-optional-slot="4" style="--i:3">
+        <div class="menu-card-img"><img src="https://picsum.photos/500/400?random=106" alt="{{service_4_title}}" data-image-slot="gallery_4"></div>
+        <div class="menu-card-body">
+          <h3>{{service_4_title}}</h3>
+          <p>{{service_4_description}}</p>
+        </div>
+      </div>
+      <div class="menu-card" hidden data-optional-slot="5" style="--i:4">
+        <div class="menu-card-img"><img src="https://picsum.photos/500/400?random=107" alt="{{service_5_title}}" data-image-slot="gallery_5"></div>
+        <div class="menu-card-body">
+          <h3>{{service_5_title}}</h3>
+          <p>{{service_5_description}}</p>
+        </div>
+      </div>
+      <div class="menu-card" hidden data-optional-slot="6" style="--i:5">
+        <div class="menu-card-img"><img src="https://picsum.photos/500/400?random=108" alt="{{service_6_title}}" data-image-slot="gallery_6"></div>
+        <div class="menu-card-body">
+          <h3>{{service_6_title}}</h3>
+          <p>{{service_6_description}}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= GALLERY ================= -->
+<section id="gallery">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">A Closer Look</span>
+      <h2>Gallery</h2>
+      <p>A glimpse into our dining room, our plates, and the moments in between.</p>
+    </div>
+    <div class="gallery-grid reveal reveal-stagger">
+      <a href="#" tabindex="-1" style="--i:0"><img src="https://picsum.photos/500/1050?random=109" alt="{{business_name}} dining room" data-image-slot="gallery_7" class="tall"></a>
+      <a href="#" tabindex="-1" style="--i:1"><img src="https://picsum.photos/500/500?random=110" alt="Signature plate at {{business_name}}" data-image-slot="gallery_8"></a>
+      <a href="#" tabindex="-1" style="--i:2"><img src="https://picsum.photos/500/500?random=111" alt="Fresh ingredients at {{business_name}}" data-image-slot="gallery_9"></a>
+    </div>
+  </div>
+</section>
+
+<!-- ================= TESTIMONIALS ================= -->
+<section id="testimonials" class="testimonial-section">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">Guest Notes</span>
+      <h2>What People Say</h2>
+    </div>
+    <div class="testimonial-grid reveal reveal-stagger">
+      <div class="testimonial-card" style="--i:0">
+        <span class="quote-mark" aria-hidden="true">&ldquo;</span>
+        <p class="quote">{{testimonial_1_quote}}</p>
+        <div class="t-name">{{testimonial_1_name}}</div>
+        <div class="t-role">{{testimonial_1_role}}</div>
+      </div>
+      <div class="testimonial-card" style="--i:1">
+        <span class="quote-mark" aria-hidden="true">&ldquo;</span>
+        <p class="quote">{{testimonial_2_quote}}</p>
+        <div class="t-name">{{testimonial_2_name}}</div>
+        <div class="t-role">{{testimonial_2_role}}</div>
+      </div>
+      <div class="testimonial-card" style="--i:2">
+        <span class="quote-mark" aria-hidden="true">&ldquo;</span>
+        <p class="quote">{{testimonial_3_quote}}</p>
+        <div class="t-name">{{testimonial_3_name}}</div>
+        <div class="t-role">{{testimonial_3_role}}</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CONTACT ================= -->
+<section id="contact" class="contact-section">
+  <div class="container contact-grid">
+    <div class="contact-info reveal">
+      <span class="eyebrow">Get In Touch</span>
+      <h2>Reserve Your Table</h2>
+      <p>We'd love to host you. Reach out for reservations, private events, or just to say hello.</p>
+      <div class="contact-detail">
+        <div class="strip-icon" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5h4l2 5-2.5 1.5a11 11 0 0 0 5 5L13 14l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 7a2 2 0 0 1 2-2z"/></svg>
+        </div>
+        <a href="tel:{{phone_number}}">{{phone_number}}</a>
+      </div>
+      <div class="contact-detail">
+        <div class="strip-icon" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+        </div>
+        <a href="mailto:{{email_address}}">{{email_address}}</a>
+      </div>
+      <div class="contact-detail">
+        <div class="strip-icon" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+        </div>
+        <span>{{address}}</span>
+      </div>
+    </div>
+    <div class="reveal">
+      <form id="contact-form">
+        <div>
+          <label for="name">Name</label>
+          <input type="text" id="name" name="name" required>
+        </div>
+        <div>
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required>
+        </div>
+        <div>
+          <label for="message">Message</label>
+          <textarea id="message" name="message" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-filled">Send Message</button>
+      </form>
+      <div id="form-success">Message sent — thank you! We'll be in touch soon.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FOOTER ================= -->
+<footer>
+  <div class="container">
+    <div class="logo-text">{{business_name}}</div>
+    <p class="footer-tagline">{{tagline}}</p>
+    <div class="social-links">
+      <a href="{{instagram_url}}" id="instagram-link" aria-label="Instagram" target="_blank" rel="noopener">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg>
+      </a>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; <span id="year"></span> {{business_name}}. All rights reserved. &nbsp;·&nbsp; <a href="#" rel="nofollow">Powered by Zuri</a></p>
+    </div>
+  </div>
+</footer>
+
+<!-- ================= WHATSAPP FLOAT ================= -->
+<div id="whatsapp-float" data-whatsapp-number="{{whatsapp_number}}">
+  <a href="#" aria-label="Chat on WhatsApp" target="_blank" rel="noopener">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="#fff"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.29-1.39a9.87 9.87 0 0 0 4.75 1.21h.01c5.46 0 9.9-4.45 9.9-9.91C21.96 6.45 17.5 2 12.04 2zm0 18.06h-.01a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.13.82.84-3.05-.2-.31a8.19 8.19 0 0 1-1.26-4.38c0-4.53 3.69-8.22 8.25-8.22 2.2 0 4.27.86 5.83 2.42a8.18 8.18 0 0 1 2.41 5.81c0 4.53-3.69 8.24-8.24 8.24zm4.52-6.16c-.25-.12-1.47-.72-1.7-.81-.23-.08-.39-.12-.56.12-.17.25-.64.81-.78.97-.14.17-.29.19-.53.06-.25-.12-1.05-.39-2-1.23-.74-.66-1.24-1.47-1.39-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.12-.14.16-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.35-.77-1.85-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.23.25-.86.84-.86 2.05 0 1.21.88 2.38 1 2.54.12.17 1.74 2.66 4.22 3.73.59.25 1.05.4 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.08.15-1.18-.06-.1-.23-.16-.48-.28z"/></svg>
+  </a>
+</div>
+
+<script>
+  // Year
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  // Sticky nav on scroll
+  var nav = document.getElementById('site-nav');
+  function handleScroll() {
+    if (window.scrollY > 40) nav.classList.add('scrolled');
+    else nav.classList.remove('scrolled');
+  }
+  window.addEventListener('scroll', handleScroll);
+  handleScroll();
+
+  // Hamburger drawer
+  var hamburger = document.getElementById('hamburger');
+  var drawer = document.getElementById('mobile-drawer');
+  var overlay = document.getElementById('drawer-overlay');
+  function closeDrawer() {
+    hamburger.classList.remove('open');
+    hamburger.setAttribute('aria-expanded', 'false');
+    drawer.classList.remove('open');
+    overlay.classList.remove('open');
+  }
+  hamburger.addEventListener('click', function () {
+    var isOpen = drawer.classList.toggle('open');
+    hamburger.classList.toggle('open', isOpen);
+    hamburger.setAttribute('aria-expanded', String(isOpen));
+    overlay.classList.toggle('open', isOpen);
+  });
+  overlay.addEventListener('click', closeDrawer);
+  drawer.querySelectorAll('a').forEach(function (a) {
+    a.addEventListener('click', closeDrawer);
+  });
+
+  // IntersectionObserver reveals
+  var revealEls = document.querySelectorAll('.reveal');
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('active');
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  revealEls.forEach(function (el) { io.observe(el); });
+
+  // Contact form fake submit
+  var form = document.getElementById('contact-form');
+  var success = document.getElementById('form-success');
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    form.classList.add('hidden-form');
+    success.classList.add('show');
+  });
+
+  // Instagram link hide if empty
+  (function () {
+    var ig = document.getElementById('instagram-link');
+    var href = ig.getAttribute('href');
+    if (!href || href.trim() === '' || href.indexOf('{{') === 0) {
+      ig.parentElement.remove();
+    }
+  })();
+</script>
+
+<!-- WhatsApp float script (per global rules) -->
+<script>
+  (function(){
+    var el = document.getElementById('whatsapp-float');
+    var num = el.getAttribute('data-whatsapp-number');
+    if (!num || num.trim() === '' || num.indexOf('{{') === 0) { el.remove(); }
+    else { el.querySelector('a').href = 'https://wa.me/' + num.replace(/[^0-9]/g,''); }
+  })();
+</script>
+
+</body>
+</html>
