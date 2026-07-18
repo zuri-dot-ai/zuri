@@ -30,7 +30,6 @@ export default function SignupPage() {
 function SignupForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const supabase = createClient();
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -50,6 +49,7 @@ function SignupForm() {
   }, [params]);
 
   async function persistTermsAccepted(userId: string) {
+    const supabase = createClient();
     await supabase
       .from("profiles")
       .update({
@@ -76,6 +76,7 @@ function SignupForm() {
 
     setLoading(true);
 
+    const supabase = createClient();
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -119,6 +120,7 @@ function SignupForm() {
       );
     }
 
+    const supabase = createClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {

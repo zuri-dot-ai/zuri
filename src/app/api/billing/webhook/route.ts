@@ -4,10 +4,6 @@ import { verifyWebhookSignature, planTierFromFlwId } from "@/lib/flutterwave";
 import { activateSubscription } from "@/lib/payments/activate-subscription";
 import { getResend } from "@/lib/email/resend-client";
 
-// #region agent log
-fetch('http://127.0.0.1:7419/ingest/076876bf-f6bf-42a9-9aff-97004d9bbbbe',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'91f293'},body:JSON.stringify({sessionId:'91f293',location:'billing/webhook/route.ts:module',message:'Module loaded without Resend construct',data:{hasKey:!!process.env.RESEND_API_KEY?.trim()},timestamp:Date.now(),hypothesisId:'B',runId:'post-fix'})}).catch(()=>{});
-// #endregion
-
 export async function POST(request: Request) {
   const signature = request.headers.get("verif-hash");
 

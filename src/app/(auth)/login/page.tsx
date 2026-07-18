@@ -23,7 +23,6 @@ function LoginForm() {
   const params = useSearchParams();
   const redirectTo =
     params.get("redirect") || params.get("next") || "/dashboard";
-  const supabase = createClient();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,6 +32,7 @@ function LoginForm() {
     e.preventDefault();
     setLoading(true);
 
+    const supabase = createClient();
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -67,6 +67,7 @@ function LoginForm() {
   }
 
   async function handleGoogle() {
+    const supabase = createClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
