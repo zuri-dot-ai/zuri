@@ -39,6 +39,9 @@ export type TaskType = "website" | "content" | "engagement" | "setup";
 export type MatchStatus =
   | "pending" | "contacted" | "hired" | "completed" | "declined";
 
+/** Legacy v1 motion tokens (still used by motion helpers / old block comps) */
+export type MotionStyle = "slow_elegant" | "crisp_modern" | "bold_energetic";
+
 /** Identity row from `profiles` (not legacy `users`) */
 export interface ProfileRow {
   id: string;

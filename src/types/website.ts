@@ -108,3 +108,39 @@ export interface WebsiteImageRow {
   file_size_bytes: number | null;
   created_at: string;
 }
+
+/**
+ * Legacy v1 composition shape (BlockRenderer era).
+ * Kept so leftover website-blocks / section API still typecheck.
+ * New sites use template_html — do not use this for new features.
+ */
+export type WebsiteMotionStyle =
+  | "slow_elegant"
+  | "crisp_modern"
+  | "bold_energetic";
+
+export interface WebsiteComposition {
+  motion_style: WebsiteMotionStyle;
+  palette: {
+    primary: string;
+    accent: string;
+    bg: string;
+    [key: string]: string;
+  };
+  content: {
+    business_name?: string;
+    tagline?: string;
+    headline?: string;
+    subheadline?: string;
+    cta_label?: string;
+    about_paragraph?: string;
+    contact_email?: string;
+    contact_phone?: string;
+    location?: string;
+    services?: Array<{ name: string; description?: string }>;
+    testimonials?: Array<{ quote: string; author: string; role?: string }>;
+    stats?: Array<{ value: string; label: string }>;
+    blocks?: Record<string, Record<string, unknown>>;
+    [key: string]: unknown;
+  };
+}
