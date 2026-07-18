@@ -26,13 +26,12 @@ export async function POST(request: Request) {
     .single();
   if (!profile) return NextResponse.json({ error: "No profile" }, { status: 400 });
 
-  // Growth tier unlocks video scripts
-  const { data: account } = await supabase
-    .from("users")
-    .select("subscription_plan")
-    .eq("id", user.id)
-    .single();
-  const includeVideo = account?.subscription_plan === "growth";
+  // Growth+ unlocks video scripts
+  const { getActivePlanId, isGrowthPlus } = await import(
+    "@/lib/payments/get-plan"
+  );
+  const planId = await getActivePlanId(supabase, user.id);
+  const includeVideo = isGrowthPlus(planId);
 
   try {
     // ── GEMINI 2.0 FLASH: draft the post ──

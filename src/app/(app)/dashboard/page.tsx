@@ -15,6 +15,7 @@ import type { ConsistencyDay } from "@/components/app/consistency-tracker";
 import { QuickLinksRow } from "@/components/app/quick-links-row";
 import { RecentActivityFeed } from "@/components/app/recent-activity-feed";
 import type { ActivityItem } from "@/components/app/recent-activity-feed";
+import { GenerationStatusCard } from "@/components/app/generation-status-card";
 import {
   getActivePlanId,
   isGrowthPlus,
@@ -45,7 +46,12 @@ function last7Days(): ConsistencyDay[] {
   return days;
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ generation?: string }>;
+}) {
+  const params = searchParams ? await searchParams : {};
   const supabase = await createClient();
   const {
     data: { user },
@@ -69,8 +75,13 @@ export default async function DashboardPage() {
     { data: completedThisWeek },
     { data: postedThisWeek },
     { data: notifications },
+    { data: latestJob },
   ] = await Promise.all([
-    supabase.from("users").select("full_name").eq("id", user!.id).single(),
+    supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", user!.id)
+      .maybeSingle(),
     supabase
       .from("user_progress")
       .select("current_streak")
@@ -120,6 +131,13 @@ export default async function DashboardPage() {
       .eq("user_id", user!.id)
       .order("created_at", { ascending: false })
       .limit(5),
+    supabase
+      .from("website_generation_jobs")
+      .select("id, status, error_message")
+      .eq("user_id", user!.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   let monthViews = 0;
@@ -158,6 +176,16 @@ export default async function DashboardPage() {
     href: n.action_url,
   }));
 
+  const jobStatus =
+    params.generation === "failed"
+      ? ("failed" as const)
+      : ((latestJob?.status as
+          | "queued"
+          | "processing"
+          | "failed"
+          | "completed"
+          | null) ?? null);
+
   return (
     <div className="relative mx-auto max-w-5xl space-y-7 pb-8 page-enter">
       <header className="page-head">
@@ -179,15 +207,18 @@ export default async function DashboardPage() {
             {website?.handle ? ` · ${website.handle}` : ""}
           </Badge>
           {!published && (
-            <Link
-              href="/website"
-              className="text-xs text-gold hover:underline"
-            >
+            <Link href="/website" className="text-xs text-gold hover:underline">
               Finish setup →
             </Link>
           )}
         </div>
       </header>
+
+      <GenerationStatusCard
+        status={jobStatus}
+        errorMessage={latestJob?.error_message}
+        jobId={latestJob?.id}
+      />
 
       <TodaysActionCard task={todayTask} websitePublished={published} />
 

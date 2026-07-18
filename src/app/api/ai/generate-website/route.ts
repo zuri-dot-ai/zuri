@@ -74,16 +74,20 @@ export async function POST(req: Request) {
     }
     userId = user.id;
 
-    // Any paid plan — websites limit > 0 on Pro+
-    const gate = await checkFeatureAccess(supabase, user.id, "websites");
-    if (!gate.allowed) {
-      return NextResponse.json(
-        {
-          error: gate.reason ?? "Upgrade required to generate a website",
-          upgradeRequired: gate.upgradeRequired,
-        },
-        { status: 403 }
-      );
+    // Retrying an existing onboarding job is allowed on Free (first site).
+    // New generations from the dashboard require Pro+ (websites limit > 0).
+    const isRetry = Boolean(body.jobId);
+    if (!isRetry) {
+      const gate = await checkFeatureAccess(supabase, user.id, "websites");
+      if (!gate.allowed) {
+        return NextResponse.json(
+          {
+            error: gate.reason ?? "Upgrade required to generate a website",
+            upgradeRequired: gate.upgradeRequired,
+          },
+          { status: 403 }
+        );
+      }
     }
   }
 

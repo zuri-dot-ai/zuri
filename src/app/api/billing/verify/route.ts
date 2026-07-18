@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { verifyTransaction } from "@/lib/flutterwave";
+import { activateSubscription } from "@/lib/payments/activate-subscription";
+import { isPlanId } from "@/lib/payments/plans";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -12,37 +14,57 @@ export async function GET(request: Request) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
   if (status !== "successful" || !transactionId) {
-    return NextResponse.redirect(`${appUrl}/settings?tab=billing&payment=failed`);
+    return NextResponse.redirect(
+      `${appUrl}/settings?tab=billing&payment=failed`
+    );
   }
 
   try {
-    // Verify the transaction with Flutterwave
     const result = await verifyTransaction(transactionId);
     if (result.data?.status !== "successful") {
-      return NextResponse.redirect(`${appUrl}/settings?tab=billing&payment=failed`);
+      return NextResponse.redirect(
+        `${appUrl}/settings?tab=billing&payment=failed`
+      );
     }
 
     const meta = result.data?.meta ?? {};
     const userId: string = meta.user_id;
-    const planId: "starter" | "growth" = meta.plan_id;
+    const planId = meta.plan_id;
+    const interval: "monthly" | "annual" =
+      meta.interval === "annual" ? "annual" : "monthly";
+    const amount = Number(result.data?.amount ?? 0);
 
-    if (!userId || !planId) {
-      throw new Error("Missing meta in transaction");
+    if (!userId || !isPlanId(planId) || planId === "free") {
+      throw new Error("Missing or invalid meta in transaction");
     }
 
-    // Use service client — update bypasses RLS
+    // Ensure caller is the paying user when session exists
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user && user.id !== userId) {
+      return NextResponse.redirect(
+        `${appUrl}/settings?tab=billing&payment=error`
+      );
+    }
+
     const service = createServiceClient();
-    await service
-      .from("users")
-      .update({
-        subscription_plan: planId,
-        subscription_status: "active",
-      })
-      .eq("id", userId);
+    await activateSubscription(
+      service,
+      userId,
+      planId,
+      interval,
+      String(transactionId),
+      amount,
+      txRef ?? undefined
+    );
 
     return NextResponse.redirect(`${appUrl}/dashboard?payment=success`);
   } catch (err) {
     console.error("[billing/verify]", err);
-    return NextResponse.redirect(`${appUrl}/settings?tab=billing&payment=error`);
+    return NextResponse.redirect(
+      `${appUrl}/settings?tab=billing&payment=error`
+    );
   }
 }

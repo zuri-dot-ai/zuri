@@ -21,27 +21,23 @@ import type { DesignArchetype } from "../src/lib/website/archetypes";
 import type { TemplateMetadata, TemplateRow } from "../src/types/website";
 
 function loadEnv() {
-  const candidates = [
-    join(process.cwd(), ".env.local"),
-    join(process.cwd(), "src", "app", ".env.local"),
-  ];
-  for (const file of candidates) {
-    if (!existsSync(file)) continue;
-    const raw = readFileSync(file, "utf8");
-    for (const line of raw.split(/\r?\n/)) {
-      if (!line || line.startsWith("#")) continue;
-      const i = line.indexOf("=");
-      if (i < 1) continue;
-      const key = line.slice(0, i).trim();
-      let val = line.slice(i + 1).trim();
-      if (
-        (val.startsWith('"') && val.endsWith('"')) ||
-        (val.startsWith("'") && val.endsWith("'"))
-      ) {
-        val = val.slice(1, -1);
-      }
-      if (!process.env[key]) process.env[key] = val;
+  // Project-root .env.local only — never src/app/.env.local
+  const file = join(process.cwd(), ".env.local");
+  if (!existsSync(file)) return;
+  const raw = readFileSync(file, "utf8");
+  for (const line of raw.split(/\r?\n/)) {
+    if (!line || line.startsWith("#")) continue;
+    const i = line.indexOf("=");
+    if (i < 1) continue;
+    const key = line.slice(0, i).trim();
+    let val = line.slice(i + 1).trim();
+    if (
+      (val.startsWith('"') && val.endsWith('"')) ||
+      (val.startsWith("'") && val.endsWith("'"))
+    ) {
+      val = val.slice(1, -1);
     }
+    if (!process.env[key]) process.env[key] = val;
   }
 }
 

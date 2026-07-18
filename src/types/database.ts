@@ -19,9 +19,10 @@ export type {
 } from "./website";
 export type { AgencyBrief } from "./brand";
 
-export type SubscriptionPlan = "free" | "starter" | "growth";
+/** Canonical plan IDs — free | pro | growth | premium */
+export type SubscriptionPlan = "free" | "pro" | "growth" | "premium";
 export type SubscriptionStatus =
-  | "inactive" | "active" | "past_due" | "cancelled" | "trialing";
+  | "inactive" | "active" | "past_due" | "cancelled" | "trialing" | "grace_period" | "expired";
 export type OnboardingMethod = "voice" | "typed" | "form";
 export type WebsiteType =
   | "portfolio" | "business" | "ecommerce" | "restaurant" | "salon_spa"
@@ -38,18 +39,30 @@ export type TaskType = "website" | "content" | "engagement" | "setup";
 export type MatchStatus =
   | "pending" | "contacted" | "hired" | "completed" | "declined";
 
-export interface UserRow {
+/** Identity row from `profiles` (not legacy `users`) */
+export interface ProfileRow {
   id: string;
-  email: string;
+  email: string | null;
+  full_name: string | null;
+  handle: string | null;
+  avatar_url: string | null;
+  onboarding_completed: boolean;
+  is_admin: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+/** @deprecated Use ProfileRow — kept as alias for gradual migration */
+export type UserRow = ProfileRow;
+
+/** Settings/billing view model: profile + active subscription */
+export interface AccountView {
+  id: string;
+  email: string | null;
   full_name: string | null;
   avatar_url: string | null;
   subscription_plan: SubscriptionPlan;
   subscription_status: SubscriptionStatus;
-  flutterwave_customer_id: string | null;
-  is_early_adopter: boolean;
-  has_onboarded: boolean;
-  created_at: string;
-  updated_at: string;
 }
 
 export interface BusinessProfileRow {

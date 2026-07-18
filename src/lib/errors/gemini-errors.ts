@@ -20,13 +20,12 @@ export async function handleGeminiError(
     return { shouldRetry: false };
   }
 
-  // Quota exceeded — back off
+  // Quota exceeded — caller applies backoff between retries
   if (
     errMessage.includes("RESOURCE_EXHAUSTED") ||
     errMessage.includes("429")
   ) {
-    console.warn(`[Gemini] Quota exceeded in ${context} — waiting 60s`);
-    await new Promise((r) => setTimeout(r, 60000));
+    console.warn(`[Gemini] Quota exceeded in ${context}`);
     return { shouldRetry: true };
   }
 

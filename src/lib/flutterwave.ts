@@ -83,14 +83,29 @@ export function verifyWebhookSignature(signature: string | null): boolean {
 }
 
 /** Map a Flutterwave plan id back to a Zuri plan tier */
-export function planTierFromFlwId(flwPlanId: string): "starter" | "growth" | null {
+export function planTierFromFlwId(
+  flwPlanId: string
+): "pro" | "growth" | "premium" | null {
   if (
+    flwPlanId === process.env.FLW_PLAN_PRO_MONTHLY ||
+    flwPlanId === process.env.FLW_PLAN_PRO_ANNUAL ||
+    // Legacy starter env keys (pre-rename)
     flwPlanId === process.env.FLW_PLAN_STARTER_MONTHLY ||
     flwPlanId === process.env.FLW_PLAN_STARTER_ANNUAL
-  ) return "starter";
+  ) {
+    return "pro";
+  }
   if (
     flwPlanId === process.env.FLW_PLAN_GROWTH_MONTHLY ||
     flwPlanId === process.env.FLW_PLAN_GROWTH_ANNUAL
-  ) return "growth";
+  ) {
+    return "growth";
+  }
+  if (
+    flwPlanId === process.env.FLW_PLAN_PREMIUM_MONTHLY ||
+    flwPlanId === process.env.FLW_PLAN_PREMIUM_ANNUAL
+  ) {
+    return "premium";
+  }
   return null;
 }

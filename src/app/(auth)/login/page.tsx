@@ -132,7 +132,7 @@ function LoginForm() {
                 Password
               </Label>
               <Link
-                href="#"
+                href="/forgot-password"
                 className="text-xs text-gold hover:underline"
               >
                 Forgot?

@@ -6,6 +6,7 @@ import { Star, MapPin, Clock, CheckCircle2, Sparkles, X, Lock } from "lucide-rea
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { UpgradeSheet } from "@/components/app/upgrade-sheet";
 import type { AgencyRow, AgencyBrief } from "@/types/database";
 
 const SPECIALTIES = ["all", "instagram", "linkedin", "video", "email", "facebook", "tiktok"];
@@ -16,11 +17,16 @@ export function AgencyMarketplace({ agencies, plan }: { agencies: AgencyRow[]; p
   const [brief, setBrief] = useState<AgencyBrief | null>(null);
   const [loadingBrief, setLoadingBrief] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
-  const isGrowth = plan === "growth";
+  const isGrowth = plan === "growth" || plan === "premium";
   const filtered = filter === "all" ? agencies : agencies.filter((a) => a.specialties.includes(filter));
 
   async function openMatch(agency: AgencyRow) {
+    if (!isGrowth) {
+      setUpgradeOpen(true);
+      return;
+    }
     setActive(agency);
     setBrief(null);
     setLoadingBrief(true);
@@ -65,11 +71,26 @@ export function AgencyMarketplace({ agencies, plan }: { agencies: AgencyRow[]; p
       </header>
 
       {!isGrowth && (
-        <div className="surface flex items-center gap-3 border border-border p-4">
-          <Lock className="size-5 text-gold" />
-          <p className="text-sm">
-            <span className="font-medium text-gold">Growth feature.</span>{" "}
-            Browse partners now — upgrade to send AI-matched briefs.
+        <div className="surface flex items-center justify-between gap-3 border border-border p-4">
+          <div className="flex items-center gap-3">
+            <Lock className="size-5 shrink-0 text-gold" />
+            <p className="text-sm">
+              <span className="font-medium text-gold">Growth feature.</span>{" "}
+              Browse partners now — upgrade to send AI-matched briefs.
+            </p>
+          </div>
+          <Button size="sm" variant="outline" onClick={() => setUpgradeOpen(true)}>
+            Upgrade
+          </Button>
+        </div>
+      )}
+
+      {agencies.length === 0 && (
+        <div className="empty-state surface border border-dashed py-16 text-center">
+          <h3>Partners coming soon</h3>
+          <p>
+            We&apos;re onboarding vetted agencies for your market. Check back shortly —
+            or contact support if you need a custom intro.
           </p>
         </div>
       )}
@@ -167,6 +188,13 @@ export function AgencyMarketplace({ agencies, plan }: { agencies: AgencyRow[]; p
           </div>
         </div>
       )}
+      <UpgradeSheet
+        open={upgradeOpen}
+        onClose={() => setUpgradeOpen(false)}
+        feature="Agency briefs"
+        benefit="Growth unlocks AI-matched briefs so vetted partners can execute for you — browsing stays free."
+        requiredPlan="Growth"
+      />
     </div>
   );
 }

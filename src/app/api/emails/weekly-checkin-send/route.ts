@@ -22,14 +22,23 @@ export async function POST(request: Request) {
   const weekAgo = new Date();
   weekAgo.setDate(weekAgo.getDate() - 7);
 
-  // All active paid subscribers
-  const { data: subscribers } = await service
-    .from("users")
-    .select("id, email, full_name")
-    .eq("subscription_status", "active")
-    .neq("subscription_plan", "free");
+  // All active paid subscribers via subscriptions + profiles
+  const { data: paidSubs } = await service
+    .from("subscriptions")
+    .select("user_id, plan_id")
+    .eq("status", "active")
+    .neq("plan_id", "free");
 
-  if (!subscribers?.length) return NextResponse.json({ sent: 0 });
+  if (!paidSubs?.length) return NextResponse.json({ sent: 0 });
+
+  const userIds = paidSubs.map((s) => s.user_id);
+  const { data: profiles } = await service
+    .from("profiles")
+    .select("id, email, full_name")
+    .in("id", userIds);
+
+  const subscribers = profiles ?? [];
+  if (!subscribers.length) return NextResponse.json({ sent: 0 });
 
   let sent = 0;
 

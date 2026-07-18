@@ -277,6 +277,15 @@
     animation: pageIn 0.4s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
   }
 
+  .reveal-preview {
+    animation: pageIn 0.55s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+  }
+
+  .milestone-toast {
+    border-color: var(--gold) !important;
+    box-shadow: 0 0 0 1px rgba(212, 166, 86, 0.35), 0 8px 24px rgba(0, 0, 0, 0.2);
+  }
+
   .skeleton {
     @apply relative overflow-hidden bg-muted;
   }

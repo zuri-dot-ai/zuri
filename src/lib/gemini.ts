@@ -1,6 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import * as fs from "fs";
 import * as path from "path";
+import { handleGeminiError } from "@/lib/errors/gemini-errors";
 
 export const FLASH = process.env.GEMINI_FLASH_MODEL || "gemini-2.0-flash";
 export const PRO = process.env.GEMINI_PRO_MODEL || "gemini-2.5-pro";
@@ -29,8 +30,9 @@ function isNonRetryableGeminiError(err: unknown): boolean {
 }
 
 /**
- * Gemini Developer API (API key) by default.
+ * Gemini Developer API (API key from aistudio.google.com) by default.
  * Vertex AI only when GEMINI_USE_VERTEX=true and a service-account file is available.
+ * Load env from project-root .env.local only — never src/app/.env.local.
  */
 function getAI(): GoogleGenAI {
   if (aiClient) return aiClient;
@@ -39,6 +41,11 @@ function getAI(): GoogleGenAI {
   const useVertex = wantsVertex();
 
   if (!useVertex && apiKey && !looksLikePlaceholderApiKey(apiKey)) {
+    if (!apiKey.startsWith("AIza")) {
+      console.warn(
+        "[Gemini] GEMINI_API_KEY does not start with AIza (typical AI Studio format). If calls fail, regenerate at https://aistudio.google.com/app/apikey"
+      );
+    }
     aiClient = new GoogleGenAI({ apiKey, vertexai: false });
     aiMode = "api-key";
     return aiClient;
@@ -51,7 +58,7 @@ function getAI(): GoogleGenAI {
       );
     }
     throw new Error(
-      "GEMINI_API_KEY is missing. Set it in .env.local, or set GEMINI_USE_VERTEX=true with GOOGLE_APPLICATION_CREDENTIALS."
+      "GEMINI_API_KEY is missing. Set it in project-root .env.local, or set GEMINI_USE_VERTEX=true with GOOGLE_APPLICATION_CREDENTIALS."
     );
   }
 
@@ -158,6 +165,7 @@ export async function geminiJSON<T>(
     : { ...(modelOrOpts as Omit<GenerateOptions, "json">), model: modelId };
 
   let lastError: unknown;
+  const context = `geminiJSON(${isAlias ? modelOrOpts : modelId})`;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -179,8 +187,13 @@ export async function geminiJSON<T>(
     } catch (err) {
       lastError = err;
       if (isNonRetryableGeminiError(err)) break;
-      if (attempt === maxRetries) break;
-      console.warn(`Gemini JSON parse attempt ${attempt} failed. Retrying...`);
+
+      const { shouldRetry } = await handleGeminiError(err, context);
+      if (!shouldRetry || attempt === maxRetries) break;
+
+      console.warn(
+        `Gemini JSON attempt ${attempt}/${maxRetries} failed. Retrying...`
+      );
       await new Promise((r) => setTimeout(r, 500 * attempt));
     }
   }

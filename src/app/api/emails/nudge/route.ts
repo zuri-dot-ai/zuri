@@ -35,24 +35,32 @@ export async function POST(request: Request) {
 
   for (const row of inactive) {
     try {
-      // Get user email + their next two pending tasks
-      const [{ data: user }, { data: tasks }] = await Promise.all([
-        service
-          .from("users")
-          .select("email, subscription_plan")
-          .eq("id", row.user_id)
-          .single(),
-        service
-          .from("action_plan_tasks")
-          .select("task_title, ai_asset, platform")
-          .eq("user_id", row.user_id)
-          .eq("is_completed", false)
-          .order("day_number", { ascending: true })
-          .limit(2),
-      ]);
+      const [{ data: profile }, { data: sub }, { data: tasks }] =
+        await Promise.all([
+          service
+            .from("profiles")
+            .select("email")
+            .eq("id", row.user_id)
+            .maybeSingle(),
+          service
+            .from("subscriptions")
+            .select("plan_id, status")
+            .eq("user_id", row.user_id)
+            .maybeSingle(),
+          service
+            .from("action_plan_tasks")
+            .select("task_title, ai_asset, platform")
+            .eq("user_id", row.user_id)
+            .eq("is_completed", false)
+            .order("day_number", { ascending: true })
+            .limit(2),
+        ]);
 
-      // Only nudge paid subscribers
-      if (!user?.email || user.subscription_plan === "free") continue;
+      const planId = sub?.plan_id ?? "free";
+      const paid =
+        (sub?.status === "active" || sub?.status === "grace_period") &&
+        planId !== "free";
+      if (!profile?.email || !paid) continue;
 
       const taskLines = (tasks ?? [])
         .map(
@@ -63,8 +71,8 @@ export async function POST(request: Request) {
 
       await resend.emails.send({
         from: process.env.RESEND_FROM_EMAIL || "Zuri <onboarding@resend.dev>",
-        to: user.email,
-        subject: "Your content is waiting for you 📬",
+        to: profile.email,
+        subject: "Your content is waiting for you",
         text: [
           "Hey — your Zuri dashboard has been quiet for a few days.",
           "",

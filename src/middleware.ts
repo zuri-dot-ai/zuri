@@ -4,14 +4,25 @@ import { NextResponse, type NextRequest } from "next/server";
 const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "buildzuri.com";
 const APP_SUBDOMAINS = new Set(["app", "api", "www", "mail", "admin", "staging"]);
 
-const PROTECTED_PREFIXES = ["/dashboard", "/onboarding", "/settings", "/admin"];
-const AUTH_ROUTES = ["/login", "/signup"];
+const PROTECTED_PREFIXES = [
+  "/dashboard",
+  "/onboarding",
+  "/settings",
+  "/admin",
+  "/website",
+  "/content",
+  "/analytics",
+  "/agencies",
+  "/plan",
+  "/help",
+  "/notifications",
+];
+const AUTH_ROUTES = ["/login", "/signup", "/forgot-password"];
 
 export async function middleware(req: NextRequest) {
   const hostname = req.headers.get("host") ?? "";
   const { pathname } = req.nextUrl;
 
-  // Skip static/internal paths for subdomain rewrite (session still handled below for app)
   const isInternalPath =
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api") ||
@@ -30,7 +41,6 @@ export async function middleware(req: NextRequest) {
       }
     }
 
-    // Custom domain — user's own domain → /sites/custom-domain/[hostname]
     if (
       !hostname.includes(ROOT_DOMAIN) &&
       !hostname.includes("localhost") &&
@@ -54,7 +64,13 @@ export async function middleware(req: NextRequest) {
         getAll() {
           return req.cookies.getAll();
         },
-        setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
+        setAll(
+          cookiesToSet: {
+            name: string;
+            value: string;
+            options?: Record<string, unknown>;
+          }[]
+        ) {
           cookiesToSet.forEach(({ name, value }) =>
             req.cookies.set(name, value)
           );
@@ -67,7 +83,6 @@ export async function middleware(req: NextRequest) {
     }
   );
 
-  // getUser() verifies the JWT and refreshes the session when needed
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -83,7 +98,32 @@ export async function middleware(req: NextRequest) {
   }
 
   if (isAuthRoute && user) {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("onboarding_completed")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const dest = profile?.onboarding_completed ? "/dashboard" : "/onboarding";
+    return NextResponse.redirect(new URL(dest, req.url));
+  }
+
+  // Incomplete onboarding should not land on app pages (except /onboarding)
+  if (
+    user &&
+    isProtected &&
+    !pathname.startsWith("/onboarding") &&
+    !pathname.startsWith("/admin")
+  ) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("onboarding_completed")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profile && !profile.onboarding_completed) {
+      return NextResponse.redirect(new URL("/onboarding", req.url));
+    }
   }
 
   return response;

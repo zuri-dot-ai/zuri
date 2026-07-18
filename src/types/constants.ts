@@ -27,7 +27,7 @@ export interface PlanFeature {
 }
 
 export interface PricingPlan {
-  id: "starter" | "growth";
+  id: "pro" | "growth" | "premium";
   name: string;
   ngnMonthly: number;
   usdMonthly: number;
@@ -40,43 +40,56 @@ export interface PricingPlan {
 
 export const PRICING: PricingPlan[] = [
   {
-    id: "starter",
-    name: "Starter",
-    ngnMonthly: 38000,
-    usdMonthly: 25,
-    ngnAnnual: 380000,
-    usdAnnual: 250,
+    id: "pro",
+    name: "Pro",
+    ngnMonthly: 23000,
+    usdMonthly: 15,
+    ngnAnnual: 230000,
+    usdAnnual: 150,
     highlight: false,
-    description: "Everything you need to get online and stay consistent.",
+    description: "Publish your site and run a consistent content cadence.",
     features: [
       { text: "AI-generated premium website", included: true },
+      { text: "Publish to your Zuri subdomain", included: true },
       { text: "90-day content action plan", included: true },
       { text: "Weekly AI content drafts", included: true },
       { text: "Progress tracker & streaks", included: true },
-      { text: "Daily content drafts", included: false },
-      { text: "Animated video generation", included: false },
       { text: "Agency marketplace access", included: false },
-      { text: "AI accountability coach", included: false },
+      { text: "Custom domain", included: false },
     ],
   },
   {
     id: "growth",
     name: "Growth",
-    ngnMonthly: 61000,
-    usdMonthly: 40,
-    ngnAnnual: 610000,
-    usdAnnual: 400,
+    ngnMonthly: 51000,
+    usdMonthly: 33,
+    ngnAnnual: 510000,
+    usdAnnual: 330,
     highlight: true,
-    description: "For owners ready to scale with daily content and a coach.",
+    description: "For owners ready to scale with daily content and partners.",
     features: [
-      { text: "AI-generated premium website", included: true },
-      { text: "90-day content action plan", included: true },
+      { text: "Everything in Pro", included: true },
       { text: "Daily AI content drafts", included: true },
-      { text: "Progress tracker & streaks", included: true },
-      { text: "Animated video generation", included: true },
+      { text: "Custom domain", included: true },
       { text: "Agency marketplace access", included: true },
-      { text: "AI accountability coach", included: true },
+      { text: "Deeper analytics", included: true },
       { text: "Priority support", included: true },
+    ],
+  },
+  {
+    id: "premium",
+    name: "Premium",
+    ngnMonthly: 99000,
+    usdMonthly: 65,
+    ngnAnnual: 990000,
+    usdAnnual: 650,
+    highlight: false,
+    description: "Full stack — advanced analytics and unlimited regenerations.",
+    features: [
+      { text: "Everything in Growth", included: true },
+      { text: "Unlimited regenerations", included: true },
+      { text: "Advanced analytics retention", included: true },
+      { text: "Priority generation queue", included: true },
     ],
   },
 ];

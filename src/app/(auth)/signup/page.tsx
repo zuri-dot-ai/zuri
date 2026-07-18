@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
@@ -11,8 +11,25 @@ import { Label } from "@/components/ui/label";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { marketingUrl } from "@/lib/marketing-url";
 
+const PENDING_PLAN_KEY = "zuri_pending_plan";
+
+function isStrongPassword(password: string): boolean {
+  return (
+    password.length >= 8 && /[A-Z]/.test(password) && /[0-9]/.test(password)
+  );
+}
+
 export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen" aria-hidden />}>
+      <SignupForm />
+    </Suspense>
+  );
+}
+
+function SignupForm() {
   const router = useRouter();
+  const params = useSearchParams();
   const supabase = createClient();
 
   const [fullName, setFullName] = useState("");
@@ -20,6 +37,17 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const plan = params.get("plan");
+    if (plan && ["pro", "growth", "premium"].includes(plan)) {
+      try {
+        localStorage.setItem(PENDING_PLAN_KEY, plan);
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [params]);
 
   async function persistTermsAccepted(userId: string) {
     await supabase
@@ -35,11 +63,15 @@ export default function SignupPage() {
     e.preventDefault();
 
     if (!termsAccepted) {
-      return toast.error("Please agree to the Terms of Service and Privacy Policy.");
+      return toast.error(
+        "Please agree to the Terms of Service and Privacy Policy."
+      );
     }
 
-    if (password.length < 8) {
-      return toast.error("Password must be at least 8 characters.");
+    if (!isStrongPassword(password)) {
+      return toast.error(
+        "Password must be at least 8 characters, with one uppercase letter and one number."
+      );
     }
 
     setLoading(true);
@@ -67,7 +99,6 @@ export default function SignupPage() {
 
     setLoading(false);
 
-    // Email confirmation enabled — no session until verified
     if (!data.session) {
       toast.success(
         "Account created! Check your inbox to verify your email, then sign in."
@@ -83,7 +114,9 @@ export default function SignupPage() {
 
   async function handleGoogle() {
     if (!termsAccepted) {
-      return toast.error("Please agree to the Terms of Service and Privacy Policy.");
+      return toast.error(
+        "Please agree to the Terms of Service and Privacy Policy."
+      );
     }
 
     const { error } = await supabase.auth.signInWithOAuth({

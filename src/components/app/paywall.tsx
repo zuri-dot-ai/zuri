@@ -4,31 +4,35 @@ import { Lock, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import type { SubscriptionPlan } from "@/types/database";
+import { PLAN_RANK } from "@/lib/payments/plans";
 
 interface PaywallProps {
   /** The minimum plan needed */
-  required: "starter" | "growth";
+  required: "pro" | "growth" | "premium";
   /** The current user plan */
   current: SubscriptionPlan;
   /** Feature name shown in the lock message */
   feature: string;
+  /** Optional benefit copy for contextual upgrade */
+  benefit?: string;
   /** Render children if access is granted */
   children: React.ReactNode;
 }
 
-const PLAN_RANK: Record<SubscriptionPlan, number> = {
-  free: 0,
-  starter: 1,
-  growth: 2,
-};
-
-export function Paywall({ required, current, feature, children }: PaywallProps) {
+export function Paywall({
+  required,
+  current,
+  feature,
+  benefit,
+  children,
+}: PaywallProps) {
   const router = useRouter();
   const hasAccess = PLAN_RANK[current] >= PLAN_RANK[required];
 
   if (hasAccess) return <>{children}</>;
 
-  const planLabel = required === "growth" ? "Growth" : "Starter";
+  const planLabel =
+    required === "premium" ? "Premium" : required === "growth" ? "Growth" : "Pro";
 
   return (
     <div className="surface flex flex-col items-center justify-center border border-border px-6 py-16 text-center">
@@ -37,11 +41,20 @@ export function Paywall({ required, current, feature, children }: PaywallProps) 
       </div>
       <h3 className="mt-5 font-heading text-2xl font-semibold">{feature}</h3>
       <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-        {feature} is available on the{" "}
-        <span className="font-medium text-foreground">{planLabel} plan</span> and above.
-        Upgrade to unlock it.
+        {benefit ?? (
+          <>
+            {feature} is available on the{" "}
+            <span className="font-medium text-foreground">{planLabel} plan</span>{" "}
+            and above. Upgrade to unlock it.
+          </>
+        )}
       </p>
-      <Button className="mt-7" onClick={() => router.push("/settings?tab=billing")}>
+      <Button
+        className="mt-7"
+        onClick={() =>
+          router.push(`/settings?tab=billing&upgrade=${required}&feature=${encodeURIComponent(feature)}`)
+        }
+      >
         <Zap className="size-4" /> Upgrade to {planLabel}
       </Button>
     </div>

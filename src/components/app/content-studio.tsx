@@ -55,7 +55,7 @@ export function ContentStudio({
       };
       setSlots((prev) => prev.map((s) => (s.id === slot.id ? updated : s)));
       setActive(updated);
-      toast.success("Fresh draft ready ✨");
+      toast.success("Writing a fresh draft… done");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not regenerate");
     } finally {
@@ -77,10 +77,14 @@ export function ContentStudio({
         </header>
         <EmptyState
           icon={PenLine}
-          title="No content yet"
-          description="Your AI content drafts will appear here once your plan is generated."
-          actionLabel="View your plan"
-          actionHref="/plan"
+          title="Your content calendar is empty"
+          description={
+            plan === "free"
+              ? "Free includes a taste of your strategy. Complete onboarding or upgrade to Pro for the full 90-day calendar."
+              : "Your AI content drafts will appear here once your plan is generated. Check Plan if generation is still running."
+          }
+          actionLabel={plan === "free" ? "View billing" : "View your plan"}
+          actionHref={plan === "free" ? "/settings?tab=billing" : "/plan"}
         />
       </div>
     );

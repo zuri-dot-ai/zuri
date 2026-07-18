@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   User,
@@ -20,7 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { PRICING } from "@/lib/constants";
 import { formatNGN as fmtNGN } from "@/lib/utils";
-import type { UserRow, BusinessProfileRow } from "@/types/database";
+import type { AccountView, BusinessProfileRow } from "@/types/database";
 
 type Tab = "profile" | "business" | "billing" | "notifications" | "danger";
 
@@ -36,7 +36,7 @@ export function SettingsView({
   account,
   profile,
 }: {
-  account: UserRow | null;
+  account: AccountView | null;
   profile: BusinessProfileRow | null;
 }) {
   const [tab, setTab] = useState<Tab>("profile");
@@ -80,7 +80,7 @@ export function SettingsView({
 }
 
 // ── PROFILE TAB ──────────────────────────────────────────
-function ProfileTab({ account }: { account: UserRow | null }) {
+function ProfileTab({ account }: { account: AccountView | null }) {
   const supabase = createClient();
   const [name, setName] = useState(account?.full_name ?? "");
   const [saving, setSaving] = useState(false);
@@ -88,8 +88,8 @@ function ProfileTab({ account }: { account: UserRow | null }) {
   async function save() {
     setSaving(true);
     const { error } = await supabase
-      .from("users")
-      .update({ full_name: name })
+      .from("profiles")
+      .update({ full_name: name, updated_at: new Date().toISOString() })
       .eq("id", account!.id);
     setSaving(false);
     if (error) return toast.error("Could not save profile.");
@@ -245,13 +245,26 @@ function BusinessTab({ profile }: { profile: BusinessProfileRow | null }) {
 }
 
 // ── BILLING TAB ─────────────────────────────────────────
-function BillingTab({ account }: { account: UserRow | null }) {
+function BillingTab({ account }: { account: AccountView | null }) {
   const [loadingCheckout, setLoadingCheckout] = useState<string | null>(null);
+  const [pendingPlan, setPendingPlan] = useState<string | null>(null);
 
   const plan = account?.subscription_plan ?? "free";
   const status = account?.subscription_status ?? "inactive";
 
-  async function upgrade(planId: "starter" | "growth", interval: "monthly" | "annual") {
+  useEffect(() => {
+    try {
+      const p = localStorage.getItem("zuri_pending_plan");
+      if (p && ["pro", "growth", "premium"].includes(p)) setPendingPlan(p);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  async function upgrade(
+    planId: "pro" | "growth" | "premium",
+    interval: "monthly" | "annual"
+  ) {
     setLoadingCheckout(`${planId}-${interval}`);
     try {
       const res = await fetch("/api/billing/checkout", {
@@ -261,12 +274,23 @@ function BillingTab({ account }: { account: UserRow | null }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
+      try {
+        localStorage.removeItem("zuri_pending_plan");
+      } catch {
+        /* ignore */
+      }
       window.location.href = data.checkoutUrl;
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not start checkout.");
       setLoadingCheckout(null);
     }
   }
+
+  const canUpgrade = plan !== "premium";
+  const upgradePlans = PRICING.filter((p) => {
+    const rank = { free: 0, pro: 1, growth: 2, premium: 3 } as const;
+    return rank[p.id] > rank[plan as keyof typeof rank];
+  });
 
   return (
     <div className="space-y-6">
@@ -295,13 +319,19 @@ function BillingTab({ account }: { account: UserRow | null }) {
             Upgrade to publish your website, access your full content calendar, and unlock the agency marketplace.
           </p>
         )}
+        {pendingPlan && plan === "free" && (
+          <p className="mt-3 text-sm text-gold">
+            You selected <span className="capitalize font-medium">{pendingPlan}</span> from
+            pricing — pick monthly or annual below to finish checkout.
+          </p>
+        )}
       </div>
 
       {/* Upgrade options */}
-      {plan === "free" && (
+      {canUpgrade && upgradePlans.length > 0 && (
         <div className="space-y-4">
           <p className="text-sm font-medium">Upgrade your plan</p>
-          {PRICING.map((p) => (
+          {upgradePlans.map((p) => (
             <div
               key={p.id}
               className={`surface rounded-none border p-5 ${

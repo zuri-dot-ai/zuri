@@ -3,6 +3,7 @@ import { Toaster } from "sonner";
 import { BRAND } from "@/lib/constants";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
+import "@/styles/dashboard.css";
 
 import "@fontsource/montserrat/300.css";
 import "@fontsource/montserrat/400.css";

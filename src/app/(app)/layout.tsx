@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/app/sidebar";
 import { BottomTabs } from "@/components/app/bottom-tabs";
 import { Topbar } from "@/components/app/topbar";
 import { PaymentToast } from "@/components/app/payment-toast";
+import { FirstVisitTour } from "@/components/app/first-visit-tour";
 
 export default async function AppLayout({
   children,
@@ -29,6 +30,7 @@ export default async function AppLayout({
         <main className="flex-1 overflow-y-auto px-4 pb-24 pt-6 md:px-8 md:pb-8">
           {children}
           <PaymentToast />
+          <FirstVisitTour />
         </main>
       </div>
       <BottomTabs />
