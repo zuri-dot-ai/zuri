@@ -1,17 +1,42 @@
 import { NextResponse } from "next/server";
-import { Resend } from "resend";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { getResend } from "@/lib/email/resend-client";
 import type { AgencyBrief } from "@/types/brand";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// #region agent log
+fetch("http://127.0.0.1:7419/ingest/076876bf-f6bf-42a9-9aff-97004d9bbbbe", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "X-Debug-Session-Id": "91f293",
+  },
+  body: JSON.stringify({
+    sessionId: "91f293",
+    location: "agencies/match/route.ts:module",
+    message: "Module loaded without Resend construct",
+    data: {
+      hasKey: !!process.env.RESEND_API_KEY?.trim(),
+      keyLen: process.env.RESEND_API_KEY?.trim()?.length ?? 0,
+    },
+    timestamp: Date.now(),
+    hypothesisId: "A",
+    runId: "post-fix",
+  }),
+}).catch(() => {});
+// #endregion
 
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { agencyId, brief } = (await request.json()) as { agencyId: string; brief: AgencyBrief };
+  const { agencyId, brief } = (await request.json()) as {
+    agencyId: string;
+    brief: AgencyBrief;
+  };
 
   // Record the match request
   const { error } = await supabase.from("agency_match_requests").insert({
@@ -26,9 +51,13 @@ export async function POST(request: Request) {
   try {
     const service = createServiceClient();
     const { data: agency } = await service
-      .from("agencies").select("name, contact_email").eq("id", agencyId).single();
+      .from("agencies")
+      .select("name, contact_email")
+      .eq("id", agencyId)
+      .single();
 
-    if (agency?.contact_email) {
+    const resend = getResend();
+    if (agency?.contact_email && resend) {
       await resend.emails.send({
         from: process.env.RESEND_FROM_EMAIL || "Zuri <onboarding@resend.dev>",
         to: agency.contact_email,

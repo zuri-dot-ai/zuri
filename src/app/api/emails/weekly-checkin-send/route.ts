@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { Resend } from "resend";
+import { getResend } from "@/lib/email/resend-client";
 import { geminiJSON, FLASH } from "@/lib/gemini";
 import { WEEKLY_CHECKIN_SYSTEM, weeklyCheckinPrompt } from "@/lib/prompts";
 import type { WeeklyCheckin } from "@/types/brand";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// #region agent log
+fetch('http://127.0.0.1:7419/ingest/076876bf-f6bf-42a9-9aff-97004d9bbbbe',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'91f293'},body:JSON.stringify({sessionId:'91f293',location:'emails/weekly-checkin-send/route.ts:module',message:'Module loaded without Resend construct',data:{hasKey:!!process.env.RESEND_API_KEY?.trim()},timestamp:Date.now(),hypothesisId:'B',runId:'post-fix'})}).catch(()=>{});
+// #endregion
 
 function verifyCron(request: Request): boolean {
   return (
@@ -74,6 +76,9 @@ export async function POST(request: Request) {
         }),
         { model: FLASH, system: WEEKLY_CHECKIN_SYSTEM, temperature: 0.7 }
       );
+
+      const resend = getResend();
+      if (!resend) continue;
 
       await resend.emails.send({
         from: process.env.RESEND_FROM_EMAIL || "Zuri <onboarding@resend.dev>",

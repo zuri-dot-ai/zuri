@@ -2,9 +2,11 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { verifyWebhookSignature, planTierFromFlwId } from "@/lib/flutterwave";
 import { activateSubscription } from "@/lib/payments/activate-subscription";
-import { Resend } from "resend";
+import { getResend } from "@/lib/email/resend-client";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// #region agent log
+fetch('http://127.0.0.1:7419/ingest/076876bf-f6bf-42a9-9aff-97004d9bbbbe',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'91f293'},body:JSON.stringify({sessionId:'91f293',location:'billing/webhook/route.ts:module',message:'Module loaded without Resend construct',data:{hasKey:!!process.env.RESEND_API_KEY?.trim()},timestamp:Date.now(),hypothesisId:'B',runId:'post-fix'})}).catch(()=>{});
+// #endregion
 
 export async function POST(request: Request) {
   const signature = request.headers.get("verif-hash");
@@ -57,22 +59,25 @@ export async function POST(request: Request) {
         );
 
         if (eventType === "subscription.activated") {
-          await resend.emails.send({
-            from:
-              process.env.RESEND_FROM_EMAIL ||
-              "Zuri <onboarding@resend.dev>",
-            to: customerEmail,
-            subject: "Welcome to Zuri — you're all set",
-            text: [
-              `Welcome to the ${tier.charAt(0).toUpperCase() + tier.slice(1)} plan!`,
-              "",
-              "Your website is ready to publish, your content calendar is unlocked, and your 90-day plan is running.",
-              "",
-              "Log in and pick up where you left off: https://app.buildzuri.com/dashboard",
-              "",
-              "— The Zuri Team",
-            ].join("\n"),
-          });
+          const resend = getResend();
+          if (resend) {
+            await resend.emails.send({
+              from:
+                process.env.RESEND_FROM_EMAIL ||
+                "Zuri <onboarding@resend.dev>",
+              to: customerEmail,
+              subject: "Welcome to Zuri — you're all set",
+              text: [
+                `Welcome to the ${tier.charAt(0).toUpperCase() + tier.slice(1)} plan!`,
+                "",
+                "Your website is ready to publish, your content calendar is unlocked, and your 90-day plan is running.",
+                "",
+                "Log in and pick up where you left off: https://app.buildzuri.com/dashboard",
+                "",
+                "— The Zuri Team",
+              ].join("\n"),
+            });
+          }
         }
         break;
       }
@@ -98,20 +103,25 @@ export async function POST(request: Request) {
             .eq("user_id", profile.id);
         }
 
-        await resend.emails.send({
-          from:
-            process.env.RESEND_FROM_EMAIL || "Zuri <onboarding@resend.dev>",
-          to: customerEmail,
-          subject: "Your Zuri subscription has been cancelled",
-          text: [
-            "Your Zuri subscription has been cancelled.",
-            "",
-            "Your website will stay live until the end of your current billing period.",
-            "If this was a mistake, you can resubscribe any time at https://app.buildzuri.com/settings.",
-            "",
-            "— The Zuri Team",
-          ].join("\n"),
-        });
+        {
+          const resend = getResend();
+          if (resend) {
+            await resend.emails.send({
+              from:
+                process.env.RESEND_FROM_EMAIL || "Zuri <onboarding@resend.dev>",
+              to: customerEmail,
+              subject: "Your Zuri subscription has been cancelled",
+              text: [
+                "Your Zuri subscription has been cancelled.",
+                "",
+                "Your website will stay live until the end of your current billing period.",
+                "If this was a mistake, you can resubscribe any time at https://app.buildzuri.com/settings.",
+                "",
+                "— The Zuri Team",
+              ].join("\n"),
+            });
+          }
+        }
         break;
       }
 
@@ -135,20 +145,25 @@ export async function POST(request: Request) {
             .eq("user_id", profile.id);
         }
 
-        await resend.emails.send({
-          from:
-            process.env.RESEND_FROM_EMAIL || "Zuri <onboarding@resend.dev>",
-          to: customerEmail,
-          subject: "Action needed — Zuri payment failed",
-          text: [
-            "We couldn't process your Zuri subscription payment.",
-            "",
-            "Please update your payment details to keep your website live:",
-            "https://app.buildzuri.com/settings",
-            "",
-            "— The Zuri Team",
-          ].join("\n"),
-        });
+        {
+          const resend = getResend();
+          if (resend) {
+            await resend.emails.send({
+              from:
+                process.env.RESEND_FROM_EMAIL || "Zuri <onboarding@resend.dev>",
+              to: customerEmail,
+              subject: "Action needed — Zuri payment failed",
+              text: [
+                "We couldn't process your Zuri subscription payment.",
+                "",
+                "Please update your payment details to keep your website live:",
+                "https://app.buildzuri.com/settings",
+                "",
+                "— The Zuri Team",
+              ].join("\n"),
+            });
+          }
+        }
         break;
       }
 
