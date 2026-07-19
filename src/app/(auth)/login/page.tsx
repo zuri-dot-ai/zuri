@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthShell } from "@/components/auth/auth-shell";
@@ -103,14 +102,13 @@ function LoginForm() {
           </p>
         </div>
 
-        <Button
+        <button
           type="button"
-          variant="outline"
-          className="w-full"
+          className="btn-ghost w-full"
           onClick={handleGoogle}
         >
           <GoogleIcon /> Continue with Google
-        </Button>
+        </button>
 
         <div className="my-6 flex items-center gap-3 text-xs text-[var(--chrome-dark)]">
           <span className="h-px flex-1 bg-[#222]" /> or{" "}
@@ -155,9 +153,9 @@ function LoginForm() {
               autoComplete="current-password"
             />
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
+          <button type="submit" className="btn-gold w-full" disabled={loading}>
             {loading ? "Signing in…" : "Sign in"}
-          </Button>
+          </button>
         </form>
 
         <p className="mt-7 text-center text-sm text-[var(--chrome-mid)]">

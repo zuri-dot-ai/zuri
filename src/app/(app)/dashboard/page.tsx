@@ -189,7 +189,7 @@ export default async function DashboardPage({
   return (
     <div className="relative mx-auto max-w-5xl space-y-7 pb-8 page-enter">
       <header className="page-head">
-        <h1>
+        <h1 className="heading-rule">
           {greetingForNow()}, {firstName}
         </h1>
         <div className="mt-3 flex flex-wrap items-center gap-2">

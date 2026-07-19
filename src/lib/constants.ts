@@ -6,9 +6,9 @@ export const BRAND = {
   description:
     "Launch your business online with Zuri. Instantly create a premium website, unlock a personalized 90-day content plan, and accelerate growth with AI.",
   colors: {
-    background: "#0A0A0B",
-    surface: "#131315",
-    border: "rgba(255,255,255,0.08)",
+    background: "#0D0C0A",
+    surface: "#161411",
+    border: "rgba(201,162,39,0.18)",
     foreground: "#F5F5F4",
     muted: "#A1A1AA",
     gold: "#C9A227",

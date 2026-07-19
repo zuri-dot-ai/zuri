@@ -13,7 +13,7 @@ interface AuthShellProps {
 }
 
 /**
- * Auth shell — 50/50 split that never overflows the viewport.
+ * Auth shell — tablet 50/50, desktop lg+ form takes 60%.
  * Uses marketing PNG logo on auth surfaces.
  */
 export function AuthShell({
@@ -24,7 +24,7 @@ export function AuthShell({
   socialProof,
 }: AuthShellProps) {
   return (
-    <div className="relative grid min-h-screen w-full grid-cols-1 overflow-x-hidden bg-transparent md:grid-cols-2">
+    <div className="relative grid min-h-screen w-full grid-cols-1 overflow-x-hidden bg-transparent md:grid-cols-2 lg:grid-cols-[2fr_3fr]">
       <aside className="relative z-10 hidden flex-col justify-between border-r border-[#222] p-10 md:flex lg:p-14">
         <Logo variant="image" size="navbar" href={marketingUrl()} />
 

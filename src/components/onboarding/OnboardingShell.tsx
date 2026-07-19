@@ -108,7 +108,7 @@ export function OnboardingShell({
       {/* Fixed header: logo + progress */}
       <header className="sticky top-0 z-20 -mx-5 border-b border-transparent bg-[var(--bg-primary)]/80 px-5 pb-4 pt-5 backdrop-blur-md sm:-mx-6 sm:px-6 sm:pt-6">
         <div className="mx-auto flex w-full max-w-[680px] flex-col items-center gap-4">
-          <Logo variant="app" size="navbar" href={marketingUrl()} />
+          <Logo variant="image" size="navbar" href={marketingUrl()} />
           {!isBuilding && <StepProgress currentStep={step} />}
           {showWelcomeBack && !isBuilding && (
             <p className="text-center text-sm text-gold/90">

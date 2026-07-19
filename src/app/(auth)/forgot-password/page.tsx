@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthShell } from "@/components/auth/auth-shell";
@@ -57,9 +56,9 @@ export default function ForgotPasswordPage() {
               If an account exists for <strong className="text-foreground">{email}</strong>,
               you&apos;ll receive a reset link shortly.
             </p>
-            <Button asChild className="w-full">
-              <Link href="/login">Back to sign in</Link>
-            </Button>
+            <Link href="/login" className="btn-gold w-full">
+              Back to sign in
+            </Link>
           </div>
         ) : (
           <form onSubmit={handleReset} className="space-y-4">
@@ -77,9 +76,9 @@ export default function ForgotPasswordPage() {
                 autoComplete="email"
               />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            <button type="submit" className="btn-gold w-full" disabled={loading}>
               {loading ? "Sending…" : "Send reset link"}
-            </Button>
+            </button>
           </form>
         )}
 

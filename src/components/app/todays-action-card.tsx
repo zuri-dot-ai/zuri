@@ -23,9 +23,9 @@ export function TodaysActionCard({ task, websitePublished = true }: Props) {
 
   if (!websitePublished) {
     return (
-      <section className="rounded-md border border-border border-l-[3px] border-l-gold bg-[var(--bg-elevated)] p-6 md:p-8">
+      <section className="hero-gold-glow relative overflow-hidden rounded-lg border border-[rgba(201,162,39,0.28)] border-l-[3px] border-l-gold bg-[var(--bg-elevated)] p-6 md:p-8">
         <Badge>Today&apos;s Action</Badge>
-        <h2 className="mt-4 text-h1 font-semibold tracking-[-0.02em]">
+        <h2 className="mt-4 font-heading text-h1 font-medium tracking-[0.015em]">
           Publish your website
         </h2>
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground leading-relaxed">
@@ -46,11 +46,11 @@ export function TodaysActionCard({ task, websitePublished = true }: Props) {
 
   if (!task) {
     return (
-      <section className="flex items-start gap-4 rounded-md border border-border border-l-[3px] border-l-gold/50 bg-[var(--bg-elevated)] p-6 md:p-8">
+      <section className="flex items-start gap-4 rounded-lg border border-[rgba(201,162,39,0.22)] border-l-[3px] border-l-gold/50 bg-[var(--bg-elevated)] p-6 md:p-8">
         <CheckCircle2 className="mt-0.5 size-7 shrink-0 text-success" strokeWidth={1.75} />
         <div>
           <Badge variant="muted">Today&apos;s Action</Badge>
-          <h2 className="mt-3 text-h1 font-semibold tracking-[-0.02em]">
+          <h2 className="mt-3 font-heading text-h1 font-medium tracking-[0.015em]">
             You&apos;re all caught up
           </h2>
           <p className="mt-1.5 text-sm text-muted-foreground">
@@ -94,7 +94,7 @@ export function TodaysActionCard({ task, websitePublished = true }: Props) {
     (task.ai_asset ? task.ai_asset.slice(0, 160) : null);
 
   return (
-    <section className="relative overflow-hidden rounded-md border border-border border-l-[3px] border-l-gold bg-[var(--bg-elevated)] p-6 md:p-8">
+    <section className="hero-gold-glow relative overflow-hidden rounded-lg border border-[rgba(201,162,39,0.28)] border-l-[3px] border-l-gold bg-[var(--bg-elevated)] p-6 md:p-8">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Badge>
           Today&apos;s Action · Day {task.day_number}
@@ -104,7 +104,7 @@ export function TodaysActionCard({ task, websitePublished = true }: Props) {
         </span>
       </div>
 
-      <h2 className="mt-4 text-h1 font-semibold tracking-[-0.02em] md:text-[1.75rem]">
+      <h2 className="mt-4 font-heading text-h1 font-medium tracking-[0.015em] md:text-[1.75rem]">
         {task.task_title}
       </h2>
       {preview && (

@@ -90,14 +90,14 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center rounded-md border border-border bg-[var(--bg-secondary)] px-6 py-20 text-center",
+        "flex flex-col items-center justify-center rounded-lg border border-[rgba(201,162,39,0.22)] bg-[var(--bg-secondary)] px-6 py-20 text-center",
         className
       )}
     >
-      <div className="flex size-16 items-center justify-center rounded-full border border-border bg-[var(--bg-elevated)] text-[var(--text-secondary)]">
+      <div className="flex size-16 items-center justify-center rounded-full border border-[rgba(201,162,39,0.28)] bg-[var(--bg-elevated)] text-gold">
         <Illustration variant={variant} icon={Icon} />
       </div>
-      <h3 className="mt-5 text-h2 font-semibold tracking-[-0.015em]">{title}</h3>
+      <h3 className="mt-5 font-heading text-2xl font-medium tracking-[0.015em]">{title}</h3>
       <p className="mt-2 max-w-sm text-sm text-muted-foreground">{description}</p>
       {actionLabel && actionHref && (
         <Button

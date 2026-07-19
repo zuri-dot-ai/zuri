@@ -60,7 +60,7 @@ export async function initCheckout(args: {
       customizations: {
         title: "Zuri",
         description: BRAND.description,
-        logo: `${process.env.NEXT_PUBLIC_APP_URL}/zuri_logo.png`,
+        logo: `${process.env.NEXT_PUBLIC_APP_URL}/Zuri_Logo.png`,
       },
       meta: args.meta,
     }),

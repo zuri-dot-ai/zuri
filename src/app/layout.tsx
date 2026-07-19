@@ -1,21 +1,22 @@
 import type { Metadata } from "next";
-import { Inter, Cormorant_Garamond } from "next/font/google";
+import { Montserrat, Cormorant_Garamond } from "next/font/google";
 import { Toaster } from "sonner";
 import { BRAND } from "@/lib/constants";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 import "@/styles/dashboard.css";
 
-const inter = Inter({
+const montserrat = Montserrat({
   subsets: ["latin"],
-  variable: "--font-inter",
+  weight: ["400", "500", "600"],
+  variable: "--font-body",
   display: "swap",
 });
 
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
-  variable: "--font-cormorant",
+  variable: "--font-heading",
   display: "swap",
 });
 
@@ -67,7 +68,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${inter.variable} ${cormorant.variable}`}
+      className={`${montserrat.variable} ${cormorant.variable}`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
