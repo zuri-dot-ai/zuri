@@ -3,20 +3,20 @@
 import { useCallback, useEffect, useState } from "react";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { Step1Name } from "@/components/onboarding/steps/Step1Name";
-import { Step2BusinessHandle } from "@/components/onboarding/steps/Step2BusinessHandle";
-import { Step3BusinessType } from "@/components/onboarding/steps/Step3BusinessType";
-import { Step4Services } from "@/components/onboarding/steps/Step4Services";
-import { Step5Customers } from "@/components/onboarding/steps/Step5Customers";
+import { Step2BusinessIdentity } from "@/components/onboarding/steps/Step2BusinessIdentity";
+import { Step3OfferingsAudience } from "@/components/onboarding/steps/Step3OfferingsAudience";
 import { Step6BrandVibe } from "@/components/onboarding/steps/Step6BrandVibe";
 import { Step7Platforms } from "@/components/onboarding/steps/Step7Platforms";
 import { Step8Building } from "@/components/onboarding/steps/Step8Building";
 import {
   DEFAULT_ONBOARDING_STATE,
   ONBOARDING_STORAGE_KEY,
+  ONBOARDING_TOTAL_STEPS,
   type OnboardingState,
 } from "@/lib/onboarding/types";
 
 const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000;
+const BUILDING_STEP = ONBOARDING_TOTAL_STEPS + 1; // 6
 
 function loadSavedState(): {
   state: OnboardingState;
@@ -53,14 +53,21 @@ function loadSavedState(): {
       };
     }
 
-    if (parsed.step >= 8) {
-      // Restore to Step 8 loading if they refreshed mid-generation
-      return { state: { ...parsed, step: 8 }, welcomeBack: false };
+    const step = Math.min(
+      BUILDING_STEP,
+      Math.max(1, Number(parsed.step) || 1)
+    );
+
+    if (step >= BUILDING_STEP) {
+      return {
+        state: { ...DEFAULT_ONBOARDING_STATE, ...parsed, step: BUILDING_STEP },
+        welcomeBack: false,
+      };
     }
 
     return {
-      state: { ...DEFAULT_ONBOARDING_STATE, ...parsed },
-      welcomeBack: parsed.step > 1,
+      state: { ...DEFAULT_ONBOARDING_STATE, ...parsed, step },
+      welcomeBack: step > 1,
     };
   } catch {
     return {
@@ -87,10 +94,9 @@ export default function OnboardingPage() {
     setHydrated(true);
   }, []);
 
-  // Persist on every state change after hydration
   useEffect(() => {
     if (!hydrated) return;
-    if (state.step <= 7) {
+    if (state.step <= ONBOARDING_TOTAL_STEPS) {
       localStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify(state));
     }
   }, [state, hydrated]);
@@ -105,7 +111,7 @@ export default function OnboardingPage() {
     setWelcomeBack(false);
     setState((prev) => ({
       ...prev,
-      step: Math.min(8, prev.step + 1),
+      step: Math.min(BUILDING_STEP, prev.step + 1),
     }));
   }, []);
 
@@ -124,13 +130,13 @@ export default function OnboardingPage() {
     setState((prev) => ({
       ...prev,
       platforms: ["instagram", "facebook"],
-      step: 8,
+      step: BUILDING_STEP,
     }));
   }, []);
 
   if (!hydrated) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-white/40">
+      <div className="flex min-h-screen items-center justify-center text-[var(--text-tertiary)]">
         Loading…
       </div>
     );
@@ -146,7 +152,8 @@ export default function OnboardingPage() {
       showWelcomeBack={welcomeBack}
       onBack={goBack}
       onContinue={goNext}
-      hideControls={step === 8}
+      hideControls={step === BUILDING_STEP}
+      launchOnContinue={step === ONBOARDING_TOTAL_STEPS}
     >
       {step === 1 && (
         <Step1Name
@@ -156,48 +163,38 @@ export default function OnboardingPage() {
         />
       )}
       {step === 2 && (
-        <Step2BusinessHandle
+        <Step2BusinessIdentity
           businessName={state.businessName}
           handle={state.handle}
+          businessType={state.businessType}
           onBusinessNameChange={(businessName) => update({ businessName })}
           onHandleChange={(handle) => update({ handle })}
+          onBusinessTypeChange={(businessType) => update({ businessType })}
           onValidityChange={setCanContinue}
         />
       )}
       {step === 3 && (
-        <Step3BusinessType
-          value={state.businessType}
-          onChange={(businessType) => update({ businessType })}
-          onValidityChange={setCanContinue}
-        />
-      )}
-      {step === 4 && (
-        <Step4Services
+        <Step3OfferingsAudience
           businessType={state.businessType}
-          value={state.services}
-          onChange={(services) => update({ services })}
-          onValidityChange={setCanContinue}
-        />
-      )}
-      {step === 5 && (
-        <Step5Customers
+          services={state.services}
           audienceTypes={state.audienceTypes}
           location={state.location}
           locationCity={state.locationCity}
+          onServicesChange={(services) => update({ services })}
           onAudienceChange={(audienceTypes) => update({ audienceTypes })}
           onLocationChange={(location) => update({ location })}
           onLocationCityChange={(locationCity) => update({ locationCity })}
           onValidityChange={setCanContinue}
         />
       )}
-      {step === 6 && (
+      {step === 4 && (
         <Step6BrandVibe
           value={state.brandVibe}
           onChange={(brandVibe) => update({ brandVibe })}
           onValidityChange={setCanContinue}
         />
       )}
-      {step === 7 && (
+      {step === 5 && (
         <Step7Platforms
           value={state.platforms}
           onChange={(platforms) => update({ platforms })}
@@ -205,7 +202,7 @@ export default function OnboardingPage() {
           onSkip={skipPlatforms}
         />
       )}
-      {step === 8 && <Step8Building state={state} />}
+      {step === BUILDING_STEP && <Step8Building state={state} />}
     </OnboardingShell>
   );
 }

@@ -1,0 +1,44 @@
+import {
+  Home,
+  Globe,
+  PenLine,
+  Users,
+  Settings,
+  BarChart3,
+  HelpCircle,
+  CalendarCheck,
+  type LucideIcon,
+} from "lucide-react";
+
+export type NavItem = {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+};
+
+/** Top-level primary nav (no section label) */
+export const PRIMARY_NAV: NavItem[] = [
+  { href: "/dashboard", label: "Home", icon: Home },
+];
+
+/** Core product areas */
+export const WORKSPACE_NAV: NavItem[] = [
+  { href: "/website", label: "Website", icon: Globe },
+  { href: "/content", label: "Content", icon: PenLine },
+  { href: "/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/plan", label: "Plan", icon: CalendarCheck },
+];
+
+/** Marketplace — single item, no section label */
+export const MARKETPLACE_NAV: NavItem[] = [
+  { href: "/agencies", label: "Agency Marketplace", icon: Users },
+];
+
+/** Sidebar avatar menu utilities (Notifications live in topbar) */
+export const UTILITY_NAV: NavItem[] = [
+  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/help", label: "Help", icon: HelpCircle },
+];
+
+/** Mobile bottom tabs — Home + Workspace */
+export const BOTTOM_TABS: NavItem[] = [...PRIMARY_NAV, ...WORKSPACE_NAV];

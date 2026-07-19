@@ -76,6 +76,7 @@ export function ContentStudio({
           <h1>Content Studio</h1>
         </header>
         <EmptyState
+          variant="content"
           icon={PenLine}
           title="Your content calendar is empty"
           description={
@@ -85,6 +86,7 @@ export function ContentStudio({
           }
           actionLabel={plan === "free" ? "View billing" : "View your plan"}
           actionHref={plan === "free" ? "/settings?tab=billing" : "/plan"}
+          actionVariant="secondary"
         />
       </div>
     );
@@ -103,10 +105,10 @@ export function ContentStudio({
             key={f}
             onClick={() => setFilter(f)}
             className={cn(
-              "rounded-none border px-4 py-1.5 text-sm capitalize transition-all",
+              "rounded-sm border px-4 py-1.5 text-sm capitalize transition-all",
               filter === f
-                ? "border-gold bg-gold text-background"
-                : "border-border text-muted-foreground hover:border-gold/40"
+                ? "border-gold bg-gold text-[var(--accent-foreground)]"
+                : "border-border text-muted-foreground hover:border-[var(--border-hover)] hover:bg-[var(--bg-elevated)]"
             )}
           >
             {f}
@@ -155,7 +157,7 @@ export function ContentStudio({
           >
             <div className="flex items-center justify-between">
               <Badge>{platformMeta(active.platform)?.emoji} {platformMeta(active.platform)?.label}</Badge>
-              <button onClick={() => setActive(null)} className="rounded-none p-1.5 text-muted-foreground hover:bg-muted">
+              <button onClick={() => setActive(null)} className="rounded-sm p-1.5 text-muted-foreground hover:bg-muted">
                 <X className="size-5" />
               </button>
             </div>
@@ -165,7 +167,7 @@ export function ContentStudio({
             </h2>
             {active.theme && <p className="mt-1 text-sm text-muted-foreground">{active.theme}</p>}
 
-            <div className="mt-5 rounded-none border border-border bg-background p-4">
+            <div className="mt-5 rounded-sm border border-border bg-background p-4">
               <p className="whitespace-pre-wrap text-sm leading-relaxed">
                 {active.ai_draft || "No draft yet — regenerate to create one."}
               </p>

@@ -1,25 +1,23 @@
 import type { Metadata } from "next";
+import { Inter, Cormorant_Garamond } from "next/font/google";
 import { Toaster } from "sonner";
 import { BRAND } from "@/lib/constants";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 import "@/styles/dashboard.css";
 
-import "@fontsource/montserrat/300.css";
-import "@fontsource/montserrat/400.css";
-import "@fontsource/montserrat/500.css";
-import "@fontsource/montserrat/600.css";
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
-import "@fontsource/cormorant-garamond/400.css";
-import "@fontsource/cormorant-garamond/500.css";
-import "@fontsource/cormorant-garamond/600.css";
-import "@fontsource/cormorant-garamond/700.css";
-
-import "@fontsource/jetbrains-mono/400.css";
-import "@fontsource/jetbrains-mono/500.css";
-import "@fontsource/jetbrains-mono/600.css";
-import "@fontsource/jetbrains-mono/700.css";
-import "@fontsource/jetbrains-mono/800.css";
+const cormorant = Cormorant_Garamond({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-cormorant",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -66,22 +64,16 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${inter.variable} ${cormorant.variable}`}
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
-        <style>{`
-          :root {
-            --font-montserrat: 'Montserrat', sans-serif;
-            --font-cormorant: 'Cormorant Garamond', serif;
-            --font-jetbrains: 'JetBrains Mono', monospace;
-          }
-        `}</style>
         <link rel="manifest" href="/manifest.json" />
       </head>
-      <body
-        className="min-h-screen bg-background font-sans text-foreground antialiased"
-        style={{ fontFamily: "var(--font-montserrat)" }}
-      >
+      <body className="min-h-screen bg-background font-sans text-foreground antialiased">
         <ThemeProvider>
           {children}
           <Toaster
@@ -92,7 +84,7 @@ export default function RootLayout({
                 background: "hsl(var(--surface))",
                 border: "1px solid hsl(var(--border))",
                 color: "hsl(var(--foreground))",
-                borderRadius: 0,
+                borderRadius: 12,
               },
             }}
           />

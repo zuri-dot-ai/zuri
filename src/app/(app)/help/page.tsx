@@ -69,9 +69,9 @@ export default function HelpPage() {
         })}
       </div>
 
-      <div className="empty-state surface border border-dashed py-12 text-center">
-        <HelpCircle className="mx-auto size-8 text-gold" />
-        <h3 className="mt-4 font-heading text-xl">Still stuck?</h3>
+      <div className="empty-state py-12 text-center">
+        <HelpCircle className="mx-auto size-8 text-[var(--text-secondary)]" strokeWidth={1.75} />
+        <h3 className="mt-4 text-h2 font-semibold tracking-[-0.015em]">Still stuck?</h3>
         <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
           Email{" "}
           <a href="mailto:hello@buildzuri.com" className="text-gold hover:underline">

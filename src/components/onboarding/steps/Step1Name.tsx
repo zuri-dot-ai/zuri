@@ -43,10 +43,6 @@ export function Step1Name({ value, onChange, onValidityChange }: Step1NameProps)
     onValidityChange(isValidName(value));
   }, [value, onValidityChange]);
 
-  function handleChange(raw: string) {
-    onChange(raw);
-  }
-
   const clean = sanitizeText(value);
   const showError =
     value.length > 0 &&
@@ -55,17 +51,17 @@ export function Step1Name({ value, onChange, onValidityChange }: Step1NameProps)
 
   return (
     <div className="space-y-6">
-      <h1 className="font-heading text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
+      <h1 className="text-[1.75rem] font-semibold tracking-[-0.02em] text-foreground md:text-[2rem]">
         Welcome to Zuri. What should we call you?
       </h1>
-      <div className="surface p-6 sm:p-7">
+      <div className="rounded-md border border-border bg-[var(--bg-secondary)] p-5 sm:p-6">
         <Input
           value={value}
-          onChange={(e) => handleChange(e.target.value)}
+          onChange={(e) => onChange(e.target.value)}
           placeholder="Your first name"
           autoFocus
           autoComplete="given-name"
-          className="h-14 text-lg"
+          className="onboarding-input h-14 text-lg"
         />
         {showError && (
           <p className="mt-2 text-sm text-error">

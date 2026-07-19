@@ -23,8 +23,7 @@ import {
   type WebsiteAnalyticsSummary,
 } from "@/lib/analytics/website-stats";
 import { formatCompactNumber } from "@/lib/dashboard/home-helpers";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/app/empty-state";
 
 function parseRange(raw: string | string[] | undefined): AnalyticsRange {
   const v = Array.isArray(raw) ? raw[0] : raw;
@@ -119,18 +118,14 @@ export default async function AnalyticsPage({
       </header>
 
       {!analyticsEnabled ? (
-        <section className="surface p-8 text-center">
-          <h2 className="font-heading text-xl font-medium">
-            Analytics unlocks on Pro
-          </h2>
-          <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-            Upgrade to see pageviews, visitors, traffic sources, and form
-            submissions for your website.
-          </p>
-          <Button asChild className="mt-6">
-            <Link href="/settings?tab=billing">View plans</Link>
-          </Button>
-        </section>
+        <EmptyState
+          variant="analytics"
+          title="Analytics unlocks on Pro"
+          description="Upgrade to see pageviews, visitors, traffic sources, and form submissions for your website."
+          actionLabel="View plans"
+          actionHref="/settings?tab=billing"
+          actionVariant="secondary"
+        />
       ) : (
         <>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

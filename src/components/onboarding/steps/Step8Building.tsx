@@ -1,20 +1,40 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { OnboardingState } from "@/lib/onboarding/types";
 import { ONBOARDING_STORAGE_KEY } from "@/lib/onboarding/types";
 import { sanitizeText } from "@/lib/utils/sanitize";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
 const BUILD_STEPS = [
-  "Saving your brand profile...",
-  "Analysing your brand with AI...",
-  "Designing your website...",
-  "Writing your content...",
-  "Preparing your strategy...",
-  "You're almost ready...",
+  {
+    label: "Saving your brand profile...",
+    micro: (name: string) => `Locking in details for ${name}…`,
+  },
+  {
+    label: "Analysing your brand with AI...",
+    micro: (name: string) => `Understanding what makes ${name} unique…`,
+  },
+  {
+    label: "Designing your website...",
+    micro: (name: string) => `Choosing colors for ${name}…`,
+  },
+  {
+    label: "Writing your content...",
+    micro: (name: string) => `Drafting copy that sounds like ${name}…`,
+  },
+  {
+    label: "Preparing your strategy...",
+    micro: () => "Mapping your first 90 days…",
+  },
+  {
+    label: "You're almost ready...",
+    micro: () => "Putting the finishing touches…",
+  },
 ];
 
 interface Step8BuildingProps {
@@ -23,12 +43,21 @@ interface Step8BuildingProps {
 
 export function Step8Building({ state }: Step8BuildingProps) {
   const router = useRouter();
+  const reducedMotion = useReducedMotion();
   const [activeIndex, setActiveIndex] = useState(0);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const startedRef = useRef(false);
 
+  const businessName = useMemo(
+    () => sanitizeText(state.businessName) || "your business",
+    [state.businessName]
+  );
+
+  const progressPct = Math.round(
+    ((activeIndex + 1) / BUILD_STEPS.length) * 100
+  );
+
   useEffect(() => {
-    // Animated progress even if API is still running
     const timers = BUILD_STEPS.map((_, i) =>
       setTimeout(() => setActiveIndex(i), i * 4500)
     );
@@ -78,7 +107,6 @@ export function Step8Building({ state }: Step8BuildingProps) {
         });
 
         if (!res.ok) {
-          // Fail soft — redirect to dashboard with generation-failed card
           localStorage.removeItem(ONBOARDING_STORAGE_KEY);
           router.push("/dashboard?generation=failed");
           return;
@@ -86,7 +114,6 @@ export function Step8Building({ state }: Step8BuildingProps) {
 
         localStorage.removeItem(ONBOARDING_STORAGE_KEY);
         setActiveIndex(BUILD_STEPS.length - 1);
-        // Brief pause so user sees final checkmark
         setTimeout(() => router.push("/dashboard"), 800);
       } catch {
         setStatusMessage("Connection lost. Retrying...");
@@ -101,53 +128,97 @@ export function Step8Building({ state }: Step8BuildingProps) {
   }, [state, router]);
 
   return (
-    <div className="flex flex-col items-center justify-center gap-8 py-8 text-center">
-      <div>
-        <h1 className="font-heading text-2xl font-semibold text-foreground md:text-3xl">
+    <div className="flex flex-col items-center justify-center gap-8 py-6 text-center md:py-10">
+      <div className="w-full max-w-md space-y-3">
+        <h1 className="text-[1.75rem] font-semibold tracking-[-0.02em] text-foreground md:text-[2rem]">
           Building your presence
         </h1>
         {statusMessage && (
-          <p className="mt-3 text-sm text-muted-foreground">{statusMessage}</p>
+          <p className="text-sm text-[var(--text-secondary)]">{statusMessage}</p>
         )}
+        <div className="mx-auto h-1 w-full max-w-xs overflow-hidden rounded-full bg-[var(--text-tertiary)]/20">
+          <div
+            className="h-full rounded-full bg-gold transition-all duration-500 ease-out"
+            style={{ width: `${progressPct}%` }}
+          />
+        </div>
+        <p className="text-caption text-[var(--text-tertiary)]">
+          {progressPct}% complete
+        </p>
       </div>
 
-      <div className="surface w-full max-w-sm p-6 text-left">
-        <ul className="space-y-3">
-          {BUILD_STEPS.map((label, i) => {
+      <div className="w-full max-w-md rounded-lg border border-border bg-[var(--bg-secondary)] p-6 text-left sm:p-8">
+        <ul className="space-y-4">
+          {BUILD_STEPS.map((item, i) => {
             const done = i < activeIndex;
             const active = i === activeIndex;
+            const visible = done || active || i <= activeIndex + 1;
+
             return (
-              <li
-                key={label}
-                className={cn(
-                  "flex items-center gap-3 text-sm transition-opacity duration-300",
-                  done || active ? "opacity-100" : "opacity-30"
+              <AnimatePresence key={item.label}>
+                {visible && (
+                  <motion.li
+                    initial={
+                      reducedMotion
+                        ? { opacity: 0 }
+                        : { opacity: 0, y: 8 }
+                    }
+                    animate={{ opacity: done || active ? 1 : 0.35, y: 0 }}
+                    transition={{ duration: 0.28, ease: "easeOut" }}
+                    className="flex items-start gap-3"
+                  >
+                    <span
+                      className={cn(
+                        "mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border transition-all duration-200",
+                        done
+                          ? "border-gold bg-gold/15 text-gold"
+                          : active
+                            ? "border-gold"
+                            : "border-border"
+                      )}
+                    >
+                      {done ? (
+                        <motion.span
+                          initial={reducedMotion ? false : { scale: 0.5 }}
+                          animate={{ scale: 1 }}
+                          transition={{ type: "spring", stiffness: 400, damping: 18 }}
+                        >
+                          <Check className="size-3.5" strokeWidth={2.5} />
+                        </motion.span>
+                      ) : active ? (
+                        <span
+                          className="size-1.5 animate-pulse rounded-full bg-gold"
+                          aria-hidden
+                        />
+                      ) : null}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p
+                        className={cn(
+                          "text-sm font-medium",
+                          done || active
+                            ? "text-foreground"
+                            : "text-[var(--text-tertiary)]"
+                        )}
+                      >
+                        {item.label}
+                      </p>
+                      {active && (
+                        <motion.p
+                          key={item.micro(businessName)}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.4 }}
+                          className="mt-1 text-caption text-[var(--text-tertiary)]"
+                        >
+                          {item.micro(businessName)}
+                        </motion.p>
+                      )}
+                    </div>
+                  </motion.li>
                 )}
-              >
-                <span
-                  className={cn(
-                    "flex size-5 shrink-0 items-center justify-center border",
-                    done
-                      ? "border-gold bg-gold text-background"
-                      : active
-                        ? "border-gold"
-                        : "border-[hsl(var(--border))]"
-                  )}
-                >
-                  {done ? (
-                    <Check className="size-3" strokeWidth={3} />
-                  ) : active ? (
-                    <span className="size-1.5 animate-pulse bg-gold" aria-hidden />
-                  ) : null}
-                </span>
-                <span
-                  className={cn(
-                    done || active ? "text-foreground" : "text-muted-foreground"
-                  )}
-                >
-                  {label}
-                </span>
-              </li>
+              </AnimatePresence>
             );
           })}
         </ul>

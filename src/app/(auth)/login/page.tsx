@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthShell } from "@/components/auth/auth-shell";
+import { authCallbackUrl, safeNextPath } from "@/lib/auth/redirect";
 
 export default function LoginPage() {
   return (
@@ -21,8 +22,9 @@ export default function LoginPage() {
 function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const redirectTo =
-    params.get("redirect") || params.get("next") || "/dashboard";
+  const redirectTo = safeNextPath(
+    params.get("redirect") || params.get("next")
+  );
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -71,7 +73,10 @@ function LoginForm() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/api/auth/callback?next=${encodeURIComponent(redirectTo)}`,
+        redirectTo: authCallbackUrl(window.location.origin, redirectTo),
+        queryParams: {
+          prompt: "select_account",
+        },
       },
     });
     if (error) toast.error(error.message);

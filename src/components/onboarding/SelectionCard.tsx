@@ -1,5 +1,6 @@
 "use client";
 
+import { Check } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -15,8 +16,14 @@ interface SelectionCardProps {
   onSelect: () => void;
   /** Optional color swatch strip (for brand vibe cards) */
   swatches?: string[];
+  /** Smoother multi-stop gradient bar instead of hard color blocks */
+  gradientSwatch?: string;
   className?: string;
   multi?: boolean;
+  /** Icon + title only, denser category grid */
+  compact?: boolean;
+  /** Slight scale on selected (brand feel) */
+  scaleOnSelect?: boolean;
 }
 
 export function SelectionCard({
@@ -26,8 +33,11 @@ export function SelectionCard({
   selected = false,
   onSelect,
   swatches,
+  gradientSwatch,
   className,
   multi = false,
+  compact = false,
+  scaleOnSelect = false,
 }: SelectionCardProps) {
   return (
     <button
@@ -35,64 +45,71 @@ export function SelectionCard({
       onClick={onSelect}
       aria-pressed={selected}
       className={cn(
-        "flex w-full flex-col items-start gap-2 border bg-[hsl(var(--surface))] p-4 text-left transition-colors duration-200",
-        "hover:border-gold/40",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/40",
-        selected ? "border-gold" : "border-[hsl(var(--border))]",
+        "flex w-full flex-col items-start gap-2 rounded-sm border bg-[var(--bg-secondary)] text-left transition-all duration-150",
+        compact ? "min-h-[44px] p-3.5" : "min-h-[44px] p-4",
+        "hover:border-[var(--border-hover)]",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/35",
+        selected
+          ? "border-gold bg-gold/[0.08]"
+          : "border-border",
+        scaleOnSelect && selected && "scale-[1.02] motion-reduce:scale-100",
         className
       )}
     >
-      {swatches && swatches.length > 0 && (
-        <div className="mb-1 flex h-2 w-full overflow-hidden">
-          {swatches.map((color) => (
-            <span
-              key={color}
-              className="flex-1"
-              style={{ backgroundColor: color }}
-            />
-          ))}
-        </div>
+      {(gradientSwatch || (swatches && swatches.length > 0)) && (
+        <div
+          className="mb-1 h-2.5 w-full overflow-hidden rounded-full"
+          style={
+            gradientSwatch
+              ? { background: gradientSwatch }
+              : {
+                  background: `linear-gradient(90deg, ${(swatches ?? []).join(", ")})`,
+                }
+          }
+        />
       )}
 
-      <div className="flex w-full items-start gap-3">
+      <div className="flex w-full items-center gap-3">
         {Icon && (
           <span
             className={cn(
-              "flex size-9 shrink-0 items-center justify-center border",
+              "flex size-9 shrink-0 items-center justify-center rounded-sm",
               selected
-                ? "border-gold/40 text-gold"
-                : "border-[hsl(var(--border))] text-muted-foreground"
+                ? "bg-gold/10 text-gold"
+                : "bg-[var(--bg-elevated)] text-[var(--text-secondary)]"
             )}
           >
-            <Icon className="size-4" />
+            <Icon className="size-4" strokeWidth={1.75} />
           </span>
         )}
         <div className="min-w-0 flex-1">
           <p
             className={cn(
-              "text-sm font-medium",
-              selected ? "text-gold" : "text-foreground"
+              "text-sm font-medium tracking-[-0.01em]",
+              selected ? "text-foreground" : "text-foreground"
             )}
           >
             {label}
           </p>
-          {descriptor && (
-            <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
+          {descriptor && !compact && (
+            <p className="mt-0.5 text-xs leading-snug text-[var(--text-tertiary)]">
               {descriptor}
             </p>
           )}
         </div>
-        {multi && (
-          <span
-            className={cn(
-              "mt-0.5 size-4 shrink-0 border transition-colors",
-              selected
-                ? "border-gold bg-gold"
-                : "border-[hsl(var(--border))] bg-transparent"
-            )}
-            aria-hidden
-          />
-        )}
+        <span
+          className={cn(
+            "flex size-5 shrink-0 items-center justify-center rounded-full border transition-all duration-150",
+            selected
+              ? "border-gold bg-gold/15 text-gold"
+              : "border-border bg-transparent",
+          )}
+          aria-hidden
+        >
+          {selected ? (
+            <Check className="size-3" strokeWidth={2.5} />
+          ) : null}
+        </span>
       </div>
     </button>
   );

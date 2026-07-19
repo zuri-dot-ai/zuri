@@ -27,8 +27,8 @@ export function ContentPerformanceTeaser({ unlocked }: Props) {
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-gold/5 to-transparent" />
       <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-gold/10 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-gold">
-            <Lock className="size-3" /> Growth+
+          <div className="mb-2 inline-flex items-center gap-1.5 rounded-sm border border-border px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-[var(--text-tertiary)]">
+            <Lock className="size-3" strokeWidth={1.75} /> Growth+
           </div>
           <h3 className="text-sm font-medium">Content performance</h3>
           <p className="mt-1 max-w-md text-xs text-muted-foreground">

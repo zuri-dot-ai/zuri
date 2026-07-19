@@ -54,7 +54,7 @@ export function SettingsView({
             <button
               key={id}
               onClick={() => setTab(id)}
-              className={`flex items-center gap-3 rounded-none px-3 py-2.5 text-left text-sm font-medium transition-colors ${
+              className={`flex items-center gap-3 rounded-sm px-3 py-2.5 text-left text-sm font-medium transition-colors ${
                 tab === id
                   ? "bg-surface text-gold"
                   : "text-muted-foreground hover:bg-surface hover:text-foreground"
@@ -226,7 +226,7 @@ function BusinessTab({ profile }: { profile: BusinessProfileRow | null }) {
         <select
           value={f.tone}
           onChange={(e) => setF({ ...f, tone: e.target.value })}
-          className="flex h-11 w-full rounded-none border border-border bg-background px-4 text-sm focus:border-gold/60 focus:outline-none"
+          className="flex h-11 w-full rounded-sm border border-border bg-background px-4 text-sm focus:border-gold/60 focus:outline-none"
         >
           {["professional", "warm", "bold", "playful"].map((t) => (
             <option key={t} value={t} className="capitalize">
@@ -302,7 +302,7 @@ function BillingTab({ account }: { account: AccountView | null }) {
       </div>
 
       {/* Current plan */}
-      <div className="surface rounded-none border border-border p-5">
+      <div className="surface rounded-sm border border-border p-5">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs uppercase tracking-wider text-muted-foreground">
@@ -334,7 +334,7 @@ function BillingTab({ account }: { account: AccountView | null }) {
           {upgradePlans.map((p) => (
             <div
               key={p.id}
-              className={`surface rounded-none border p-5 ${
+              className={`surface rounded-sm border p-5 ${
                 p.highlight ? "border-gold bg-muted" : "border-border"
               }`}
             >
@@ -448,7 +448,7 @@ function NotificationsTab() {
         ).map(({ key, label, desc }) => (
           <label
             key={key}
-            className="flex cursor-pointer items-start gap-4 rounded-none border border-border p-4 transition-colors hover:bg-muted/50"
+            className="flex cursor-pointer items-start gap-4 rounded-sm border border-border p-4 transition-colors hover:bg-muted/50"
           >
             <div className="mt-0.5 flex-1">
               <p className="font-medium">{label}</p>
@@ -507,7 +507,7 @@ function DangerTab() {
         </p>
       </div>
 
-      <div className="surface rounded-none border border-error p-5">
+      <div className="surface rounded-sm border border-error p-5">
         <p className="font-medium text-error">Delete account</p>
         <p className="mt-1 text-sm text-muted-foreground">
           Permanently deletes your account, website, content plan, and all data. Your published

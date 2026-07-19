@@ -51,7 +51,6 @@ export function Step7Platforms({
   onValidityChange,
   onSkip,
 }: Step7PlatformsProps) {
-  // Continue always enabled — skip is allowed
   useEffect(() => {
     onValidityChange(true);
   }, [onValidityChange]);
@@ -67,15 +66,15 @@ export function Step7Platforms({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-heading text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
+        <h1 className="text-[1.75rem] font-semibold tracking-[-0.02em] text-foreground md:text-[2rem]">
           Where do you want to show up?
         </h1>
-        <p className="mt-2 text-muted-foreground">
+        <p className="mt-2 text-[0.9375rem] text-[var(--text-secondary)]">
           Choose all that apply. You can change this later.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
         {PLATFORMS.map((platform) => (
           <SelectionCard
             key={platform.id}
@@ -88,7 +87,7 @@ export function Step7Platforms({
         ))}
       </div>
 
-      <p className="text-xs text-muted-foreground">
+      <p className="text-caption text-[var(--text-tertiary)]">
         Platform availability depends on your plan. You can adjust this at any
         time.
       </p>
@@ -96,7 +95,7 @@ export function Step7Platforms({
       <button
         type="button"
         onClick={onSkip}
-        className="text-sm text-gold hover:underline"
+        className="text-sm text-gold transition-colors hover:underline"
       >
         I&apos;ll set this up later →
       </button>

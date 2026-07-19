@@ -75,12 +75,12 @@ export function QuickLinksRow({ agenciesUnlocked }: Props) {
                 )}
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex size-10 items-center justify-center rounded-[10px] bg-gold/10 text-gold">
-                    <Icon className="size-5" strokeWidth={1.75} />
+                  <div className="flex size-9 items-center justify-center rounded-full bg-gold/10 text-gold">
+                    <Icon className="size-4" strokeWidth={1.75} />
                   </div>
                   {locked && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-gold/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-gold">
-                      <Lock className="size-3" /> Growth+
+                    <span className="inline-flex items-center gap-1 rounded-sm border border-border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-[var(--text-tertiary)]">
+                      <Lock className="size-3" strokeWidth={1.75} /> Growth+
                     </span>
                   )}
                 </div>

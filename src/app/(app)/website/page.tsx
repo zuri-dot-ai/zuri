@@ -24,11 +24,13 @@ export default async function WebsitePage() {
           <h1>Your Website</h1>
         </header>
         <EmptyState
+          variant="website"
           icon={Globe}
           title="No website yet"
           description="Complete onboarding and Zuri will compose a premium website for your business."
           actionLabel="Go to onboarding"
           actionHref="/onboarding"
+          actionVariant="primary"
         />
       </div>
     );

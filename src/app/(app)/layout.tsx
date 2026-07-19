@@ -23,11 +23,11 @@ export default async function AppLayout({
     .maybeSingle();
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="app-shell flex min-h-screen bg-background">
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar businessName={profile?.business_name ?? undefined} />
-        <main className="flex-1 overflow-y-auto px-4 pb-24 pt-6 md:px-8 md:pb-8">
+        <main className="flex-1 overflow-y-auto px-4 pb-24 pt-6 sm:px-5 md:px-8 md:pb-8">
           {children}
           <PaymentToast />
           <FirstVisitTour />

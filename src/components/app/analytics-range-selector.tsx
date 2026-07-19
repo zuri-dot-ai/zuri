@@ -26,7 +26,7 @@ export function AnalyticsRangeSelector({
 
   return (
     <div
-      className="flex flex-wrap gap-1 rounded-[10px] border border-border bg-surface p-1"
+      className="flex flex-wrap gap-1 rounded-md border border-border bg-[var(--bg-secondary)] p-1"
       role="tablist"
       aria-label="Date range"
     >
@@ -38,10 +38,10 @@ export function AnalyticsRangeSelector({
           aria-selected={current === opt.value}
           onClick={() => setRange(opt.value)}
           className={cn(
-            "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+            "rounded-sm px-3 py-1.5 text-xs font-medium transition-colors",
             current === opt.value
-              ? "bg-gold/15 text-gold"
-              : "text-muted-foreground hover:text-foreground"
+              ? "bg-[var(--bg-elevated)] text-gold"
+              : "text-[var(--text-tertiary)] hover:text-foreground"
           )}
         >
           {opt.label}

@@ -27,14 +27,14 @@ export function LockedFeature({
   return (
     <div
       className={cn(
-        "surface flex flex-col items-center border border-dashed border-gold/40 px-6 py-14 text-center",
+        "flex flex-col items-center rounded-md border border-border bg-[var(--bg-secondary)] px-6 py-14 text-center",
         className
       )}
     >
-      <div className="flex size-12 items-center justify-center border border-border bg-muted">
-        <Lock className="size-5 text-gold" />
+      <div className="flex size-12 items-center justify-center rounded-full border border-border bg-[var(--bg-elevated)]">
+        <Lock className="size-5 text-gold" strokeWidth={1.75} />
       </div>
-      <h3 className="mt-4 font-heading text-xl font-semibold">{title}</h3>
+      <h3 className="mt-4 text-h2 font-semibold tracking-[-0.015em]">{title}</h3>
       <p className="mt-2 max-w-sm text-sm text-muted-foreground">{description}</p>
       <Button className="mt-6" onClick={() => router.push(href)}>
         <Zap className="size-4" /> Upgrade to {requiredPlan}

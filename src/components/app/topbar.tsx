@@ -66,7 +66,7 @@ export function Topbar({ businessName }: { businessName?: string }) {
     <header className="flex h-16 items-center justify-between border-b border-border bg-background px-4 md:px-6">
       <div className="flex items-center gap-3">
         <span className="md:hidden">
-          <Logo showMark href="/dashboard" size="sm" />
+          <Logo variant="app" href="/dashboard" size="sm" />
         </span>
         {businessName && (
           <span className="hidden text-sm text-muted-foreground md:inline">
@@ -74,11 +74,12 @@ export function Topbar({ businessName }: { businessName?: string }) {
           </span>
         )}
       </div>
-      <div className="flex items-center gap-1">
+
+      <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={toggleTheme}
-          className="rounded-none p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="icon-btn"
           aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
         >
           {theme === "dark" ? (
@@ -87,11 +88,12 @@ export function Topbar({ businessName }: { businessName?: string }) {
             <Moon className="size-5" strokeWidth={1.75} />
           )}
         </button>
+
         <div className="relative" ref={panelRef}>
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
-            className="relative rounded-none p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="icon-btn relative"
             aria-label="Notifications"
             aria-expanded={open}
           >
@@ -102,7 +104,7 @@ export function Topbar({ businessName }: { businessName?: string }) {
           </button>
           <div
             className={cn(
-              "notif-panel absolute right-0 top-full z-50 mt-2 w-[320px] border border-border bg-background shadow-[var(--elevation-3,0_12px_32px_rgba(0,0,0,.18))]",
+              "notif-panel absolute right-0 top-full z-50 mt-2 w-[320px] rounded-md border border-border bg-[var(--bg-elevated)] shadow-[var(--elevation-3)]",
               open && "open"
             )}
           >
@@ -123,7 +125,7 @@ export function Topbar({ businessName }: { businessName?: string }) {
                     key={n.id}
                     href={n.action_url || "/notifications"}
                     onClick={() => setOpen(false)}
-                    className="notif-item block border-b border-border px-4 py-3 hover:bg-muted"
+                    className="notif-item block border-b border-border px-4 py-3 hover:bg-[var(--bg-secondary)]"
                   >
                     <p className="text-sm font-medium">{n.title}</p>
                     {n.body && (
@@ -137,15 +139,17 @@ export function Topbar({ businessName }: { businessName?: string }) {
             </div>
           </div>
         </div>
+
         <button
           type="button"
           onClick={signOut}
-          className="rounded-none p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="icon-btn"
           aria-label="Sign out"
         >
           <LogOut className="size-5" strokeWidth={1.75} />
         </button>
-        <div className="avatar current ml-1 flex size-9 items-center justify-center rounded-none bg-gold font-semibold text-[var(--black)]">
+
+        <div className="flex size-8 items-center justify-center rounded-full bg-gold text-xs font-semibold text-[var(--accent-foreground)]">
           {initial}
         </div>
       </div>

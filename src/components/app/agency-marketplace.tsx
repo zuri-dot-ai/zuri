@@ -86,7 +86,7 @@ export function AgencyMarketplace({ agencies, plan }: { agencies: AgencyRow[]; p
       )}
 
       {agencies.length === 0 && (
-        <div className="empty-state surface border border-dashed py-16 text-center">
+        <div className="empty-state py-16 text-center">
           <h3>Partners coming soon</h3>
           <p>
             We&apos;re onboarding vetted agencies for your market. Check back shortly —
@@ -102,8 +102,10 @@ export function AgencyMarketplace({ agencies, plan }: { agencies: AgencyRow[]; p
             key={s}
             onClick={() => setFilter(s)}
             className={cn(
-              "rounded-none border px-4 py-1.5 text-sm capitalize transition-all",
-              filter === s ? "border-gold bg-gold text-background" : "border-border text-muted-foreground hover:border-gold/40"
+              "rounded-sm border px-4 py-1.5 text-sm capitalize transition-all",
+              filter === s
+                ? "border-gold bg-gold text-[var(--accent-foreground)]"
+                : "border-border text-muted-foreground hover:border-[var(--border-hover)] hover:bg-[var(--bg-elevated)]"
             )}
           >
             {s}
@@ -158,7 +160,7 @@ export function AgencyMarketplace({ agencies, plan }: { agencies: AgencyRow[]; p
           <div className="h-full w-full max-w-md overflow-y-auto border-l border-border bg-surface p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h2 className="font-heading text-2xl font-semibold">Match with {active.name}</h2>
-              <button onClick={() => setActive(null)} className="rounded-none p-1.5 text-muted-foreground hover:bg-muted">
+              <button onClick={() => setActive(null)} className="rounded-sm p-1.5 text-muted-foreground hover:bg-muted">
                 <X className="size-5" />
               </button>
             </div>

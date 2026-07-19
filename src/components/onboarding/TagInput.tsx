@@ -63,7 +63,6 @@ export function TagInput({
       return;
     }
 
-    // Duplicates: silently ignore
     if (value.some((t) => t.toLowerCase() === clean.toLowerCase())) {
       setDraft("");
       setError(null);
@@ -91,27 +90,29 @@ export function TagInput({
 
   return (
     <div className={cn("space-y-3", className)}>
-      <div className="flex flex-wrap gap-2">
-        {value.map((tag) => (
-          <span
-            key={tag}
-            className="inline-flex items-center gap-1.5 border border-gold bg-[hsl(var(--surface))] px-3 py-1 text-sm text-gold"
-          >
-            {tag}
-            <button
-              type="button"
-              onClick={() => {
-                onChange(value.filter((t) => t !== tag));
-                setError(null);
-              }}
-              className="p-0.5 hover:text-gold-hover"
-              aria-label={`Remove ${tag}`}
+      {value.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {value.map((tag) => (
+            <span
+              key={tag}
+              className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-[var(--bg-elevated)] px-3 py-1.5 text-sm text-foreground"
             >
-              <X className="size-3" />
-            </button>
-          </span>
-        ))}
-      </div>
+              {tag}
+              <button
+                type="button"
+                onClick={() => {
+                  onChange(value.filter((t) => t !== tag));
+                  setError(null);
+                }}
+                className="rounded-sm p-0.5 text-[var(--text-tertiary)] transition-colors hover:text-foreground"
+                aria-label={`Remove ${tag}`}
+              >
+                <X className="size-3" strokeWidth={2} />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
 
       <Input
         value={draft}
@@ -125,10 +126,10 @@ export function TagInput({
         }}
         placeholder={placeholder}
         disabled={value.length >= MAX_SERVICES}
-        className="h-12"
+        className="onboarding-input h-12"
       />
 
-      <p className="text-xs text-muted-foreground">
+      <p className="text-caption text-[var(--text-tertiary)]">
         {value.length} of {MAX_SERVICES} services added
       </p>
 
@@ -141,7 +142,7 @@ export function TagInput({
               key={s}
               type="button"
               onClick={() => tryAdd(s)}
-              className="border border-[hsl(var(--border))] bg-[hsl(var(--surface))] px-3 py-1 text-xs text-muted-foreground transition-colors hover:border-gold/40 hover:text-gold"
+              className="rounded-sm border border-border bg-transparent px-3 py-1.5 text-xs text-[var(--text-secondary)] transition-colors duration-150 hover:border-gold/40 hover:text-gold"
             >
               + {s}
             </button>

@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { marketingUrl } from "@/lib/marketing-url";
+import { authCallbackUrl } from "@/lib/auth/redirect";
 
 const PENDING_PLAN_KEY = "zuri_pending_plan";
 
@@ -85,7 +86,10 @@ function SignupForm() {
           full_name: fullName,
           terms_accepted: true,
         },
-        emailRedirectTo: `${window.location.origin}/api/auth/callback?next=/onboarding`,
+        emailRedirectTo: authCallbackUrl(
+          window.location.origin,
+          "/onboarding"
+        ),
       },
     });
 
@@ -124,7 +128,10 @@ function SignupForm() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/api/auth/callback?next=/onboarding`,
+        redirectTo: authCallbackUrl(window.location.origin, "/onboarding"),
+        queryParams: {
+          prompt: "select_account",
+        },
       },
     });
     if (error) toast.error(error.message);

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthShell } from "@/components/auth/auth-shell";
+import { authCallbackUrl } from "@/lib/auth/redirect";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -19,7 +20,10 @@ export default function ForgotPasswordPage() {
     setLoading(true);
     const supabase = createClient();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/api/auth/callback?next=/settings?tab=profile`,
+      redirectTo: authCallbackUrl(
+        window.location.origin,
+        "/settings?tab=profile"
+      ),
     });
     setLoading(false);
     if (error) {

@@ -17,29 +17,26 @@ const config: Config = {
     },
     extend: {
       colors: {
-        // ── ZURI CORE BRAND (System A — docs/13 §1) ─────
-        background: "hsl(var(--background))",     // #0e0e10
-        surface: "hsl(var(--surface))",           // #1a1a1d
-        foreground: "hsl(var(--foreground))",     // #f2f2f3
+        background: "hsl(var(--background))",
+        surface: "hsl(var(--surface))",
+        foreground: "hsl(var(--foreground))",
         muted: {
           DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))", // #a7a8ad text-mid
+          foreground: "hsl(var(--muted-foreground))",
         },
-        border: "hsl(var(--border))",             // #2b2b2f
+        border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
 
-        // ── WARM GOLD ACCENT (marketing-site match) ─────
         gold: {
-          DEFAULT: "#d4a656",
-          hover: "#f0c878",
+          DEFAULT: "var(--accent)",
+          hover: "var(--accent-hover)",
         },
         primary: {
-          DEFAULT: "hsl(var(--primary))",         // #d4a656
+          DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
         },
 
-        // ── STATUS ──────────────────────────────────────
         success: "#3D9970",
         error: "#C0392B",
         destructive: {
@@ -47,7 +44,6 @@ const config: Config = {
           foreground: "#F0EEE9",
         },
 
-        // ── shadcn aliases ──────────────────────────────
         card: {
           DEFAULT: "hsl(var(--surface))",
           foreground: "hsl(var(--foreground))",
@@ -61,27 +57,31 @@ const config: Config = {
           foreground: "hsl(var(--foreground))",
         },
         accent: {
-          DEFAULT: "hsl(var(--accent))",
+          DEFAULT: "var(--bg-elevated)",
           foreground: "hsl(var(--foreground))",
         },
       },
 
       fontFamily: {
-        // Headings — elegant, premium
         heading: ["var(--font-cormorant)", "Georgia", "serif"],
-        // Body / UI — clean, modern
-        sans: ["var(--font-montserrat)", "system-ui", "sans-serif"],
-        // Data / code
-        mono: ["var(--font-jetbrains)", "monospace"],
+        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+        mono: ["var(--font-inter)", "system-ui", "sans-serif"],
+      },
+
+      fontSize: {
+        display: ["2.25rem", { lineHeight: "1.15", fontWeight: "700", letterSpacing: "-0.02em" }],
+        h1: ["1.5rem", { lineHeight: "1.25", fontWeight: "600", letterSpacing: "-0.02em" }],
+        h2: ["1.125rem", { lineHeight: "1.35", fontWeight: "600", letterSpacing: "-0.015em" }],
+        body: ["0.9375rem", { lineHeight: "1.5", fontWeight: "400" }],
+        caption: ["0.8125rem", { lineHeight: "1.4", fontWeight: "400" }],
       },
 
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        lg: "var(--radius-lg)",
+        md: "var(--radius-md)",
+        sm: "var(--radius-sm)",
       },
 
-      // ── MOTION STYLE TOKENS (Website Generator) ────────
       transitionTimingFunction: {
         "slow-elegant": "cubic-bezier(0.25, 0.1, 0.25, 1)",
         "crisp-modern": "cubic-bezier(0.4, 0, 0.2, 1)",

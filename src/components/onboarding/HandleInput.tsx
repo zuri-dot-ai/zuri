@@ -192,7 +192,7 @@ export function HandleInput({
             onChange(sanitizeHandleInput(e.target.value));
           }}
           placeholder="your-business"
-          className="h-11 pr-10 font-mono text-sm"
+          className="onboarding-input h-11 pr-10 font-mono text-sm"
           autoComplete="off"
           spellCheck={false}
         />
@@ -232,7 +232,7 @@ export function HandleInput({
                     setUserEdited(true);
                     onChange(s);
                   }}
-                  className="border border-gold/40 bg-[hsl(var(--surface))] px-2.5 py-0.5 font-mono text-xs text-gold hover:border-gold"
+                  className="rounded-sm border border-border bg-[var(--bg-elevated)] px-2.5 py-1 font-mono text-xs text-gold transition-colors hover:border-gold"
                 >
                   {s}
                 </button>

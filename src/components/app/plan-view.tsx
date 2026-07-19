@@ -78,7 +78,7 @@ export function PlanView({
               const badge = BADGES[b];
               if (!badge) return null;
               return (
-                <div key={b} className="flex items-center gap-2 rounded-none border border-border bg-background px-3 py-2">
+                <div key={b} className="flex items-center gap-2 rounded-sm border border-border bg-background px-3 py-2">
                   <span className="text-xl">{badge.emoji}</span>
                   <span className="text-sm font-medium">{badge.label}</span>
                 </div>

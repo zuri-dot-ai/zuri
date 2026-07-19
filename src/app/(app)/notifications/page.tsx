@@ -28,14 +28,16 @@ export default async function NotificationsPage() {
 
       {!items?.length ? (
         <EmptyState
+          variant="notifications"
           icon={Bell}
           title="No notifications yet"
           description="When your site gets submissions, content is ready, or milestones hit, they'll show up here."
           actionLabel="Go to Home"
           actionHref="/dashboard"
+          actionVariant="secondary"
         />
       ) : (
-        <ul className="divide-y divide-border border border-border">
+        <ul className="divide-y divide-border overflow-hidden rounded-md border border-border bg-[var(--bg-secondary)]">
           {items.map((n) => (
             <li key={n.id}>
               <Link

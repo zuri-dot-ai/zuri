@@ -1,4 +1,15 @@
-export const ONBOARDING_STORAGE_KEY = "zuri_onboarding";
+/** v2 = 5 data steps + building (step 6). Old key abandoned for clean remaps. */
+export const ONBOARDING_STORAGE_KEY = "zuri_onboarding_v2";
+
+export const ONBOARDING_TOTAL_STEPS = 5;
+
+export const ONBOARDING_STEP_LABELS: Record<number, string> = {
+  1: "Name",
+  2: "Business identity",
+  3: "Offerings & audience",
+  4: "Brand feel",
+  5: "Where you show up",
+};
 
 export interface OnboardingState {
   step: number;

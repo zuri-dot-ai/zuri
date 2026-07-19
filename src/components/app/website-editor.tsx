@@ -122,7 +122,7 @@ export function WebsiteEditor({
             key={t}
             onClick={() => setMobileTab(t)}
             className={cn(
-              "flex flex-1 items-center justify-center gap-2 rounded-none border py-2 text-sm capitalize",
+              "flex flex-1 items-center justify-center gap-2 rounded-sm border py-2 text-sm capitalize",
               mobileTab === t
                 ? "border-gold bg-surface text-gold"
                 : "border-border text-muted-foreground"
@@ -164,7 +164,7 @@ export function WebsiteEditor({
                 placeholderEntries.map(([key, value]) => (
                   <div
                     key={key}
-                    className="rounded-none border border-border bg-background px-3 py-2"
+                    className="rounded-sm border border-border bg-background px-3 py-2"
                   >
                     <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
                       {key.replace(/_/g, " ")}
