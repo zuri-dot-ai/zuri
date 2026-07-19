@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { HelpCircle, LogOut, Settings } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/ui/logo";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -13,6 +13,7 @@ import {
   PRIMARY_NAV,
   WORKSPACE_NAV,
   MARKETPLACE_NAV,
+  UTILITY_NAV,
   type NavItem,
 } from "@/components/app/nav-config";
 
@@ -93,7 +94,7 @@ function SidebarAvatarMenu() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center gap-3 rounded-sm px-2 py-2 text-left transition-colors hover:bg-[var(--bg-elevated)]"
+        className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left transition-colors hover:bg-[var(--bg-elevated)]"
         aria-expanded={open}
         aria-haspopup="menu"
         aria-label="Account menu"
@@ -119,24 +120,6 @@ function SidebarAvatarMenu() {
           role="menu"
           className="absolute bottom-full left-0 right-0 z-50 mb-2 overflow-hidden rounded-md border border-border bg-[var(--bg-elevated)] py-1 shadow-[var(--elevation-3)]"
         >
-          <Link
-            href="/settings"
-            role="menuitem"
-            onClick={() => setOpen(false)}
-            className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-[var(--bg-secondary)] hover:text-foreground"
-          >
-            <Settings className="size-4" strokeWidth={1.75} />
-            Settings
-          </Link>
-          <Link
-            href="/help"
-            role="menuitem"
-            onClick={() => setOpen(false)}
-            className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-[var(--bg-secondary)] hover:text-foreground"
-          >
-            <HelpCircle className="size-4" strokeWidth={1.75} />
-            Help
-          </Link>
           <button
             type="button"
             role="menuitem"
@@ -155,7 +138,7 @@ function SidebarAvatarMenu() {
 export function Sidebar() {
   return (
     <aside className="hidden h-full shrink-0 border-r border-border bg-background md:flex md:w-[240px] md:flex-col">
-      <div className="flex h-16 shrink-0 items-center border-b border-border px-5">
+      <div className="flex h-16 shrink-0 items-center justify-center px-5">
         <Logo variant="app" size="navbar" href="/dashboard" />
       </div>
 
@@ -164,6 +147,8 @@ export function Sidebar() {
         <NavGroup label="Workspace" items={WORKSPACE_NAV} />
         <div className="mx-3 my-3 border-t border-border" />
         <NavGroup items={MARKETPLACE_NAV} />
+        <div className="mx-3 my-3 border-t border-border" />
+        <NavGroup items={UTILITY_NAV} />
       </nav>
 
       <div className="sidebar-foot shrink-0 border-t border-border p-3">

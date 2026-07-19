@@ -12,22 +12,20 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) redirect("/login");
-
-  // Fetch business name for the topbar
-  const { data: profile } = await supabase
-    .from("business_profiles")
-    .select("business_name")
-    .eq("user_id", user.id)
-    .maybeSingle();
 
   return (
     <div className="app-shell flex h-dvh overflow-hidden bg-background">
       <Sidebar />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <Topbar businessName={profile?.business_name ?? undefined} />
-        <main className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-6 sm:px-5 md:px-8 md:pb-8">
+        {/* Mobile-only top chrome — desktop is sidebar-only */}
+        <div className="md:hidden">
+          <Topbar />
+        </div>
+        <main className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-6 sm:px-5 md:px-8 md:pb-8 md:pt-8">
           {children}
           <PaymentToast />
           <FirstVisitTour />

@@ -223,15 +223,10 @@ table.data-table tr:hover td{ background:var(--surface-alt); }
   position:absolute; top:6px; right:7px; width:8px; height:8px; border-radius:50%;
   background:#e2555a; border:2px solid var(--bg-secondary);
 }
+/* Legacy notif panel — unused; React popover will own positioning in B5 */
 .notif-panel{
-  position:absolute; top:56px; right:1.6rem; width:340px; max-height:420px; overflow-y:auto;
-  background:var(--bg-elevated); border:1px solid var(--border-solid); border-radius:12px;
-  box-shadow:var(--elevation-3);
-  opacity:0; transform:translateY(-8px); pointer-events:none;
-  transition:opacity .2s ease, transform .2s ease;
-  z-index:50;
+  display:none;
 }
-.notif-panel.open{ opacity:1; transform:translateY(0); pointer-events:auto; }
 .notif-panel-head{ padding:1rem 1.2rem; border-bottom:1px solid var(--border-solid); display:flex; justify-content:space-between; align-items:center; }
 .notif-panel-head h4{ font-size:.9rem; }
 .notif-panel-head a{ font-size:.76rem; color:var(--gold); cursor:pointer; }
