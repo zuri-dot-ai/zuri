@@ -9,6 +9,11 @@ import { Logo } from "@/components/ui/logo";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { useUser } from "@/hooks/use-user";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   PRIMARY_NAV,
   WORKSPACE_NAV,
   MARKETPLACE_NAV,
@@ -159,33 +164,40 @@ export function HamburgerButton({
   onClick: () => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="relative inline-flex size-11 items-center justify-center rounded-md text-gold transition-colors hover:bg-gold/10"
-      aria-label={open ? "Close menu" : "Open menu"}
-      aria-expanded={open}
-    >
-      <span className="relative block size-6" aria-hidden>
-        <span
-          className={cn(
-            "absolute left-0.5 top-[6px] h-[2px] w-5 rounded-full bg-current transition-all duration-200 ease-out",
-            open && "top-[11px] rotate-45"
-          )}
-        />
-        <span
-          className={cn(
-            "absolute left-0.5 top-[11px] h-[2px] w-5 rounded-full bg-current transition-all duration-200 ease-out",
-            open && "opacity-0"
-          )}
-        />
-        <span
-          className={cn(
-            "absolute left-0.5 top-[16px] h-[2px] w-5 rounded-full bg-current transition-all duration-200 ease-out",
-            open && "top-[11px] -rotate-45"
-          )}
-        />
-      </span>
-    </button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          onClick={onClick}
+          className="relative inline-flex size-11 items-center justify-center rounded-md text-gold transition-colors hover:bg-gold/10"
+          aria-label={open ? "Close menu" : "Open menu"}
+          aria-expanded={open}
+        >
+          <span className="relative block size-6" aria-hidden>
+            <span
+              className={cn(
+                "absolute left-0.5 top-[6px] h-[2px] w-5 rounded-full bg-current transition-all duration-200 ease-out",
+                open && "top-[11px] rotate-45"
+              )}
+            />
+            <span
+              className={cn(
+                "absolute left-0.5 top-[11px] h-[2px] w-5 rounded-full bg-current transition-all duration-200 ease-out",
+                open && "opacity-0"
+              )}
+            />
+            <span
+              className={cn(
+                "absolute left-0.5 top-[16px] h-[2px] w-5 rounded-full bg-current transition-all duration-200 ease-out",
+                open && "top-[11px] -rotate-45"
+              )}
+            />
+          </span>
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="bottom">
+        {open ? "Close menu" : "Open menu"}
+      </TooltipContent>
+    </Tooltip>
   );
 }

@@ -10,6 +10,8 @@ interface StatCardProps {
   className?: string;
   /** Optional trend: positive / negative / flat — shows a sparkline placeholder */
   trend?: "up" | "down" | "flat";
+  /** Subtle breathing glow when a streak is active */
+  live?: boolean;
 }
 
 function Sparkline({ trend = "flat" }: { trend?: "up" | "down" | "flat" }) {
@@ -51,11 +53,12 @@ export function StatCard({
   accent,
   className,
   trend = "flat",
+  live,
 }: StatCardProps) {
   return (
     <div
       className={cn(
-        "flex items-start justify-between gap-3 rounded-md border border-border bg-[var(--bg-secondary)] p-5 transition-shadow hover:shadow-[var(--elevation-2)]",
+        "flex items-start justify-between gap-3 rounded-lg border border-[rgba(201,162,39,0.16)] bg-[var(--bg-secondary)] p-5 transition-shadow hover:border-[rgba(201,162,39,0.28)] hover:shadow-[var(--elevation-2)]",
         className
       )}
     >
@@ -65,10 +68,11 @@ export function StatCard({
         </p>
         <p
           className={cn(
-            "mt-2 text-2xl font-semibold tracking-[-0.02em]",
+            "mt-2 flex items-center gap-2 font-sans text-2xl font-semibold tracking-[-0.02em]",
             accent && "text-gold"
           )}
         >
+          {live && <span className="streak-live__dot" aria-hidden />}
           {value}
         </p>
         {hint && (
@@ -77,8 +81,19 @@ export function StatCard({
         <Sparkline trend={trend} />
       </div>
       {Icon && (
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gold/10 text-gold">
-          <Icon className="size-4" strokeWidth={1.75} />
+        <div
+          className={cn(
+            "flex size-9 shrink-0 items-center justify-center rounded-full bg-gold/10 text-gold",
+            live && "relative"
+          )}
+        >
+          {live && (
+            <span
+              aria-hidden
+              className="absolute inset-0 animate-pulse rounded-full bg-gold/10"
+            />
+          )}
+          <Icon className="relative size-4" strokeWidth={1.75} />
         </div>
       )}
     </div>

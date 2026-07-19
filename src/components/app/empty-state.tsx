@@ -100,13 +100,15 @@ export function EmptyState({
       <h3 className="mt-5 font-heading text-2xl font-medium tracking-[0.015em]">{title}</h3>
       <p className="mt-2 max-w-sm text-sm text-muted-foreground">{description}</p>
       {actionLabel && actionHref && (
-        <Button
-          className="mt-6"
-          variant={actionVariant === "secondary" ? "outline" : "default"}
-          asChild
-        >
-          <Link href={actionHref}>{actionLabel}</Link>
-        </Button>
+        actionVariant === "primary" ? (
+          <Link href={actionHref} className="btn-gold mt-6">
+            {actionLabel}
+          </Link>
+        ) : (
+          <Button className="mt-6" variant="outline" asChild>
+            <Link href={actionHref}>{actionLabel}</Link>
+          </Button>
+        )
       )}
     </div>
   );

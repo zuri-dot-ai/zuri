@@ -287,7 +287,7 @@ function BusinessTab({ profile }: { profile: BusinessProfileRow | null }) {
         <select
           value={f.tone}
           onChange={(e) => setF({ ...f, tone: e.target.value })}
-          className="flex h-11 w-full rounded-sm border border-border bg-background px-4 text-sm focus:border-gold/60 focus:outline-none"
+          className="flex h-11 w-full rounded-sm border border-border bg-background px-4 text-sm focus:border-gold/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(201,162,39,0.35)]"
         >
           {["professional", "warm", "bold", "playful"].map((t) => (
             <option key={t} value={t} className="capitalize">

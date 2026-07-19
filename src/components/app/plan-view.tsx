@@ -64,7 +64,13 @@ export function PlanView({
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Current streak" value={`${streak} 🔥`} icon={Flame} accent />
+        <StatCard
+          label="Current streak"
+          value={`${streak} day${streak === 1 ? "" : "s"}`}
+          icon={Flame}
+          accent
+          live={streak > 0}
+        />
         <StatCard label="Tasks done" value={`${completed} / 90`} icon={CheckCircle2} />
         <StatCard label="Longest streak" value={progress?.longest_streak ?? 0} icon={Trophy} />
       </div>
