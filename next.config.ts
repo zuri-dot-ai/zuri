@@ -43,7 +43,7 @@ const securityHeaders = [
       "font-src 'self' https://fonts.gstatic.com",
 
       // Images: self + data URIs + stock photo CDNs + Supabase storage + Google AI (Imagen)
-      "img-src 'self' data: blob: https://images.unsplash.com https://images.pexels.com https://*.supabase.co https://*.supabase.in https://generativelanguage.googleapis.com",
+      "img-src 'self' data: blob: https://images.unsplash.com https://images.pexels.com https://*.supabase.co https://*.supabase.in https://generativelanguage.googleapis.com https://lh3.googleusercontent.com",
 
       // Connections: self + all external APIs
       "connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://api.flutterwave.com https://checkout.flutterwave.com https://api.unsplash.com https://api.pexels.com https://generativelanguage.googleapis.com https://api.resend.com https://graph.facebook.com https://searchconsole.googleapis.com https://api.vercel.com",

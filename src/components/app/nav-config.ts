@@ -7,6 +7,7 @@ import {
   BarChart3,
   HelpCircle,
   CalendarCheck,
+  Bell,
   type LucideIcon,
 } from "lucide-react";
 
@@ -34,10 +35,16 @@ export const MARKETPLACE_NAV: NavItem[] = [
   { href: "/agencies", label: "Agency Marketplace", icon: Users },
 ];
 
-/** Sidebar avatar menu utilities (Notifications live in topbar) */
+/** Sidebar avatar menu utilities */
 export const UTILITY_NAV: NavItem[] = [
   { href: "/settings", label: "Settings", icon: Settings },
   { href: "/help", label: "Help", icon: HelpCircle },
+];
+
+/** Mobile drawer utilities — includes Notifications (canonical mobile nav) */
+export const DRAWER_UTILITY_NAV: NavItem[] = [
+  { href: "/notifications", label: "Notifications", icon: Bell },
+  ...UTILITY_NAV,
 ];
 
 /** Mobile bottom tabs — Home + Workspace */

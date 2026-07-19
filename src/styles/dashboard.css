@@ -25,7 +25,8 @@ button{font-family:inherit;}
   border-right:1px solid var(--border-solid);
   display:flex; flex-direction:column;
   padding:1.4rem 1rem;
-  position:sticky; top:0; height:100vh;
+  height:100%;
+  overflow:hidden;
 }
 .sidebar-logo{ display:flex; align-items:center; gap:.6rem; padding:.4rem .6rem 1.6rem; }
 .sidebar-logo img{ height:24px; }
@@ -40,16 +41,17 @@ button{font-family:inherit;}
 .sidebar-link:hover{ background:var(--surface-alt); color:var(--text); }
 .sidebar-link.active{ background:var(--surface-alt); color:var(--text); }
 .sidebar-link.active .icon{ color:var(--gold); opacity:1; }
-.sidebar-foot{ border-top:1px solid var(--border-solid); padding-top:1rem; margin-top:1rem; }
+.sidebar-foot{ /* foot chrome — spacing handled in React */ }
 
-.main-area{ flex:1; min-width:0; }
+.main-area{ flex:1; min-width:0; min-height:0; }
 .topbar{
   height:64px;
   border-bottom:1px solid var(--border-solid);
   display:flex; align-items:center; justify-content:space-between;
   padding:0 1.6rem;
   background:var(--bg-secondary);
-  position:sticky; top:0; z-index:20;
+  flex-shrink:0;
+  z-index:20;
 }
 .topbar-title{ font-size:1.05rem; font-weight:600; }
 .topbar-actions{ display:flex; align-items:center; gap:1rem; }
@@ -122,14 +124,14 @@ html[data-theme="dark"] .theme-toggle .knob{ left:20px; }
   transition:opacity .15s ease, filter .15s ease;
 }
 .bar-chart .bar:hover, .bar-chart .bar:focus-visible{ opacity:1; filter:brightness(1.08); outline:none; }
-.bar-chart .bar-label{ font-size:.65rem; color:var(--text-dim); text-align:center; margin-top:.4rem; min-height:1em; font-family:var(--font-inter),system-ui,sans-serif; }
+.bar-chart .bar-label{ font-size:.65rem; color:var(--text-dim); text-align:center; margin-top:.4rem; min-height:1em; font-family:var(--font-body),system-ui,sans-serif; }
 .bar-col{ display:flex; flex-direction:column; align-items:center; flex:1; height:100%; justify-content:flex-end; position:relative; }
 .bar-tooltip{
   position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%);
   background:var(--bg-secondary); border:1px solid var(--border-solid); border-radius:8px;
   padding:.4rem .55rem; font-size:.72rem; color:var(--text); white-space:nowrap;
   box-shadow:var(--elevation-2); z-index:5; pointer-events:none;
-  font-family:var(--font-inter),system-ui,sans-serif;
+  font-family:var(--font-body),system-ui,sans-serif;
 }
 
 /* ---------- TABLE ---------- */
@@ -190,7 +192,7 @@ table.data-table tr:hover td{ background:var(--surface-alt); }
 
 .page-head{ margin-bottom:1.6rem; }
 .page-head h1{
-  font-family:var(--font-inter),system-ui,sans-serif;
+  font-family:var(--font-body),system-ui,sans-serif;
   font-weight:600;
   font-size:1.5rem;
   letter-spacing:-.02em;

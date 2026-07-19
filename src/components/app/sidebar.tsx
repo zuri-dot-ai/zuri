@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { HelpCircle, LogOut, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/ui/logo";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { useUser } from "@/hooks/use-user";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -65,13 +66,12 @@ function NavGroup({
 }
 
 function SidebarAvatarMenu() {
-  const { user } = useUser();
+  const { user, avatarUrl } = useUser();
   const router = useRouter();
   const supabase = createClient();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const initial = (user?.full_name || user?.email || "Z").charAt(0).toUpperCase();
   const name = user?.full_name || user?.email || "Account";
 
   useEffect(() => {
@@ -98,9 +98,12 @@ function SidebarAvatarMenu() {
         aria-haspopup="menu"
         aria-label="Account menu"
       >
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gold text-xs font-semibold text-[var(--accent-foreground)]">
-          {initial}
-        </span>
+        <UserAvatar
+          name={user?.full_name}
+          email={user?.email}
+          src={avatarUrl}
+          size={32}
+        />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-medium text-foreground">
             {name}
@@ -151,19 +154,19 @@ function SidebarAvatarMenu() {
 
 export function Sidebar() {
   return (
-    <aside className="hidden border-r border-border bg-background md:flex md:w-[240px] md:flex-col">
-      <div className="flex h-16 items-center border-b border-border px-5">
+    <aside className="hidden h-full shrink-0 border-r border-border bg-background md:flex md:w-[240px] md:flex-col">
+      <div className="flex h-16 shrink-0 items-center border-b border-border px-5">
         <Logo variant="app" size="navbar" href="/dashboard" />
       </div>
 
-      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
+      <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-y-contain p-3">
         <NavGroup items={PRIMARY_NAV} />
         <NavGroup label="Workspace" items={WORKSPACE_NAV} />
         <div className="mx-3 my-3 border-t border-border" />
         <NavGroup items={MARKETPLACE_NAV} />
       </nav>
 
-      <div className="sidebar-foot border-t border-border p-3">
+      <div className="sidebar-foot shrink-0 border-t border-border p-3">
         <SidebarAvatarMenu />
       </div>
     </aside>

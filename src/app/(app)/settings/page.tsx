@@ -25,11 +25,17 @@ export default async function SettingsPage() {
       getActivePlanId(supabase, user!.id),
     ]);
 
+  const meta = user!.user_metadata as Record<string, unknown> | undefined;
+  const metaAvatar =
+    (typeof meta?.avatar_url === "string" && meta.avatar_url) ||
+    (typeof meta?.picture === "string" && meta.picture) ||
+    null;
+
   const account: AccountView = {
     id: user!.id,
     email: profile?.email ?? user!.email ?? null,
     full_name: profile?.full_name ?? null,
-    avatar_url: profile?.avatar_url ?? null,
+    avatar_url: profile?.avatar_url ?? metaAvatar ?? null,
     subscription_plan: planId,
     subscription_status: (sub?.status as SubscriptionStatus) ?? "inactive",
   };

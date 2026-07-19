@@ -65,20 +65,28 @@ export async function GET(request: Request) {
 
   let dest = next;
   if (user) {
+    const meta = user.user_metadata as Record<string, unknown> | undefined;
+    const metaAvatar =
+      (typeof meta?.avatar_url === "string" && meta.avatar_url) ||
+      (typeof meta?.picture === "string" && meta.picture) ||
+      null;
+
     const { data: profile } = await supabase
       .from("profiles")
-      .select("onboarding_completed, terms_accepted_at")
+      .select("onboarding_completed, terms_accepted_at, avatar_url")
       .eq("id", user.id)
       .maybeSingle();
 
+    const profilePatch: Record<string, string> = {};
     if (!profile?.terms_accepted_at) {
-      await supabase
-        .from("profiles")
-        .update({
-          terms_accepted_at: new Date().toISOString(),
-          terms_version: "1.0",
-        })
-        .eq("id", user.id);
+      profilePatch.terms_accepted_at = new Date().toISOString();
+      profilePatch.terms_version = "1.0";
+    }
+    if (!profile?.avatar_url && metaAvatar) {
+      profilePatch.avatar_url = metaAvatar;
+    }
+    if (Object.keys(profilePatch).length > 0) {
+      await supabase.from("profiles").update(profilePatch).eq("id", user.id);
     }
 
     dest = profile?.onboarding_completed ? next : "/onboarding";

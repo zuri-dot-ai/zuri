@@ -138,6 +138,12 @@
     text-rendering: optimizeLegibility;
   }
 
+  /* Lock viewport scroll to the app main pane (not the document) */
+  body:has(.app-shell) {
+    overflow: hidden;
+    height: 100dvh;
+  }
+
   /* Strict rule: headings = Cormorant; UI/body = Montserrat */
   h1,
   h2,

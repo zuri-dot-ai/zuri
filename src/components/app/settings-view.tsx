@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { PRICING } from "@/lib/constants";
 import { formatNGN as fmtNGN } from "@/lib/utils";
 import type { AccountView, BusinessProfileRow } from "@/types/database";
@@ -106,6 +107,24 @@ function ProfileTab({ account }: { account: AccountView | null }) {
       </div>
 
       <div className="space-y-4">
+        <div className="flex items-center gap-4">
+          <UserAvatar
+            name={account?.full_name}
+            email={account?.email}
+            src={account?.avatar_url}
+            size={56}
+          />
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium text-foreground">
+              {account?.full_name || "Your profile"}
+            </p>
+            <p className="truncate text-xs text-muted-foreground">
+              {account?.avatar_url
+                ? "Photo from your Google account"
+                : "Add a Google sign-in to show your photo"}
+            </p>
+          </div>
+        </div>
         <div className="space-y-2">
           <Label>Full name</Label>
           <Input
