@@ -150,7 +150,7 @@ export function MobileNavDrawer({ open, onClose }: MobileNavDrawerProps) {
   );
 }
 
-/** Animated hamburger ↔ X (~200ms) */
+/** Animated gold hamburger ↔ X (~200ms) — mobile only, top-right */
 export function HamburgerButton({
   open,
   onClick,
@@ -162,7 +162,7 @@ export function HamburgerButton({
     <button
       type="button"
       onClick={onClick}
-      className="icon-btn relative md:hidden"
+      className="relative inline-flex size-9 items-center justify-center rounded-md text-gold transition-colors hover:bg-gold/10 md:hidden"
       aria-label={open ? "Close menu" : "Open menu"}
       aria-expanded={open}
     >

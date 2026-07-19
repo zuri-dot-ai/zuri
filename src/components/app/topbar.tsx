@@ -1,14 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Bell, LogOut, Moon, Sun } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Bell } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useUser } from "@/hooks/use-user";
-import { useTheme } from "@/components/theme-provider";
 import { Logo } from "@/components/ui/logo";
-import { UserAvatar } from "@/components/ui/user-avatar";
 import {
   HamburgerButton,
   MobileNavDrawer,
@@ -25,17 +22,14 @@ interface NotifRow {
 }
 
 export function Topbar({ businessName }: { businessName?: string }) {
-  const { user, avatarUrl } = useUser();
-  const router = useRouter();
+  const { user } = useUser();
   const supabase = createClient();
-  const { theme, toggleTheme } = useTheme();
   const [open, setOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [items, setItems] = useState<NotifRow[]>([]);
   const panelRef = useRef<HTMLDivElement>(null);
 
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
-
   const unread = items.filter((i) => !i.read_at).length;
 
   useEffect(() => {
@@ -63,20 +57,11 @@ export function Topbar({ businessName }: { businessName?: string }) {
     return () => document.removeEventListener("mousedown", onDoc);
   }, [open]);
 
-  async function signOut() {
-    await supabase.auth.signOut();
-    router.push("/login");
-    router.refresh();
-  }
-
   return (
     <>
       <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-border bg-background px-4 md:px-6">
-        <div className="flex min-w-0 flex-1 items-center gap-2 md:gap-3">
-          <HamburgerButton
-            open={drawerOpen}
-            onClick={() => setDrawerOpen((v) => !v)}
-          />
+        {/* Left: logo (mobile) / business name (desktop) */}
+        <div className="flex min-w-0 flex-1 items-center">
           <span className="md:hidden">
             <Logo variant="app" href="/dashboard" size="sm" />
           </span>
@@ -87,20 +72,8 @@ export function Topbar({ businessName }: { businessName?: string }) {
           )}
         </div>
 
-        <div className="flex shrink-0 items-center gap-2">
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className="icon-btn"
-            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-          >
-            {theme === "dark" ? (
-              <Sun className="size-5" strokeWidth={1.75} />
-            ) : (
-              <Moon className="size-5" strokeWidth={1.75} />
-            )}
-          </button>
-
+        {/* Right: notifications + gold hamburger (mobile only) */}
+        <div className="flex shrink-0 items-center gap-1">
           <div className="relative" ref={panelRef}>
             <button
               type="button"
@@ -152,20 +125,9 @@ export function Topbar({ businessName }: { businessName?: string }) {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={signOut}
-            className="icon-btn"
-            aria-label="Sign out"
-          >
-            <LogOut className="size-5" strokeWidth={1.75} />
-          </button>
-
-          <UserAvatar
-            name={user?.full_name}
-            email={user?.email}
-            src={avatarUrl}
-            size={32}
+          <HamburgerButton
+            open={drawerOpen}
+            onClick={() => setDrawerOpen((v) => !v)}
           />
         </div>
       </header>

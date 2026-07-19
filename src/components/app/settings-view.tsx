@@ -11,9 +11,12 @@ import {
   Save,
   ExternalLink,
   LogOut,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -82,7 +85,9 @@ export function SettingsView({
 
 // ── PROFILE TAB ──────────────────────────────────────────
 function ProfileTab({ account }: { account: AccountView | null }) {
+  const router = useRouter();
   const supabase = createClient();
+  const { theme, toggleTheme } = useTheme();
   const [name, setName] = useState(account?.full_name ?? "");
   const [saving, setSaving] = useState(false);
 
@@ -95,6 +100,12 @@ function ProfileTab({ account }: { account: AccountView | null }) {
     setSaving(false);
     if (error) return toast.error("Could not save profile.");
     toast.success("Profile updated.");
+  }
+
+  async function signOut() {
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
   }
 
   return (
@@ -146,6 +157,37 @@ function ProfileTab({ account }: { account: AccountView | null }) {
         {saving ? <span className="zuri-spinner" /> : <Save className="size-4" />}
         Save changes
       </Button>
+
+      <div className="border-t border-border pt-5">
+        <h3 className="text-sm font-medium text-foreground">Appearance</h3>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Switch between dark and light mode.
+        </p>
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="mt-3 flex w-full items-center justify-between rounded-md border border-border bg-[var(--bg-elevated)] px-4 py-3 text-sm transition-colors hover:border-gold/40"
+        >
+          <span className="flex items-center gap-2.5">
+            {theme === "dark" ? (
+              <Moon className="size-4 text-gold" strokeWidth={1.75} />
+            ) : (
+              <Sun className="size-4 text-gold" strokeWidth={1.75} />
+            )}
+            {theme === "dark" ? "Dark mode" : "Light mode"}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            Tap to switch
+          </span>
+        </button>
+      </div>
+
+      <div className="border-t border-border pt-5">
+        <Button variant="outline" onClick={signOut} className="w-full gap-2">
+          <LogOut className="size-4" strokeWidth={1.75} />
+          Sign out
+        </Button>
+      </div>
     </div>
   );
 }
