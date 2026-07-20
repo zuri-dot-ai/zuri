@@ -3,26 +3,141 @@
 import Link from "next/link";
 import { AlertTriangle, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { createClient } from "@/lib/supabase/client";
+
+type JobStatus = "queued" | "processing" | "failed" | "completed" | null;
 
 export function GenerationStatusCard({
-  status,
-  errorMessage,
+  status: initialStatus,
+  errorMessage: initialError,
   jobId,
 }: {
-  status: "queued" | "processing" | "failed" | "completed" | null;
+  status: JobStatus;
   errorMessage?: string | null;
   jobId?: string | null;
 }) {
   const [retrying, setRetrying] = useState(false);
+  const [status, setStatus] = useState<JobStatus>(initialStatus);
+  const [errorMessage, setErrorMessage] = useState(initialError);
+  const kickoffAttempted = useRef(false);
+  const statusRef = useRef(status);
+  statusRef.current = status;
+
+  useEffect(() => {
+    setStatus(initialStatus);
+    setErrorMessage(initialError);
+  }, [initialStatus, initialError]);
+
+  // Poll job status + kick off stuck queued jobs
+  useEffect(() => {
+    if (!jobId || !initialStatus || initialStatus === "completed" || initialStatus === "failed") {
+      return;
+    }
+
+    const supabase = createClient();
+    let cancelled = false;
+
+    async function poll() {
+      const { data } = await supabase
+        .from("website_generation_jobs")
+        .select("status, error_message")
+        .eq("id", jobId!)
+        .maybeSingle();
+
+      if (cancelled || !data) return;
+
+      const next = data.status as JobStatus;
+      setStatus(next);
+      setErrorMessage(data.error_message);
+
+      // #region agent log
+      fetch("http://127.0.0.1:7419/ingest/076876bf-f6bf-42a9-9aff-97004d9bbbbe", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Debug-Session-Id": "af0cfc",
+        },
+        body: JSON.stringify({
+          sessionId: "af0cfc",
+          runId: "post-fix",
+          hypothesisId: "H-F1",
+          location: "GenerationStatusCard:poll",
+          message: "job status polled",
+          data: { jobId, status: next },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+      // #endregion
+
+      if (next === "completed") {
+        toast.success("Your website is ready!");
+        window.location.reload();
+      }
+    }
+
+    async function kickoffIfStuck() {
+      if (kickoffAttempted.current || statusRef.current !== "queued") return;
+      kickoffAttempted.current = true;
+
+      // #region agent log
+      fetch("http://127.0.0.1:7419/ingest/076876bf-f6bf-42a9-9aff-97004d9bbbbe", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Debug-Session-Id": "af0cfc",
+        },
+        body: JSON.stringify({
+          sessionId: "af0cfc",
+          runId: "post-fix",
+          hypothesisId: "H-F1",
+          location: "GenerationStatusCard:kickoff",
+          message: "kicking off stuck queued job",
+          data: { jobId },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+      // #endregion
+
+      try {
+        const res = await fetch("/api/ai/generate-website", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ jobId }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          toast.error(data.error ?? "Could not start website generation");
+          setStatus("failed");
+          setErrorMessage(data.error ?? "Generation failed to start");
+        } else {
+          setStatus("processing");
+          void poll();
+        }
+      } catch (e) {
+        toast.error(
+          e instanceof Error ? e.message : "Could not start website generation"
+        );
+      }
+    }
+
+    const kickoffTimer = setTimeout(() => void kickoffIfStuck(), 3000);
+    const pollTimer = setInterval(() => void poll(), 4000);
+    void poll();
+
+    return () => {
+      cancelled = true;
+      clearTimeout(kickoffTimer);
+      clearInterval(pollTimer);
+    };
+  }, [jobId, initialStatus]);
 
   if (!status || status === "completed") return null;
 
   async function retry() {
     setRetrying(true);
     try {
-      // Prefer existing jobId; omit it so the API creates a new job when none exists
       const body: { jobId?: string } = {};
       if (jobId) body.jobId = jobId;
 
@@ -34,7 +149,8 @@ export function GenerationStatusCard({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Retry failed");
       toast.success("Generation restarted. This usually takes under a minute.");
-      window.location.href = "/dashboard";
+      setStatus("processing");
+      window.location.reload();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not retry generation");
     } finally {
@@ -67,14 +183,19 @@ export function GenerationStatusCard({
     );
   }
 
+  const statusLabel =
+    status === "queued"
+      ? "Queued — starting your website build…"
+      : "Building your website…";
+
   return (
     <div className="surface flex items-start gap-3 border border-gold/30 p-5">
       <Loader2 className="mt-0.5 size-5 shrink-0 animate-spin text-gold" />
       <div>
-        <h3 className="font-medium">Building your website…</h3>
+        <h3 className="font-medium">{statusLabel}</h3>
         <p className="mt-1 text-sm text-muted-foreground">
           Finding your style, writing your copy, and adding finishing touches.
-          You can keep browsing — we&apos;ll update this when it&apos;s ready.{" "}
+          This page updates automatically when your site is ready.{" "}
           <Link href="/website" className="text-gold hover:underline">
             Check website
           </Link>

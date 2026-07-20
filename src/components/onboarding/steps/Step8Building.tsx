@@ -187,6 +187,49 @@ export function Step8Building({ state }: Step8BuildingProps) {
         }).catch(() => {});
         // #endregion
 
+        // Kick off generation from the client — server fire-and-forget fetch
+        // is killed when the Vercel lambda exits after this API returns.
+        if (data.jobId) {
+          setActiveIndex(2);
+          const genRes = await fetch("/api/ai/generate-website", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ jobId: data.jobId }),
+          });
+          const genData = (await genRes.json().catch(() => ({}))) as {
+            error?: string;
+            success?: boolean;
+          };
+
+          // #region agent log
+          fetch("http://127.0.0.1:7419/ingest/076876bf-f6bf-42a9-9aff-97004d9bbbbe", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Debug-Session-Id": "af0cfc",
+            },
+            body: JSON.stringify({
+              sessionId: "af0cfc",
+              runId: "post-fix",
+              hypothesisId: "H-F1",
+              location: "Step8Building.tsx:generate",
+              message: "client generation trigger result",
+              data: {
+                ok: genRes.ok,
+                status: genRes.status,
+                error: genData.error ?? null,
+                jobId: data.jobId,
+              },
+              timestamp: Date.now(),
+            }),
+          }).catch(() => {});
+          // #endregion
+
+          if (!genRes.ok) {
+            toast.error(genData.error ?? "Website generation failed to start");
+          }
+        }
+
         localStorage.removeItem(ONBOARDING_STORAGE_KEY);
         setActiveIndex(BUILD_STEPS.length - 1);
         setTimeout(() => router.push("/dashboard"), 800);
