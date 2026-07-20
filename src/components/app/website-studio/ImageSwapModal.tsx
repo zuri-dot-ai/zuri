@@ -178,7 +178,25 @@ export function ImageSwapModal({
         },
         body: JSON.stringify({
           sessionId: "21ff00",
-          runId: "pre-fix",
+          runId: "post-fix",
+          hypothesisId: "A",
+          location: "ImageSwapModal.tsx:commitUpload",
+          message: res.ok ? "upload ok" : "upload failed client",
+          data: {
+            status: res.status,
+            error: data.error ?? null,
+            debug: data.debug ?? null,
+            slot,
+          },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+      fetch("/api/debug-log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId: "21ff00",
+          runId: "post-fix",
           hypothesisId: "A",
           location: "ImageSwapModal.tsx:commitUpload",
           message: res.ok ? "upload ok" : "upload failed client",
@@ -192,7 +210,13 @@ export function ImageSwapModal({
         }),
       }).catch(() => {});
       // #endregion
-      if (!res.ok) throw new Error(data.error ?? "Upload failed");
+      if (!res.ok) {
+        const hint =
+          data.debug && typeof data.debug === "object"
+            ? ` [${JSON.stringify(data.debug)}]`
+            : "";
+        throw new Error((data.error ?? "Upload failed") + hint);
+      }
       if (!data.image) throw new Error("Upload failed");
       onUpdated(slot, data.image, data.needsReview);
       toast.success(`${formatFieldLabel(slot)} updated`);

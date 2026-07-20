@@ -11,6 +11,10 @@ import {
   MAX_FILE_SIZE_BYTES,
   validateUploadedFile,
 } from "@/lib/security/file-validation";
+import {
+  ensureWebsiteImagesBucket,
+  WEBSITE_IMAGES_BUCKET,
+} from "@/lib/website/ensure-website-images-bucket";
 import type { ActiveTheme, DesignArchetype, ResolvedImage } from "@/types/website";
 
 const MAX_BYTES = MAX_FILE_SIZE_BYTES;
@@ -111,27 +115,54 @@ export async function POST(req: Request) {
     );
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    const BUCKET = "website-images";
     const service = createServiceClient();
+    const ensure = await ensureWebsiteImagesBucket(service);
 
     // #region agent log
-    let bucketList: { id: string; name: string; public: boolean }[] = [];
-    let bucketListError: string | null = null;
+    const preUploadDebug = {
+      sessionId: "21ff00",
+      runId: "post-fix",
+      hypothesisId: "A",
+      location: "api/website/image/route.ts:ensure",
+      message: "ensure website-images bucket",
+      data: {
+        bucket: WEBSITE_IMAGES_BUCKET,
+        existed: ensure.existed,
+        created: ensure.created,
+        bucketIds: ensure.bucketIds,
+        ensureError: ensure.error,
+      },
+      timestamp: Date.now(),
+    };
     try {
-      const listed = await service.storage.listBuckets();
-      if (listed.error) bucketListError = listed.error.message;
-      bucketList = (listed.data ?? []).map((b) => ({
-        id: b.id,
-        name: b.name,
-        public: b.public,
-      }));
-    } catch (e) {
-      bucketListError = e instanceof Error ? e.message : "listBuckets failed";
+      await fetch(
+        "http://127.0.0.1:7419/ingest/076876bf-f6bf-42a9-9aff-97004d9bbbbe",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Debug-Session-Id": "21ff00",
+          },
+          body: JSON.stringify(preUploadDebug),
+        }
+      );
+    } catch {
+      /* ignore */
     }
     // #endregion
 
+    if (ensure.error) {
+      return NextResponse.json(
+        {
+          error: `Storage bucket unavailable: ${ensure.error}`,
+          debug: preUploadDebug.data,
+        },
+        { status: 500 }
+      );
+    }
+
     const { error: uploadErr } = await service.storage
-      .from(BUCKET)
+      .from(WEBSITE_IMAGES_BUCKET)
       .upload(storagePath, buffer, {
         contentType: file.type,
         upsert: true,
@@ -142,22 +173,24 @@ export async function POST(req: Request) {
       // #region agent log
       const debugPayload = {
         sessionId: "21ff00",
-        runId: "pre-fix",
+        runId: "post-fix",
         hypothesisId: "A",
         location: "api/website/image/route.ts:upload",
-        message: "upload failed",
+        message: "upload failed after ensure",
         data: {
-          bucket: BUCKET,
+          bucket: WEBSITE_IMAGES_BUCKET,
           uploadError: uploadErr.message,
-          uploadStatus: (uploadErr as { statusCode?: string }).statusCode ?? null,
+          uploadStatus:
+            (uploadErr as { statusCode?: string }).statusCode ?? null,
           storagePath,
-          bucketIds: bucketList.map((b) => b.id),
-          hasWebsiteImagesBucket: bucketList.some((b) => b.id === BUCKET),
-          bucketListError,
+          bucketIds: ensure.bucketIds,
+          hasWebsiteImagesBucket: ensure.bucketIds.includes(
+            WEBSITE_IMAGES_BUCKET
+          ),
+          created: ensure.created,
         },
         timestamp: Date.now(),
       };
-      // Best-effort remote ingest (no-op on Vercel if ingest unreachable)
       try {
         await fetch(
           "http://127.0.0.1:7419/ingest/076876bf-f6bf-42a9-9aff-97004d9bbbbe",
@@ -177,19 +210,14 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           error: uploadErr.message,
-          debug: {
-            bucket: BUCKET,
-            hasWebsiteImagesBucket: bucketList.some((b) => b.id === BUCKET),
-            bucketIds: bucketList.map((b) => b.id),
-            bucketListError,
-          },
+          debug: debugPayload.data,
         },
         { status: 500 }
       );
     }
 
     const { data: pub } = service.storage
-      .from("website-images")
+      .from(WEBSITE_IMAGES_BUCKET)
       .getPublicUrl(storagePath);
 
     resolved = {
