@@ -4,7 +4,10 @@
 
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { checkFeatureAccess } from "@/lib/payments/feature-gate";
+import {
+  canPublishWebsite,
+  getActivePlanId,
+} from "@/lib/payments/get-plan";
 import { validateFilledHtml } from "@/lib/website/generation-pipeline";
 import { sendSitePublishedEmail } from "@/lib/email/templates";
 import { createAuditLog } from "@/lib/security/audit";
@@ -26,14 +29,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Plan gate — Free cannot publish (websites limit is 0)
-  const gate = await checkFeatureAccess(supabase, user.id, "websites");
-  if (!gate.allowed) {
+  // Plan gate — Free is preview-only; Pro+ can publish live
+  const planId = await getActivePlanId(supabase, user.id);
+  if (!canPublishWebsite(planId)) {
     return NextResponse.json(
       {
         error:
           "Upgrade to Pro to publish your website. [Upgrade]",
-        upgradeRequired: gate.upgradeRequired,
+        upgradeRequired: "pro",
       },
       { status: 403 }
     );

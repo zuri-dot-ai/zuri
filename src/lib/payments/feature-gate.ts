@@ -47,7 +47,13 @@ export async function checkFeatureAccess(
     .from("subscriptions")
     .select("plan_id, status")
     .eq("user_id", userId)
-    .single();
+    .maybeSingle();
+
+  if (!sub) {
+    console.warn(
+      `[checkFeatureAccess] No subscriptions row for user ${userId} — defaulting to free`
+    );
+  }
 
   const planId = resolvePlanId(sub?.plan_id, sub?.status);
   const limits = PLAN_CONFIG[planId]?.limits;
@@ -103,7 +109,13 @@ export async function checkUsageLimit(
     .from("subscriptions")
     .select("plan_id, status")
     .eq("user_id", userId)
-    .single();
+    .maybeSingle();
+
+  if (!sub) {
+    console.warn(
+      `[checkUsageLimit] No subscriptions row for user ${userId} — defaulting to free`
+    );
+  }
 
   const planId = resolvePlanId(sub?.plan_id, sub?.status);
   const limits = PLAN_CONFIG[planId]?.limits;
@@ -123,7 +135,7 @@ export async function checkUsageLimit(
     .select(metric)
     .eq("user_id", userId)
     .eq("period_start", periodStartStr)
-    .single();
+    .maybeSingle();
 
   const used =
     (usage as Record<string, number> | null)?.[metric] ?? 0;

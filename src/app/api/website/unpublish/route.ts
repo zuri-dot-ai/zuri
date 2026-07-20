@@ -4,7 +4,10 @@
 
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { checkFeatureAccess } from "@/lib/payments/feature-gate";
+import {
+  canPublishWebsite,
+  getActivePlanId,
+} from "@/lib/payments/get-plan";
 import { createAuditLog } from "@/lib/security/audit";
 import { ERROR_MESSAGES } from "@/lib/errors/messages";
 
@@ -20,12 +23,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const gate = await checkFeatureAccess(supabase, user.id, "websites");
-  if (!gate.allowed) {
+  const planId = await getActivePlanId(supabase, user.id);
+  if (!canPublishWebsite(planId)) {
     return NextResponse.json(
       {
         error: "Upgrade required to manage your website",
-        upgradeRequired: gate.upgradeRequired,
+        upgradeRequired: "pro",
       },
       { status: 403 }
     );

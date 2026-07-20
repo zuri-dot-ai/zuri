@@ -12,6 +12,8 @@ export interface PlanConfig {
 
 export interface PlanLimits {
   websites: number;
+  /** Live publish to {handle}.buildzuri.com — Free is preview-only. */
+  can_publish: boolean;
   custom_domain: boolean;
   max_pages_per_site: number | null; // null = unlimited
   website_regenerations: number | null; // null = unlimited
@@ -45,9 +47,10 @@ export const PLAN_CONFIG: Record<PlanId, PlanConfig> = {
     price_monthly: 0,
     price_annual: 0,
     limits: {
-      websites: 0,
+      websites: 1, // preview site allowed; publish gated by can_publish
+      can_publish: false,
       custom_domain: false,
-      max_pages_per_site: 0,
+      max_pages_per_site: 5,
       website_regenerations: 0,
       priority_queue: false,
       remove_branding: false,
@@ -79,6 +82,7 @@ export const PLAN_CONFIG: Record<PlanId, PlanConfig> = {
     price_annual: 230000,
     limits: {
       websites: 1,
+      can_publish: true,
       custom_domain: false,
       max_pages_per_site: 5,
       website_regenerations: 1,
@@ -112,6 +116,7 @@ export const PLAN_CONFIG: Record<PlanId, PlanConfig> = {
     price_annual: 510000,
     limits: {
       websites: 1,
+      can_publish: true,
       custom_domain: true,
       max_pages_per_site: null,
       website_regenerations: 3,
@@ -145,6 +150,7 @@ export const PLAN_CONFIG: Record<PlanId, PlanConfig> = {
     price_annual: 730000,
     limits: {
       websites: 3,
+      can_publish: true,
       custom_domain: true,
       max_pages_per_site: null,
       website_regenerations: null,

@@ -213,58 +213,64 @@ export function Sidebar() {
         !ready && "transition-none"
       )}
     >
-      {/* Logo + underline separator + visible collapse toggle */}
+      {/* Logo row + underline + collapse toggle */}
       <div
         className={cn(
-          "flex shrink-0 flex-col items-center justify-center px-4 pt-5",
-          collapsed ? "pb-3" : "pb-4"
+          "flex shrink-0 flex-col px-4 pt-5",
+          collapsed ? "items-center pb-3" : "pb-4"
         )}
       >
         {collapsed ? (
-          <Link
-            href="/dashboard"
-            aria-label="Zuri home"
-            className="font-heading text-lg font-medium tracking-[0.12em] text-[var(--wood-word)] transition-colors"
-          >
-            Z
-          </Link>
-        ) : (
-          <Logo variant="app" size="navbar" href="/dashboard" />
-        )}
-        <span
-          aria-hidden
-          className={cn(
-            "mt-4 h-[2px] rounded-full bg-gradient-to-r from-transparent via-gold to-transparent shadow-[0_0_14px_rgba(201,162,39,0.35)]",
-            collapsed ? "w-10" : "w-24"
-          )}
-        />
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              onClick={toggle}
-              className={cn(
-                "mt-3 flex items-center rounded-md text-muted-foreground transition-colors hover:bg-[var(--bg-elevated)] hover:text-gold",
-                collapsed ? "justify-center px-2 py-2" : "gap-2 px-3 py-2"
-              )}
-              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          <>
+            <Link
+              href="/dashboard"
+              aria-label="Zuri home"
+              className="font-heading text-lg font-medium tracking-[0.12em] text-[var(--wood-word)] transition-colors"
             >
-              {collapsed ? (
-                <PanelLeft className="size-[18px]" strokeWidth={1.75} />
-              ) : (
-                <>
-                  <PanelLeftClose className="size-[18px] shrink-0" strokeWidth={1.75} />
-                  <span className="text-xs font-medium uppercase tracking-[0.12em]">
-                    Collapse
-                  </span>
-                </>
-              )}
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="right">
-            {collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          </TooltipContent>
-        </Tooltip>
+              Z
+            </Link>
+            <span
+              aria-hidden
+              className="mt-3 h-[2px] w-10 rounded-full bg-gradient-to-r from-transparent via-gold to-transparent shadow-[0_0_14px_rgba(201,162,39,0.35)]"
+            />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={toggle}
+                  className="mt-3 flex items-center justify-center rounded-md p-2 text-muted-foreground transition-colors hover:bg-[var(--bg-elevated)] hover:text-gold"
+                  aria-label="Expand sidebar"
+                >
+                  <PanelLeft className="size-[18px]" strokeWidth={1.75} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Expand sidebar</TooltipContent>
+            </Tooltip>
+          </>
+        ) : (
+          <>
+            <div className="flex w-full items-center justify-between gap-2">
+              <Logo variant="app" size="navbar" href="/dashboard" />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={toggle}
+                    className="flex shrink-0 items-center justify-center rounded-md p-2 text-muted-foreground transition-colors hover:bg-[var(--bg-elevated)] hover:text-gold"
+                    aria-label="Collapse sidebar"
+                  >
+                    <PanelLeftClose className="size-[18px]" strokeWidth={1.75} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right">Collapse sidebar</TooltipContent>
+              </Tooltip>
+            </div>
+            <span
+              aria-hidden
+              className="mt-3 h-[2px] w-24 rounded-full bg-gradient-to-r from-transparent via-gold to-transparent shadow-[0_0_14px_rgba(201,162,39,0.35)]"
+            />
+          </>
+        )}
       </div>
 
       <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-y-contain p-2">

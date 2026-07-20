@@ -46,12 +46,7 @@ function last7Days(): ConsistencyDay[] {
   return days;
 }
 
-export default async function DashboardPage({
-  searchParams,
-}: {
-  searchParams?: Promise<{ generation?: string }>;
-}) {
-  const params = searchParams ? await searchParams : {};
+export default async function DashboardPage() {
   const supabase = await createClient();
   const {
     data: { user },
@@ -177,14 +172,12 @@ export default async function DashboardPage({
   }));
 
   const jobStatus =
-    params.generation === "failed"
-      ? ("failed" as const)
-      : ((latestJob?.status as
-          | "queued"
-          | "processing"
-          | "failed"
-          | "completed"
-          | null) ?? null);
+    (latestJob?.status as
+      | "queued"
+      | "processing"
+      | "failed"
+      | "completed"
+      | null) ?? null;
 
   return (
     <div className="relative mx-auto max-w-5xl space-y-7 pb-8 page-enter">

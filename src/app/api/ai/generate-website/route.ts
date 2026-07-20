@@ -1,12 +1,11 @@
 // POST /api/ai/generate-website
 // docs/02_WEBSITE_BUILDER.md §4, §13
 // Auth: x-internal-secret (server-to-server) OR valid user session.
-// Plan gate (user-auth path only): any paid plan (websites limit > 0).
+// Generation is allowed on all plans (Free = preview; Pro+ can publish).
 
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { checkFeatureAccess } from "@/lib/payments/feature-gate";
 import { generateWebsite } from "@/lib/website/generation-pipeline";
 import type { BusinessProfile } from "@/types/brand";
 
@@ -73,22 +72,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     userId = user.id;
-
-    // Retrying an existing onboarding job is allowed on Free (first site).
-    // New generations from the dashboard require Pro+ (websites limit > 0).
-    const isRetry = Boolean(body.jobId);
-    if (!isRetry) {
-      const gate = await checkFeatureAccess(supabase, user.id, "websites");
-      if (!gate.allowed) {
-        return NextResponse.json(
-          {
-            error: gate.reason ?? "Upgrade required to generate a website",
-            upgradeRequired: gate.upgradeRequired,
-          },
-          { status: 403 }
-        );
-      }
-    }
   }
 
   if (!userId) {

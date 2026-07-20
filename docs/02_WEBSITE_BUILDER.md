@@ -725,14 +725,14 @@ Unchanged from v1 §12 — same component, update the `mailto:` target to
 
 | Method | Route | Description | Auth | Plan Gate |
 |---|---|---|---|---|
-| POST | /api/ai/generate-website | Trigger generation (§4) | Internal secret OR user auth | Any paid plan |
+| POST | /api/ai/generate-website | Trigger generation (§4) | Internal secret OR user auth | Free+ (preview); publish is Pro+ |
 | GET | /api/website | Get user's website (status + handle + theme) | Yes | Free+ |
 | PATCH | /api/website/placeholder | Edit or regenerate a text field | Yes | Pro+ |
 | PATCH | /api/website/theme | Swap color theme | Yes | Growth+ (per v1 §14 gating table, unchanged) |
 | POST | /api/website/image | Swap image for a slot | Yes | Pro+ |
-| POST | /api/website/publish | Publish live | Yes | Pro+ |
+| POST | /api/website/publish | Publish live to `{handle}.buildzuri.com` | Yes | Pro+ (`can_publish`) |
 | POST | /api/website/unpublish | Take offline | Yes | Pro+ |
-| POST | /api/website/regenerate | Full re-generation (new template pick + full re-fill) | Yes | Pro+ (counts against regen limit) |
+| POST | /api/website/regenerate | Full re-generation (new template pick + full re-fill) | Yes | Free+ generate; regen quota on Pro+ |
 | DELETE | /api/website | Delete website | Yes | Any |
 | POST | /api/website/custom-domain | Attach custom domain | Yes | Growth+ |
 | GET | /api/website/custom-domain/status | DNS propagation check | Yes | Growth+ |
@@ -740,11 +740,12 @@ Unchanged from v1 §12 — same component, update the `mailto:` target to
 | GET | /sites/[handle] | Serve published site (raw HTML) | Public | — |
 | GET | /preview/[handle] | Serve preview (raw HTML, owner-only) | Yes | Free+ |
 
-Plan-gated feature table: unchanged from v1 §14, with row labels updated —
+Plan model: **Free** generates and previews only; **Pro** publishes to
+`{handle}.buildzuri.com`; **Growth+** can attach a custom domain. Row labels
+from v1 §14 carry over with updates —
 "Edit global palette" → "Swap color theme", "Reorder sections" / "Add/remove
 optional sections" → **removed** (not possible in v2; templates are structurally
-fixed). All other rows (regeneration limits, custom domain, multiple websites,
-footer badge removal) carry over unchanged.
+fixed).
 
 ---
 

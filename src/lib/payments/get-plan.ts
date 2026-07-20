@@ -12,13 +12,20 @@ export async function getActivePlanId(
     .eq("user_id", userId)
     .maybeSingle();
 
+  if (!data) {
+    console.warn(
+      `[getActivePlanId] No subscriptions row for user ${userId} — defaulting to free`
+    );
+    return "free";
+  }
+
   const active =
-    data?.status === "active" ||
-    data?.status === "grace_period" ||
-    data?.status === "trialing";
+    data.status === "active" ||
+    data.status === "grace_period" ||
+    data.status === "trialing";
 
   if (!active) return "free";
-  return isPlanId(data?.plan_id) ? data.plan_id : "free";
+  return isPlanId(data.plan_id) ? data.plan_id : "free";
 }
 
 export function planDisplayName(planId: PlanId): string {
@@ -27,4 +34,14 @@ export function planDisplayName(planId: PlanId): string {
 
 export function isGrowthPlus(planId: PlanId): boolean {
   return planId === "growth" || planId === "premium";
+}
+
+/** Pro+ can publish live to {handle}.buildzuri.com; Free is preview-only. */
+export function canPublishWebsite(planId: PlanId): boolean {
+  return PLAN_CONFIG[planId].limits.can_publish === true;
+}
+
+/** Growth+ can attach a custom domain. */
+export function canUseCustomDomain(planId: PlanId): boolean {
+  return PLAN_CONFIG[planId].limits.custom_domain === true;
 }

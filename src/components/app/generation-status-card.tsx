@@ -22,15 +22,19 @@ export function GenerationStatusCard({
   async function retry() {
     setRetrying(true);
     try {
+      // Prefer existing jobId; omit it so the API creates a new job when none exists
+      const body: { jobId?: string } = {};
+      if (jobId) body.jobId = jobId;
+
       const res = await fetch("/api/ai/generate-website", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jobId }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Retry failed");
       toast.success("Generation restarted. This usually takes under a minute.");
-      window.location.reload();
+      window.location.href = "/dashboard";
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not retry generation");
     } finally {

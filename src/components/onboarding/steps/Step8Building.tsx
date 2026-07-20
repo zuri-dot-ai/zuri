@@ -108,7 +108,7 @@ export function Step8Building({ state }: Step8BuildingProps) {
 
         if (!res.ok) {
           localStorage.removeItem(ONBOARDING_STORAGE_KEY);
-          router.push("/dashboard?generation=failed");
+          router.push("/dashboard");
           return;
         }
 

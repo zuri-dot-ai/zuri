@@ -75,9 +75,10 @@ insert into plans (id, name, price_monthly, price_annual, limits) values
   0,
   0,
   '{
-    "websites": 0,
+    "websites": 1,
+    "can_publish": false,
     "custom_domain": false,
-    "max_pages_per_site": 0,
+    "max_pages_per_site": 5,
     "website_regenerations": 0,
     "priority_queue": false,
     "remove_branding": false,
@@ -109,6 +110,7 @@ insert into plans (id, name, price_monthly, price_annual, limits) values
   230000,
   '{
     "websites": 1,
+    "can_publish": true,
     "custom_domain": false,
     "max_pages_per_site": 5,
     "website_regenerations": 1,
@@ -142,6 +144,7 @@ insert into plans (id, name, price_monthly, price_annual, limits) values
   510000,
   '{
     "websites": 1,
+    "can_publish": true,
     "custom_domain": true,
     "max_pages_per_site": null,
     "website_regenerations": 3,
@@ -175,6 +178,7 @@ insert into plans (id, name, price_monthly, price_annual, limits) values
   730000,
   '{
     "websites": 3,
+    "can_publish": true,
     "custom_domain": true,
     "max_pages_per_site": null,
     "website_regenerations": null,
