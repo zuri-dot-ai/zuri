@@ -20,6 +20,41 @@ import {
   type ValidationResult,
 } from "@/lib/utils/validate";
 import { classifySupabaseError } from "@/lib/errors/supabase-errors";
+import { appendFileSync } from "fs";
+import { join } from "path";
+
+function debugLog(
+  hypothesisId: string,
+  location: string,
+  message: string,
+  data: Record<string, unknown>
+) {
+  const entry = {
+    sessionId: "af0cfc",
+    runId: "pre-fix",
+    hypothesisId,
+    location,
+    message,
+    data,
+    timestamp: Date.now(),
+  };
+  try {
+    appendFileSync(
+      join(process.cwd(), "debug-af0cfc.log"),
+      `${JSON.stringify(entry)}\n`
+    );
+  } catch {
+    /* ignore */
+  }
+  fetch("http://127.0.0.1:7419/ingest/076876bf-f6bf-42a9-9aff-97004d9bbbbe", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Debug-Session-Id": "af0cfc",
+    },
+    body: JSON.stringify(entry),
+  }).catch(() => {});
+}
 
 const FIRST_NAME_PATTERN = /^[\p{L}]+(?:[\s'-][\p{L}]+)*$/u;
 const BLOCKED_SERVICE_KEYWORDS = new Set([
@@ -37,6 +72,12 @@ export async function POST(req: Request) {
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  // #region agent log
+  debugLog("H-A", "onboarding/complete:entry", "request received", {
+    userId: user.id,
+  });
+  // #endregion
 
   let body: Record<string, unknown>;
   try {
@@ -205,6 +246,13 @@ export async function POST(req: Request) {
   if (existingHandle) errors.push("Handle is already taken");
 
   if (errors.length > 0) {
+    // #region agent log
+    debugLog("H-A", "onboarding/complete:validation", "validation failed", {
+      errors,
+      handle,
+      businessType,
+    });
+    // #endregion
     return NextResponse.json(
       { error: "Validation failed", details: errors },
       { status: 400 }
@@ -253,6 +301,12 @@ export async function POST(req: Request) {
   if (profileError) {
     console.error("Profile save error:", profileError);
     const classified = classifySupabaseError(profileError);
+    // #region agent log
+    debugLog("H-A", "onboarding/complete:profile", "profile save failed", {
+      code: profileError.code,
+      message: profileError.message,
+    });
+    // #endregion
     return NextResponse.json(
       { error: classified.message },
       { status: classified.status }
@@ -311,6 +365,16 @@ export async function POST(req: Request) {
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
   const internalSecret = process.env.INTERNAL_API_SECRET;
+  const hasGenerationEnv = Boolean(appUrl && internalSecret);
+
+  // #region agent log
+  debugLog("H-B", "onboarding/complete:generation-env", "generation trigger env", {
+    hasAppUrl: Boolean(appUrl),
+    hasInternalSecret: Boolean(internalSecret),
+    jobId: job?.id ?? null,
+    jobError: jobError?.message ?? null,
+  });
+  // #endregion
 
   if (appUrl && internalSecret) {
     fetch(`${appUrl}/api/ai/generate-website`, {
@@ -337,6 +401,13 @@ export async function POST(req: Request) {
       "Skipping website generation trigger: NEXT_PUBLIC_APP_URL or INTERNAL_API_SECRET missing"
     );
   }
+
+  // #region agent log
+  debugLog("H-B", "onboarding/complete:success", "onboarding complete ok", {
+    jobId: job?.id ?? null,
+    hasGenerationEnv,
+  });
+  // #endregion
 
   return NextResponse.json({ success: true, jobId: job?.id ?? null });
 }

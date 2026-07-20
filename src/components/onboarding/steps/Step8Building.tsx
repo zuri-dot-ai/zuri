@@ -9,6 +9,7 @@ import type { OnboardingState } from "@/lib/onboarding/types";
 import { ONBOARDING_STORAGE_KEY } from "@/lib/onboarding/types";
 import { sanitizeText } from "@/lib/utils/sanitize";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import { toast } from "sonner";
 
 const BUILD_STEPS = [
   {
@@ -100,22 +101,117 @@ export function Step8Building({ state }: Step8BuildingProps) {
       };
 
       try {
+        // #region agent log
+        fetch("http://127.0.0.1:7419/ingest/076876bf-f6bf-42a9-9aff-97004d9bbbbe", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Debug-Session-Id": "af0cfc",
+          },
+          body: JSON.stringify({
+            sessionId: "af0cfc",
+            runId: "pre-fix",
+            hypothesisId: "H-A",
+            location: "Step8Building.tsx:submit:start",
+            message: "onboarding complete request starting",
+            data: { handle: payload.handle, businessType: payload.businessType },
+            timestamp: Date.now(),
+          }),
+        }).catch(() => {});
+        // #endregion
+
         const res = await fetch("/api/onboarding/complete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
 
+        const data = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          details?: string[];
+          jobId?: string | null;
+          success?: boolean;
+        };
+
+        // #region agent log
+        fetch("http://127.0.0.1:7419/ingest/076876bf-f6bf-42a9-9aff-97004d9bbbbe", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Debug-Session-Id": "af0cfc",
+          },
+          body: JSON.stringify({
+            sessionId: "af0cfc",
+            runId: "pre-fix",
+            hypothesisId: "H-A",
+            location: "Step8Building.tsx:submit:response",
+            message: "onboarding complete response",
+            data: {
+              ok: res.ok,
+              status: res.status,
+              error: data.error ?? null,
+              details: data.details ?? null,
+              jobId: data.jobId ?? null,
+            },
+            timestamp: Date.now(),
+          }),
+        }).catch(() => {});
+        // #endregion
+
         if (!res.ok) {
+          const detailMsg = data.details?.length
+            ? data.details.join("; ")
+            : data.error ?? "Could not complete onboarding";
+          toast.error(detailMsg);
           localStorage.removeItem(ONBOARDING_STORAGE_KEY);
           router.push("/dashboard");
           return;
         }
 
+        // #region agent log
+        fetch("http://127.0.0.1:7419/ingest/076876bf-f6bf-42a9-9aff-97004d9bbbbe", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Debug-Session-Id": "af0cfc",
+          },
+          body: JSON.stringify({
+            sessionId: "af0cfc",
+            runId: "pre-fix",
+            hypothesisId: "H-B",
+            location: "Step8Building.tsx:submit:success",
+            message: "onboarding complete succeeded",
+            data: { jobId: data.jobId ?? null },
+            timestamp: Date.now(),
+          }),
+        }).catch(() => {});
+        // #endregion
+
         localStorage.removeItem(ONBOARDING_STORAGE_KEY);
         setActiveIndex(BUILD_STEPS.length - 1);
         setTimeout(() => router.push("/dashboard"), 800);
-      } catch {
+      } catch (err) {
+        // #region agent log
+        fetch("http://127.0.0.1:7419/ingest/076876bf-f6bf-42a9-9aff-97004d9bbbbe", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Debug-Session-Id": "af0cfc",
+          },
+          body: JSON.stringify({
+            sessionId: "af0cfc",
+            runId: "pre-fix",
+            hypothesisId: "H-A",
+            location: "Step8Building.tsx:submit:catch",
+            message: "onboarding complete network error",
+            data: {
+              error: err instanceof Error ? err.message : String(err),
+            },
+            timestamp: Date.now(),
+          }),
+        }).catch(() => {});
+        // #endregion
+
         setStatusMessage("Connection lost. Retrying...");
         setTimeout(() => {
           startedRef.current = false;
