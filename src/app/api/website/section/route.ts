@@ -26,18 +26,37 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Missing blockId" }, { status: 400 });
   }
 
-  // Load current website
   const { data: website } = await supabase
+    .from("websites")
+    .select("id, generation_version, template_html")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!website) {
+    return NextResponse.json({ error: "No website found" }, { status: 404 });
+  }
+
+  if (website.template_html || website.generation_version === 2) {
+    return NextResponse.json(
+      {
+        error:
+          "This editor API is deprecated. Use PATCH /api/website/placeholder instead.",
+      },
+      { status: 410 }
+    );
+  }
+
+  const { data: legacy } = await supabase
     .from("websites")
     .select("id, composition_json")
     .eq("user_id", user.id)
     .single();
 
-  if (!website?.composition_json) {
+  if (!legacy?.composition_json) {
     return NextResponse.json({ error: "No website found" }, { status: 404 });
   }
 
-  const composition = website.composition_json as WebsiteComposition;
+  const composition = legacy.composition_json as WebsiteComposition;
   const next: any = JSON.parse(JSON.stringify(composition));
 
   if (!next.content) next.content = { blocks: {} };

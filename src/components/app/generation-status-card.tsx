@@ -52,25 +52,6 @@ export function GenerationStatusCard({
       setStatus(next);
       setErrorMessage(data.error_message);
 
-      // #region agent log
-      fetch("http://127.0.0.1:7419/ingest/076876bf-f6bf-42a9-9aff-97004d9bbbbe", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Debug-Session-Id": "af0cfc",
-        },
-        body: JSON.stringify({
-          sessionId: "af0cfc",
-          runId: "post-fix",
-          hypothesisId: "H-F1",
-          location: "GenerationStatusCard:poll",
-          message: "job status polled",
-          data: { jobId, status: next },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {});
-      // #endregion
-
       if (next === "completed") {
         toast.success("Your website is ready!");
         window.location.reload();
@@ -80,25 +61,6 @@ export function GenerationStatusCard({
     async function kickoffIfStuck() {
       if (kickoffAttempted.current || statusRef.current !== "queued") return;
       kickoffAttempted.current = true;
-
-      // #region agent log
-      fetch("http://127.0.0.1:7419/ingest/076876bf-f6bf-42a9-9aff-97004d9bbbbe", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Debug-Session-Id": "af0cfc",
-        },
-        body: JSON.stringify({
-          sessionId: "af0cfc",
-          runId: "post-fix",
-          hypothesisId: "H-F1",
-          location: "GenerationStatusCard:kickoff",
-          message: "kicking off stuck queued job",
-          data: { jobId },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {});
-      // #endregion
 
       try {
         const res = await fetch("/api/ai/generate-website", {

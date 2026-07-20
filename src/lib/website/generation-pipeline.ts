@@ -77,13 +77,14 @@ export function normalizeSlotType(slot: string): CategorySlotType | string {
   return withoutIndex || raw;
 }
 
-/** Last-resort static fallback — docs/02_WEBSITE_BUILDER.md §4.5 / §18 path. */
+/** Last-resort static fallback — reliable picsum seed per archetype. */
 export function getArchetypeFallback(archetype: DesignArchetype): ResolvedImage {
+  const seed = archetype.replace(/-/g, "");
   return {
-    url: `/images/fallbacks/${archetype}.jpg`,
+    url: `https://picsum.photos/seed/zuri-${seed}/1200/800`,
     source: "fallback",
-    width: null,
-    height: null,
+    width: 1200,
+    height: 800,
     alt: `${archetype} fallback`,
   };
 }

@@ -324,18 +324,26 @@
   .powered-by a{border-bottom:1px solid rgba(250,248,245,.4);}
 
   /* WHATSAPP FLOAT */
-  #whatsapp-float{
-    position:fixed;bottom:24px;right:24px;z-index:900;
-  }
-  #whatsapp-float a{
-    display:flex;align-items:center;justify-content:center;
-    width:56px;height:56px;border-radius:50%;
-    background:#25D366;
-    box-shadow:0 6px 20px rgba(37,211,102,.4);
-    transition:transform .3s ease;
-  }
-  #whatsapp-float a:hover{transform:scale(1.08);}
-  #whatsapp-float svg{width:28px;height:28px;fill:#fff;}
+  #whatsapp-float {
+      position: fixed;
+      bottom: 1.25rem;
+      right: 1.25rem;
+      z-index: 9999;
+    }
+    #whatsapp-float a {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 3.25rem;
+      height: 3.25rem;
+      border-radius: 9999px;
+      background: #25D366;
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(37, 211, 102, 0.45);
+      transition: transform 0.2s ease;
+    }
+    #whatsapp-float a:hover { transform: scale(1.08); }
+    #whatsapp-float svg { width: 1.75rem; height: 1.75rem; fill: #fff; }
 
   /* REVEAL ANIMATIONS */
   .reveal{opacity:0;transform:translateY(20px);transition:opacity .35s ease, transform .35s ease;}

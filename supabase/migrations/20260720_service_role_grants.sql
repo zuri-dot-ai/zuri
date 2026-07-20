@@ -14,6 +14,11 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.notification_preferences TO
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.usage_tracking TO service_role;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.payment_history TO service_role;
 
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.templates TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.category_images TO service_role;
+GRANT SELECT ON TABLE public.templates TO authenticated;
+GRANT SELECT ON TABLE public.category_images TO authenticated;
+
 -- Authenticated row-scoped access (RLS enforces ownership)
 GRANT SELECT, UPDATE ON TABLE public.profiles TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.business_profiles TO authenticated;

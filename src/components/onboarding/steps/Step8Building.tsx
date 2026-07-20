@@ -101,25 +101,6 @@ export function Step8Building({ state }: Step8BuildingProps) {
       };
 
       try {
-        // #region agent log
-        fetch("http://127.0.0.1:7419/ingest/076876bf-f6bf-42a9-9aff-97004d9bbbbe", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Debug-Session-Id": "af0cfc",
-          },
-          body: JSON.stringify({
-            sessionId: "af0cfc",
-            runId: "pre-fix",
-            hypothesisId: "H-A",
-            location: "Step8Building.tsx:submit:start",
-            message: "onboarding complete request starting",
-            data: { handle: payload.handle, businessType: payload.businessType },
-            timestamp: Date.now(),
-          }),
-        }).catch(() => {});
-        // #endregion
-
         const res = await fetch("/api/onboarding/complete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -133,31 +114,6 @@ export function Step8Building({ state }: Step8BuildingProps) {
           success?: boolean;
         };
 
-        // #region agent log
-        fetch("http://127.0.0.1:7419/ingest/076876bf-f6bf-42a9-9aff-97004d9bbbbe", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Debug-Session-Id": "af0cfc",
-          },
-          body: JSON.stringify({
-            sessionId: "af0cfc",
-            runId: "pre-fix",
-            hypothesisId: "H-A",
-            location: "Step8Building.tsx:submit:response",
-            message: "onboarding complete response",
-            data: {
-              ok: res.ok,
-              status: res.status,
-              error: data.error ?? null,
-              details: data.details ?? null,
-              jobId: data.jobId ?? null,
-            },
-            timestamp: Date.now(),
-          }),
-        }).catch(() => {});
-        // #endregion
-
         if (!res.ok) {
           const detailMsg = data.details?.length
             ? data.details.join("; ")
@@ -167,25 +123,6 @@ export function Step8Building({ state }: Step8BuildingProps) {
           router.push("/dashboard");
           return;
         }
-
-        // #region agent log
-        fetch("http://127.0.0.1:7419/ingest/076876bf-f6bf-42a9-9aff-97004d9bbbbe", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Debug-Session-Id": "af0cfc",
-          },
-          body: JSON.stringify({
-            sessionId: "af0cfc",
-            runId: "pre-fix",
-            hypothesisId: "H-B",
-            location: "Step8Building.tsx:submit:success",
-            message: "onboarding complete succeeded",
-            data: { jobId: data.jobId ?? null },
-            timestamp: Date.now(),
-          }),
-        }).catch(() => {});
-        // #endregion
 
         // Kick off generation from the client — server fire-and-forget fetch
         // is killed when the Vercel lambda exits after this API returns.
@@ -201,30 +138,6 @@ export function Step8Building({ state }: Step8BuildingProps) {
             success?: boolean;
           };
 
-          // #region agent log
-          fetch("http://127.0.0.1:7419/ingest/076876bf-f6bf-42a9-9aff-97004d9bbbbe", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-Debug-Session-Id": "af0cfc",
-            },
-            body: JSON.stringify({
-              sessionId: "af0cfc",
-              runId: "post-fix",
-              hypothesisId: "H-F1",
-              location: "Step8Building.tsx:generate",
-              message: "client generation trigger result",
-              data: {
-                ok: genRes.ok,
-                status: genRes.status,
-                error: genData.error ?? null,
-                jobId: data.jobId,
-              },
-              timestamp: Date.now(),
-            }),
-          }).catch(() => {});
-          // #endregion
-
           if (!genRes.ok) {
             toast.error(genData.error ?? "Website generation failed to start");
           }
@@ -234,27 +147,6 @@ export function Step8Building({ state }: Step8BuildingProps) {
         setActiveIndex(BUILD_STEPS.length - 1);
         setTimeout(() => router.push("/dashboard"), 800);
       } catch (err) {
-        // #region agent log
-        fetch("http://127.0.0.1:7419/ingest/076876bf-f6bf-42a9-9aff-97004d9bbbbe", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Debug-Session-Id": "af0cfc",
-          },
-          body: JSON.stringify({
-            sessionId: "af0cfc",
-            runId: "pre-fix",
-            hypothesisId: "H-A",
-            location: "Step8Building.tsx:submit:catch",
-            message: "onboarding complete network error",
-            data: {
-              error: err instanceof Error ? err.message : String(err),
-            },
-            timestamp: Date.now(),
-          }),
-        }).catch(() => {});
-        // #endregion
-
         setStatusMessage("Connection lost. Retrying...");
         setTimeout(() => {
           startedRef.current = false;

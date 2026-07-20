@@ -1,8 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { Globe } from "lucide-react";
 import { EmptyState } from "@/components/app/empty-state";
-import { WebsiteEditor } from "@/components/app/website-editor";
+import { WebsiteStudio } from "@/components/app/website-studio";
 import { getActivePlanId } from "@/lib/payments/get-plan";
+import { normalizeFilledImages } from "@/lib/website/recompose-html";
 import type { ActiveTheme, DesignArchetype } from "@/types/website";
 
 export default async function WebsitePage() {
@@ -36,6 +37,16 @@ export default async function WebsitePage() {
     );
   }
 
+  let imageSlots: string[] = [];
+  if (website.template_id) {
+    const { data: templateRow } = await supabase
+      .from("templates")
+      .select("image_slots")
+      .eq("id", website.template_id)
+      .maybeSingle();
+    imageSlots = (templateRow?.image_slots as string[]) ?? [];
+  }
+
   const isPublished =
     website.status === "published" || website.is_published === true;
   const slug =
@@ -44,17 +55,20 @@ export default async function WebsitePage() {
     null;
 
   return (
-    <WebsiteEditor
+    <WebsiteStudio
       websiteId={website.id}
-      templateHtml={website.template_html as string}
       filledPlaceholders={
         (website.filled_placeholders as Record<string, string>) ?? {}
       }
+      filledImages={normalizeFilledImages(website.filled_images)}
+      imageSlots={imageSlots}
       activeTheme={(website.active_theme as ActiveTheme) ?? "theme-1"}
       archetype={(website.archetype as DesignArchetype | null) ?? null}
       isPublished={isPublished}
       slug={slug}
+      handle={(website.handle as string | null) ?? slug}
       plan={planId}
+      needsReview={Boolean(website.needs_review)}
     />
   );
 }

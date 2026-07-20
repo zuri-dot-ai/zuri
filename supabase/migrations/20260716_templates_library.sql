@@ -55,7 +55,7 @@ VALUES (
   'website-templates',
   true,
   5242880,
-  ARRAY['text/html', 'application/json']
+  ARRAY['text/html', 'text/html; charset=utf-8', 'application/json']
 )
 ON CONFLICT (id) DO UPDATE SET
   public = EXCLUDED.public,

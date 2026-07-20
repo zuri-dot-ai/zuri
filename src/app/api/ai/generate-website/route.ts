@@ -8,43 +8,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { generateWebsite } from "@/lib/website/generation-pipeline";
 import type { BusinessProfile } from "@/types/brand";
-import { appendFileSync } from "fs";
-import { join } from "path";
 
 export const maxDuration = 120;
-
-function debugLog(
-  hypothesisId: string,
-  location: string,
-  message: string,
-  data: Record<string, unknown>
-) {
-  const entry = {
-    sessionId: "af0cfc",
-    runId: "pre-fix",
-    hypothesisId,
-    location,
-    message,
-    data,
-    timestamp: Date.now(),
-  };
-  try {
-    appendFileSync(
-      join(process.cwd(), "debug-af0cfc.log"),
-      `${JSON.stringify(entry)}\n`
-    );
-  } catch {
-    /* ignore */
-  }
-  fetch("http://127.0.0.1:7419/ingest/076876bf-f6bf-42a9-9aff-97004d9bbbbe", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Debug-Session-Id": "af0cfc",
-    },
-    body: JSON.stringify(entry),
-  }).catch(() => {});
-}
 
 function isInternalRequest(req: Request): boolean {
   const secret = process.env.INTERNAL_API_SECRET;
@@ -87,12 +52,6 @@ function mapBrand(
 
 export async function POST(req: Request) {
   const internal = isInternalRequest(req);
-
-  // #region agent log
-  debugLog("H-D", "generate-website:entry", "generate website called", {
-    internal,
-  });
-  // #endregion
 
   let body: { userId?: string; jobId?: string } = {};
   try {
@@ -181,14 +140,6 @@ export async function POST(req: Request) {
 
   try {
     const result = await generateWebsite(brand, userId, jobId!);
-    // #region agent log
-    debugLog("H-D", "generate-website:success", "generation completed", {
-      userId,
-      jobId,
-      handle: result.handle,
-      needsReview: result.needsReview,
-    });
-    // #endregion
     return NextResponse.json({
       success: true,
       handle: result.handle,
@@ -197,13 +148,6 @@ export async function POST(req: Request) {
     });
   } catch (err) {
     console.error("[generate-website]", err);
-    // #region agent log
-    debugLog("H-D", "generate-website:error", "generation failed", {
-      userId,
-      jobId,
-      error: err instanceof Error ? err.message : String(err),
-    });
-    // #endregion
     return NextResponse.json(
       {
         error: "Website generation failed",

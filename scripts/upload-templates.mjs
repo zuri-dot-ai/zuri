@@ -84,7 +84,7 @@ async function ensureBucket(supabase) {
   const { error: createErr } = await supabase.storage.createBucket(BUCKET, {
     public: true,
     fileSizeLimit: 5 * 1024 * 1024,
-    allowedMimeTypes: ["text/html", "application/json"],
+    allowedMimeTypes: ["text/html", "text/html; charset=utf-8", "application/json"],
   });
   if (createErr) throw new Error(`createBucket: ${createErr.message}`);
   console.log(`Created public bucket "${BUCKET}"`);
@@ -231,7 +231,7 @@ async function main() {
     const { error: upErr } = await supabase.storage
       .from(BUCKET)
       .upload(storagePath, html, {
-        contentType: "text/html; charset=utf-8",
+        contentType: "text/html",
         upsert: true,
         cacheControl: "3600",
       });
