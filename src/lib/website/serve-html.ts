@@ -4,7 +4,11 @@
 
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
-import type { WebsiteStatus } from "@/types/website";
+import {
+  getArchetypeFallback,
+  isBrokenImageUrl,
+} from "@/lib/website/image-url";
+import type { DesignArchetype, WebsiteStatus } from "@/types/website";
 
 /** Session 2B generation previews — local serve smoke only (never in production). */
 const DEV_FIXTURE_HANDLES: Record<string, string> = {
@@ -70,6 +74,36 @@ export function htmlResponse(html: string, status = 200): Response {
 
 export function notFoundResponse(): Response {
   return new Response("Not found", { status: 404 });
+}
+
+/**
+ * Rewrite broken / picsum / missing-fallback img srcs on data-image-slot
+ * elements to a reachable Unsplash archetype fallback before serving.
+ */
+export function sanitizeServedImages(
+  html: string,
+  archetype: DesignArchetype | string | null | undefined = "clean-modern"
+): string {
+  const arch = (archetype as DesignArchetype) || "clean-modern";
+  const fallback = getArchetypeFallback(arch).url;
+  let out = html;
+
+  const slotRegex = /<img\b[^>]*\bdata-image-slot="[^"]+"[^>]*>/gi;
+  const matches = [...html.matchAll(slotRegex)];
+
+  for (const match of matches) {
+    const tag = match[0];
+    const srcMatch = tag.match(/\bsrc="([^"]*)"/i);
+    const src = srcMatch?.[1] ?? "";
+    if (!isBrokenImageUrl(src)) continue;
+
+    const fixed = tag.includes("src=")
+      ? tag.replace(/\bsrc="[^"]*"/i, `src="${fallback}"`)
+      : tag.replace(/<img\b/i, `<img src="${fallback}"`);
+    out = out.replace(tag, fixed);
+  }
+
+  return out;
 }
 
 /**

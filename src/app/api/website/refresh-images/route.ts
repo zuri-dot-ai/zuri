@@ -4,11 +4,27 @@ import {
   normalizeFilledImages,
   persistRecomposedWebsite,
 } from "@/lib/website/recompose-html";
-import { resolveTemplateImages } from "@/lib/website/generation-pipeline";
+import {
+  isBrokenImageUrl,
+  resolveTemplateImages,
+} from "@/lib/website/generation-pipeline";
 import { fetchTemplate } from "@/lib/website/template-registry";
-import type { ActiveTheme, DesignArchetype } from "@/types/website";
+import type {
+  ActiveTheme,
+  DesignArchetype,
+  ResolvedImage,
+} from "@/types/website";
 
-/** Re-resolve curated/fallback images and recompose HTML (fixes broken fallback paths). */
+function htmlHasBrokenSlots(html: string | null | undefined): boolean {
+  if (!html) return false;
+  return /picsum\.photos/i.test(html) || /\/images\/fallbacks\//i.test(html);
+}
+
+/**
+ * Re-resolve curated/fallback images and recompose HTML.
+ * Forces a full recompose when template_html still contains picsum or
+ * filled_images has broken URLs — even if some slots look fine.
+ */
 export async function POST() {
   const supabase = await createClient();
   const {
@@ -21,7 +37,7 @@ export async function POST() {
   const { data: website } = await supabase
     .from("websites")
     .select(
-      "id, template_id, archetype, filled_placeholders, filled_images, active_theme"
+      "id, template_id, archetype, template_html, filled_placeholders, filled_images, active_theme"
     )
     .eq("user_id", user.id)
     .maybeSingle();
@@ -30,9 +46,32 @@ export async function POST() {
     return NextResponse.json({ error: "No website found" }, { status: 404 });
   }
 
+  const existing = normalizeFilledImages(website.filled_images);
+  const htmlBroken = htmlHasBrokenSlots(website.template_html);
+  const imagesBroken = Object.values(existing).some((img) =>
+    isBrokenImageUrl(img.url)
+  );
+  const needsRepair = htmlBroken || imagesBroken;
+
   const { metadata } = await fetchTemplate(website.template_id);
   const archetype = website.archetype as DesignArchetype;
-  const filledImages = await resolveTemplateImages(metadata, archetype);
+  const resolved = await resolveTemplateImages(metadata, archetype);
+
+  // Keep valid user uploads; replace broken/missing slots with curated/fallback.
+  // When HTML itself still has picsum, replace every slot that is broken or
+  // was only a picsum/fallback source so recompose clears template_html.
+  const filledImages: Record<string, ResolvedImage> = { ...resolved };
+  for (const [slot, img] of Object.entries(existing)) {
+    if (
+      img.source === "user-upload" &&
+      !isBrokenImageUrl(img.url)
+    ) {
+      filledImages[slot] = img;
+    } else if (!needsRepair && !isBrokenImageUrl(img.url)) {
+      filledImages[slot] = img;
+    }
+  }
+
   const placeholders =
     (website.filled_placeholders as Record<string, string>) ?? {};
   const activeTheme = (website.active_theme as ActiveTheme) ?? "theme-1";
@@ -55,6 +94,7 @@ export async function POST() {
       success: true,
       filledImages,
       needsReview: result.needsReview,
+      repaired: needsRepair,
     });
   } catch (e) {
     return NextResponse.json(

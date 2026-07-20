@@ -54,6 +54,8 @@ export default async function WebsitePage() {
     (website.published_slug as string | null) ??
     null;
 
+  const htmlHasPicsum = /picsum\.photos/i.test(website.template_html ?? "");
+
   return (
     <WebsiteStudio
       websiteId={website.id}
@@ -68,7 +70,7 @@ export default async function WebsitePage() {
       slug={slug}
       handle={(website.handle as string | null) ?? slug}
       plan={planId}
-      needsReview={Boolean(website.needs_review)}
+      needsReview={Boolean(website.needs_review) || htmlHasPicsum}
     />
   );
 }

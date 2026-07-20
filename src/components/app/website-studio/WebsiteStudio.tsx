@@ -132,10 +132,12 @@ export function WebsiteStudio({
   const effectiveNeedsReview = needsReview || reviewIssues.length > 0;
 
   useEffect(() => {
-    const hasBroken = Object.values(initialImages).some((img) =>
+    const hasBrokenImages = Object.values(initialImages).some((img) =>
       isBrokenImageUrl(img.url)
     );
-    if (!hasBroken) return;
+    // Also refresh when needs_review is set — often means picsum left in
+    // template_html even if filled_images already looks fine.
+    if (!hasBrokenImages && !initialNeedsReview) return;
     safeFetchJSON<{
       filledImages?: Record<string, ResolvedImage>;
       needsReview?: boolean;
@@ -150,7 +152,7 @@ export function WebsiteStudio({
         }
       })
       .catch(() => {});
-  }, [initialImages]);
+  }, [initialImages, initialNeedsReview]);
 
   function bumpPreview() {
     setPreviewKey((k) => k + 1);

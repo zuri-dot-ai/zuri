@@ -4,8 +4,10 @@ import {
   injectContactFormEndpoint,
   loadDevFixtureHtml,
   notFoundResponse,
+  sanitizeServedImages,
   SUSPENDED_PAGE_HTML,
 } from "@/lib/website/serve-html";
+import type { DesignArchetype } from "@/types/website";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +24,7 @@ export async function GET(
 
   const { data: website, error } = await supabase
     .from("websites")
-    .select("template_html, status, user_id")
+    .select("template_html, status, user_id, archetype")
     .eq("handle", handle)
     .maybeSingle();
 
@@ -33,7 +35,10 @@ export async function GET(
     const fixture = loadDevFixtureHtml(handle);
     if (fixture) {
       return htmlResponse(
-        injectContactFormEndpoint(fixture, { handle, ownerEmail: "" })
+        injectContactFormEndpoint(sanitizeServedImages(fixture), {
+          handle,
+          ownerEmail: "",
+        })
       );
     }
     return notFoundResponse();
@@ -43,7 +48,10 @@ export async function GET(
     const fixture = loadDevFixtureHtml(handle);
     if (fixture) {
       return htmlResponse(
-        injectContactFormEndpoint(fixture, { handle, ownerEmail: "" })
+        injectContactFormEndpoint(sanitizeServedImages(fixture), {
+          handle,
+          ownerEmail: "",
+        })
       );
     }
     return notFoundResponse();
@@ -57,7 +65,10 @@ export async function GET(
     const fixture = loadDevFixtureHtml(handle);
     if (fixture) {
       return htmlResponse(
-        injectContactFormEndpoint(fixture, { handle, ownerEmail: "" })
+        injectContactFormEndpoint(sanitizeServedImages(fixture), {
+          handle,
+          ownerEmail: "",
+        })
       );
     }
     return notFoundResponse();
@@ -73,7 +84,11 @@ export async function GET(
     ownerEmail = profile?.email ?? "";
   }
 
-  const html = injectContactFormEndpoint(website.template_html, {
+  const sanitized = sanitizeServedImages(
+    website.template_html,
+    website.archetype as DesignArchetype | null
+  );
+  const html = injectContactFormEndpoint(sanitized, {
     handle,
     ownerEmail,
   });

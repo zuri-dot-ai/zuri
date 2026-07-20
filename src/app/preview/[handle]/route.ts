@@ -4,7 +4,9 @@ import {
   htmlResponse,
   injectPreviewBanner,
   notFoundResponse,
+  sanitizeServedImages,
 } from "@/lib/website/serve-html";
+import type { DesignArchetype } from "@/types/website";
 
 export const dynamic = "force-dynamic";
 
@@ -32,13 +34,17 @@ export async function GET(
   const service = createServiceClient();
   const { data: website } = await service
     .from("websites")
-    .select("template_html, status, user_id")
+    .select("template_html, status, user_id, archetype")
     .eq("handle", handle)
     .eq("user_id", user.id)
     .maybeSingle();
 
   if (!website?.template_html) return notFoundResponse();
 
-  const html = injectPreviewBanner(website.template_html, website.status);
+  const sanitized = sanitizeServedImages(
+    website.template_html,
+    website.archetype as DesignArchetype | null
+  );
+  const html = injectPreviewBanner(sanitized, website.status);
   return htmlResponse(html);
 }
