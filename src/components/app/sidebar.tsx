@@ -213,11 +213,11 @@ export function Sidebar() {
         !ready && "transition-none"
       )}
     >
-      {/* Logo + underline separator */}
+      {/* Logo + underline separator + visible collapse toggle */}
       <div
         className={cn(
           "flex shrink-0 flex-col items-center justify-center px-4 pt-5",
-          collapsed ? "pb-4" : "pb-5"
+          collapsed ? "pb-3" : "pb-4"
         )}
       >
         {collapsed ? (
@@ -234,10 +234,37 @@ export function Sidebar() {
         <span
           aria-hidden
           className={cn(
-            "mt-4 h-px bg-gradient-to-r from-transparent via-gold/70 to-transparent",
-            collapsed ? "w-8" : "w-16"
+            "mt-4 h-[2px] rounded-full bg-gradient-to-r from-transparent via-gold to-transparent shadow-[0_0_14px_rgba(201,162,39,0.35)]",
+            collapsed ? "w-10" : "w-24"
           )}
         />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={toggle}
+              className={cn(
+                "mt-3 flex items-center rounded-md text-muted-foreground transition-colors hover:bg-[var(--bg-elevated)] hover:text-gold",
+                collapsed ? "justify-center px-2 py-2" : "gap-2 px-3 py-2"
+              )}
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              {collapsed ? (
+                <PanelLeft className="size-[18px]" strokeWidth={1.75} />
+              ) : (
+                <>
+                  <PanelLeftClose className="size-[18px] shrink-0" strokeWidth={1.75} />
+                  <span className="text-xs font-medium uppercase tracking-[0.12em]">
+                    Collapse
+                  </span>
+                </>
+              )}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            {collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          </TooltipContent>
+        </Tooltip>
       </div>
 
       <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-y-contain p-2">
@@ -265,31 +292,6 @@ export function Sidebar() {
 
       <div className="sidebar-foot shrink-0 border-t border-border p-2">
         <SidebarAvatarMenu collapsed={collapsed} />
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              onClick={toggle}
-              className={cn(
-                "mt-1 flex w-full items-center rounded-md text-muted-foreground transition-colors hover:bg-[var(--bg-elevated)] hover:text-gold",
-                collapsed ? "justify-center px-2 py-2.5" : "gap-3 px-3 py-2.5"
-              )}
-              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            >
-              {collapsed ? (
-                <PanelLeft className="size-[18px]" strokeWidth={1.75} />
-              ) : (
-                <>
-                  <PanelLeftClose className="size-[18px] shrink-0" strokeWidth={1.75} />
-                  <span className="text-sm font-medium">Collapse</span>
-                </>
-              )}
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="right">
-            {collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          </TooltipContent>
-        </Tooltip>
       </div>
     </aside>
   );

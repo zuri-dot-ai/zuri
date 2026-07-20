@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     description: BRAND.description,
     type: "website",
     locale: "en_NG",
-    images: [{ url: "/zuri_meta.png", width: 1584, height: 792 }],
+    images: [{ url: "/zuri_meta.jpeg", width: 1584, height: 792 }],
   },
   icons: {
     icon: [
