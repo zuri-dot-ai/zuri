@@ -77,9 +77,35 @@ export function ImageSwapModal({
       try {
         const params = new URLSearchParams({ slot });
         if (archetype) params.set("archetype", archetype);
-        const data = await safeFetchJSON<{ images?: CategoryImageRow[] }>(
-          `/api/website/image?${params}`
-        );
+        const data = await safeFetchJSON<{
+          images?: CategoryImageRow[];
+          debug?: { sampleUrls?: unknown[]; count?: number };
+        }>(`/api/website/image?${params}`);
+        // #region agent log
+        fetch(
+          "http://127.0.0.1:7419/ingest/076876bf-f6bf-42a9-9aff-97004d9bbbbe",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Debug-Session-Id": "21ff00",
+            },
+            body: JSON.stringify({
+              sessionId: "21ff00",
+              runId: "pre-fix",
+              hypothesisId: "C",
+              location: "ImageSwapModal.tsx:library",
+              message: "library loaded client",
+              data: {
+                count: data.images?.length ?? 0,
+                sampleUrls: data.debug?.sampleUrls ?? null,
+                firstUrl: data.images?.[0]?.public_url ?? null,
+              },
+              timestamp: Date.now(),
+            }),
+          }
+        ).catch(() => {});
+        // #endregion
         if (!cancelled) setLibrary(data.images ?? []);
       } catch (e) {
         if (!cancelled) {
@@ -133,10 +159,41 @@ export function ImageSwapModal({
       form.set("slot", slot);
       form.set("action", "upload");
       form.set("file", compressed);
-      const data = await safeFetchJSON<{
-        image: ResolvedImage;
+      const res = await fetch("/api/website/image", {
+        method: "POST",
+        body: form,
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        image?: ResolvedImage;
         needsReview?: boolean;
-      }>("/api/website/image", { method: "POST", body: form });
+        error?: string;
+        debug?: Record<string, unknown>;
+      };
+      // #region agent log
+      fetch("http://127.0.0.1:7419/ingest/076876bf-f6bf-42a9-9aff-97004d9bbbbe", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Debug-Session-Id": "21ff00",
+        },
+        body: JSON.stringify({
+          sessionId: "21ff00",
+          runId: "pre-fix",
+          hypothesisId: "A",
+          location: "ImageSwapModal.tsx:commitUpload",
+          message: res.ok ? "upload ok" : "upload failed client",
+          data: {
+            status: res.status,
+            error: data.error ?? null,
+            debug: data.debug ?? null,
+            slot,
+          },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+      // #endregion
+      if (!res.ok) throw new Error(data.error ?? "Upload failed");
+      if (!data.image) throw new Error("Upload failed");
       onUpdated(slot, data.image, data.needsReview);
       toast.success(`${formatFieldLabel(slot)} updated`);
       onClose();

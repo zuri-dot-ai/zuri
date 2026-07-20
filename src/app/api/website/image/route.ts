@@ -111,9 +111,27 @@ export async function POST(req: Request) {
     );
     const buffer = Buffer.from(await file.arrayBuffer());
 
+    const BUCKET = "website-images";
     const service = createServiceClient();
+
+    // #region agent log
+    let bucketList: { id: string; name: string; public: boolean }[] = [];
+    let bucketListError: string | null = null;
+    try {
+      const listed = await service.storage.listBuckets();
+      if (listed.error) bucketListError = listed.error.message;
+      bucketList = (listed.data ?? []).map((b) => ({
+        id: b.id,
+        name: b.name,
+        public: b.public,
+      }));
+    } catch (e) {
+      bucketListError = e instanceof Error ? e.message : "listBuckets failed";
+    }
+    // #endregion
+
     const { error: uploadErr } = await service.storage
-      .from("website-images")
+      .from(BUCKET)
       .upload(storagePath, buffer, {
         contentType: file.type,
         upsert: true,
@@ -121,7 +139,53 @@ export async function POST(req: Request) {
       });
 
     if (uploadErr) {
-      return NextResponse.json({ error: uploadErr.message }, { status: 500 });
+      // #region agent log
+      const debugPayload = {
+        sessionId: "21ff00",
+        runId: "pre-fix",
+        hypothesisId: "A",
+        location: "api/website/image/route.ts:upload",
+        message: "upload failed",
+        data: {
+          bucket: BUCKET,
+          uploadError: uploadErr.message,
+          uploadStatus: (uploadErr as { statusCode?: string }).statusCode ?? null,
+          storagePath,
+          bucketIds: bucketList.map((b) => b.id),
+          hasWebsiteImagesBucket: bucketList.some((b) => b.id === BUCKET),
+          bucketListError,
+        },
+        timestamp: Date.now(),
+      };
+      // Best-effort remote ingest (no-op on Vercel if ingest unreachable)
+      try {
+        await fetch(
+          "http://127.0.0.1:7419/ingest/076876bf-f6bf-42a9-9aff-97004d9bbbbe",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Debug-Session-Id": "21ff00",
+            },
+            body: JSON.stringify(debugPayload),
+          }
+        );
+      } catch {
+        /* ignore */
+      }
+      // #endregion
+      return NextResponse.json(
+        {
+          error: uploadErr.message,
+          debug: {
+            bucket: BUCKET,
+            hasWebsiteImagesBucket: bucketList.some((b) => b.id === BUCKET),
+            bucketIds: bucketList.map((b) => b.id),
+            bucketListError,
+          },
+        },
+        { status: 500 }
+      );
     }
 
     const { data: pub } = service.storage
@@ -196,5 +260,49 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ images: data ?? [] });
+  const images = data ?? [];
+  // #region agent log
+  const sampleUrls = images.slice(0, 5).map((row) => ({
+    id: row.id,
+    public_url: row.public_url,
+    slot_type: row.slot_type,
+    host: (() => {
+      try {
+        return new URL(String(row.public_url ?? "")).host;
+      } catch {
+        return "invalid";
+      }
+    })(),
+  }));
+  try {
+    await fetch(
+      "http://127.0.0.1:7419/ingest/076876bf-f6bf-42a9-9aff-97004d9bbbbe",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Debug-Session-Id": "21ff00",
+        },
+        body: JSON.stringify({
+          sessionId: "21ff00",
+          runId: "pre-fix",
+          hypothesisId: "C",
+          location: "api/website/image/route.ts:GET",
+          message: "library list",
+          data: {
+            slot,
+            archetype,
+            count: images.length,
+            sampleUrls,
+          },
+          timestamp: Date.now(),
+        }),
+      }
+    );
+  } catch {
+    /* ignore */
+  }
+  // #endregion
+
+  return NextResponse.json({ images, debug: { sampleUrls, count: images.length } });
 }
