@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import type { AdminTemplateRow } from "@/app/admin/templates/page";
+import { FetchError, safeFetchJSON } from "@/lib/utils/safe-fetch";
 
 type Props = {
   templates: AdminTemplateRow[];
@@ -41,34 +42,39 @@ export function TemplatesAdminClient({ templates, storageBaseUrl }: Props) {
     if (!selected) return;
     startTransition(async () => {
       setMessage(null);
-      const res = await fetch("/api/admin/templates/revision", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: selected.id,
-          needs_revision: needsRevision,
-          revision_note: needsRevision ? note.trim() || null : null,
-        }),
-      });
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setMessage(body.error ?? "Failed to update revision flag");
-        return;
+      try {
+        await safeFetchJSON("/api/admin/templates/revision", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: selected.id,
+            needs_revision: needsRevision,
+            revision_note: needsRevision ? note.trim() || null : null,
+          }),
+        });
+        setRows((prev) =>
+          prev.map((t) =>
+            t.id === selected.id
+              ? {
+                  ...t,
+                  needs_revision: needsRevision,
+                  revision_note: needsRevision ? note.trim() || null : null,
+                }
+              : t
+          )
+        );
+        setMessage(
+          needsRevision ? "Flagged needs_revision" : "Cleared revision flag"
+        );
+      } catch (e) {
+        setMessage(
+          e instanceof FetchError
+            ? e.message
+            : e instanceof Error
+              ? e.message
+              : "Failed to update revision flag"
+        );
       }
-      setRows((prev) =>
-        prev.map((t) =>
-          t.id === selected.id
-            ? {
-                ...t,
-                needs_revision: needsRevision,
-                revision_note: needsRevision ? note.trim() || null : null,
-              }
-            : t
-        )
-      );
-      setMessage(
-        needsRevision ? "Flagged needs_revision" : "Cleared revision flag"
-      );
     });
   }
 

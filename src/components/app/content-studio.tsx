@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/app/empty-state";
 import { PLATFORMS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { safeFetchJSON } from "@/lib/utils/safe-fetch";
 import type { ContentCalendarRow, Platform } from "@/types/database";
 
 const FILTERS = ["all", "instagram", "linkedin", "facebook", "tiktok", "email"] as const;
@@ -33,7 +34,10 @@ export function ContentStudio({
   async function regenerate(slot: ContentCalendarRow) {
     setRegenerating(true);
     try {
-      const res = await fetch("/api/ai/generate-content", {
+      const data = await safeFetchJSON<{
+        draft: { caption: string; hashtags: string[] };
+        canva_url?: string | null;
+      }>("/api/ai/generate-content", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -44,13 +48,11 @@ export function ContentStudio({
           slotId: slot.id,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
       const updated = {
         ...slot,
         ai_draft: data.draft.caption,
         hashtags: data.draft.hashtags,
-        canva_url: data.canva_url,
+        canva_url: data.canva_url ?? null,
         status: "drafted" as const,
       };
       setSlots((prev) => prev.map((s) => (s.id === slot.id ? updated : s)));

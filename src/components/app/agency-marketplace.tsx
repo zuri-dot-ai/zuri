@@ -6,6 +6,7 @@ import { Star, MapPin, Clock, CheckCircle2, Sparkles, X, Lock } from "lucide-rea
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { safeFetchJSON } from "@/lib/utils/safe-fetch";
 import { UpgradeSheet } from "@/components/app/upgrade-sheet";
 import type { AgencyRow, AgencyBrief } from "@/types/database";
 
@@ -31,12 +32,13 @@ export function AgencyMarketplace({ agencies, plan }: { agencies: AgencyRow[]; p
     setBrief(null);
     setLoadingBrief(true);
     try {
-      const res = await fetch("/api/agencies/brief", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      const data = await safeFetchJSON<{ brief: AgencyBrief }>(
+        "/api/agencies/brief",
+        { method: "POST" }
+      );
       setBrief(data.brief);
-    } catch {
-      toast.error("Could not generate brief");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not generate brief");
     } finally {
       setLoadingBrief(false);
     }

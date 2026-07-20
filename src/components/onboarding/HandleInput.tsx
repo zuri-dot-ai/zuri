@@ -11,6 +11,7 @@ import {
   validateHandle,
 } from "@/lib/handle/client";
 import { cn } from "@/lib/utils";
+import { FetchError, safeFetchJSON } from "@/lib/utils/safe-fetch";
 import { formatPublicSiteUrlLabel } from "@/lib/website/public-site-url";
 
 type Availability =
@@ -24,6 +25,12 @@ type Availability =
       message: string;
     }
   | { status: "error"; message: string };
+
+type HandleCheckResponse = {
+  available?: boolean;
+  reason?: string;
+  suggestions?: string[];
+};
 
 interface HandleInputProps {
   businessName: string;
@@ -87,20 +94,10 @@ export function HandleInput({
       abortRef.current = controller;
 
       try {
-        const res = await fetch(
+        const data = await safeFetchJSON<HandleCheckResponse>(
           `/api/handle/check?handle=${encodeURIComponent(clean)}`,
           { signal: controller.signal }
         );
-        const data = await res.json();
-
-        if (!res.ok) {
-          setAvailability({
-            status: "error",
-            message: "Couldn't check availability. Tap to retry.",
-          });
-          onAvailabilityChange(false, false);
-          return;
-        }
 
         if (data.available) {
           setAvailability({ status: "available" });
@@ -127,7 +124,10 @@ export function HandleInput({
         if (err instanceof DOMException && err.name === "AbortError") return;
         setAvailability({
           status: "error",
-          message: "Couldn't check availability. Tap to retry.",
+          message:
+            err instanceof FetchError
+              ? err.message
+              : "Couldn't check availability. Tap to retry.",
         });
         onAvailabilityChange(false, false);
       }
@@ -146,33 +146,33 @@ export function HandleInput({
     onAvailabilityChange(false, true);
     void (async () => {
       try {
-        const res = await fetch(
+        const data = await safeFetchJSON<HandleCheckResponse>(
           `/api/handle/check?handle=${encodeURIComponent(value.toLowerCase().trim())}`
         );
-        const data = await res.json();
-        if (!res.ok || !data.available) {
+        if (!data.available) {
           setAvailability({
-            status: data.available === false ? "unavailable" : "error",
+            status: "unavailable",
             reason: data.reason ?? "error",
             suggestions: data.suggestions,
             message:
-              data.available === false
-                ? data.reason === "reserved"
-                  ? "This handle is reserved. Please choose a different one."
-                  : data.suggestions?.length
-                    ? `This handle is taken. Try: ${data.suggestions.join(", ")}`
-                    : "This handle is taken."
-                : "Couldn't check availability. Tap to retry.",
-          } as Availability);
+              data.reason === "reserved"
+                ? "This handle is reserved. Please choose a different one."
+                : data.suggestions?.length
+                  ? `This handle is taken. Try: ${data.suggestions.join(", ")}`
+                  : "This handle is taken.",
+          });
           onAvailabilityChange(false, false);
           return;
         }
         setAvailability({ status: "available" });
         onAvailabilityChange(true, false);
-      } catch {
+      } catch (err) {
         setAvailability({
           status: "error",
-          message: "Couldn't check availability. Tap to retry.",
+          message:
+            err instanceof FetchError
+              ? err.message
+              : "Couldn't check availability. Tap to retry.",
         });
         onAvailabilityChange(false, false);
       }

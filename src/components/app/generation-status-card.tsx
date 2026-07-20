@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { safeFetchJSON } from "@/lib/utils/safe-fetch";
 
 type JobStatus = "queued" | "processing" | "failed" | "completed" | null;
 
@@ -63,24 +64,19 @@ export function GenerationStatusCard({
       kickoffAttempted.current = true;
 
       try {
-        const res = await fetch("/api/ai/generate-website", {
+        await safeFetchJSON("/api/ai/generate-website", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ jobId }),
         });
-        const data = await res.json();
-        if (!res.ok) {
-          toast.error(data.error ?? "Could not start website generation");
-          setStatus("failed");
-          setErrorMessage(data.error ?? "Generation failed to start");
-        } else {
-          setStatus("processing");
-          void poll();
-        }
+        setStatus("processing");
+        void poll();
       } catch (e) {
-        toast.error(
-          e instanceof Error ? e.message : "Could not start website generation"
-        );
+        const message =
+          e instanceof Error ? e.message : "Could not start website generation";
+        toast.error(message);
+        setStatus("failed");
+        setErrorMessage(message);
       }
     }
 
@@ -103,13 +99,11 @@ export function GenerationStatusCard({
       const body: { jobId?: string } = {};
       if (jobId) body.jobId = jobId;
 
-      const res = await fetch("/api/ai/generate-website", {
+      await safeFetchJSON("/api/ai/generate-website", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Retry failed");
       toast.success("Generation restarted. This usually takes under a minute.");
       setStatus("processing");
       window.location.reload();

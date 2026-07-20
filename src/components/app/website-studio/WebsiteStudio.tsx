@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
+  ChevronLeft,
   Eye,
   ExternalLink,
   FileText,
@@ -12,6 +13,7 @@ import {
   Rocket,
   Settings,
   Undo2,
+  X,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,30 +25,46 @@ import {
   getPublicSiteUrl,
   getRootDomain,
 } from "@/lib/website/public-site-url";
+import { isBrokenImageUrl } from "@/lib/website/image-url";
+import {
+  buildReviewIssues,
+  sectionForField,
+  type ReviewIssue,
+} from "@/lib/website/review-issues";
+import {
+  groupPlaceholderFields,
+  previewSectionId,
+} from "@/lib/website/field-groups";
+import { FetchError, safeFetchJSON } from "@/lib/utils/safe-fetch";
 import { ContentPanel } from "./ContentPanel";
 import { ImagesPanel } from "./ImagesPanel";
 import { ThemePanel } from "./ThemePanel";
 import { PublishPanel } from "./PublishPanel";
 import { PreviewFrame } from "./PreviewFrame";
+import { ImageSwapModal } from "./ImageSwapModal";
+import { ReviewChecklist } from "./ReviewChecklist";
 import type {
   ActiveTheme,
   DesignArchetype,
   ResolvedImage,
 } from "@/types/website";
 
-type StudioTab = "content" | "images" | "theme" | "publish" | "settings";
+type PanelId =
+  | "hero"
+  | "about"
+  | "services"
+  | "testimonials"
+  | "faq"
+  | "contact"
+  | "social"
+  | "business"
+  | "other"
+  | "images"
+  | "theme"
+  | "publish"
+  | "settings";
 
-const TABS: {
-  id: StudioTab;
-  label: string;
-  icon: React.ElementType;
-}[] = [
-  { id: "content", label: "Content", icon: FileText },
-  { id: "images", label: "Images", icon: ImageIcon },
-  { id: "theme", label: "Theme", icon: Palette },
-  { id: "publish", label: "Publish", icon: Rocket },
-  { id: "settings", label: "Settings", icon: Settings },
-];
+type MobileScreen = "list" | "edit" | "preview";
 
 export function WebsiteStudio({
   websiteId,
@@ -73,8 +91,8 @@ export function WebsiteStudio({
   plan: string;
   needsReview: boolean;
 }) {
-  const [tab, setTab] = useState<StudioTab>("content");
-  const [mobileView, setMobileView] = useState<"edit" | "preview">("edit");
+  const [expanded, setExpanded] = useState<PanelId | "">("hero");
+  const [mobileScreen, setMobileScreen] = useState<MobileScreen>("list");
   const [placeholders, setPlaceholders] = useState(initialPlaceholders);
   const [images, setImages] = useState(initialImages);
   const [activeTheme, setActiveTheme] = useState(initialTheme);
@@ -87,6 +105,10 @@ export function WebsiteStudio({
     null
   );
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [imageModalSlot, setImageModalSlot] = useState<string | null>(null);
+  const [highlightSection, setHighlightSection] = useState<string | null>(null);
+  const [focusFieldId, setFocusFieldId] = useState<string | null>(null);
 
   const rootDomain = getRootDomain();
   const previewHandle = handle ?? liveSlug;
@@ -94,17 +116,37 @@ export function WebsiteStudio({
   const previewUrl = previewHandle ? `/preview/${previewHandle}` : null;
   const canPublish = plan !== "free";
 
+  const contentGroups = useMemo(
+    () =>
+      groupPlaceholderFields(
+        Object.keys(placeholders).filter((k) => k !== "active_theme")
+      ),
+    [placeholders]
+  );
+
+  const reviewIssues = useMemo(
+    () => buildReviewIssues(placeholders, images, imageSlots),
+    [placeholders, images, imageSlots]
+  );
+
+  const effectiveNeedsReview = needsReview || reviewIssues.length > 0;
+
   useEffect(() => {
     const hasBroken = Object.values(initialImages).some((img) =>
-      img.url.includes("/images/fallbacks/")
+      isBrokenImageUrl(img.url)
     );
     if (!hasBroken) return;
-    fetch("/api/website/refresh-images", { method: "POST" })
-      .then((r) => r.json())
+    safeFetchJSON<{
+      filledImages?: Record<string, ResolvedImage>;
+      needsReview?: boolean;
+    }>("/api/website/refresh-images", { method: "POST" })
       .then((data) => {
         if (data.filledImages) {
           setImages(data.filledImages);
           setPreviewKey((k) => k + 1);
+        }
+        if (typeof data.needsReview === "boolean") {
+          setNeedsReview(data.needsReview);
         }
       })
       .catch(() => {});
@@ -119,14 +161,45 @@ export function WebsiteStudio({
     bumpPreview();
   }
 
-  function onImageUpdated(slot: string, image: ResolvedImage) {
+  function onImageUpdated(
+    slot: string,
+    image: ResolvedImage,
+    review?: boolean
+  ) {
     setImages((prev) => ({ ...prev, [slot]: image }));
+    if (typeof review === "boolean") setNeedsReview(review);
     bumpPreview();
   }
 
-  function onThemeChange(theme: ActiveTheme) {
+  function onThemeChange(theme: ActiveTheme, review?: boolean) {
     setActiveTheme(theme);
+    if (typeof review === "boolean") setNeedsReview(review);
     bumpPreview();
+  }
+
+  function onFocusField(field: string) {
+    const section = sectionForField(field);
+    const sid = previewSectionId(section);
+    if (sid) setHighlightSection(sid);
+  }
+
+  function jumpToIssue(issue: ReviewIssue) {
+    setReviewOpen(false);
+    setExpanded(issue.sectionId as PanelId);
+    setMobileScreen("edit");
+    if (issue.kind === "image") {
+      setImageModalSlot(issue.target);
+      setTimeout(() => {
+        document.getElementById(`slot-${issue.target}`)?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }, 50);
+    } else {
+      setFocusFieldId(issue.target);
+      const sid = previewSectionId(issue.sectionId);
+      if (sid) setHighlightSection(sid);
+    }
   }
 
   async function publish() {
@@ -137,26 +210,26 @@ export function WebsiteStudio({
     setBusy(true);
     setBusyAction("publish");
     try {
-      const res = await fetch("/api/website/publish", {
+      const data = await safeFetchJSON<{
+        slug: string;
+        liveUrl?: string;
+      }>("/api/website/publish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ websiteId }),
       });
-      const data = await res.json();
-      if (!res.ok) {
-        if (res.status === 403) {
-          setUpgradeOpen(true);
-          return;
-        }
-        throw new Error(data.error);
-      }
       setPublished(true);
       setLiveSlug(data.slug);
       setNeedsReview(false);
-      const url = (data.liveUrl as string | undefined) ?? getPublicSiteUrl(data.slug);
+      const url =
+        (data.liveUrl as string | undefined) ?? getPublicSiteUrl(data.slug);
       celebrateFirstPublish(url);
       toast.success(`Live at ${formatPublicSiteUrlLabel(data.slug)}`);
     } catch (e) {
+      if (e instanceof FetchError && e.status === 403) {
+        setUpgradeOpen(true);
+        return;
+      }
       toast.error(e instanceof Error ? e.message : "Publish failed");
     } finally {
       setBusy(false);
@@ -179,22 +252,18 @@ export function WebsiteStudio({
     setBusy(true);
     setBusyAction("unpublish");
     try {
-      const res = await fetch("/api/website/unpublish", {
+      await safeFetchJSON("/api/website/unpublish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ websiteId }),
       });
-      const data = await res.json();
-      if (!res.ok) {
-        if (res.status === 403) {
-          setUpgradeOpen(true);
-          return;
-        }
-        throw new Error(data.error);
-      }
       setPublished(false);
       toast.success("Site unpublished — back in preview mode");
     } catch (e) {
+      if (e instanceof FetchError && e.status === 403) {
+        setUpgradeOpen(true);
+        return;
+      }
       toast.error(e instanceof Error ? e.message : "Unpublish failed");
     } finally {
       setBusy(false);
@@ -202,20 +271,129 @@ export function WebsiteStudio({
     }
   }
 
+  const staticPanels: { id: PanelId; label: string; icon: React.ElementType }[] =
+    [
+      { id: "images", label: "Images", icon: ImageIcon },
+      { id: "theme", label: "Theme", icon: Palette },
+      { id: "publish", label: "Publish", icon: Rocket },
+      { id: "settings", label: "Settings", icon: Settings },
+    ];
+
+  function renderPanelBody(id: PanelId | "") {
+    if (!id) return null;
+    if (contentGroups.some((g) => g.id === id)) {
+      const group = contentGroups.find((g) => g.id === id)!;
+      return (
+        <ContentPanel
+          filledPlaceholders={Object.fromEntries(
+            group.fields.map((f) => [f, placeholders[f] ?? ""])
+          )}
+          onChange={onFieldSaved}
+          onFocusField={onFocusField}
+          onNeedsReview={setNeedsReview}
+          focusFieldId={focusFieldId}
+          singleGroupId={group.id}
+        />
+      );
+    }
+    if (id === "images") {
+      return (
+        <ImagesPanel
+          filledImages={images}
+          imageSlots={imageSlots}
+          archetype={archetype}
+          onOpenSlot={setImageModalSlot}
+        />
+      );
+    }
+    if (id === "theme") {
+      return (
+        <ThemePanel
+          activeTheme={activeTheme}
+          onThemeChange={(t, r) => onThemeChange(t, r)}
+        />
+      );
+    }
+    if (id === "publish") {
+      return (
+        <PublishPanel
+          published={published}
+          canPublish={canPublish}
+          needsReview={effectiveNeedsReview}
+          previewUrl={previewUrl}
+          liveUrl={liveUrl}
+          busy={busy}
+          onPublish={publish}
+          onUnpublish={unpublish}
+          onUpgrade={() => setUpgradeOpen(true)}
+        />
+      );
+    }
+    if (id === "settings") {
+      return (
+        <div className="space-y-4 text-sm text-muted-foreground">
+          <p>
+            Custom domains are available on Growth plans. Connect your own
+            domain from billing when you upgrade.
+          </p>
+          <Button variant="outline" size="sm" asChild>
+            <a href="/settings?tab=billing">View plans</a>
+          </Button>
+        </div>
+      );
+    }
+    return null;
+  }
+
+  function openPanel(id: PanelId) {
+    setExpanded(id);
+    setMobileScreen("edit");
+  }
+
+  const sidebarItems: { id: PanelId; label: string }[] = [
+    ...contentGroups.map((g) => ({ id: g.id as PanelId, label: g.label })),
+    ...staticPanels.map((p) => ({ id: p.id, label: p.label })),
+  ];
+
   return (
-    <div className="flex min-h-[calc(100vh-6rem)] flex-col gap-5 page-enter">
-      <header className="page-head flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <div className="flex min-h-[calc(100vh-6rem)] flex-col gap-4 page-enter">
+      {/* Top bar */}
+      <header className="page-head flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <h1>Your Website</h1>
             <Badge variant={published ? "success" : "muted"}>
-              {published ? "Live" : "Preview"}
+              {published ? "Live" : "Draft"}
             </Badge>
-            {needsReview && (
-              <Badge variant="outline" className="border-amber-500/50 text-amber-600">
-                Needs review
-              </Badge>
-            )}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setReviewOpen((o) => !o)}
+                className="inline-flex"
+              >
+                {effectiveNeedsReview ? (
+                  <Badge
+                    variant="outline"
+                    className="cursor-pointer border-amber-500/50 text-amber-600 hover:bg-amber-500/10"
+                  >
+                    Needs review ({reviewIssues.length})
+                  </Badge>
+                ) : (
+                  <Badge
+                    variant="outline"
+                    className="cursor-pointer border-emerald-500/40 text-emerald-600"
+                  >
+                    Ready
+                  </Badge>
+                )}
+              </button>
+              <ReviewChecklist
+                open={reviewOpen}
+                issues={reviewIssues}
+                onClose={() => setReviewOpen(false)}
+                onJump={jumpToIssue}
+              />
+            </div>
             {plan === "free" && (
               <Badge variant="outline">Free — preview only</Badge>
             )}
@@ -264,126 +442,137 @@ export function WebsiteStudio({
         </div>
       </header>
 
-      <div className="flex gap-2 lg:hidden">
-        {(["edit", "preview"] as const).map((v) => (
-          <button
-            key={v}
-            type="button"
-            onClick={() => setMobileView(v)}
-            className={cn(
-              "flex flex-1 items-center justify-center gap-2 rounded-sm border py-2 text-sm capitalize",
-              mobileView === v
-                ? "border-gold bg-surface text-gold"
-                : "border-border text-muted-foreground"
-            )}
-          >
-            {v === "preview" ? (
-              <Eye className="size-4" />
-            ) : (
-              <FileText className="size-4" />
-            )}
-            {v}
-          </button>
-        ))}
-      </div>
+      {/* Desktop split-pane */}
+      <div className="hidden min-h-0 flex-1 gap-4 lg:grid lg:grid-cols-[minmax(280px,380px)_1fr]">
+        <aside className="zuri-card flex max-h-[calc(100vh-10rem)] flex-col overflow-hidden p-0">
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            {sidebarItems.map((item) => {
+              const open = expanded === item.id;
+              return (
+                <div key={item.id} className="border-b border-border">
+                  <button
+                    type="button"
+                    onClick={() => setExpanded(open ? "" : item.id)}
+                    className={cn(
+                      "flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium transition-colors",
+                      open
+                        ? "bg-surface text-gold"
+                        : "text-foreground hover:bg-surface/50"
+                    )}
+                  >
+                    {item.label}
+                    <span className="text-xs text-muted-foreground">
+                      {open ? "−" : "+"}
+                    </span>
+                  </button>
+                  {open && (
+                    <div className="border-t border-border px-4 py-4">
+                      {renderPanelBody(item.id)}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </aside>
 
-      <div className="grid min-h-0 flex-1 gap-5 xl:grid-cols-[220px_minmax(0,400px)_1fr]">
-        <nav
-          className={cn(
-            "flex flex-col gap-1",
-            mobileView !== "edit" && "hidden xl:flex"
-          )}
-        >
-          {TABS.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setTab(id)}
-              className={cn(
-                "flex items-center gap-3 rounded-sm px-3 py-2.5 text-left text-sm font-medium transition-colors",
-                tab === id
-                  ? "bg-surface text-gold"
-                  : "text-muted-foreground hover:bg-surface hover:text-foreground"
-              )}
-            >
-              <Icon className="size-4 shrink-0" />
-              {label}
-            </button>
-          ))}
-        </nav>
-
-        <div
-          className={cn(
-            "zuri-card min-h-0 overflow-y-auto",
-            mobileView !== "edit" && "hidden xl:block"
-          )}
-        >
-          {tab === "content" && (
-            <ContentPanel
-              filledPlaceholders={placeholders}
-              onChange={onFieldSaved}
-            />
-          )}
-          {tab === "images" && (
-            <ImagesPanel
-              filledImages={images}
-              imageSlots={imageSlots}
-              archetype={archetype}
-              onUpdated={onImageUpdated}
-            />
-          )}
-          {tab === "theme" && (
-            <ThemePanel
-              activeTheme={activeTheme}
-              onThemeChange={onThemeChange}
-            />
-          )}
-          {tab === "publish" && (
-            <PublishPanel
-              published={published}
-              canPublish={canPublish}
-              needsReview={needsReview}
-              previewUrl={previewUrl}
-              liveUrl={liveUrl}
-              busy={busy}
-              onPublish={publish}
-              onUnpublish={unpublish}
-              onUpgrade={() => setUpgradeOpen(true)}
-            />
-          )}
-          {tab === "settings" && (
-            <div className="space-y-4 text-sm text-muted-foreground">
-              <p>
-                Custom domains are available on Growth plans. Connect your own
-                domain from billing when you upgrade.
-              </p>
-              <Button variant="outline" size="sm" asChild>
-                <a href="/settings?tab=billing">View plans</a>
-              </Button>
-            </div>
-          )}
-        </div>
-
-        <div
-          className={cn(
-            "min-h-[60vh] xl:min-h-0",
-            mobileView !== "preview" && "hidden xl:block"
-          )}
-        >
+        <div className="min-h-[70vh]">
           <PreviewFrame
             handle={previewHandle}
             refreshKey={previewKey}
             rootDomain={rootDomain}
+            highlightSection={highlightSection}
+            onImageSlotClick={setImageModalSlot}
           />
         </div>
       </div>
 
+      {/* Mobile: section list → editor → preview sheet */}
+      <div className="flex flex-1 flex-col lg:hidden">
+        {mobileScreen === "list" && (
+          <div className="space-y-1">
+            {sidebarItems.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => openPanel(item.id)}
+                className="flex w-full items-center gap-3 rounded-sm border border-border px-4 py-3.5 text-left text-sm font-medium hover:border-gold/40"
+              >
+                <FileText className="size-4 text-muted-foreground" />
+                {item.label}
+              </button>
+            ))}
+            <Button
+              variant="outline"
+              className="mt-4 w-full"
+              onClick={() => setMobileScreen("preview")}
+            >
+              <Eye className="size-4" /> Preview site
+            </Button>
+          </div>
+        )}
+
+        {mobileScreen === "edit" && expanded && (
+          <div className="flex flex-col gap-3">
+            <button
+              type="button"
+              onClick={() => setMobileScreen("list")}
+              className="flex items-center gap-1 text-sm text-muted-foreground"
+            >
+              <ChevronLeft className="size-4" /> Sections
+            </button>
+            <h2 className="font-heading text-xl capitalize">
+              {sidebarItems.find((i) => i.id === expanded)?.label}
+            </h2>
+            <div className="zuri-card">{renderPanelBody(expanded)}</div>
+            <Button
+              variant="outline"
+              onClick={() => setMobileScreen("preview")}
+            >
+              <Eye className="size-4" /> Preview
+            </Button>
+          </div>
+        )}
+
+        {mobileScreen === "preview" && (
+          <div className="fixed inset-0 z-40 flex flex-col bg-background">
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+              <p className="text-sm font-medium">Preview</p>
+              <button
+                type="button"
+                onClick={() =>
+                  setMobileScreen(expanded ? "edit" : "list")
+                }
+                className="rounded-sm p-1.5 hover:bg-surface"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+            <div className="min-h-0 flex-1">
+              <PreviewFrame
+                handle={previewHandle}
+                refreshKey={previewKey}
+                rootDomain={rootDomain}
+                highlightSection={highlightSection}
+                onImageSlotClick={(slot) => {
+                  setImageModalSlot(slot);
+                  setExpanded("images");
+                  setMobileScreen("edit");
+                }}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
       <div className="sticky bottom-0 flex gap-2 border-t border-border bg-background/95 p-3 backdrop-blur lg:hidden">
         {previewUrl && (
-          <Button variant="outline" className="flex-1" asChild>
-            <a href={previewUrl} target="_blank" rel="noreferrer">
-              <Globe className="size-4" /> Preview
-            </a>
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={() => setMobileScreen("preview")}
+          >
+            <Globe className="size-4" /> Preview
           </Button>
         )}
         {published && canPublish ? (
@@ -403,6 +592,16 @@ export function WebsiteStudio({
           </Button>
         )}
       </div>
+
+      {imageModalSlot && (
+        <ImageSwapModal
+          slot={imageModalSlot}
+          archetype={archetype}
+          open={Boolean(imageModalSlot)}
+          onClose={() => setImageModalSlot(null)}
+          onUpdated={onImageUpdated}
+        />
+      )}
 
       <UpgradeSheet
         open={upgradeOpen}

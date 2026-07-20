@@ -27,7 +27,7 @@ export async function PATCH(req: Request) {
   const { data: website } = await supabase
     .from("websites")
     .select(
-      "id, template_id, filled_placeholders, filled_images, active_theme"
+      "id, template_id, archetype, filled_placeholders, filled_images, active_theme"
     )
     .eq("user_id", user.id)
     .maybeSingle();
@@ -39,6 +39,9 @@ export async function PATCH(req: Request) {
   const placeholders =
     (website.filled_placeholders as Record<string, string>) ?? {};
   const images = normalizeFilledImages(website.filled_images);
+  const archetype =
+    (website.archetype as import("@/types/website").DesignArchetype) ??
+    "clean-modern";
 
   try {
     const result = await persistRecomposedWebsite(
@@ -50,6 +53,7 @@ export async function PATCH(req: Request) {
         filledPlaceholders: placeholders,
         filledImages: images,
         activeTheme: theme,
+        archetype,
       }
     );
 

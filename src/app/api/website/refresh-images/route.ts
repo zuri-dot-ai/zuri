@@ -47,6 +47,7 @@ export async function POST() {
         filledPlaceholders: placeholders,
         filledImages,
         activeTheme,
+        archetype,
       }
     );
 

@@ -7,10 +7,12 @@ import {
   type DesignArchetype,
 } from "@/lib/website/archetypes";
 import {
-  CATEGORY_SLOT_TYPES,
-  isCategorySlotType,
-  type CategorySlotType,
+  normalizeSlotType,
 } from "@/lib/website/category-images";
+import {
+  getArchetypeFallback,
+  isBrokenImageUrl,
+} from "@/lib/website/image-url";
 import {
   fetchTemplate,
   getTemplatesForArchetype,
@@ -23,6 +25,9 @@ import type {
   TemplateMetadata,
   TemplateRow,
 } from "@/types/website";
+
+export { getArchetypeFallback, isBrokenImageUrl } from "@/lib/website/image-url";
+export { normalizeSlotType } from "@/lib/website/category-images";
 
 export interface ValidationResult {
   valid: boolean;
@@ -52,41 +57,6 @@ function escapeHtml(value: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
-}
-
-/** e.g. "gallery_1" → "gallery", "before_after_2" → "before_after", "hero" → "hero" */
-export function normalizeSlotType(slot: string): CategorySlotType | string {
-  const raw = slot.trim().toLowerCase();
-  if (isCategorySlotType(raw)) return raw;
-
-  // Templates often use before / after as separate slots
-  if (raw === "before" || raw === "after" || raw.startsWith("before_") || raw.startsWith("after_")) {
-    return "before_after";
-  }
-
-  // Strip trailing _N index
-  const withoutIndex = raw.replace(/_\d+$/, "");
-  if (isCategorySlotType(withoutIndex)) return withoutIndex;
-
-  // Longest known prefix match (before_after before before)
-  const sorted = [...CATEGORY_SLOT_TYPES].sort((a, b) => b.length - a.length);
-  for (const known of sorted) {
-    if (raw === known || raw.startsWith(`${known}_`)) return known;
-  }
-
-  return withoutIndex || raw;
-}
-
-/** Last-resort static fallback — reliable picsum seed per archetype. */
-export function getArchetypeFallback(archetype: DesignArchetype): ResolvedImage {
-  const seed = archetype.replace(/-/g, "");
-  return {
-    url: `https://picsum.photos/seed/zuri-${seed}/1200/800`,
-    source: "fallback",
-    width: 1200,
-    height: 800,
-    alt: `${archetype} fallback`,
-  };
 }
 
 async function markJob(
@@ -377,6 +347,10 @@ export async function resolveTemplateImages(
       }
 
       const pick = rows[Math.floor(Math.random() * rows.length)];
+      if (!pick.public_url || isBrokenImageUrl(pick.public_url)) {
+        resolved[slot] = getArchetypeFallback(archetype);
+        return;
+      }
       resolved[slot] = {
         url: pick.public_url,
         source: "curated",
@@ -422,21 +396,62 @@ export function applyServiceCardVisibility(
 
 export function applyImages(
   html: string,
-  images: Record<string, ResolvedImage>
+  images: Record<string, ResolvedImage>,
+  options?: { archetype?: DesignArchetype }
 ): string {
   let out = html;
+  const archetype = options?.archetype ?? "clean-modern";
+
   for (const [slot, image] of Object.entries(images)) {
-    // src after data-image-slot
+    const url = isBrokenImageUrl(image.url)
+      ? getArchetypeFallback(archetype).url
+      : image.url;
     out = out.replace(
       new RegExp(`(data-image-slot="${slot}"[^>]*src=")[^"]*(")`, "i"),
-      `$1${image.url}$2`
+      `$1${url}$2`
     );
-    // src before data-image-slot
     out = out.replace(
       new RegExp(`(src=")[^"]*("[^>]*data-image-slot="${slot}")`, "i"),
-      `$1${image.url}$2`
+      `$1${url}$2`
     );
   }
+
+  // Assert every data-image-slot has a non-empty valid-looking src
+  out = assertImageSlotsFilled(out, archetype);
+  return out;
+}
+
+/**
+ * After image resolution: any empty/broken slot src gets the archetype fallback.
+ * Logs a critical alert server-side when fallback was forced.
+ */
+export function assertImageSlotsFilled(
+  html: string,
+  archetype: DesignArchetype = "clean-modern"
+): string {
+  const fallback = getArchetypeFallback(archetype).url;
+  let out = html;
+
+  const slotRegex = /<img\b[^>]*\bdata-image-slot="([^"]+)"[^>]*>/gi;
+  const matches = [...html.matchAll(slotRegex)];
+
+  for (const match of matches) {
+    const tag = match[0];
+    const slot = match[1];
+    const srcMatch = tag.match(/\bsrc="([^"]*)"/i);
+    const src = srcMatch?.[1] ?? "";
+
+    if (isBrokenImageUrl(src)) {
+      console.error(
+        `[critical] Image slot "${slot}" still empty/broken after resolution — forcing archetype fallback`
+      );
+      const fixed = tag.includes("src=")
+        ? tag.replace(/\bsrc="[^"]*"/i, `src="${fallback}"`)
+        : tag.replace(/<img\b/i, `<img src="${fallback}"`);
+      out = out.replace(tag, fixed);
+    }
+  }
+
   return out;
 }
 
@@ -491,7 +506,7 @@ export async function composeWebsiteHtml(
   const filledImages = await resolveTemplateImages(metadata, archetype);
 
   let html = applyPlaceholders(rawHtml, filledPlaceholders);
-  html = applyImages(html, filledImages);
+  html = applyImages(html, filledImages, { archetype });
   html = applyServiceCardVisibility(html, filledPlaceholders);
 
   const validation = validateFilledHtml(html);

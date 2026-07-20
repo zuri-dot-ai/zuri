@@ -6,6 +6,7 @@ import { Globe, ExternalLink, Eye, Pencil, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { FetchError, safeFetchJSON } from "@/lib/utils/safe-fetch";
 import { UpgradeSheet } from "@/components/app/upgrade-sheet";
 import { celebrateFirstPublish } from "@/lib/ui/milestones";
 import type { ActiveTheme, DesignArchetype } from "@/types/website";
@@ -50,25 +51,24 @@ export function WebsiteEditor({
     setBusy(true);
     setBusyLabel("Publishing your site…");
     try {
-      const res = await fetch("/api/website/publish", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ websiteId }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        if (res.status === 403) {
-          setUpgradeOpen(true);
-          return;
+      const data = await safeFetchJSON<{ slug?: string }>(
+        "/api/website/publish",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ websiteId }),
         }
-        throw new Error(data.error);
-      }
+      );
       setPublished(true);
-      setLiveSlug(data.slug);
+      setLiveSlug(data.slug ?? null);
       celebrateFirstPublish(
         data.slug ? `https://${data.slug}.${rootDomain}` : undefined
       );
     } catch (e) {
+      if (e instanceof FetchError && e.status === 403) {
+        setUpgradeOpen(true);
+        return;
+      }
       toast.error(e instanceof Error ? e.message : "Publish failed");
     } finally {
       setBusy(false);

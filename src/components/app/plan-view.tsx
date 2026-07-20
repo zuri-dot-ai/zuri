@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { StatCard } from "@/components/app/stat-card";
 import { BADGES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { safeFetchJSON } from "@/lib/utils/safe-fetch";
 import type { ActionPlanTaskRow, UserProgressRow, CompleteTaskResult } from "@/types/database";
 
 export function PlanView({
@@ -35,13 +36,14 @@ export function PlanView({
     if (task.is_completed) return;
     setBusyId(task.id);
     try {
-      const res = await fetch("/api/tasks/complete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ taskId: task.id }),
-      });
-      const data = (await res.json()) as CompleteTaskResult;
-      if (!res.ok) throw new Error();
+      const data = await safeFetchJSON<CompleteTaskResult>(
+        "/api/tasks/complete",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ taskId: task.id }),
+        }
+      );
       setTasks((prev) =>
         prev.map((t) => (t.id === task.id ? { ...t, is_completed: true } : t))
       );
@@ -49,8 +51,8 @@ export function PlanView({
         const badge = BADGES[b];
         if (badge) toast(`${badge.emoji} Badge earned: ${badge.label}`);
       });
-    } catch {
-      toast.error("Could not update task.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not update task.");
     } finally {
       setBusyId(null);
     }

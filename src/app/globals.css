@@ -14,7 +14,7 @@
     --text-primary: #f5f5f4;
     --text-secondary: #a1a1aa;
     --text-tertiary: #6b6b70;
-    --accent: #c9a227;
+    --accent: #c9a84c;
     --accent-foreground: #0d0c0a;
     --accent-hover: #d4b03a;
     --radius-sm: 12px;
@@ -37,8 +37,8 @@
     --accent-ui: 30 6% 11%;
     --radius: 14px;
 
-    --gold: #c9a227;
-    --gold-bright: #d4b03a;
+    --gold: #c9a84c;
+    --gold-bright: #d4b55f;
     --black: #0d0c0a;
     --chrome-light: #f5f5f4;
     --chrome-mid: #a1a1aa;
@@ -74,7 +74,7 @@
     --text-primary: #18181b;
     --text-secondary: #52525b;
     --text-tertiary: #71717a;
-    --accent: #c9a227;
+    --accent: #c9a84c;
     --accent-foreground: #0d0c0a;
     --accent-hover: #b8921f;
 
@@ -108,7 +108,7 @@
   /* Auth canvas — marketing black + gold logo */
   .auth-canvas {
     --background: 0 0% 4%;
-    --logo-color: #c9a227;
+    --logo-color: #c9a84c;
     --foreground: 0 0% 96%;
     --muted-foreground: 210 5% 79%;
     --border: 0 0% 13%;

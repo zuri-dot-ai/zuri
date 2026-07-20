@@ -6,7 +6,11 @@ import {
   validateFilledHtml,
   type ValidationResult,
 } from "@/lib/website/generation-pipeline";
-import type { ActiveTheme, ResolvedImage } from "@/types/website";
+import {
+  getArchetypeFallback,
+  isBrokenImageUrl,
+} from "@/lib/website/image-url";
+import type { ActiveTheme, DesignArchetype, ResolvedImage } from "@/types/website";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export interface RecomposeInput {
@@ -14,6 +18,7 @@ export interface RecomposeInput {
   filledPlaceholders: Record<string, string>;
   filledImages: Record<string, ResolvedImage>;
   activeTheme?: ActiveTheme;
+  archetype?: DesignArchetype;
 }
 
 export interface RecomposeResult {
@@ -42,9 +47,18 @@ export async function recomposeWebsiteHtml(
   input: RecomposeInput
 ): Promise<RecomposeResult> {
   const { html: rawHtml } = await fetchTemplate(input.templateId);
+  const archetype = input.archetype ?? "clean-modern";
+
+  // Sanitize any broken image URLs before apply
+  const filledImages: Record<string, ResolvedImage> = {};
+  for (const [slot, image] of Object.entries(input.filledImages)) {
+    filledImages[slot] = isBrokenImageUrl(image.url)
+      ? getArchetypeFallback(archetype)
+      : image;
+  }
 
   let html = applyPlaceholders(rawHtml, input.filledPlaceholders);
-  html = applyImages(html, input.filledImages);
+  html = applyImages(html, filledImages, { archetype });
   html = applyServiceCardVisibility(html, input.filledPlaceholders);
 
   if (input.activeTheme) {

@@ -1,5 +1,8 @@
 const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
+/** Platform body limit is ~4.5MB — keep app limit under that. */
+export const MAX_FILE_SIZE_BYTES = 4 * 1024 * 1024; // 4MB
+/** Client should compress below this before upload. */
+export const CLIENT_MAX_UPLOAD_BYTES = Math.floor(3.5 * 1024 * 1024);
 
 // Magic byte signatures for image validation
 const MAGIC_BYTES: Record<string, number[]> = {
@@ -19,7 +22,7 @@ export async function validateUploadedFile(
 ): Promise<FileValidationResult> {
   // 1. Check file size
   if (file.size > MAX_FILE_SIZE_BYTES) {
-    return { valid: false, error: "File must be smaller than 10MB." };
+    return { valid: false, error: "File must be smaller than 4MB." };
   }
 
   if (file.size === 0) {

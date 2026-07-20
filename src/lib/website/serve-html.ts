@@ -89,7 +89,10 @@ export function injectPreviewBanner(
   const banner = `<div id="zuri-preview-banner" role="banner" style="position:fixed;top:0;left:0;right:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;gap:1rem;padding:0.65rem 1rem;background:#111;color:#f5f5f5;font:500 13px/1.4 system-ui,-apple-system,sans-serif;box-shadow:0 1px 0 rgba(255,255,255,0.08)">
   <span>Preview · <strong style="font-weight:600;text-transform:capitalize">${safeStatus}</strong></span>
   <a href="${publishHref}" style="color:#111;background:#e8c547;text-decoration:none;padding:0.35rem 0.75rem;font-weight:600;border-radius:2px">Publish</a>
-</div><style>body{padding-top:44px !important}</style>`;
+</div><style>
+  body{padding-top:44px !important}
+  header#site-nav, header.site-nav, #main-nav, #site-nav, .site-nav { top: 44px !important; }
+</style>`;
 
   if (/<body[^>]*>/i.test(html)) {
     return html.replace(/<body([^>]*)>/i, `<body$1>${banner}`);

@@ -20,6 +20,7 @@ import {
 } from "@/lib/website/category-images";
 import type { DesignArchetype } from "@/lib/website/archetypes";
 import type { CategoryImageRow } from "@/types/website";
+import { safeFetchJSON } from "@/lib/utils/safe-fetch";
 
 const selectClassName =
   "flex h-11 w-full rounded-none border border-[hsl(var(--input))] bg-[hsl(var(--surface-form))] px-4 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:border-gold";
@@ -47,9 +48,9 @@ export function CategoryImagesUploader() {
   const refresh = useCallback(async () => {
     setLoadingList(true);
     try {
-      const res = await fetch("/api/admin/category-images?limit=48");
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Failed to load library");
+      const data = await safeFetchJSON<{ images?: CategoryImageRow[] }>(
+        "/api/admin/category-images?limit=48"
+      );
       setImages(data.images ?? []);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to load library");
@@ -79,15 +80,14 @@ export function CategoryImagesUploader() {
         form.append("files", file);
       }
 
-      const res = await fetch("/api/admin/category-images", {
+      const data = await safeFetchJSON<{
+        count?: number;
+        failures?: { name: string; error: string }[];
+        error?: string;
+      }>("/api/admin/category-images", {
         method: "POST",
         body: form,
       });
-      const data = await res.json();
-
-      if (!res.ok && res.status !== 207) {
-        throw new Error(data.error ?? "Upload failed");
-      }
 
       const ok = data.count ?? 0;
       const fail = (data.failures ?? []).length;
@@ -105,7 +105,7 @@ export function CategoryImagesUploader() {
       }
 
       if (fail > 0) {
-        for (const f of data.failures.slice(0, 5)) {
+        for (const f of (data.failures ?? []).slice(0, 5)) {
           toast.error(`${f.name}: ${f.error}`);
         }
       }

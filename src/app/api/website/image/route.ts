@@ -1,19 +1,19 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { normalizeSlotType } from "@/lib/website/category-images";
 import {
   normalizeFilledImages,
   persistRecomposedWebsite,
 } from "@/lib/website/recompose-html";
-import type { ActiveTheme, ResolvedImage } from "@/types/website";
+import {
+  generateStoragePath,
+  MAX_FILE_SIZE_BYTES,
+  validateUploadedFile,
+} from "@/lib/security/file-validation";
+import type { ActiveTheme, DesignArchetype, ResolvedImage } from "@/types/website";
 
-const MAX_BYTES = 10 * 1024 * 1024;
-const ALLOWED_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/jpg",
-]);
+const MAX_BYTES = MAX_FILE_SIZE_BYTES;
 
 export async function POST(req: Request) {
   const supabase = await createClient();
@@ -24,7 +24,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const form = await req.formData();
+  let form: FormData;
+  try {
+    form = await req.formData();
+  } catch {
+    return NextResponse.json(
+      { error: "File is too large. Please use an image under 4MB." },
+      { status: 413 }
+    );
+  }
+
   const slot = String(form.get("slot") ?? "").trim();
   const action = String(form.get("action") ?? "upload");
   const file = form.get("file");
@@ -50,6 +59,7 @@ export async function POST(req: Request) {
     (website.filled_placeholders as Record<string, string>) ?? {};
   const images = normalizeFilledImages(website.filled_images);
   const activeTheme = (website.active_theme as ActiveTheme) ?? "theme-1";
+  const archetype = (website.archetype as DesignArchetype) ?? "clean-modern";
 
   let resolved: ResolvedImage;
 
@@ -78,26 +88,27 @@ export async function POST(req: Request) {
     if (!(file instanceof File)) {
       return NextResponse.json({ error: "Missing file" }, { status: 400 });
     }
-    if (!ALLOWED_TYPES.has(file.type)) {
+
+    const validation = await validateUploadedFile(file);
+    if (!validation.valid || !validation.sanitizedName) {
       return NextResponse.json(
-        { error: "Please upload a JPEG, PNG, or WebP image." },
-        { status: 400 }
-      );
-    }
-    if (file.size > MAX_BYTES) {
-      return NextResponse.json(
-        { error: "Image must be smaller than 10MB." },
+        { error: validation.error ?? "Invalid file" },
         { status: 400 }
       );
     }
 
-    const ext =
-      file.type === "image/png"
-        ? "png"
-        : file.type === "image/webp"
-          ? "webp"
-          : "jpg";
-    const storagePath = `${user.id}/${slot}-${Date.now()}.${ext}`;
+    if (file.size > MAX_BYTES) {
+      return NextResponse.json(
+        { error: "Image must be smaller than 4MB." },
+        { status: 413 }
+      );
+    }
+
+    const storagePath = generateStoragePath(
+      user.id,
+      `slot-${slot}`,
+      validation.sanitizedName
+    );
     const buffer = Buffer.from(await file.arrayBuffer());
 
     const service = createServiceClient();
@@ -145,6 +156,7 @@ export async function POST(req: Request) {
         filledPlaceholders: placeholders,
         filledImages: updatedImages,
         activeTheme,
+        archetype,
       }
     );
 
@@ -177,7 +189,7 @@ export async function GET(req: Request) {
   let query = supabase.from("category_images").select("*").limit(48);
 
   if (archetype) query = query.eq("archetype", archetype);
-  if (slot) query = query.eq("slot_type", slot);
+  if (slot) query = query.eq("slot_type", normalizeSlotType(slot));
 
   const { data, error } = await query;
   if (error) {

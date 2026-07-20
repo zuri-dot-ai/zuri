@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { FetchError, safeFetchJSON } from "@/lib/utils/safe-fetch";
 import type { OnboardingState } from "@/lib/onboarding/types";
 import { ONBOARDING_STORAGE_KEY } from "@/lib/onboarding/types";
 import { sanitizeText } from "@/lib/utils/sanitize";
@@ -101,45 +102,33 @@ export function Step8Building({ state }: Step8BuildingProps) {
       };
 
       try {
-        const res = await fetch("/api/onboarding/complete", {
+        const data = await safeFetchJSON<{
+          error?: string;
+          details?: string[];
+          jobId?: string | null;
+          success?: boolean;
+        }>("/api/onboarding/complete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
 
-        const data = (await res.json().catch(() => ({}))) as {
-          error?: string;
-          details?: string[];
-          jobId?: string | null;
-          success?: boolean;
-        };
-
-        if (!res.ok) {
-          const detailMsg = data.details?.length
-            ? data.details.join("; ")
-            : data.error ?? "Could not complete onboarding";
-          toast.error(detailMsg);
-          localStorage.removeItem(ONBOARDING_STORAGE_KEY);
-          router.push("/dashboard");
-          return;
-        }
-
         // Kick off generation from the client — server fire-and-forget fetch
         // is killed when the Vercel lambda exits after this API returns.
         if (data.jobId) {
           setActiveIndex(2);
-          const genRes = await fetch("/api/ai/generate-website", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ jobId: data.jobId }),
-          });
-          const genData = (await genRes.json().catch(() => ({}))) as {
-            error?: string;
-            success?: boolean;
-          };
-
-          if (!genRes.ok) {
-            toast.error(genData.error ?? "Website generation failed to start");
+          try {
+            await safeFetchJSON("/api/ai/generate-website", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ jobId: data.jobId }),
+            });
+          } catch (genErr) {
+            toast.error(
+              genErr instanceof Error
+                ? genErr.message
+                : "Website generation failed to start"
+            );
           }
         }
 
@@ -147,6 +136,12 @@ export function Step8Building({ state }: Step8BuildingProps) {
         setActiveIndex(BUILD_STEPS.length - 1);
         setTimeout(() => router.push("/dashboard"), 800);
       } catch (err) {
+        if (err instanceof FetchError) {
+          toast.error(err.message);
+          localStorage.removeItem(ONBOARDING_STORAGE_KEY);
+          router.push("/dashboard");
+          return;
+        }
         setStatusMessage("Connection lost. Retrying...");
         setTimeout(() => {
           startedRef.current = false;

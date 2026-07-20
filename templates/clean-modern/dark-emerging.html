@@ -17,6 +17,7 @@
     --color-accent-text:#FFFFFF;
     --color-amber:#E8A33D;
     --border:#212636;
+    --nav-h: 72px;
   }
   *{margin:0;padding:0;box-sizing:border-box;}
   html{scroll-behavior:smooth;}
@@ -99,7 +100,7 @@
   /* HERO */
   #hero{
     min-height:100vh;display:flex;align-items:center;position:relative;
-    padding-top:120px;overflow:hidden;
+    padding-top:calc(var(--nav-h) + 48px);overflow:hidden;
   }
   #hero::before{
     content:"";position:absolute;inset:0;

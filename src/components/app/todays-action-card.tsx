@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BADGES } from "@/lib/constants";
 import { actionCtaForTask } from "@/lib/dashboard/home-helpers";
+import { safeFetchJSON } from "@/lib/utils/safe-fetch";
 import type { ActionPlanTaskRow, CompleteTaskResult } from "@/types/database";
 
 type Props = {
@@ -68,21 +69,24 @@ export function TodaysActionCard({ task, websitePublished = true }: Props) {
   async function markDone() {
     setBusy(true);
     try {
-      const res = await fetch("/api/tasks/complete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ taskId: task!.id }),
-      });
-      const data = (await res.json()) as CompleteTaskResult;
-      if (!res.ok) throw new Error("Failed");
+      const data = await safeFetchJSON<CompleteTaskResult>(
+        "/api/tasks/complete",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ taskId: task!.id }),
+        }
+      );
       setDone(true);
       toast.success("Action complete");
       data.new_badges?.forEach((b) => {
         const badge = BADGES[b];
         if (badge) toast(`${badge.emoji} Badge earned: ${badge.label}`);
       });
-    } catch {
-      toast.error("Could not mark complete. Try again.");
+    } catch (e) {
+      toast.error(
+        e instanceof Error ? e.message : "Could not mark complete. Try again."
+      );
     } finally {
       setBusy(false);
     }

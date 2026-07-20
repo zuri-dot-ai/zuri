@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { PRICING } from "@/lib/constants";
 import { formatNGN as fmtNGN } from "@/lib/utils";
+import { safeFetchJSON } from "@/lib/utils/safe-fetch";
 import type { AccountView, BusinessProfileRow } from "@/types/database";
 
 type Tab = "profile" | "business" | "billing" | "notifications" | "danger";
@@ -328,13 +329,14 @@ function BillingTab({ account }: { account: AccountView | null }) {
   ) {
     setLoadingCheckout(`${planId}-${interval}`);
     try {
-      const res = await fetch("/api/billing/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId, interval }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      const data = await safeFetchJSON<{ checkoutUrl: string }>(
+        "/api/billing/checkout",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ planId, interval }),
+        }
+      );
       try {
         localStorage.removeItem("zuri_pending_plan");
       } catch {

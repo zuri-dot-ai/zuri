@@ -48,8 +48,8 @@ const securityHeaders = [
       // Connections: self + all external APIs
       "connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://api.flutterwave.com https://checkout.flutterwave.com https://api.unsplash.com https://api.pexels.com https://generativelanguage.googleapis.com https://api.resend.com https://graph.facebook.com https://searchconsole.googleapis.com https://api.vercel.com",
 
-      // Frames: Flutterwave checkout + Meta OAuth
-      "frame-src https://checkout.flutterwave.com https://www.facebook.com",
+      // Frames: same-origin preview iframe + Flutterwave checkout + Meta OAuth
+      "frame-src 'self' https://checkout.flutterwave.com https://www.facebook.com",
 
       // Media: self + blob
       "media-src 'self' blob: https://*.supabase.co",

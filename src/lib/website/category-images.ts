@@ -36,6 +36,31 @@ export function isCategorySlotType(value: string): value is CategorySlotType {
   return (CATEGORY_SLOT_TYPES as readonly string[]).includes(value);
 }
 
+/** e.g. "gallery_1" → "gallery", "before_after_2" → "before_after", "hero" → "hero" */
+export function normalizeSlotType(slot: string): CategorySlotType | string {
+  const raw = slot.trim().toLowerCase();
+  if (isCategorySlotType(raw)) return raw;
+
+  if (
+    raw === "before" ||
+    raw === "after" ||
+    raw.startsWith("before_") ||
+    raw.startsWith("after_")
+  ) {
+    return "before_after";
+  }
+
+  const withoutIndex = raw.replace(/_\d+$/, "");
+  if (isCategorySlotType(withoutIndex)) return withoutIndex;
+
+  const sorted = [...CATEGORY_SLOT_TYPES].sort((a, b) => b.length - a.length);
+  for (const known of sorted) {
+    if (raw === known || raw.startsWith(`${known}_`)) return known;
+  }
+
+  return withoutIndex || raw;
+}
+
 /** Object path inside the `category-images` bucket. */
 export function buildCategoryImagePath(
   archetype: DesignArchetype,

@@ -19,7 +19,7 @@ export function Skeleton({
         "relative overflow-hidden rounded-md bg-[var(--bg-secondary)]",
         "before:absolute before:inset-0 before:-translate-x-full",
         "before:animate-shimmer before:bg-gradient-to-r",
-        "before:from-transparent before:via-[rgba(201,162,39,0.08)] before:to-transparent",
+        "before:from-transparent before:via-[rgba(201,168,76,0.08)] before:to-transparent",
         className
       )}
       {...props}
@@ -132,6 +132,64 @@ export function PlanRowSkeleton() {
         <Skeleton className="h-3 w-2/3" />
       </div>
       <Skeleton className="h-6 w-16 rounded-full" />
+    </div>
+  );
+}
+
+/** Skeleton: website preview thumbnail / iframe placeholder */
+export function WebsitePreviewSkeleton({
+  className,
+}: {
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex h-full min-h-[240px] flex-col overflow-hidden rounded-sm border border-border bg-[var(--bg-secondary)]",
+        className
+      )}
+    >
+      <div className="flex items-center gap-2 border-b border-border px-4 py-2.5">
+        <Skeleton className="h-3 w-3 rounded-full" />
+        <Skeleton className="h-3 w-40" />
+      </div>
+      <div className="relative flex-1 p-6">
+        <Skeleton className="mb-4 h-3 w-24" />
+        <Skeleton className="mb-3 h-8 w-3/4" />
+        <Skeleton className="mb-6 h-4 w-1/2" />
+        <div className="grid grid-cols-2 gap-4">
+          <Skeleton className="h-28 w-full" />
+          <Skeleton className="h-28 w-full" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Skeleton: analytics chart block */
+export function ChartSkeleton({ className }: { className?: string }) {
+  return (
+    <div className={cn("zuri-card space-y-4", className)}>
+      <Skeleton className="h-4 w-32" />
+      <div className="flex h-40 items-end gap-2">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <Skeleton
+            key={i}
+            className="flex-1"
+            style={{ height: `${30 + ((i * 17) % 70)}%` }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Skeleton: page header title block */
+export function PageHeaderSkeleton() {
+  return (
+    <div className="mb-6 space-y-2">
+      <Skeleton className="h-8 w-48" />
+      <Skeleton className="h-4 w-64" />
     </div>
   );
 }

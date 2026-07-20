@@ -1,9 +1,12 @@
-import { ContentSlotSkeleton } from "@/components/ui/skeleton";
+import {
+  ContentSlotSkeleton,
+  PageHeaderSkeleton,
+} from "@/components/ui/skeleton";
 
 export default function Loading() {
   return (
     <div className="mx-auto max-w-5xl space-y-6">
-      <div className="h-8 w-56 bg-muted" />
+      <PageHeaderSkeleton />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 6 }).map((_, i) => (
           <ContentSlotSkeleton key={i} />
