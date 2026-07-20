@@ -1,8 +1,9 @@
 "use client";
 
-import { AlertCircle, CheckCircle2, ExternalLink, Rocket } from "lucide-react";
+import { AlertCircle, CheckCircle2, ExternalLink, Rocket, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { getSiteUrlMode } from "@/lib/website/public-site-url";
 
 export function PublishPanel({
   published,
@@ -12,6 +13,7 @@ export function PublishPanel({
   liveUrl,
   busy,
   onPublish,
+  onUnpublish,
   onUpgrade,
 }: {
   published: boolean;
@@ -21,8 +23,13 @@ export function PublishPanel({
   liveUrl: string | null;
   busy: boolean;
   onPublish: () => void;
+  onUnpublish: () => void;
   onUpgrade: () => void;
 }) {
+  const urlMode = getSiteUrlMode();
+  const publishLabel =
+    urlMode === "path" ? "Publish live" : "Publish to subdomain";
+
   const checks = [
     {
       ok: !needsReview,
@@ -59,6 +66,14 @@ export function PublishPanel({
         ))}
       </div>
 
+      {urlMode === "path" && (
+        <p className="text-xs text-muted-foreground">
+          Live sites are public at{" "}
+          <span className="font-mono">/sites/your-handle</span> until your custom
+          domain wildcard is configured.
+        </p>
+      )}
+
       <div className="flex flex-wrap gap-3">
         {previewUrl && !published && (
           <Button variant="outline" asChild>
@@ -74,29 +89,44 @@ export function PublishPanel({
             </a>
           </Button>
         )}
-        <Button
-          onClick={canPublish ? onPublish : onUpgrade}
-          disabled={busy || published}
-        >
-          {busy ? (
-            <>
-              <span className="zuri-spinner" />
-              <span className="ml-1 text-xs">Publishing…</span>
-            </>
-          ) : (
-            <Rocket className="size-4" />
-          )}
-          {published
-            ? "Published"
-            : canPublish
-              ? "Publish to subdomain"
-              : "Upgrade to publish"}
-        </Button>
+        {published && canPublish ? (
+          <Button
+            variant="outline"
+            onClick={onUnpublish}
+            disabled={busy}
+            className="border-destructive/40 text-destructive hover:bg-destructive/10"
+          >
+            {busy ? (
+              <>
+                <span className="zuri-spinner" />
+                <span className="ml-1 text-xs">Working…</span>
+              </>
+            ) : (
+              <Undo2 className="size-4" />
+            )}
+            Unpublish
+          </Button>
+        ) : (
+          <Button
+            onClick={canPublish ? onPublish : onUpgrade}
+            disabled={busy}
+          >
+            {busy ? (
+              <>
+                <span className="zuri-spinner" />
+                <span className="ml-1 text-xs">Publishing…</span>
+              </>
+            ) : (
+              <Rocket className="size-4" />
+            )}
+            {canPublish ? publishLabel : "Upgrade to publish"}
+          </Button>
+        )}
       </div>
 
       {published && liveUrl && (
         <Badge variant="success" className="font-normal">
-          Live at {liveUrl.replace("https://", "")}
+          Live at {liveUrl.replace(/^https?:\/\//, "")}
         </Badge>
       )}
     </div>

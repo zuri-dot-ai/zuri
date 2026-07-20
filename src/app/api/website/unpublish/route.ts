@@ -10,9 +10,7 @@ import {
 } from "@/lib/payments/get-plan";
 import { createAuditLog } from "@/lib/security/audit";
 import { ERROR_MESSAGES } from "@/lib/errors/messages";
-
-const ROOT_DOMAIN =
-  process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "buildzuri.com";
+import { getPublicSiteUrl, getRootDomain } from "@/lib/website/public-site-url";
 
 export async function POST(req: Request) {
   const supabase = await createClient();
@@ -61,7 +59,7 @@ export async function POST(req: Request) {
       success: true,
       message: "Website is not published",
       handle: website.handle,
-      domain: ROOT_DOMAIN,
+      domain: getRootDomain(),
     });
   }
 
@@ -93,7 +91,7 @@ export async function POST(req: Request) {
     website.id,
     {
       handle: website.handle,
-      formerUrl: `https://${website.handle}.${ROOT_DOMAIN}`,
+      formerUrl: getPublicSiteUrl(website.handle),
     },
     req
   );
@@ -101,6 +99,6 @@ export async function POST(req: Request) {
   return NextResponse.json({
     success: true,
     handle: website.handle,
-    domain: ROOT_DOMAIN,
+    domain: getRootDomain(),
   });
 }

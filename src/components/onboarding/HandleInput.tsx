@@ -11,6 +11,7 @@ import {
   validateHandle,
 } from "@/lib/handle/client";
 import { cn } from "@/lib/utils";
+import { formatPublicSiteUrlLabel } from "@/lib/website/public-site-url";
 
 type Availability =
   | { status: "idle" }
@@ -217,7 +218,7 @@ export function HandleInput({
         </span>
       </div>
       <p className="font-mono text-xs text-muted-foreground">
-        <span className="text-gold">{value || "handle"}</span>.buildzuri.com
+        {formatPublicSiteUrlLabel(value || "handle")}
       </p>
       {availability.status === "unavailable" && (
         <div className="space-y-1.5">

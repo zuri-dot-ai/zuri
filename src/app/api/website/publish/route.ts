@@ -9,16 +9,10 @@ import {
   getActivePlanId,
 } from "@/lib/payments/get-plan";
 import { validateFilledHtml } from "@/lib/website/generation-pipeline";
+import { getPublicSiteUrl } from "@/lib/website/public-site-url";
 import { sendSitePublishedEmail } from "@/lib/email/templates";
 import { createAuditLog } from "@/lib/security/audit";
 import { ERROR_MESSAGES } from "@/lib/errors/messages";
-
-const ROOT_DOMAIN =
-  process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "buildzuri.com";
-
-function siteUrlFor(handle: string): string {
-  return `https://${handle}.${ROOT_DOMAIN}`;
-}
 
 export async function POST(req: Request) {
   const supabase = await createClient();
@@ -71,7 +65,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const liveUrl = siteUrlFor(website.handle);
+  const liveUrl = getPublicSiteUrl(website.handle);
 
   if (website.status === "published") {
     return NextResponse.json({

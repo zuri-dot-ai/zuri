@@ -26,6 +26,29 @@ dansbakery.com               → Dan's custom domain (Growth+ only)
 
 The Next.js middleware intercepts requests at the edge, detects whether the request is for the main app or a generated website subdomain, and rewrites accordingly — no separate deployment per user site.
 
+### 1.1 Interim Vercel hosting (before buildzuri.com)
+
+You do **not** need a custom domain to go live. One Vercel deployment serves all customer sites from Supabase HTML.
+
+| Mode | Env | Public live URL |
+|---|---|---|
+| **Path** (interim) | `NEXT_PUBLIC_SITE_URL_MODE=path` | `{NEXT_PUBLIC_APP_URL}/sites/{handle}` |
+| **Subdomain** (production) | `NEXT_PUBLIC_SITE_URL_MODE=subdomain` + wildcard DNS | `https://{handle}.buildzuri.com` |
+
+**Set on Vercel today (no buildzuri.com yet):**
+
+```
+NEXT_PUBLIC_APP_URL=https://your-project.vercel.app
+NEXT_PUBLIC_SITE_URL_MODE=path
+NEXT_PUBLIC_ROOT_DOMAIN=buildzuri.com
+```
+
+After publish, the public URL is `https://your-project.vercel.app/sites/pixelnest-studio-test`. Owner preview stays at `/preview/{handle}` (auth required).
+
+When you buy `buildzuri.com`: add `buildzuri.com` and `*.buildzuri.com` in Vercel Domains, configure wildcard CNAME, then set `NEXT_PUBLIC_SITE_URL_MODE=subdomain`.
+
+Helper: [`src/lib/website/public-site-url.ts`](../src/lib/website/public-site-url.ts) — `getPublicSiteUrl()` used by publish API and Website Studio.
+
 ---
 
 ## 2. VERCEL PROJECT SETUP

@@ -11,12 +11,18 @@ import {
   Palette,
   Rocket,
   Settings,
+  Undo2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { UpgradeSheet } from "@/components/app/upgrade-sheet";
 import { celebrateFirstPublish } from "@/lib/ui/milestones";
+import {
+  formatPublicSiteUrlLabel,
+  getPublicSiteUrl,
+  getRootDomain,
+} from "@/lib/website/public-site-url";
 import { ContentPanel } from "./ContentPanel";
 import { ImagesPanel } from "./ImagesPanel";
 import { ThemePanel } from "./ThemePanel";
@@ -77,11 +83,14 @@ export function WebsiteStudio({
   const [liveSlug, setLiveSlug] = useState(slug);
   const [previewKey, setPreviewKey] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [busyAction, setBusyAction] = useState<"publish" | "unpublish" | null>(
+    null
+  );
   const [upgradeOpen, setUpgradeOpen] = useState(false);
 
-  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "localhost:3000";
+  const rootDomain = getRootDomain();
   const previewHandle = handle ?? liveSlug;
-  const liveUrl = liveSlug ? `https://${liveSlug}.${rootDomain}` : null;
+  const liveUrl = liveSlug ? getPublicSiteUrl(liveSlug) : null;
   const previewUrl = previewHandle ? `/preview/${previewHandle}` : null;
   const canPublish = plan !== "free";
 
@@ -126,6 +135,7 @@ export function WebsiteStudio({
       return;
     }
     setBusy(true);
+    setBusyAction("publish");
     try {
       const res = await fetch("/api/website/publish", {
         method: "POST",
@@ -143,13 +153,52 @@ export function WebsiteStudio({
       setPublished(true);
       setLiveSlug(data.slug);
       setNeedsReview(false);
-      celebrateFirstPublish(
-        data.slug ? `https://${data.slug}.${rootDomain}` : undefined
-      );
+      const url = (data.liveUrl as string | undefined) ?? getPublicSiteUrl(data.slug);
+      celebrateFirstPublish(url);
+      toast.success(`Live at ${formatPublicSiteUrlLabel(data.slug)}`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Publish failed");
     } finally {
       setBusy(false);
+      setBusyAction(null);
+    }
+  }
+
+  async function unpublish() {
+    if (!canPublish) {
+      setUpgradeOpen(true);
+      return;
+    }
+    if (
+      !window.confirm(
+        "Take site offline? Visitors will get a 404 until you publish again."
+      )
+    ) {
+      return;
+    }
+    setBusy(true);
+    setBusyAction("unpublish");
+    try {
+      const res = await fetch("/api/website/unpublish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ websiteId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        if (res.status === 403) {
+          setUpgradeOpen(true);
+          return;
+        }
+        throw new Error(data.error);
+      }
+      setPublished(false);
+      toast.success("Site unpublished — back in preview mode");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Unpublish failed");
+    } finally {
+      setBusy(false);
+      setBusyAction(null);
     }
   }
 
@@ -191,14 +240,27 @@ export function WebsiteStudio({
               </a>
             </Button>
           )}
-          <Button size="sm" onClick={publish} disabled={busy || published}>
-            <Rocket className="size-4" />
-            {published
-              ? "Published"
-              : canPublish
-                ? "Publish"
-                : "Upgrade to publish"}
-          </Button>
+          {published && canPublish ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={unpublish}
+              disabled={busy}
+              className="border-destructive/40 text-destructive hover:bg-destructive/10"
+            >
+              <Undo2 className="size-4" />
+              {busyAction === "unpublish" ? "Unpublishing…" : "Unpublish"}
+            </Button>
+          ) : (
+            <Button size="sm" onClick={publish} disabled={busy}>
+              <Rocket className="size-4" />
+              {busyAction === "publish"
+                ? "Publishing…"
+                : canPublish
+                  ? "Publish"
+                  : "Upgrade to publish"}
+            </Button>
+          )}
         </div>
       </header>
 
@@ -285,6 +347,7 @@ export function WebsiteStudio({
               liveUrl={liveUrl}
               busy={busy}
               onPublish={publish}
+              onUnpublish={unpublish}
               onUpgrade={() => setUpgradeOpen(true)}
             />
           )}
@@ -323,10 +386,22 @@ export function WebsiteStudio({
             </a>
           </Button>
         )}
-        <Button className="flex-1" onClick={publish} disabled={busy || published}>
-          <Rocket className="size-4" />
-          {published ? "Live" : canPublish ? "Publish" : "Upgrade"}
-        </Button>
+        {published && canPublish ? (
+          <Button
+            variant="outline"
+            className="flex-1 border-destructive/40 text-destructive"
+            onClick={unpublish}
+            disabled={busy}
+          >
+            <Undo2 className="size-4" />
+            Unpublish
+          </Button>
+        ) : (
+          <Button className="flex-1" onClick={publish} disabled={busy}>
+            <Rocket className="size-4" />
+            {canPublish ? "Publish" : "Upgrade"}
+          </Button>
+        )}
       </div>
 
       <UpgradeSheet
