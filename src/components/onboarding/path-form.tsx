@@ -58,7 +58,7 @@ Preferred tone: ${f.tone}
         <Label htmlFor="tone">Tone</Label>
         <select id="tone" value={f.tone}
           onChange={(e) => setF({ ...f, tone: e.target.value })}
-          className="flex h-11 w-full rounded-lg border border-border bg-background px-4 text-sm focus:border-gold/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(201,162,39,0.35)]"
+          className="flex h-11 w-full rounded-lg border border-border bg-background px-4 text-sm focus:border-gold/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(201,162,39,0.35)]">
           <option value="professional">Professional</option>
           <option value="warm">Warm</option>
           <option value="bold">Bold</option>
