@@ -308,7 +308,11 @@ export async function POST(req: Request) {
     });
     // #endregion
     return NextResponse.json(
-      { error: classified.message },
+      {
+        error: classified.message,
+        details: profileError.message ? [profileError.message] : undefined,
+        code: profileError.code,
+      },
       { status: classified.status }
     );
   }
@@ -343,7 +347,11 @@ export async function POST(req: Request) {
     console.error("Business profile save error:", bizError);
     const classified = classifySupabaseError(bizError);
     return NextResponse.json(
-      { error: classified.message || "Failed to save profile" },
+      {
+        error: classified.message || "Failed to save profile",
+        details: bizError?.message ? [bizError.message] : undefined,
+        code: bizError?.code,
+      },
       { status: classified.status || 500 }
     );
   }

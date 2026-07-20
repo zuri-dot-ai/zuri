@@ -32,7 +32,18 @@ export function classifySupabaseError(error: {
       };
     case "PGRST116": // Row not found (single() with no results)
       return { status: 404, message: "Not found." };
+    case "42501": // Insufficient privilege
+      return {
+        status: 500,
+        message:
+          "Database permission error. Apply the latest Supabase migrations.",
+      };
     default:
-      return { status: 500, message: "A database error occurred." };
+      return {
+        status: 500,
+        message: error.message
+          ? `A database error occurred: ${error.message}`
+          : "A database error occurred.",
+      };
   }
 }
