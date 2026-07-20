@@ -1,11 +1,28 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Globe } from "lucide-react";
+import { Globe, Monitor, Smartphone, Tablet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { WebsitePreviewSkeleton } from "@/components/ui/skeleton";
+import {
+  computePreviewScale,
+  defaultPreviewDevice,
+  DEVICE_STAGE_HEIGHT,
+  DEVICE_WIDTHS,
+  type PreviewDevice,
+} from "@/lib/website/preview-devices";
 
 const PREVIEW_MSG = "zuri-preview";
+
+const DEVICE_TOGGLE: {
+  id: PreviewDevice;
+  label: string;
+  icon: typeof Monitor;
+}[] = [
+  { id: "desktop", label: "Desktop", icon: Monitor },
+  { id: "tablet", label: "Tablet", icon: Tablet },
+  { id: "mobile", label: "Mobile", icon: Smartphone },
+];
 
 export function PreviewFrame({
   handle,
@@ -21,12 +38,49 @@ export function PreviewFrame({
   onImageSlotClick?: (slot: string) => void;
 }) {
   const [loaded, setLoaded] = useState(false);
+  const [device, setDevice] = useState<PreviewDevice>("desktop");
+  const [scale, setScale] = useState(1);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
   const previewSrc = handle ? `/preview/${handle}?v=${refreshKey}` : null;
+
+  const intrinsicWidth = DEVICE_WIDTHS[device];
+  const intrinsicHeight = DEVICE_STAGE_HEIGHT;
+  const compactChrome = device !== "desktop";
+  const showDeviceFrame = device === "mobile" || device === "tablet";
+
+  useEffect(() => {
+    setDevice(defaultPreviewDevice());
+  }, []);
 
   useEffect(() => {
     setLoaded(false);
   }, [refreshKey, handle]);
+
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+
+    const update = () => {
+      const availW = el.clientWidth;
+      const availH = el.clientHeight;
+      // Leave a little padding so the frame isn't flush against edges
+      const pad = showDeviceFrame ? 24 : 16;
+      setScale(
+        computePreviewScale(
+          Math.max(0, availW - pad),
+          Math.max(0, availH - pad),
+          intrinsicWidth,
+          intrinsicHeight
+        )
+      );
+    };
+
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [intrinsicWidth, intrinsicHeight, showDeviceFrame]);
 
   useEffect(() => {
     function onMessage(event: MessageEvent) {
@@ -42,7 +96,8 @@ export function PreviewFrame({
   }, [onImageSlotClick]);
 
   useEffect(() => {
-    if (!loaded || !highlightSection || !iframeRef.current?.contentWindow) return;
+    if (!loaded || !highlightSection || !iframeRef.current?.contentWindow)
+      return;
     iframeRef.current.contentWindow.postMessage(
       {
         source: PREVIEW_MSG,
@@ -55,11 +110,9 @@ export function PreviewFrame({
 
   const onLoad = useCallback(() => {
     setLoaded(true);
-    const win = iframeRef.current?.contentWindow;
     const doc = iframeRef.current?.contentDocument;
-    if (!win || !doc) return;
+    if (!doc) return;
 
-    // Inject bridge for scroll/highlight + image clicks
     const script = doc.createElement("script");
     script.textContent = `
 (function(){
@@ -87,33 +140,119 @@ export function PreviewFrame({
     doc.documentElement.appendChild(script);
   }, []);
 
+  const scaledHeight = intrinsicHeight * scale;
+
   return (
     <div className="surface-hairline flex h-full min-h-[60vh] flex-col overflow-hidden border border-border reveal-preview md:min-h-0">
-      <div className="flex items-center gap-2 border-b border-border bg-background px-4 py-2.5">
-        <Globe className="size-4 text-muted-foreground" />
-        <span className="font-mono text-xs text-muted-foreground">
+      {/* Mock browser chrome */}
+      <div
+        className={cn(
+          "flex items-center gap-2 border-b border-border bg-background",
+          compactChrome ? "px-3 py-1.5" : "px-4 py-2.5"
+        )}
+      >
+        <Globe
+          className={cn(
+            "shrink-0 text-muted-foreground",
+            compactChrome ? "size-3.5" : "size-4"
+          )}
+        />
+        <span
+          className={cn(
+            "min-w-0 flex-1 truncate font-mono text-muted-foreground",
+            compactChrome ? "text-[10px]" : "text-xs"
+          )}
+        >
           {handle ? `${handle}.${rootDomain}` : "preview"}
         </span>
+        <div
+          className="flex shrink-0 items-center gap-0.5 rounded-sm border border-border p-0.5"
+          role="group"
+          aria-label="Preview device size"
+        >
+          {DEVICE_TOGGLE.map(({ id, label, icon: Icon }) => {
+            const active = device === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                title={label}
+                aria-label={label}
+                aria-pressed={active}
+                onClick={() => setDevice(id)}
+                className={cn(
+                  "rounded-sm p-1.5 transition-colors",
+                  active
+                    ? "bg-surface text-gold"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Icon className="size-3.5" />
+              </button>
+            );
+          })}
+        </div>
       </div>
-      <div className="relative flex-1 bg-[var(--bg-secondary)]">
+
+      {/* Scale-to-fit viewport */}
+      <div
+        ref={viewportRef}
+        className="relative flex min-h-0 flex-1 items-start justify-center overflow-auto bg-[var(--bg-secondary)]"
+      >
         {!loaded && previewSrc && (
           <div className="absolute inset-0 z-10">
             <WebsitePreviewSkeleton className="h-full rounded-none border-0" />
           </div>
         )}
+
         {previewSrc ? (
-          <iframe
-            ref={iframeRef}
-            key={refreshKey}
-            title="Website preview"
-            src={previewSrc}
-            onLoad={onLoad}
-            className={cn(
-              "h-full w-full border-0 bg-[var(--bg-secondary)] transition-opacity duration-300",
-              loaded ? "opacity-100" : "opacity-0"
-            )}
-            sandbox="allow-scripts allow-same-origin allow-forms"
-          />
+          <div
+            className="relative mx-auto transition-[width,height] duration-[220ms] ease-out"
+            style={{
+              width: intrinsicWidth * scale,
+              height: scaledHeight,
+            }}
+          >
+            <div
+              className="absolute left-1/2 top-0 origin-top transition-transform duration-[220ms] ease-out"
+              style={{
+                width: intrinsicWidth,
+                height: intrinsicHeight,
+                transform: `translateX(-50%) scale(${scale})`,
+              }}
+            >
+              <div
+                className={cn(
+                  "h-full w-full overflow-hidden bg-[var(--bg-secondary)]",
+                  showDeviceFrame &&
+                    (device === "mobile"
+                      ? "rounded-[1.25rem] border border-border p-1.5 shadow-[0_0_0_1px_rgba(255,255,255,0.04)]"
+                      : "rounded-xl border border-border p-1.5 shadow-[0_0_0_1px_rgba(255,255,255,0.04)]")
+                )}
+              >
+                <iframe
+                  ref={iframeRef}
+                  key={refreshKey}
+                  title="Website preview"
+                  src={previewSrc}
+                  onLoad={onLoad}
+                  width={intrinsicWidth}
+                  height={intrinsicHeight}
+                  className={cn(
+                    "block border-0 bg-[var(--bg-secondary)] transition-opacity duration-300",
+                    showDeviceFrame &&
+                      (device === "mobile" ? "rounded-[1rem]" : "rounded-lg"),
+                    loaded ? "opacity-100" : "opacity-0"
+                  )}
+                  style={{
+                    width: intrinsicWidth,
+                    height: intrinsicHeight,
+                  }}
+                  sandbox="allow-scripts allow-same-origin allow-forms"
+                />
+              </div>
+            </div>
+          </div>
         ) : (
           <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
             Preview unavailable
