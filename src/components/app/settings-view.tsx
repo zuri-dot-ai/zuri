@@ -13,6 +13,8 @@ import {
   LogOut,
   Moon,
   Sun,
+  Sparkles,
+  X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -27,11 +29,12 @@ import { formatNGN as fmtNGN } from "@/lib/utils";
 import { safeFetchJSON } from "@/lib/utils/safe-fetch";
 import type { AccountView, BusinessProfileRow } from "@/types/database";
 
-type Tab = "profile" | "business" | "billing" | "notifications" | "danger";
+type Tab = "profile" | "business" | "billing" | "notifications" | "voice" | "danger";
 
 const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: "profile", label: "Profile", icon: User },
   { id: "business", label: "Business Profile", icon: Building2 },
+  { id: "voice", label: "Brand Voice", icon: Sparkles },
   { id: "billing", label: "Billing", icon: CreditCard },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "danger", label: "Danger Zone", icon: Trash2 },
@@ -75,6 +78,7 @@ export function SettingsView({
         <div className="zuri-card">
           {tab === "profile" && <ProfileTab account={account} />}
           {tab === "business" && <BusinessTab profile={profile} />}
+          {tab === "voice" && <BrandVoiceTab />}
           {tab === "billing" && <BillingTab account={account} />}
           {tab === "notifications" && <NotificationsTab />}
           {tab === "danger" && <DangerTab />}
@@ -189,6 +193,104 @@ function ProfileTab({ account }: { account: AccountView | null }) {
           Sign out
         </Button>
       </div>
+    </div>
+  );
+}
+
+// ── BRAND VOICE TAB ─────────────────────────────────────
+function BrandVoiceTab() {
+  const [examples, setExamples] = useState<
+    { id: string; text: string; source: string; created_at: string }[]
+  >([]);
+  const [loading, setLoading] = useState(true);
+
+  async function load() {
+    setLoading(true);
+    try {
+      const data = await safeFetchJSON<{
+        examples: {
+          id: string;
+          text: string;
+          source: string;
+          created_at: string;
+        }[];
+      }>("/api/settings/voice-examples");
+      setExamples(data.examples ?? []);
+    } catch (e) {
+      toast.error(
+        e instanceof Error ? e.message : "Could not load voice examples"
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void load();
+  }, []);
+
+  async function remove(id: string) {
+    try {
+      await safeFetchJSON(`/api/settings/voice-examples?id=${id}`, {
+        method: "DELETE",
+      });
+      setExamples((prev) => prev.filter((e) => e.id !== id));
+      toast.success("Example removed");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not delete");
+    }
+  }
+
+  const sourceLabel = (source: string) => {
+    if (source === "edited") return "From an edit you made";
+    if (source === "rated") return "From a post you rated highly";
+    return source;
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="font-heading text-2xl font-semibold">Brand Voice</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Examples Zuri learns from when you edit captions or rate posts highly.
+          These shape future generation after at least two examples exist.
+        </p>
+      </div>
+
+      {loading ? (
+        <p className="text-sm text-muted-foreground">Loading…</p>
+      ) : examples.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          No voice examples yet. Edit a generated caption or rate a post 4–5
+          stars to start building your voice bank.
+        </p>
+      ) : (
+        <ul className="space-y-3">
+          {examples.map((ex) => (
+            <li
+              key={ex.id}
+              className="flex gap-3 rounded-sm border border-border bg-background p-3"
+            >
+              <div className="min-w-0 flex-1">
+                <Badge variant="outline" className="mb-1.5">
+                  {sourceLabel(ex.source)}
+                </Badge>
+                <p className="text-sm leading-relaxed text-foreground line-clamp-4">
+                  {ex.text}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => void remove(ex.id)}
+                className="shrink-0 rounded p-1 text-muted-foreground hover:text-foreground"
+                aria-label="Delete voice example"
+              >
+                <X className="size-4" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

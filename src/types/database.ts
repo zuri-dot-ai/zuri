@@ -100,6 +100,12 @@ export interface BusinessProfileRow {
   updated_at: string;
 }
 
+export interface TrendSource {
+  topic: string;
+  angle: string;
+  fetched_at: string;
+}
+
 export interface ContentCalendarRow {
   id: string;
   user_id: string;
@@ -122,8 +128,27 @@ export interface ContentCalendarRow {
   series_total: number | null;
   repurposed_from: string | null;
   needs_review?: boolean;
+  trend_source?: TrendSource | null;
   created_at: string;
   updated_at?: string;
+}
+
+export interface ContentRatingRow {
+  id: string;
+  user_id: string;
+  generated_content_id: string;
+  rating: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BrandVoiceExampleRow {
+  id: string;
+  user_id: string;
+  text: string;
+  source: "edited" | "rated" | "manual" | string;
+  platform: string | null;
+  created_at: string;
 }
 
 export interface ContentPillarRow {

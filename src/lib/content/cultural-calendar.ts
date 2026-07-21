@@ -188,12 +188,12 @@ export const NIGERIAN_CULTURAL_CALENDAR: CulturalMoment[] = [
 
   // DECEMBER
   {
-    name: "Detty December",
+    name: "Christmas Season",
     month: 12,
     day: 1,
     is_floating: false,
     applicable_to: ["warm-sensory", "luxury-aspirational", "community-vibrant", "editorial-bold"],
-    content_angle: "Lagos end-of-year season — events, celebrations, going out, looking good",
+    content_angle: "Lagos end-of-year season — family gatherings, gifting, celebration, gratitude for the year. Frame around togetherness and thankfulness rather than nightlife.",
     urgency: "high",
   },
   {

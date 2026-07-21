@@ -1,6 +1,8 @@
 import { geminiJSON } from "@/lib/gemini";
+import { createServiceClient } from "@/lib/supabase/service";
 import { sanitizeForPrompt } from "@/lib/utils/sanitize";
 import type { BlogContent, GenerationInput } from "./types";
+import { getVoiceContext } from "./voice-bank";
 
 export async function generateBlogPost(
   input: GenerationInput
@@ -17,6 +19,14 @@ export async function generateBlogPost(
   );
   const brandTone = sanitizeForPrompt(input.brand.brand_tone);
 
+  let voiceContext = "";
+  try {
+    const supabase = createServiceClient();
+    voiceContext = await getVoiceContext(supabase, input.userId);
+  } catch (err) {
+    console.error("[generateBlogPost] voice context failed:", err);
+  }
+
   const prompt = `
 You are a content writer for ${businessName}, a ${industry} business in Nigeria.
 Write a complete, high-quality blog post on: ${topic}
@@ -26,7 +36,7 @@ Business context:
 - Target audience: ${audience}
 - Location: ${location}, Nigeria
 - Brand tone: ${brandTone}
-
+${voiceContext}
 Blog post requirements:
 - Total length: 800-1200 words
 - Audience: ${audience}

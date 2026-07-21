@@ -1,7 +1,9 @@
 import { geminiJSON } from "@/lib/gemini";
+import { createServiceClient } from "@/lib/supabase/service";
 import { sanitizeForPrompt } from "@/lib/utils/sanitize";
 import type { BusinessProfile } from "@/types/brand";
 import type { GenerationInput, NewsletterContent } from "./types";
+import { getVoiceContext } from "./voice-bank";
 
 export async function generateNewsletter(
   input: GenerationInput
@@ -13,11 +15,20 @@ export async function generateNewsletter(
   const brandTone = sanitizeForPrompt(input.brand.brand_tone);
   const audience = sanitizeForPrompt(input.brand.target_audience);
 
+  let voiceContext = "";
+  try {
+    const supabase = createServiceClient();
+    voiceContext = await getVoiceContext(supabase, input.userId);
+  } catch (err) {
+    console.error("[generateNewsletter] voice context failed:", err);
+  }
+
   const prompt = `
 You are writing an email newsletter for ${businessName}, a ${industry} in Nigeria.
 Newsletter topic: ${topic}
 Brief: ${brief}
 Brand tone: ${brandTone}
+${voiceContext}
 Audience: ${audience}
 
 Write a complete email newsletter that subscribers will actually want to read.

@@ -49,6 +49,7 @@ interface GeneratedSlot {
   is_cultural_moment?: boolean;
   cultural_moment_name?: string | null;
   suggested_day_of_week?: string;
+  trend_topic?: string | null;
 }
 
 interface CalendarPromptParams {
@@ -317,6 +318,10 @@ RULES:
 6. Each slot must include a specific HOOK — the first line the audience will read or see
 7. Video format slots: mark as coming_soon: true — these appear in the calendar but cannot be generated yet
 8. At least 20% of posts should be engagement-driven (questions, polls, challenges, opinions)
+9. If a slot's topic is directly inspired by one of the TRENDING TOPICS listed above,
+   set "trend_topic" to that trend's exact topic text. Otherwise set it to null.
+   Do not force trends into slots where they don't fit naturally — most slots
+   should have trend_topic: null.
 
 Output ONLY valid JSON with no markdown:
 {
@@ -331,7 +336,8 @@ Output ONLY valid JSON with no markdown:
       "coming_soon": false,
       "is_cultural_moment": false,
       "cultural_moment_name": null,
-      "suggested_day_of_week": "Tuesday"
+      "suggested_day_of_week": "Tuesday",
+      "trend_topic": "string matching a trend topic above, or null"
     }
   ]
 }
@@ -395,6 +401,7 @@ function buildTemplateSlots(
       series_total: null,
       repurposed_from: null,
       needs_review: false,
+      trend_source: null,
     };
   });
 }
@@ -410,7 +417,8 @@ export function mergeCalendarOutput(
   }>,
   culturalMoments: CulturalMoment[],
   userId: string,
-  pillars: ContentPillar[]
+  pillars: ContentPillar[],
+  trends: TrendingTopic[] = []
 ): CalendarSlot[] {
   const pillarByName = new Map(
     pillars.map((p) => [p.name.toLowerCase(), p.id ?? null])
@@ -458,6 +466,10 @@ export function mergeCalendarOutput(
           )
       );
 
+    const matchedTrend = g?.trend_topic
+      ? trends.find((t) => t.topic === g.trend_topic)
+      : null;
+
     return {
       user_id: userId,
       pillar_id: pillarId,
@@ -483,6 +495,13 @@ export function mergeCalendarOutput(
       repurposed_from: null,
       needs_review:
         hasPlaceholder(topic) || hasPlaceholder(hook) || hasPlaceholder(brief),
+      trend_source: matchedTrend
+        ? {
+            topic: matchedTrend.topic,
+            angle: matchedTrend.angle,
+            fetched_at: new Date().toISOString(),
+          }
+        : null,
     };
   });
 }
@@ -544,7 +563,8 @@ export async function generateMonthlyCalendar(
       formatsDistribution,
       culturalMoments,
       input.userId,
-      pillars
+      pillars,
+      trends
     );
   } catch (err) {
     console.error("[generateMonthlyCalendar] falling back to template:", err);

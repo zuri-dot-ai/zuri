@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
 import {
   ChevronLeft,
@@ -16,11 +17,14 @@ import {
   Trash2,
   Check,
   Sparkles,
+  TrendingUp,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/app/empty-state";
+import { RatingsSummaryCard } from "@/components/content/RatingsSummaryCard";
+import { GeneratedContentView } from "@/components/content/GeneratedContentView";
 import { cn } from "@/lib/utils";
 import { safeFetchJSON } from "@/lib/utils/safe-fetch";
 import { getNigerianCulturalMoments } from "@/lib/content/cultural-calendar";
@@ -30,6 +34,15 @@ import type {
   ContentStatus,
 } from "@/types/database";
 import type { PlanId } from "@/lib/payments/plans";
+
+const SERIES_OPTIONS = [
+  { name: "Meet the Team", post_count: 5 },
+  { name: "How We Make It", post_count: 4 },
+  { name: "Customer of the Week", post_count: 3 },
+  { name: "5 Tips Series", post_count: 5 },
+  { name: "Before & After", post_count: 2 },
+  { name: "Product Deep Dive", post_count: 3 },
+] as const;
 
 type SlotWithPillar = ContentCalendarRow & {
   content_pillars?: {
@@ -90,6 +103,7 @@ export function ContentCalendar({
   const [platformFilter, setPlatformFilter] = useState<string>("all");
   const [pillarFilter, setPillarFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [trendingOnly, setTrendingOnly] = useState(false);
   const [active, setActive] = useState<SlotWithPillar | null>(null);
   const [generating, setGenerating] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -97,6 +111,15 @@ export function ContentCalendar({
   const [editHook, setEditHook] = useState("");
   const [editBrief, setEditBrief] = useState("");
   const [editing, setEditing] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [contentRefreshKey, setContentRefreshKey] = useState(0);
+  const [seriesOpen, setSeriesOpen] = useState(false);
+  const [seriesTemplate, setSeriesTemplate] = useState<string>(
+    SERIES_OPTIONS[0]?.name ?? "Meet the Team"
+  );
+  const [seriesPlatform, setSeriesPlatform] = useState("instagram");
+  const [lastSeriesIds, setLastSeriesIds] = useState<string[]>([]);
+  const [lastRepurposeIds, setLastRepurposeIds] = useState<string[]>([]);
 
   const growth = plan === "growth" || plan === "premium";
   const monthName = formatMonthLabel(year, month);
@@ -129,9 +152,20 @@ export function ContentCalendar({
           if (!s.coming_soon) return false;
         } else if (s.status !== statusFilter) return false;
       }
+      if (trendingOnly && !s.trend_source) return false;
       return true;
     });
-  }, [slots, platformFilter, pillarFilter, statusFilter]);
+  }, [slots, platformFilter, pillarFilter, statusFilter, trendingOnly]);
+
+  function toggleSelect(id: string, e?: React.MouseEvent) {
+    e?.stopPropagation();
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   const slotsByDate = useMemo(() => {
     const map = new Map<string, SlotWithPillar[]>();
@@ -275,10 +309,43 @@ export function ContentCalendar({
       );
       if (data.slots?.length) {
         setSlots((prev) => [...prev, ...data.slots]);
+        setLastRepurposeIds(data.slots.map((s) => s.id));
       }
       toast.success(`Created ${data.slots?.length ?? 0} adapted slots`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not repurpose");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function createSeries() {
+    if (!growth) {
+      toast.error("Series generator is available on Growth and Premium.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const data = await safeFetchJSON<{ slots: SlotWithPillar[] }>(
+        "/api/content/series",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            template: seriesTemplate,
+            platform: seriesPlatform,
+            startDate: new Date().toISOString().slice(0, 10),
+          }),
+        }
+      );
+      if (data.slots?.length) {
+        setSlots((prev) => [...prev, ...data.slots]);
+        setLastSeriesIds(data.slots.map((s) => s.id));
+      }
+      setSeriesOpen(false);
+      toast.success(`Series created: ${data.slots?.length ?? 0} posts`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not create series");
     } finally {
       setBusy(false);
     }
@@ -313,23 +380,31 @@ export function ContentCalendar({
   async function generateContent(slot: SlotWithPillar) {
     setBusy(true);
     try {
-      await safeFetchJSON("/api/ai/generate-content", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          platform: slot.platform,
-          topic: slot.topic,
-          slotId: slot.id,
-        }),
-      });
-      setSlots((prev) =>
-        prev.map((s) =>
-          s.id === slot.id ? { ...s, status: "generated" as ContentStatus } : s
-        )
+      const output = await safeFetchJSON<{ id: string }>(
+        "/api/content/generate",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            platform: slot.platform,
+            formatType: slot.format_type,
+            topic: slot.topic,
+            hook: slot.hook ?? "",
+            brief: slot.brief ?? "",
+            calendarSlotId: slot.id,
+          }),
+        }
       );
+      const updated = {
+        ...slot,
+        status: "generated" as ContentStatus,
+        content_id: output.id,
+      };
+      setSlots((prev) => prev.map((s) => (s.id === slot.id ? updated : s)));
       if (active?.id === slot.id) {
-        setActive({ ...slot, status: "generated" });
+        setActive(updated);
       }
+      setContentRefreshKey((k) => k + 1);
       toast.success("Content generated");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not generate content");
@@ -429,6 +504,8 @@ export function ContentCalendar({
         </div>
       </header>
 
+      <RatingsSummaryCard />
+
       <div className="mb-4 flex flex-wrap gap-2">
         <FilterChip
           active={platformFilter === "all"}
@@ -477,7 +554,54 @@ export function ContentCalendar({
             />
           )
         )}
+        <span className="mx-1 w-px self-stretch bg-[var(--zuri-border)]" />
+        <FilterChip
+          active={trendingOnly}
+          onClick={() => setTrendingOnly((v) => !v)}
+          label="Trending"
+        />
       </div>
+
+      {(selectedIds.size > 0 ||
+        lastSeriesIds.length > 0 ||
+        lastRepurposeIds.length > 0) && (
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-[var(--zuri-border)] bg-[var(--zuri-surface)] px-3 py-2">
+          {selectedIds.size > 0 && (
+            <Button size="sm" asChild>
+              <Link
+                href={`/content/preview?slots=${Array.from(selectedIds).join(",")}`}
+              >
+                Preview Selected ({selectedIds.size})
+              </Link>
+            </Button>
+          )}
+          {lastSeriesIds.length > 0 && (
+            <Button size="sm" variant="outline" asChild>
+              <Link href={`/content/preview?slots=${lastSeriesIds.join(",")}`}>
+                Preview This Series
+              </Link>
+            </Button>
+          )}
+          {lastRepurposeIds.length > 0 && (
+            <Button size="sm" variant="outline" asChild>
+              <Link
+                href={`/content/preview?slots=${lastRepurposeIds.join(",")}`}
+              >
+                Preview Repurposed Set
+              </Link>
+            </Button>
+          )}
+          {selectedIds.size > 0 && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setSelectedIds(new Set())}
+            >
+              Clear selection
+            </Button>
+          )}
+        </div>
+      )}
 
       {filtered.length === 0 && (
         <div className="space-y-4">
@@ -547,6 +671,8 @@ export function ContentCalendar({
                         key={slot.id}
                         slot={slot}
                         compact
+                        selected={selectedIds.has(slot.id)}
+                        onToggleSelect={(e) => toggleSelect(slot.id, e)}
                         onClick={() => openSlot(slot)}
                       />
                     ))}
@@ -572,6 +698,8 @@ export function ContentCalendar({
               <SlotCard
                 key={slot.id}
                 slot={slot}
+                selected={selectedIds.has(slot.id)}
+                onToggleSelect={(e) => toggleSelect(slot.id, e)}
                 onClick={() => openSlot(slot)}
               />
             ))}
@@ -579,7 +707,17 @@ export function ContentCalendar({
       )}
 
       {filtered.length > 0 && (
-        <div className="mt-4 flex justify-end">
+        <div className="mt-4 flex flex-wrap justify-end gap-2">
+          {growth && (
+            <Button
+              variant="outline"
+              onClick={() => setSeriesOpen(true)}
+              disabled={busy}
+            >
+              <Sparkles className="mr-2 h-4 w-4" />
+              Create series
+            </Button>
+          )}
           <Button
             variant="outline"
             onClick={generateMonth}
@@ -715,6 +853,27 @@ export function ContentCalendar({
                       </p>
                     </div>
                   )}
+                  {active.trend_source && (
+                    <div className="rounded-md border border-[#C9A84C]/40 bg-[#C9A84C]/5 px-3 py-2">
+                      <p className="flex items-center gap-1 text-xs font-medium text-[#C9A84C]">
+                        <TrendingUp className="h-3.5 w-3.5" />
+                        Trending
+                      </p>
+                      <p className="mt-1 text-sm text-[var(--zuri-foreground)]">
+                        {active.trend_source.topic}
+                      </p>
+                      <p className="mt-0.5 text-xs text-[var(--zuri-muted)]">
+                        {active.trend_source.angle}
+                      </p>
+                    </div>
+                  )}
+                  {(active.status === "generated" || active.content_id) && (
+                    <GeneratedContentView
+                      key={`${active.id}-${contentRefreshKey}`}
+                      contentId={active.content_id}
+                      calendarSlotId={active.id}
+                    />
+                  )}
                 </>
               )}
             </div>
@@ -797,6 +956,72 @@ export function ContentCalendar({
           </div>
         </div>
       )}
+
+      {seriesOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-lg border border-[var(--zuri-border)] bg-[var(--zuri-surface)] p-5 shadow-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="font-heading text-lg font-semibold">
+                Create content series
+              </h2>
+              <button
+                type="button"
+                onClick={() => setSeriesOpen(false)}
+                aria-label="Close"
+              >
+                <X className="h-4 w-4 text-[var(--zuri-muted)]" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <label className="block text-xs text-[var(--zuri-muted)]">
+                Template
+                <select
+                  value={seriesTemplate}
+                  onChange={(e) => setSeriesTemplate(e.target.value)}
+                  className="mt-1 w-full rounded-md border border-[var(--zuri-border)] bg-[var(--zuri-bg)] px-3 py-2 text-sm"
+                >
+                  {SERIES_OPTIONS.map((t) => (
+                    <option key={t.name} value={t.name}>
+                      {t.name} ({t.post_count} posts)
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block text-xs text-[var(--zuri-muted)]">
+                Platform
+                <select
+                  value={seriesPlatform}
+                  onChange={(e) => setSeriesPlatform(e.target.value)}
+                  className="mt-1 w-full rounded-md border border-[var(--zuri-border)] bg-[var(--zuri-bg)] px-3 py-2 text-sm"
+                >
+                  {["instagram", "facebook", "linkedin", "x", "tiktok"].map(
+                    (p) => (
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
+                    )
+                  )}
+                </select>
+              </label>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSeriesOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button size="sm" onClick={() => void createSeries()} disabled={busy}>
+                  {busy ? (
+                    <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                  ) : null}
+                  Generate series
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -838,64 +1063,104 @@ function SlotCard({
   slot,
   onClick,
   compact,
+  selected,
+  onToggleSelect,
 }: {
   slot: SlotWithPillar;
   onClick: () => void;
   compact?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (e: React.MouseEvent) => void;
 }) {
   const color = slot.content_pillars?.color ?? "#C9A84C";
+  const trendTip = slot.trend_source
+    ? `${slot.trend_source.topic} — ${slot.trend_source.angle}`
+    : undefined;
+
   return (
-    <button
-      type="button"
-      onClick={onClick}
+    <div
       className={cn(
-        "w-full rounded-md border border-[var(--zuri-border)] bg-[var(--zuri-surface)] text-left transition hover:border-[var(--zuri-gold)]/50",
+        "relative w-full rounded-md border bg-[var(--zuri-surface)] text-left transition hover:border-[var(--zuri-gold)]/50",
+        selected
+          ? "border-[var(--zuri-gold)]"
+          : "border-[var(--zuri-border)]",
         compact ? "px-1.5 py-1" : "px-3 py-2.5"
       )}
     >
-      <div className="flex items-start gap-1.5">
-        <span
-          className="mt-1 inline-block h-1.5 w-1.5 shrink-0 rounded-full"
-          style={{ background: color }}
-        />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1">
-            <span className="text-[10px] font-semibold uppercase text-[var(--zuri-muted)]">
-              {PLATFORM_LABELS[slot.platform] ?? slot.platform}
-            </span>
-            {!compact && (
-              <span className="text-[10px] text-[var(--zuri-muted)]">
-                · {slot.format_type.replace(/_/g, " ")}
+      {onToggleSelect && (
+        <label
+          className="absolute left-1 top-1 z-10"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <input
+            type="checkbox"
+            checked={Boolean(selected)}
+            onChange={() =>
+              onToggleSelect?.({ stopPropagation() {} } as React.MouseEvent)
+            }
+            className="h-3.5 w-3.5 accent-[#C9A84C]"
+            aria-label="Select for preview"
+          />
+        </label>
+      )}
+      <button
+        type="button"
+        onClick={onClick}
+        className={cn("w-full text-left", onToggleSelect && "pl-4")}
+      >
+        <div className="flex items-start gap-1.5">
+          <span
+            className="mt-1 inline-block h-1.5 w-1.5 shrink-0 rounded-full"
+            style={{ background: color }}
+          />
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-1">
+              <span className="text-[10px] font-semibold uppercase text-[var(--zuri-muted)]">
+                {PLATFORM_LABELS[slot.platform] ?? slot.platform}
               </span>
-            )}
-            {slot.coming_soon ? (
-              <Badge className="ml-auto h-4 px-1 text-[9px]" variant="muted">
-                Soon
-              </Badge>
-            ) : (
-              <Badge className="ml-auto h-4 px-1 text-[9px]" variant="outline">
-                {STATUS_LABELS[slot.status] ?? slot.status}
-              </Badge>
+              {!compact && (
+                <span className="text-[10px] text-[var(--zuri-muted)]">
+                  · {slot.format_type.replace(/_/g, " ")}
+                </span>
+              )}
+              {slot.trend_source && (
+                <span
+                  title={trendTip}
+                  className="inline-flex items-center gap-0.5 rounded-full border border-[#C9A84C] px-1.5 py-0 text-[9px] font-medium text-[#C9A84C]"
+                >
+                  <TrendingUp className="h-2.5 w-2.5" />
+                  Trending
+                </span>
+              )}
+              {slot.coming_soon ? (
+                <Badge className="ml-auto h-4 px-1 text-[9px]" variant="muted">
+                  Soon
+                </Badge>
+              ) : (
+                <Badge className="ml-auto h-4 px-1 text-[9px]" variant="outline">
+                  {STATUS_LABELS[slot.status] ?? slot.status}
+                </Badge>
+              )}
+            </div>
+            <p
+              className={cn(
+                "truncate text-[var(--zuri-foreground)]",
+                compact ? "text-[11px] leading-tight" : "text-sm"
+              )}
+            >
+              {slot.topic}
+            </p>
+            {!compact && (
+              <p className="mt-0.5 text-xs text-[var(--zuri-muted)]">
+                {new Date(slot.scheduled_date).toLocaleDateString("en-NG", {
+                  day: "numeric",
+                  month: "short",
+                })}
+              </p>
             )}
           </div>
-          <p
-            className={cn(
-              "truncate text-[var(--zuri-foreground)]",
-              compact ? "text-[11px] leading-tight" : "text-sm"
-            )}
-          >
-            {slot.topic}
-          </p>
-          {!compact && (
-            <p className="mt-0.5 text-xs text-[var(--zuri-muted)]">
-              {new Date(slot.scheduled_date).toLocaleDateString("en-NG", {
-                day: "numeric",
-                month: "short",
-              })}
-            </p>
-          )}
         </div>
-      </div>
-    </button>
+      </button>
+    </div>
   );
 }

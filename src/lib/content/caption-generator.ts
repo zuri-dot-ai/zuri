@@ -1,7 +1,9 @@
 import { geminiJSON } from "@/lib/gemini";
+import { createServiceClient } from "@/lib/supabase/service";
 import { sanitizeForPrompt, sanitizeText } from "@/lib/utils/sanitize";
 import { CAPTION_RULES, type CaptionRule } from "./caption-rules";
 import type { GenerationInput } from "./types";
+import { getVoiceContext } from "./voice-bank";
 
 export function sanitizeHashtag(tag: string): string {
   const clean = tag.replace(/^#+/, "").replace(/[^a-zA-Z0-9]/g, "");
@@ -11,7 +13,8 @@ export function sanitizeHashtag(tag: string): string {
 export function buildStandardCaptionPrompt(
   input: GenerationInput,
   rules: CaptionRule,
-  imageUrl?: string
+  imageUrl?: string,
+  voiceContext = ""
 ): string {
   const businessName = sanitizeForPrompt(input.brand.business_name);
   const industry = sanitizeForPrompt(input.brand.industry);
@@ -27,6 +30,7 @@ Write a ${input.platform} post about: ${topic}
 Hook: ${hook}
 Brief: ${brief}
 Brand tone: ${brandTone}
+${voiceContext}
 ${imageUrl ? "There is an image accompanying this post. Write copy that complements a visual." : "This is a text-only post."}
 
 PLATFORM RULES FOR ${input.platform.toUpperCase()}:
@@ -61,7 +65,8 @@ Output ONLY valid JSON:
 
 export function buildThreadPrompt(
   input: GenerationInput,
-  rules: CaptionRule
+  rules: CaptionRule,
+  voiceContext = ""
 ): string {
   const businessName = sanitizeForPrompt(input.brand.business_name);
   const topic = sanitizeForPrompt(input.topic);
@@ -72,7 +77,7 @@ export function buildThreadPrompt(
 Write an X (Twitter) thread for ${businessName} about: ${topic}
 Brief: ${brief}
 Brand tone: ${brandTone}
-
+${voiceContext}
 Thread rules:
 - 4-6 posts in the thread
 - Each post max 250 characters
@@ -91,16 +96,21 @@ Output ONLY valid JSON:
 `;
 }
 
-export function buildPollPrompt(input: GenerationInput): string {
+export function buildPollPrompt(
+  input: GenerationInput,
+  voiceContext = ""
+): string {
   const businessName = sanitizeForPrompt(input.brand.business_name);
   const topic = sanitizeForPrompt(input.topic);
   const brief = sanitizeForPrompt(input.brief);
   const audience = sanitizeForPrompt(input.brand.target_audience);
+  const brandTone = sanitizeForPrompt(input.brand.brand_tone);
 
   return `
 Write a ${input.platform} poll for ${businessName} about: ${topic}
 Brief: ${brief}
-
+Brand tone: ${brandTone}
+${voiceContext}
 The poll should be engaging and relevant to the audience: ${audience}
 
 Rules:
@@ -119,7 +129,10 @@ Output ONLY valid JSON:
 `;
 }
 
-export function buildLinkedInArticlePrompt(input: GenerationInput): string {
+export function buildLinkedInArticlePrompt(
+  input: GenerationInput,
+  voiceContext = ""
+): string {
   const businessName = sanitizeForPrompt(input.brand.business_name);
   const topic = sanitizeForPrompt(input.topic);
   const brief = sanitizeForPrompt(input.brief);
@@ -130,6 +143,7 @@ export function buildLinkedInArticlePrompt(input: GenerationInput): string {
 Write a LinkedIn article for ${businessName} about: ${topic}
 Brief: ${brief}
 Brand tone: ${brandTone} (professional adaptation)
+${voiceContext}
 Target audience: ${audience}
 
 Article rules:
@@ -155,19 +169,39 @@ export async function generateCaption(
   const rules = CAPTION_RULES[input.platform];
   if (!rules) throw new Error(`Unknown platform: ${input.platform}`);
 
+  let voiceContext = "";
+  try {
+    const supabase = createServiceClient();
+    voiceContext = await getVoiceContext(supabase, input.userId);
+  } catch (err) {
+    console.error("[generateCaption] voice context failed:", err);
+  }
+
   const isThread = input.formatType === "thread";
   const isPoll = input.formatType === "poll";
   const isArticle = input.formatType === "article";
 
   let captionPrompt: string;
   if (isThread) {
-    captionPrompt = buildThreadPrompt(input, rules);
+    captionPrompt = buildThreadPrompt(input, rules, voiceContext);
   } else if (isPoll) {
-    captionPrompt = buildPollPrompt(input);
+    captionPrompt = buildPollPrompt(input, voiceContext);
   } else if (isArticle) {
-    captionPrompt = buildLinkedInArticlePrompt(input);
+    captionPrompt = buildLinkedInArticlePrompt(input, voiceContext);
   } else {
-    captionPrompt = buildStandardCaptionPrompt(input, rules, imageUrl);
+    captionPrompt = buildStandardCaptionPrompt(
+      input,
+      rules,
+      imageUrl,
+      voiceContext
+    );
+  }
+
+  if (process.env.NODE_ENV === "development" && voiceContext) {
+    console.log(
+      "[generateCaption] voice context injected:",
+      voiceContext.slice(0, 200)
+    );
   }
 
   const result = await geminiJSON<{
