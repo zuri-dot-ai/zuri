@@ -6,8 +6,10 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { AuthShell } from "@/components/auth/auth-shell";
+import { PasswordChecklist } from "@/components/auth/password-checklist";
 import { marketingUrl } from "@/lib/marketing-url";
 import { authCallbackUrl } from "@/lib/auth/redirect";
 
@@ -204,9 +206,8 @@ function SignupForm() {
             <Label htmlFor="password" className="field-label">
               Password
             </Label>
-            <Input
+            <PasswordInput
               id="password"
-              type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -214,29 +215,28 @@ function SignupForm() {
               placeholder="At least 8 characters"
               autoComplete="new-password"
             />
-            <p className="text-xs text-[var(--chrome-dark)]">
-              At least 8 characters, with one uppercase letter and one number.
-            </p>
+            <PasswordChecklist password={password} />
           </div>
 
-          <div className="mt-4 flex items-start gap-3">
+          <label
+            htmlFor="terms_consent"
+            className="mt-4 flex items-start gap-3 rounded-sm p-3 -mx-3 transition-colors hover:bg-[var(--bg-elevated)] cursor-pointer"
+          >
             <input
               type="checkbox"
               id="terms_consent"
               required
               checked={termsAccepted}
               onChange={(e) => setTermsAccepted(e.target.checked)}
-              className="mt-0.5 accent-[#d4a656]"
+              className="mt-0.5 h-5 w-5 shrink-0 accent-[#d4a656]"
             />
-            <label
-              htmlFor="terms_consent"
-              className="text-sm text-[var(--chrome-mid)]"
-            >
+            <span className="text-sm text-[var(--chrome-mid)]">
               I agree to Zuri&apos;s{" "}
               <a
                 href={marketingUrl("/terms.html")}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
                 className="text-gold underline"
               >
                 Terms of Service
@@ -246,13 +246,14 @@ function SignupForm() {
                 href={marketingUrl("/privacy.html")}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
                 className="text-gold underline"
               >
                 Privacy Policy
               </a>
               . I understand that my data will be processed as described.
-            </label>
-          </div>
+            </span>
+          </label>
 
           <button type="submit" className="btn-gold w-full" disabled={loading}>
             {loading ? "Creating account…" : "Create account"}

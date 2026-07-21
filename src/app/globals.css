@@ -137,6 +137,19 @@
     background: #0d0c0a;
     color: var(--chrome-light);
   }
+
+  /* Prevent Chrome/Edge autofill from flashing a white background on
+     dark auth inputs — fill the field with the dark surface color instead. */
+  .auth-canvas input:-webkit-autofill,
+  .auth-canvas input:-webkit-autofill:hover,
+  .auth-canvas input:-webkit-autofill:focus,
+  .auth-canvas input:-webkit-autofill:active {
+    -webkit-text-fill-color: var(--chrome-light);
+    -webkit-box-shadow: 0 0 0px 1000px var(--bg-secondary) inset;
+    box-shadow: 0 0 0px 1000px var(--bg-secondary) inset;
+    caret-color: var(--chrome-light);
+    transition: background-color 5000s ease-in-out 0s;
+  }
 }
 
 @layer base {
@@ -340,14 +353,14 @@
     color: var(--text-tertiary);
   }
 
-  /* Marketing-faithful buttons — app gold (#C9A227) */
+  /* Marketing-faithful buttons — brightened, more saturated gold (~15-20% over #C9A84C) */
   .btn-gold {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
     width: auto;
-    background: var(--accent);
+    background: #d4af37;
     color: var(--accent-foreground);
     padding: 0.95rem 2rem;
     font-family: var(--font-body), system-ui, sans-serif;
@@ -363,11 +376,14 @@
     will-change: transform;
   }
   .btn-gold:hover {
-    background: var(--accent-hover);
-    box-shadow: 0 0 24px rgba(201, 162, 39, 0.28);
+    background: #e0bd42;
+    box-shadow: 0 0 28px rgba(212, 175, 55, 0.35);
+    transform: scale(1.015);
   }
   .btn-gold:active {
+    background: #c9a227;
     transform: scale(0.94);
+    box-shadow: 0 0 12px rgba(212, 175, 55, 0.2);
   }
   .btn-gold:disabled {
     opacity: 0.5;
