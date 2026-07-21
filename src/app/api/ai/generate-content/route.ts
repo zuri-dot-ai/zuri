@@ -8,16 +8,24 @@ import type { Platform, PostType } from "@/types/database";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { platform, postType, theme, dayNumber, slotId } = (await request.json()) as {
+  const body = (await request.json()) as {
     platform: Platform;
-    postType: PostType;
-    theme: string;
-    dayNumber: number;
+    postType?: PostType;
+    theme?: string;
+    topic?: string;
+    dayNumber?: number;
     slotId?: string;
   };
+
+  const { platform, slotId } = body;
+  const theme = body.theme ?? body.topic ?? "";
+  const postType = body.postType ?? "educational";
+  const dayNumber = body.dayNumber ?? 1;
 
   const { data: profile } = await supabase
     .from("business_profiles")
@@ -26,34 +34,61 @@ export async function POST(request: Request) {
     .single();
   if (!profile) return NextResponse.json({ error: "No profile" }, { status: 400 });
 
-  // Growth+ unlocks video scripts
-  const { getActivePlanId, isGrowthPlus } = await import(
-    "@/lib/payments/get-plan"
-  );
+  const { getActivePlanId, isGrowthPlus } = await import("@/lib/payments/get-plan");
   const planId = await getActivePlanId(supabase, user.id);
   const includeVideo = isGrowthPlus(planId);
 
   try {
-    // ── GEMINI 2.0 FLASH: draft the post ──
     const draft = await geminiJSON<ContentDraft>(
-      contentDraftPrompt({ profile, platform, postType, theme, dayNumber, includeVideo }),
+      contentDraftPrompt({
+        profile,
+        platform,
+        postType,
+        theme,
+        dayNumber,
+        includeVideo,
+      }),
       { model: FLASH, system: CONTENT_DRAFT_SYSTEM, temperature: 0.85 }
     );
 
     const canva_url = canvaDeepLink(draft.canva_search_term);
 
-    // If updating an existing calendar slot, persist the draft
     if (slotId) {
-      await supabase
-        .from("content_calendar")
-        .update({
-          ai_draft: draft.caption,
-          hashtags: draft.hashtags,
-          canva_url,
-          status: "drafted",
+      const { data: generated, error: genErr } = await supabase
+        .from("generated_content")
+        .insert({
+          user_id: user.id,
+          calendar_slot_id: slotId,
+          platform,
+          format_type: "static_image",
+          caption: draft.caption,
+          hashtags: draft.hashtags ?? [],
+          image_url: null,
+          status: "ready",
         })
-        .eq("id", slotId)
-        .eq("user_id", user.id);
+        .select("id")
+        .single();
+
+      if (!genErr && generated) {
+        await supabase
+          .from("content_calendar")
+          .update({
+            status: "generated",
+            content_id: generated.id,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", slotId)
+          .eq("user_id", user.id);
+      } else {
+        await supabase
+          .from("content_calendar")
+          .update({
+            status: "generated",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", slotId)
+          .eq("user_id", user.id);
+      }
     }
 
     return NextResponse.json({ draft, canva_url });

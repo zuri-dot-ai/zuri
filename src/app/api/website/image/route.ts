@@ -15,6 +15,10 @@ import {
   ensureWebsiteImagesBucket,
   WEBSITE_IMAGES_BUCKET,
 } from "@/lib/website/ensure-website-images-bucket";
+import {
+  isBrokenImageUrl,
+  sanitizeLibraryImageUrl,
+} from "@/lib/website/image-url";
 import type { ActiveTheme, DesignArchetype, ResolvedImage } from "@/types/website";
 
 const MAX_BYTES = MAX_FILE_SIZE_BYTES;
@@ -82,9 +86,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Image not found" }, { status: 404 });
     }
 
+    const safeUrl = sanitizeLibraryImageUrl(
+      row.public_url,
+      archetype,
+      0
+    );
+
     resolved = {
-      url: row.public_url,
-      source: "curated",
+      url: safeUrl,
+      source: isBrokenImageUrl(row.public_url) ? "fallback" : "curated",
       width: row.width,
       height: row.height,
     };
@@ -289,18 +299,31 @@ export async function GET(req: Request) {
   }
 
   const images = data ?? [];
+  const arch = (archetype as DesignArchetype) || "clean-modern";
+  const sanitized = images.map((row, i) => ({
+    ...row,
+    public_url: sanitizeLibraryImageUrl(row.public_url, arch, i),
+  }));
+
   // #region agent log
-  const sampleUrls = images.slice(0, 5).map((row) => ({
+  const sampleUrls = images.slice(0, 5).map((row, i) => ({
     id: row.id,
-    public_url: row.public_url,
-    slot_type: row.slot_type,
-    host: (() => {
+    original_host: (() => {
       try {
         return new URL(String(row.public_url ?? "")).host;
       } catch {
         return "invalid";
       }
     })(),
+    sanitized_host: (() => {
+      try {
+        return new URL(sanitized[i]?.public_url ?? "").host;
+      } catch {
+        return "invalid";
+      }
+    })(),
+    wasBroken: isBrokenImageUrl(row.public_url),
+    slot_type: row.slot_type,
   }));
   try {
     await fetch(
@@ -313,15 +336,16 @@ export async function GET(req: Request) {
         },
         body: JSON.stringify({
           sessionId: "21ff00",
-          runId: "pre-fix",
+          runId: "library-fix",
           hypothesisId: "C",
           location: "api/website/image/route.ts:GET",
-          message: "library list",
+          message: "library list sanitized",
           data: {
             slot,
             archetype,
-            count: images.length,
+            count: sanitized.length,
             sampleUrls,
+            brokenCount: sampleUrls.filter((s) => s.wasBroken).length,
           },
           timestamp: Date.now(),
         }),
@@ -332,5 +356,12 @@ export async function GET(req: Request) {
   }
   // #endregion
 
-  return NextResponse.json({ images, debug: { sampleUrls, count: images.length } });
+  return NextResponse.json({
+    images: sanitized,
+    debug: {
+      sampleUrls,
+      count: sanitized.length,
+      brokenCount: sampleUrls.filter((s) => s.wasBroken).length,
+    },
+  });
 }

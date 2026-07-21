@@ -30,11 +30,15 @@ export type WebsiteType =
   | "nonprofit" | "professional_services";
 export type Platform =
   | "instagram" | "linkedin" | "facebook" | "tiktok" | "email"
-  | "twitter" | "whatsapp";
+  | "twitter" | "whatsapp" | "x";
 export type PostType =
   | "educational" | "promotional" | "behind_scenes" | "story"
   | "testimonial" | "engagement";
-export type ContentStatus = "briefed" | "drafted" | "approved" | "posted";
+export type ContentStatus =
+  | "draft" | "approved" | "generated" | "posted" | "skipped";
+export type ContentFormatType =
+  | "static_image" | "carousel" | "reel" | "story" | "text_post"
+  | "article" | "thread" | "poll" | "short_video" | "video";
 export type TaskType = "website" | "content" | "engagement" | "setup";
 export type MatchStatus =
   | "pending" | "contacted" | "hired" | "completed" | "declined";
@@ -90,17 +94,40 @@ export interface BusinessProfileRow {
 export interface ContentCalendarRow {
   id: string;
   user_id: string;
-  slot_date: string;
-  platform: Platform;
-  post_type: PostType | null;
-  theme: string | null;
+  pillar_id: string | null;
+  platform: string;
+  scheduled_date: string;
+  scheduled_time: string | null;
+  format_type: ContentFormatType | string;
+  topic: string;
+  hook: string | null;
   brief: string | null;
-  ai_draft: string | null;
-  hashtags: string[];
   status: ContentStatus;
-  canva_url: string | null;
-  video_url: string | null;
+  content_id: string | null;
+  is_cultural_moment: boolean;
+  cultural_moment_name: string | null;
+  coming_soon: boolean;
+  is_series: boolean;
+  series_title: string | null;
+  series_part: number | null;
+  series_total: number | null;
+  repurposed_from: string | null;
+  needs_review?: boolean;
   created_at: string;
+  updated_at?: string;
+}
+
+export interface ContentPillarRow {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string | null;
+  icon: string | null;
+  color: string | null;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ActionPlanTaskRow {

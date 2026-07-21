@@ -101,7 +101,7 @@ export default async function DashboardPage() {
       .select("*", { count: "exact", head: true })
       .eq("user_id", user!.id)
       .eq("status", "posted")
-      .gte("slot_date", monthStart.toISOString().slice(0, 10)),
+      .gte("scheduled_date", monthStart.toISOString().slice(0, 10)),
     supabase
       .from("contact_submissions")
       .select("*", { count: "exact", head: true })
@@ -116,10 +116,10 @@ export default async function DashboardPage() {
       .gte("completed_at", `${weekStart}T00:00:00.000Z`),
     supabase
       .from("content_calendar")
-      .select("slot_date")
+      .select("scheduled_date")
       .eq("user_id", user!.id)
       .eq("status", "posted")
-      .gte("slot_date", weekStart),
+      .gte("scheduled_date", weekStart),
     supabase
       .from("notifications")
       .select("id, title, body, action_url, created_at")
@@ -156,7 +156,7 @@ export default async function DashboardPage() {
     if (t.completed_at) doneDates.add(String(t.completed_at).slice(0, 10));
   }
   for (const p of postedThisWeek ?? []) {
-    if (p.slot_date) doneDates.add(String(p.slot_date).slice(0, 10));
+    if (p.scheduled_date) doneDates.add(String(p.scheduled_date).slice(0, 10));
   }
   const consistencyDays = last7Days().map((d) => ({
     ...d,

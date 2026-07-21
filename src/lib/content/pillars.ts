@@ -4,6 +4,7 @@
 //  after onboarding completes.
 // ════════════════════════════════════════════════════════
 
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DesignArchetype } from "./cultural-calendar";
 
 export interface PillarDefinition {
@@ -85,8 +86,6 @@ export const DEFAULT_PILLARS: Record<string, PillarDefinition[]> = {
   ],
 };
 
-// Brand archetype resolver — derives archetype from business inputs
-// Returns one of the 8 archetypes. Default is "authority-minimal".
 export function resolveArchetype(args: {
   business_type?: string | null;
   industry?: string | null;
@@ -106,7 +105,6 @@ export function resolveArchetype(args: {
     .join(" ")
     .toLowerCase();
 
-  // Portfolio / creative agency / personal brand
   if (
     /(portfolio|studio|creative|designer|photographer|filmmaker|writer|artist|freelance|consultant)/.test(text) &&
     /(portfolio|personal)/.test(text)
@@ -114,7 +112,6 @@ export function resolveArchetype(args: {
     return "portfolio-dramatic";
   }
 
-  // Editorial / fashion / streetwear / bold brands
   if (
     /(fashion|streetwear|apparel|wears|jersey|drop|sneaker|outfit|clothing)/.test(text) ||
     brand_vibe === "bold"
@@ -122,7 +119,6 @@ export function resolveArchetype(args: {
     return "editorial-bold";
   }
 
-  // Luxury / aspirational / spa / salon / beauty / premium
   if (
     /(spa|salon|beauty|luxury|premium|glamour|cosmetic|fragrance|jewel)/.test(text) ||
     brand_vibe === "luxury"
@@ -130,28 +126,24 @@ export function resolveArchetype(args: {
     return "luxury-aspirational";
   }
 
-  // Warm-sensory: restaurants, bakeries, food, art-craft
   if (
     /(restaurant|bakery|food|catering|kitchen|chef|cafe|cuisine|confection|pastry|wedding|craft|artisan)/.test(text)
   ) {
     return "warm-sensory";
   }
 
-  // Community-vibrant: fitness, gym, wellness communities, memberships
   if (
     /(gym|fitness|training|workout|yoga|wellness community|membership|coaching community)/.test(text)
   ) {
     return "community-vibrant";
   }
 
-  // Trust-professional: medical, dental, health, legal, finance
   if (
     /(hospital|clinic|medical|dentist|doctor|health|pharmacy|legal|lawyer|attorney|finance|account|tax|consulting)/.test(text)
   ) {
     return "trust-professional";
   }
 
-  // Clean-modern: tech, SaaS, software, ecommerce
   if (
     /(tech|software|saas|app |digital|ecommerce|shop|store|retail)/.test(text) ||
     brand_vibe === "modern"
@@ -159,6 +151,36 @@ export function resolveArchetype(args: {
     return "clean-modern";
   }
 
-  // Default
   return "authority-minimal";
+}
+
+/**
+ * Seed default content pillars for a user after onboarding.
+ * Idempotent: skips if the user already has pillars.
+ */
+export async function seedContentPillars(
+  supabase: SupabaseClient,
+  userId: string,
+  archetype: string
+): Promise<void> {
+  const { count } = await supabase
+    .from("content_pillars")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId);
+
+  if ((count ?? 0) > 0) return;
+
+  const pillars = DEFAULT_PILLARS[archetype] ?? DEFAULT_PILLARS["authority-minimal"];
+
+  const rows = pillars.map((p, index) => ({
+    user_id: userId,
+    name: p.name,
+    description: p.description,
+    icon: p.icon,
+    color: p.color,
+    is_active: true,
+    sort_order: index,
+  }));
+
+  await supabase.from("content_pillars").insert(rows);
 }

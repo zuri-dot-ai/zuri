@@ -8,6 +8,7 @@ const PLATFORM_LABEL: Record<Platform, string> = {
   tiktok: "TikTok",
   email: "email",
   twitter: "X",
+  x: "X",
   whatsapp: "WhatsApp",
 };
 

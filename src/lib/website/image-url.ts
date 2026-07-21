@@ -20,6 +20,16 @@ const ARCHETYPE_FALLBACK_URLS: Record<DesignArchetype, string> = {
     "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1200&h=800&fit=crop",
 };
 
+/** Extra Unsplash pool for curated library display when DB rows still use picsum. */
+const LIBRARY_UNSPLASH_POOL = [
+  "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=900&h=700&fit=crop",
+  "https://images.unsplash.com/photo-1497366216548-37526070297c?w=900&h=700&fit=crop",
+  "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=900&h=700&fit=crop",
+  "https://images.unsplash.com/photo-1556761175-b413da4baf72?w=900&h=700&fit=crop",
+  "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=900&h=700&fit=crop",
+  "https://images.unsplash.com/photo-1553877522-43269d4ea984?w=900&h=700&fit=crop",
+];
+
 export function getArchetypeFallback(archetype: DesignArchetype): ResolvedImage {
   return {
     url:
@@ -46,4 +56,19 @@ export function isBrokenImageUrl(url: string | null | undefined): boolean {
     return true;
   }
   return false;
+}
+
+/**
+ * Library/curated rows were often seeded with picsum — blocked by app CSP.
+ * Rewrite to Unsplash so the editor Library tab can render thumbnails.
+ */
+export function sanitizeLibraryImageUrl(
+  url: string | null | undefined,
+  archetype: DesignArchetype | string | null | undefined,
+  index = 0
+): string {
+  if (!isBrokenImageUrl(url)) return String(url);
+  const arch = (archetype as DesignArchetype) || "clean-modern";
+  if (index <= 0) return getArchetypeFallback(arch).url;
+  return LIBRARY_UNSPLASH_POOL[index % LIBRARY_UNSPLASH_POOL.length];
 }

@@ -79,7 +79,11 @@ export function ImageSwapModal({
         if (archetype) params.set("archetype", archetype);
         const data = await safeFetchJSON<{
           images?: CategoryImageRow[];
-          debug?: { sampleUrls?: unknown[]; count?: number };
+          debug?: {
+            sampleUrls?: unknown[];
+            count?: number;
+            brokenCount?: number;
+          };
         }>(`/api/website/image?${params}`);
         // #region agent log
         fetch(
@@ -92,12 +96,13 @@ export function ImageSwapModal({
             },
             body: JSON.stringify({
               sessionId: "21ff00",
-              runId: "pre-fix",
+              runId: "library-fix",
               hypothesisId: "C",
               location: "ImageSwapModal.tsx:library",
               message: "library loaded client",
               data: {
                 count: data.images?.length ?? 0,
+                brokenCount: data.debug?.brokenCount ?? null,
                 sampleUrls: data.debug?.sampleUrls ?? null,
                 firstUrl: data.images?.[0]?.public_url ?? null,
               },
@@ -105,6 +110,31 @@ export function ImageSwapModal({
             }),
           }
         ).catch(() => {});
+        fetch("/api/debug-log", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionId: "21ff00",
+            runId: "library-fix",
+            hypothesisId: "C",
+            location: "ImageSwapModal.tsx:library",
+            message: "library loaded client",
+            data: {
+              count: data.images?.length ?? 0,
+              brokenCount: (data.debug as { brokenCount?: number } | undefined)
+                ?.brokenCount,
+              firstUrl: data.images?.[0]?.public_url ?? null,
+              firstHost: (() => {
+                try {
+                  return new URL(data.images?.[0]?.public_url ?? "").host;
+                } catch {
+                  return null;
+                }
+              })(),
+            },
+            timestamp: Date.now(),
+          }),
+        }).catch(() => {});
         // #endregion
         if (!cancelled) setLibrary(data.images ?? []);
       } catch (e) {
