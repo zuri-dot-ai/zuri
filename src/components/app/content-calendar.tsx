@@ -17,30 +17,24 @@ import {
   Sparkles,
   TrendingUp,
   X,
-  Image as ImageIcon,
-  Images,
-  Video,
-  FileText,
-  BarChart3,
-  MonitorPlay,
   ChevronDown,
 } from "lucide-react";
-import {
-  FaInstagram,
-  FaFacebook,
-  FaLinkedin,
-  FaXTwitter,
-  FaTiktok,
-} from "react-icons/fa6";
-import type { IconType } from "react-icons";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Banner, type BannerVariant } from "@/components/ui/Banner";
 import { EmptyState } from "@/components/app/empty-state";
 import { RatingsSummaryCard } from "@/components/content/RatingsSummaryCard";
 import { GeneratedContentView } from "@/components/content/GeneratedContentView";
 import { cn } from "@/lib/utils";
-import { safeFetchJSON } from "@/lib/utils/safe-fetch";
+import { safeFetchJSON, FetchError } from "@/lib/utils/safe-fetch";
 import { getNigerianCulturalMoments } from "@/lib/content/cultural-calendar";
+import {
+  PLATFORM_SHORT_LABELS,
+  PLATFORM_META,
+  formatMeta,
+} from "@/lib/content/format-meta";
+import { RATE_LIMIT_MESSAGE } from "@/lib/errors/gemini-errors";
+import { statusStyle, statusColors, pillarStripeStyle } from "@/styles/tokens";
 import type {
   ContentCalendarRow,
   ContentPillarRow,
@@ -66,70 +60,13 @@ type SlotWithPillar = ContentCalendarRow & {
   } | null;
 };
 
-const PLATFORM_LABELS: Record<string, string> = {
-  instagram: "IG",
-  facebook: "FB",
-  linkedin: "LI",
-  x: "X",
-  tiktok: "TT",
-};
+type Notice = { variant: BannerVariant; message: string };
 
-// Real brand-colored icons instead of monochrome "IG"/"LI" text, so the
-// calendar reads as visually distinct per platform at a glance.
-const PLATFORM_META: Record<string, { Icon: IconType; color: string; label: string }> = {
-  instagram: { Icon: FaInstagram, color: "#E4405F", label: "Instagram" },
-  facebook: { Icon: FaFacebook, color: "#1877F2", label: "Facebook" },
-  linkedin: { Icon: FaLinkedin, color: "#0A66C2", label: "LinkedIn" },
-  x: { Icon: FaXTwitter, color: "#E7E9EA", label: "X" },
-  tiktok: { Icon: FaTiktok, color: "#25F4EE", label: "TikTok" },
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  draft: "Draft",
-  approved: "Approved",
-  generated: "Generated",
-  posted: "Posted",
-  skipped: "Skipped",
-};
-
-// Distinct color per status instead of one muted pill style for everything.
-const STATUS_STYLES: Record<string, { bg: string; text: string; border: string }> = {
-  draft: { bg: "bg-slate-500/10", text: "text-slate-300", border: "border-slate-500/40" },
-  approved: { bg: "bg-emerald-500/10", text: "text-emerald-400", border: "border-emerald-500/40" },
-  generated: { bg: "bg-sky-500/10", text: "text-sky-400", border: "border-sky-500/40" },
-  posted: { bg: "bg-violet-500/10", text: "text-violet-400", border: "border-violet-500/40" },
-  skipped: { bg: "bg-red-500/10", text: "text-red-400", border: "border-red-500/40" },
-  coming_soon: { bg: "bg-amber-500/10", text: "text-amber-400", border: "border-amber-500/40" },
-};
-
-function statusStyle(slot: { status: string; coming_soon: boolean }) {
-  return slot.coming_soon
-    ? STATUS_STYLES.coming_soon
-    : STATUS_STYLES[slot.status] ?? STATUS_STYLES.draft;
-}
-
-// Small format-specific icon + label so a user scanning the week can tell
-// content types apart without reading every card's text.
-const FORMAT_META: Record<string, { Icon: typeof ImageIcon; label: string }> = {
-  static_image: { Icon: ImageIcon, label: "Image" },
-  carousel: { Icon: Images, label: "Carousel" },
-  reel: { Icon: Video, label: "Reel" },
-  short_video: { Icon: Video, label: "Video" },
-  video: { Icon: Video, label: "Video" },
-  story: { Icon: MonitorPlay, label: "Story" },
-  text_post: { Icon: FileText, label: "Text" },
-  article: { Icon: FileText, label: "Article" },
-  thread: { Icon: FileText, label: "Thread" },
-  poll: { Icon: BarChart3, label: "Poll" },
-};
-
-function formatMeta(formatType: string) {
-  return (
-    FORMAT_META[formatType] ?? {
-      Icon: ImageIcon,
-      label: formatType.replace(/_/g, " "),
-    }
-  );
+/** True when a caught error is a Gemini quota/rate-limit failure surfaced
+ * by the API as HTTP 429 — this must show the friendly Banner message,
+ * never the raw diagnostic text some other failures carry. */
+function isRateLimited(e: unknown): boolean {
+  return e instanceof FetchError && e.status === 429;
 }
 
 const DAYS_PER_PAGE = 7;
@@ -185,7 +122,7 @@ export function ContentCalendar({
   const [seriesPlatform, setSeriesPlatform] = useState("instagram");
   const [lastSeriesIds, setLastSeriesIds] = useState<string[]>([]);
   const [lastRepurposeIds, setLastRepurposeIds] = useState<string[]>([]);
-  const [fallbackNotice, setFallbackNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useState<Notice | null>(null);
 
   const growth = plan === "growth" || plan === "premium";
   const monthName = formatMonthLabel(year, month);
@@ -317,13 +254,15 @@ export function ContentCalendar({
       if (data.usedFallback) {
         // Never let this look like a normal success — the slots that just
         // landed are hardcoded starter content, not real AI output.
-        setFallbackNotice(
-          data.reason ??
-            "We couldn't reach the AI right now, so starter content was created instead."
-        );
+        setNotice({
+          variant: "warning",
+          message:
+            data.reason ??
+            "We couldn't reach the AI right now, so starter content was created instead.",
+        });
         toast.error("AI generation unavailable — starter content created instead");
       } else {
-        setFallbackNotice(null);
+        setNotice(null);
         toast.success(
           data.slots_created
             ? `Added ${data.slots_created} posts to ${monthName}`
@@ -331,7 +270,11 @@ export function ContentCalendar({
         );
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not generate calendar");
+      if (isRateLimited(e)) {
+        setNotice({ variant: "error", message: RATE_LIMIT_MESSAGE });
+      } else {
+        toast.error(e instanceof Error ? e.message : "Could not generate calendar");
+      }
     } finally {
       setGenerating(false);
     }
@@ -365,11 +308,15 @@ export function ContentCalendar({
       setActive(data.slot);
       toast.success("Brief regenerated");
     } catch (e) {
-      // safeFetchJSON surfaces the API's { error, detail } body — show the
-      // real diagnostic (e.g. "status=404 model not found") instead of the
-      // same opaque message for every failure, so a user/support agent can
-      // tell "AI unavailable" apart from a genuine bug report.
-      toast.error(e instanceof Error ? e.message : "Could not regenerate");
+      // A 429 (Gemini quota/rate-limit) always shows the friendly Banner
+      // message — the API never forwards the raw Gemini error body to the
+      // client (see calendar/[id]/regenerate/route.ts), so this can't leak
+      // a raw JSON dump. Other failures keep the existing toast.
+      if (isRateLimited(e)) {
+        setNotice({ variant: "error", message: RATE_LIMIT_MESSAGE });
+      } else {
+        toast.error(e instanceof Error ? e.message : "Could not regenerate");
+      }
     } finally {
       setBusy(false);
     }
@@ -416,7 +363,11 @@ export function ContentCalendar({
       }
       toast.success(`Created ${data.slots?.length ?? 0} adapted slots`);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not repurpose");
+      if (isRateLimited(e)) {
+        setNotice({ variant: "error", message: RATE_LIMIT_MESSAGE });
+      } else {
+        toast.error(e instanceof Error ? e.message : "Could not repurpose");
+      }
     } finally {
       setBusy(false);
     }
@@ -448,7 +399,11 @@ export function ContentCalendar({
       setSeriesOpen(false);
       toast.success(`Series created: ${data.slots?.length ?? 0} posts`);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not create series");
+      if (isRateLimited(e)) {
+        setNotice({ variant: "error", message: RATE_LIMIT_MESSAGE });
+      } else {
+        toast.error(e instanceof Error ? e.message : "Could not create series");
+      }
     } finally {
       setBusy(false);
     }
@@ -520,7 +475,11 @@ export function ContentCalendar({
         toast.success("Content generated");
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not generate content");
+      if (isRateLimited(e)) {
+        setNotice({ variant: "error", message: RATE_LIMIT_MESSAGE });
+      } else {
+        toast.error(e instanceof Error ? e.message : "Could not generate content");
+      }
     } finally {
       setBusy(false);
     }
@@ -558,7 +517,7 @@ export function ContentCalendar({
       <header className="page-head flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1>Content</h1>
-          <p className="mt-1 text-sm text-[var(--zuri-muted)]">
+          <p className="mt-1 text-sm text-[var(--text-tertiary)]">
             Your AI content calendar for {monthName}
           </p>
         </div>
@@ -587,36 +546,38 @@ export function ContentCalendar({
         </div>
       </header>
 
-      {fallbackNotice && (
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3">
-          <div className="flex items-start gap-2">
-            <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-            <p className="text-sm text-[var(--zuri-foreground)]">{fallbackNotice}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={generateMonth}
-              disabled={generating}
-            >
-              {generating ? (
-                <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <RefreshCw className="mr-1 h-3.5 w-3.5" />
+      {notice && (
+        <Banner
+          variant={notice.variant}
+          message={notice.message}
+          actions={
+            <>
+              {notice.variant === "warning" && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={generateMonth}
+                  disabled={generating}
+                >
+                  {generating ? (
+                    <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <RefreshCw className="mr-1 h-3.5 w-3.5" />
+                  )}
+                  Retry Generation
+                </Button>
               )}
-              Retry Generation
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setFallbackNotice(null)}
-              aria-label="Dismiss"
-            >
-              <X className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-        </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setNotice(null)}
+                aria-label="Dismiss"
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            </>
+          }
+        />
       )}
 
       <RatingsSummaryCard />
@@ -632,10 +593,10 @@ export function ContentCalendar({
             key={p}
             active={platformFilter === p}
             onClick={() => setPlatformFilter(p)}
-            label={PLATFORM_LABELS[p] ?? p}
+            label={PLATFORM_SHORT_LABELS[p] ?? p}
           />
         ))}
-        <span className="mx-1 w-px self-stretch bg-[var(--zuri-border)]" />
+        <span className="mx-1 w-px self-stretch bg-[var(--border-solid)]" />
         <FilterChip
           active={pillarFilter === "all"}
           onClick={() => setPillarFilter("all")}
@@ -652,7 +613,7 @@ export function ContentCalendar({
               dot={p.color ?? undefined}
             />
           ))}
-        <span className="mx-1 w-px self-stretch bg-[var(--zuri-border)]" />
+        <span className="mx-1 w-px self-stretch bg-[var(--border-solid)]" />
         {(["all", "draft", "approved", "generated", "coming_soon"] as const).map(
           (s) => (
             <FilterChip
@@ -664,12 +625,12 @@ export function ContentCalendar({
                   ? "All status"
                   : s === "coming_soon"
                     ? "Coming soon"
-                    : STATUS_LABELS[s]
+                    : statusColors[s]?.label ?? s
               }
             />
           )
         )}
-        <span className="mx-1 w-px self-stretch bg-[var(--zuri-border)]" />
+        <span className="mx-1 w-px self-stretch bg-[var(--border-solid)]" />
         <FilterChip
           active={trendingOnly}
           onClick={() => setTrendingOnly((v) => !v)}
@@ -680,7 +641,7 @@ export function ContentCalendar({
       {(selectedIds.size > 0 ||
         lastSeriesIds.length > 0 ||
         lastRepurposeIds.length > 0) && (
-        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-[var(--zuri-border)] bg-[var(--zuri-surface)] px-3 py-2">
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-[var(--border-solid)] bg-[var(--bg-secondary)] px-3 py-2">
           {selectedIds.size > 0 && (
             <Button size="sm" asChild>
               <Link
@@ -754,10 +715,8 @@ export function ContentCalendar({
             );
             return (
               <div key={date}>
-                <div className="mb-2 flex items-center gap-2 border-b border-[var(--zuri-border)] pb-1.5">
-                  <h3 className="text-sm font-semibold text-[var(--zuri-foreground)]">
-                    {dateLabel}
-                  </h3>
+                <div className="mb-3 flex items-center gap-2 border-b border-[var(--border-solid)] pb-2">
+                  <h3 className="text-section-header">{dateLabel}</h3>
                   {cultural && (
                     <span
                       title={cultural}
@@ -767,7 +726,7 @@ export function ContentCalendar({
                       {cultural}
                     </span>
                   )}
-                  <span className="ml-auto text-xs text-[var(--zuri-muted)]">
+                  <span className="ml-auto text-card-meta">
                     {daySlots.length} {daySlots.length === 1 ? "post" : "posts"}
                   </span>
                 </div>
@@ -777,6 +736,7 @@ export function ContentCalendar({
                       key={slot.id}
                       slot={slot}
                       selected={selectedIds.has(slot.id)}
+                      open={active?.id === slot.id}
                       onToggleSelect={(e) => toggleSelect(slot.id, e)}
                       onClick={() => openSlot(slot)}
                     />
@@ -831,15 +791,14 @@ export function ContentCalendar({
 
       {active && (
         <div className="fixed inset-0 z-50 flex justify-end bg-black/40">
-          <div className="flex h-full w-full max-w-md flex-col border-l border-[var(--zuri-border)] bg-[var(--zuri-bg)] shadow-xl">
-            <div
-              className="flex items-center justify-between border-b border-[var(--zuri-border)] px-4 py-3"
-              style={{
-                boxShadow: `inset 3px 0 0 0 ${active.content_pillars?.color ?? "#C9A84C"}`,
-              }}
-            >
+          <div
+            className="content-card flex h-full w-full max-w-md flex-col rounded-none border-y-0 border-r-0"
+            style={pillarStripeStyle(active.content_pillars?.color)}
+          >
+            {/* Zone 1 — metadata: platform/format/date + close */}
+            <div className="flex items-center justify-between gap-2 border-b border-[var(--border-solid)] px-6 py-4">
               <div>
-                <p className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-[var(--zuri-muted)]">
+                <p className="flex items-center gap-2 text-xs uppercase tracking-wide text-[var(--text-tertiary)]">
                   {(() => {
                     const platformMeta = PLATFORM_META[active.platform];
                     if (!platformMeta) return null;
@@ -854,7 +813,7 @@ export function ContentCalendar({
                   {formatMeta(active.format_type).label} ·{" "}
                   {active.format_type.replace(/_/g, " ")}
                 </p>
-                <p className="text-sm font-medium">
+                <p className="text-card-title mt-1">
                   {new Date(active.scheduled_date).toLocaleDateString("en-NG", {
                     weekday: "short",
                     day: "numeric",
@@ -873,68 +832,68 @@ export function ContentCalendar({
               </Button>
             </div>
 
-            <div className="flex-1 space-y-4 overflow-y-auto p-4">
-              <div className="flex flex-wrap items-center gap-2">
+            {/* Zone 1b — status/pillar/tags, still part of the metadata
+                zone but visually separated from the editable fields below */}
+            <div className="flex flex-wrap items-center gap-2 border-b border-[var(--border-solid)] px-6 py-4">
+              <span className={cn("inline-flex items-center gap-1", statusStyle(active).text)}>
                 <span
-                  className={cn(
-                    "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium",
-                    statusStyle(active).bg,
-                    statusStyle(active).text,
-                    statusStyle(active).border
-                  )}
-                >
-                  {active.coming_soon
-                    ? "Coming Soon"
-                    : STATUS_LABELS[active.status] ?? active.status}
+                  className="inline-block h-1.5 w-1.5 rounded-full"
+                  style={{ background: statusStyle(active).dot }}
+                />
+                <span className="text-label">
+                  {active.coming_soon ? statusColors.coming_soon.label : statusStyle(active).label}
                 </span>
-                {active.content_pillars && (
-                  <span className="inline-flex items-center gap-1.5 text-xs text-[var(--zuri-muted)]">
-                    <span
-                      className="inline-block h-2 w-2 rounded-full"
-                      style={{
-                        background: active.content_pillars.color ?? "#C9A84C",
-                      }}
-                    />
-                    {active.content_pillars.name}
-                  </span>
-                )}
-                {active.needs_review && (
-                  <Badge variant="outline">Needs review</Badge>
-                )}
-                {active.generation_source === "fallback" && (
-                  <Badge className="border-amber-500 text-amber-500" variant="outline">
-                    Starter content — not AI generated
-                  </Badge>
-                )}
-                {active.is_cultural_moment && (
-                  <Badge variant="muted">
-                    {active.cultural_moment_name ?? "Cultural moment"}
-                  </Badge>
-                )}
-              </div>
+              </span>
+              {active.content_pillars && (
+                <span className="inline-flex items-center gap-2 text-card-meta">
+                  <span
+                    className="inline-block h-2 w-2 rounded-full"
+                    style={{
+                      background: active.content_pillars.color ?? "#C9A84C",
+                    }}
+                  />
+                  {active.content_pillars.name}
+                </span>
+              )}
+              {active.needs_review && (
+                <Badge variant="outline">Needs review</Badge>
+              )}
+              {active.generation_source === "fallback" && (
+                <Badge className="border-amber-500 text-amber-500" variant="outline">
+                  Starter content — not AI generated
+                </Badge>
+              )}
+              {active.is_cultural_moment && (
+                <Badge variant="muted">
+                  {active.cultural_moment_name ?? "Cultural moment"}
+                </Badge>
+              )}
+            </div>
 
+            {/* Zone 2 — editable content: Topic / Hook / Brief */}
+            <div className="flex-1 space-y-6 overflow-y-auto px-6 py-6">
               {editing ? (
-                <div className="space-y-3">
-                  <label className="block text-xs text-[var(--zuri-muted)]">
+                <div className="space-y-4">
+                  <label className="block text-label">
                     Topic
                     <input
-                      className="mt-1 w-full rounded-md border border-[var(--zuri-border)] bg-transparent px-3 py-2 text-sm"
+                      className="mt-2 w-full rounded-md border border-[var(--border-solid)] bg-[var(--bg-secondary)] px-3 py-2 text-sm text-[var(--text-primary)] transition-colors [transition-duration:var(--transition-fast)] focus:border-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20"
                       value={editTopic}
                       onChange={(e) => setEditTopic(e.target.value)}
                     />
                   </label>
-                  <label className="block text-xs text-[var(--zuri-muted)]">
+                  <label className="block text-label">
                     Hook
                     <input
-                      className="mt-1 w-full rounded-md border border-[var(--zuri-border)] bg-transparent px-3 py-2 text-sm"
+                      className="mt-2 w-full rounded-md border border-[var(--border-solid)] bg-[var(--bg-secondary)] px-3 py-2 text-sm text-[var(--text-primary)] transition-colors [transition-duration:var(--transition-fast)] focus:border-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20"
                       value={editHook}
                       onChange={(e) => setEditHook(e.target.value)}
                     />
                   </label>
-                  <label className="block text-xs text-[var(--zuri-muted)]">
+                  <label className="block text-label">
                     Brief
                     <textarea
-                      className="mt-1 w-full rounded-md border border-[var(--zuri-border)] bg-transparent px-3 py-2 text-sm"
+                      className="mt-2 w-full rounded-md border border-[var(--border-solid)] bg-[var(--bg-secondary)] px-3 py-2 text-sm text-[var(--text-primary)] transition-colors [transition-duration:var(--transition-fast)] focus:border-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20"
                       rows={4}
                       value={editBrief}
                       onChange={(e) => setEditBrief(e.target.value)}
@@ -960,35 +919,33 @@ export function ContentCalendar({
               ) : (
                 <>
                   <div>
-                    <p className="text-xs text-[var(--zuri-muted)]">Topic</p>
-                    <p className="mt-0.5 text-sm font-medium">{active.topic}</p>
+                    <p className="text-label">Topic</p>
+                    <p className="text-card-title mt-1">{active.topic}</p>
                   </div>
                   {active.hook && (
                     <div>
-                      <p className="text-xs text-[var(--zuri-muted)]">Hook</p>
-                      <p className="mt-0.5 text-sm italic">“{active.hook}”</p>
+                      <p className="text-label">Hook</p>
+                      <p className="mt-1 text-sm italic text-[var(--text-secondary)]">
+                        “{active.hook}”
+                      </p>
                     </div>
                   )}
                   {active.brief && (
                     <div>
-                      <p className="text-xs text-[var(--zuri-muted)]">Brief</p>
-                      <p className="mt-0.5 text-sm text-[var(--zuri-muted)]">
-                        {active.brief}
-                      </p>
+                      <p className="text-label">Brief</p>
+                      <p className="text-card-body mt-1">{active.brief}</p>
                     </div>
                   )}
                   {active.trend_source && (
-                    <div className="rounded-md border border-[#C9A84C]/40 bg-[#C9A84C]/5 px-3 py-2">
+                    <div className="rounded-md border border-[#C9A84C]/40 bg-[#C9A84C]/5 px-3 py-3">
                       <p className="flex items-center gap-1 text-xs font-medium text-[#C9A84C]">
                         <TrendingUp className="h-3.5 w-3.5" />
                         Trending
                       </p>
-                      <p className="mt-1 text-sm text-[var(--zuri-foreground)]">
+                      <p className="mt-1 text-sm text-[var(--text-primary)]">
                         {active.trend_source.topic}
                       </p>
-                      <p className="mt-0.5 text-xs text-[var(--zuri-muted)]">
-                        {active.trend_source.angle}
-                      </p>
+                      <p className="text-card-meta mt-1">{active.trend_source.angle}</p>
                     </div>
                   )}
                   {(active.status === "generated" || active.content_id) && (
@@ -1002,7 +959,9 @@ export function ContentCalendar({
               )}
             </div>
 
-            <div className="flex flex-wrap gap-2 border-t border-[var(--zuri-border)] p-4">
+            {/* Zone 3 — action bar: primary (gold) / secondary (outline,
+                ghost) / destructive, visually separated on its own edge */}
+            <div className="flex flex-wrap items-center gap-2 border-t border-[var(--border-solid)] px-6 py-4">
               {!editing && (
                 <Button
                   size="sm"
@@ -1016,7 +975,6 @@ export function ContentCalendar({
               {active.status === "draft" && (
                 <Button
                   size="sm"
-                  variant="outline"
                   onClick={() => approveSlot(active)}
                   disabled={busy}
                 >
@@ -1055,7 +1013,7 @@ export function ContentCalendar({
               </Button>
               <Button
                 size="sm"
-                variant="outline"
+                variant="ghost"
                 onClick={() => {
                   void navigator.clipboard.writeText(
                     `${active.topic}\n\n${active.hook ?? ""}\n\n${active.brief ?? ""}`
@@ -1069,7 +1027,7 @@ export function ContentCalendar({
               <Button
                 size="sm"
                 variant="ghost"
-                className="text-red-400"
+                className="ml-auto border-l border-[var(--border-solid)] pl-3 text-error hover:bg-error/10 hover:text-error"
                 onClick={() => deleteSlot(active)}
                 disabled={busy}
               >
@@ -1083,7 +1041,7 @@ export function ContentCalendar({
 
       {seriesOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-lg border border-[var(--zuri-border)] bg-[var(--zuri-surface)] p-5 shadow-xl">
+          <div className="content-card w-full max-w-md p-6 shadow-xl">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="font-heading text-lg font-semibold">
                 Create content series
@@ -1093,16 +1051,16 @@ export function ContentCalendar({
                 onClick={() => setSeriesOpen(false)}
                 aria-label="Close"
               >
-                <X className="h-4 w-4 text-[var(--zuri-muted)]" />
+                <X className="h-4 w-4 text-[var(--text-tertiary)]" />
               </button>
             </div>
             <div className="space-y-3">
-              <label className="block text-xs text-[var(--zuri-muted)]">
+              <label className="block text-xs text-[var(--text-tertiary)]">
                 Template
                 <select
                   value={seriesTemplate}
                   onChange={(e) => setSeriesTemplate(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-[var(--zuri-border)] bg-[var(--zuri-bg)] px-3 py-2 text-sm"
+                  className="mt-1 w-full rounded-md border border-[var(--border-solid)] bg-[var(--bg-primary)] px-3 py-2 text-sm"
                 >
                   {SERIES_OPTIONS.map((t) => (
                     <option key={t.name} value={t.name}>
@@ -1111,12 +1069,12 @@ export function ContentCalendar({
                   ))}
                 </select>
               </label>
-              <label className="block text-xs text-[var(--zuri-muted)]">
+              <label className="block text-xs text-[var(--text-tertiary)]">
                 Platform
                 <select
                   value={seriesPlatform}
                   onChange={(e) => setSeriesPlatform(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-[var(--zuri-border)] bg-[var(--zuri-bg)] px-3 py-2 text-sm"
+                  className="mt-1 w-full rounded-md border border-[var(--border-solid)] bg-[var(--bg-primary)] px-3 py-2 text-sm"
                 >
                   {["instagram", "facebook", "linkedin", "x", "tiktok"].map(
                     (p) => (
@@ -1166,16 +1124,16 @@ function FilterChip({
       type="button"
       onClick={onClick}
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition",
+        "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition-colors [transition-duration:var(--transition-fast)]",
         active
-          ? "border-[var(--zuri-gold)] bg-[var(--zuri-gold)]/10 text-[var(--zuri-foreground)]"
-          : "border-[var(--zuri-border)] text-[var(--zuri-muted)] hover:border-[var(--zuri-muted)]"
+          ? "border-transparent bg-[var(--accent)] text-[var(--accent-foreground)]"
+          : "border-[var(--border-solid)] text-[var(--text-tertiary)] hover:border-[var(--border-hover)] hover:text-[var(--text-secondary)]"
       )}
     >
       {dot && (
         <span
-          className="inline-block h-1.5 w-1.5 rounded-full"
-          style={{ background: dot }}
+          className="inline-block h-2 w-2 shrink-0 rounded-full"
+          style={{ background: dot, boxShadow: active ? "none" : `0 0 0 1px ${dot}33` }}
         />
       )}
       {label}
@@ -1187,11 +1145,16 @@ function SlotCard({
   slot,
   onClick,
   selected,
+  open,
   onToggleSelect,
 }: {
   slot: SlotWithPillar;
   onClick: () => void;
   selected?: boolean;
+  /** True when this card's drawer is the one currently open — gets the
+   * full gold-outline focus/active treatment (1.4), distinct from the
+   * checkbox multi-select state. */
+  open?: boolean;
   onToggleSelect?: (e: React.MouseEvent) => void;
 }) {
   const pillarColor = slot.content_pillars?.color ?? "#C9A84C";
@@ -1201,22 +1164,21 @@ function SlotCard({
   const platform = PLATFORM_META[slot.platform];
   const format = formatMeta(slot.format_type);
   const status = statusStyle(slot);
+  const statusLabel = slot.coming_soon ? statusColors.coming_soon.label : status.label;
 
   return (
     <div
       className={cn(
-        "relative w-full overflow-hidden rounded-lg border bg-[var(--zuri-surface)] text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md",
-        selected ? "border-[var(--zuri-gold)]" : "border-[var(--zuri-border)]"
+        "content-card relative flex w-full items-stretch overflow-hidden text-left",
+        open && "content-card--active"
       )}
-      style={{
-        // Pillar-color left accent stripe — a genuine visual hierarchy cue
-        // per content pillar, not a generic gold dot regardless of pillar.
-        boxShadow: `inset 3px 0 0 0 ${pillarColor}`,
-      }}
+      style={pillarStripeStyle(pillarColor)}
     >
+      {/* Checkbox gets its own reserved column so it never overlaps the
+          platform/format icons regardless of card width. */}
       {onToggleSelect && (
-        <label
-          className="absolute right-1.5 top-1.5 z-10"
+        <div
+          className="flex shrink-0 items-start pl-3 pt-3"
           onClick={(e) => e.stopPropagation()}
         >
           <input
@@ -1228,21 +1190,30 @@ function SlotCard({
             className="h-3.5 w-3.5 accent-[#C9A84C]"
             aria-label="Select for preview"
           />
-        </label>
+        </div>
       )}
-      <button type="button" onClick={onClick} className="w-full px-3 py-2.5 text-left">
-        <div className="flex items-center gap-1.5">
-          {platform && (
-            <platform.Icon
-              className="h-3.5 w-3.5 shrink-0"
-              style={{ color: platform.color }}
-              aria-label={platform.label}
-            />
-          )}
-          <span className="inline-flex items-center gap-1 text-[10px] text-[var(--zuri-muted)]">
-            <format.Icon className="h-3 w-3" />
-            {format.label}
-          </span>
+      <button
+        type="button"
+        onClick={onClick}
+        className={cn(
+          "min-w-0 flex-1 py-3 pr-3 text-left",
+          onToggleSelect ? "pl-2" : "pl-3"
+        )}
+      >
+        <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-1">
+            {platform && (
+              <platform.Icon
+                className="h-3.5 w-3.5 shrink-0"
+                style={{ color: platform.color }}
+                aria-label={platform.label}
+              />
+            )}
+            <span className="inline-flex items-center gap-1 text-[10px] text-[var(--text-tertiary)]">
+              <format.Icon className="h-3 w-3 shrink-0" />
+              {format.label}
+            </span>
+          </div>
           {slot.content_pillars?.name && (
             <span
               className="truncate text-[10px] font-medium"
@@ -1251,30 +1222,25 @@ function SlotCard({
               {slot.content_pillars.name}
             </span>
           )}
-          <span
-            className={cn(
-              "ml-auto shrink-0 rounded-full border px-1.5 py-0 text-[9px] font-medium",
-              status.bg,
-              status.text,
-              status.border
-            )}
-          >
-            {slot.coming_soon ? "Coming Soon" : STATUS_LABELS[slot.status] ?? slot.status}
+          <span className={cn("ml-auto inline-flex shrink-0 items-center gap-1", status.text)}>
+            <span
+              className="inline-block h-1.5 w-1.5 rounded-full"
+              style={{ background: status.dot }}
+            />
+            <span className="text-label">{statusLabel}</span>
           </span>
         </div>
 
-        <p className="mt-1.5 truncate text-sm font-medium text-[var(--zuri-foreground)]">
-          {slot.topic}
-        </p>
+        <p className="text-card-title mt-2 truncate">{slot.topic}</p>
 
-        <div className="mt-1.5 flex flex-wrap items-center gap-1">
-          <span className="text-xs text-[var(--zuri-muted)]">
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <span className="text-card-meta">
             {slot.scheduled_time ? slot.scheduled_time.slice(0, 5) : ""}
           </span>
           {slot.trend_source && (
             <span
               title={trendTip}
-              className="inline-flex items-center gap-0.5 rounded-full border border-[#C9A84C] px-1.5 py-0 text-[9px] font-medium text-[#C9A84C]"
+              className="inline-flex items-center gap-1 rounded-full border border-[#C9A84C]/40 px-2 py-0 text-[9px] font-medium text-[#C9A84C]"
             >
               <TrendingUp className="h-2.5 w-2.5" />
               Trending
@@ -1283,7 +1249,7 @@ function SlotCard({
           {slot.generation_source === "fallback" && (
             <span
               title="AI generation failed for this post — this is starter template content, not real AI output."
-              className="inline-flex items-center gap-0.5 rounded-full border border-amber-500 px-1.5 py-0 text-[9px] font-medium text-amber-500"
+              className="inline-flex items-center gap-1 rounded-full border border-amber-500/40 px-2 py-0 text-[9px] font-medium text-amber-500"
             >
               Starter content
             </span>

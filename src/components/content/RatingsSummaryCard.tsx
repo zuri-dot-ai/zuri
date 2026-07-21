@@ -11,7 +11,7 @@ type RatingRow = {
     calendar_slot_id?: string;
     content_calendar?: {
       pillar_id?: string | null;
-      content_pillars?: { name?: string } | null;
+      content_pillars?: { name?: string; color?: string | null } | null;
     } | null;
   } | null;
 };
@@ -19,7 +19,9 @@ type RatingRow = {
 export function RatingsSummaryCard() {
   const [avg, setAvg] = useState<number | null>(null);
   const [count, setCount] = useState(0);
-  const [topPillar, setTopPillar] = useState<string | null>(null);
+  const [topPillar, setTopPillar] = useState<{ name: string; color: string | null } | null>(
+    null
+  );
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -40,23 +42,26 @@ export function RatingsSummaryCard() {
           setAvg(Math.round((sum / rows.length) * 10) / 10);
 
           if (rows.length >= 5) {
-            const byPillar = new Map<string, { sum: number; n: number }>();
+            const byPillar = new Map<
+              string,
+              { sum: number; n: number; color: string | null }
+            >();
             for (const r of rows) {
-              const name =
-                r.generated_content?.content_calendar?.content_pillars?.name;
-              if (!name) continue;
-              const cur = byPillar.get(name) ?? { sum: 0, n: 0 };
+              const pillar = r.generated_content?.content_calendar?.content_pillars;
+              if (!pillar?.name) continue;
+              const cur =
+                byPillar.get(pillar.name) ?? { sum: 0, n: 0, color: pillar.color ?? null };
               cur.sum += r.rating;
               cur.n += 1;
-              byPillar.set(name, cur);
+              byPillar.set(pillar.name, cur);
             }
-            let best: string | null = null;
+            let best: { name: string; color: string | null } | null = null;
             let bestAvg = -1;
-            for (const [name, { sum, n }] of byPillar) {
+            for (const [name, { sum, n, color }] of byPillar) {
               const a = sum / n;
               if (a > bestAvg) {
                 bestAvg = a;
-                best = name;
+                best = { name, color };
               }
             }
             setTopPillar(best);
@@ -78,27 +83,34 @@ export function RatingsSummaryCard() {
   if (!loaded) return null;
 
   return (
-    <div className="mb-4 rounded-lg border border-[var(--zuri-border)] bg-[var(--zuri-surface)] px-4 py-3">
+    <div className="content-card mb-4 px-4 py-3">
       <div className="flex flex-wrap items-center gap-2">
         <Star className="h-4 w-4 fill-[#C9A84C] text-[#C9A84C]" />
-        <p className="text-sm text-[var(--zuri-foreground)]">
+        <p className="text-card-body">
           {avg != null ? (
             <>
               Average content rating:{" "}
               <span className="font-semibold text-[#C9A84C]">{avg} ★</span>{" "}
-              <span className="text-[var(--zuri-muted)]">({count} rated)</span>
+              <span className="text-card-meta">({count} rated)</span>
             </>
           ) : (
-            <span className="text-[var(--zuri-muted)]">
+            <span className="text-card-meta">
               No ratings yet — rate generated posts to see what&apos;s working
             </span>
           )}
         </p>
       </div>
-      <p className="mt-1 text-xs text-[var(--zuri-muted)]">
-        {count >= 5 && topPillar
-          ? `${topPillar} posts are your highest-rated pillar.`
-          : "Rate a few more posts to see what\u2019s working"}
+      <p className="mt-1 text-card-meta">
+        {count >= 5 && topPillar ? (
+          <>
+            <span style={{ color: topPillar.color ?? "#C9A84C" }} className="font-medium">
+              {topPillar.name}
+            </span>{" "}
+            posts are your highest-rated pillar.
+          </>
+        ) : (
+          "Rate a few more posts to see what\u2019s working"
+        )}
       </p>
     </div>
   );

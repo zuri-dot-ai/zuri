@@ -6,6 +6,7 @@ import {
 } from "@/lib/content/api-helpers";
 import { checkUsageLimit } from "@/lib/payments/feature-gate";
 import { sanitizeForPrompt } from "@/lib/utils/sanitize";
+import { RATE_LIMIT_MESSAGE, isRateLimitError } from "@/lib/errors/gemini-errors";
 
 export async function POST(
   _req: Request,
@@ -110,21 +111,20 @@ Output ONLY valid JSON:
 
     return NextResponse.json({ slot: { ...data, generation_source: "ai" } });
   } catch (err) {
-    // err.message from geminiJSON now carries the real status code + a
-    // truncated response body (see src/lib/gemini.ts) — log it in full for
-    // Vercel function logs, and pass a truncated version back to the client
-    // so the UI can distinguish "AI unavailable" from other 500s instead of
-    // showing the same opaque generic message for every failure.
-    const message = err instanceof Error ? err.message : String(err);
+    // err.message from geminiJSON carries the real status code + a
+    // truncated response body (see src/lib/gemini.ts) — that goes to the
+    // server logs in full for diagnostics, but never back to the client:
+    // a raw Gemini error body (e.g. a 429's `{"error":{"code":429,...}}`)
+    // must not be dumped to the user as-is.
     console.error(
       `[calendar regenerate] slotId=${id} userId=${auth.user.id}:`,
       err
     );
+    if (isRateLimitError(err)) {
+      return NextResponse.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
+    }
     return NextResponse.json(
-      {
-        error: "Could not regenerate. Please try again.",
-        detail: message.slice(0, 300),
-      },
+      { error: "Could not regenerate. Please try again." },
       { status: 500 }
     );
   }

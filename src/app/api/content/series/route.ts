@@ -12,6 +12,7 @@ import {
   generateSeries,
   SERIES_TEMPLATES,
 } from "@/lib/content/series-generator";
+import { RATE_LIMIT_MESSAGE, isRateLimitError } from "@/lib/errors/gemini-errors";
 
 export const maxDuration = 60;
 
@@ -118,6 +119,9 @@ export async function POST(req: Request) {
     });
   } catch (err) {
     console.error("[series]", err);
+    if (isRateLimitError(err)) {
+      return NextResponse.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
+    }
     return NextResponse.json(
       { error: "Series generation failed. Please try again." },
       { status: 500 }

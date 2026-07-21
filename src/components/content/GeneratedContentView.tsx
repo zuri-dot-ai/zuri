@@ -83,7 +83,7 @@ export function GeneratedContentView({
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 py-4 text-sm text-[var(--zuri-muted)]">
+      <div className="flex items-center gap-2 py-4 text-sm text-[var(--text-tertiary)]">
         <Loader2 className="h-4 w-4 animate-spin" />
         Loading generated content…
       </div>
@@ -92,7 +92,7 @@ export function GeneratedContentView({
 
   if (!content) {
     return (
-      <p className="py-2 text-sm text-[var(--zuri-muted)]">
+      <p className="py-2 text-sm text-[var(--text-tertiary)]">
         No generated content yet for this slot.
       </p>
     );
@@ -101,23 +101,23 @@ export function GeneratedContentView({
   const hashtags = Array.isArray(content.hashtags) ? content.hashtags : [];
 
   return (
-    <div className="space-y-4 border-t border-[var(--zuri-border)] pt-4">
+    <div className="space-y-4 border-t border-[var(--border-solid)] pt-4">
       {content.image_url && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={content.image_url}
           alt=""
-          className="max-h-64 w-full rounded-md border border-[var(--zuri-border)] object-cover"
+          className="max-h-64 w-full rounded-md border border-[var(--border-solid)] object-cover"
         />
       )}
 
-      <div className="space-y-1.5">
-        <label className="text-xs text-[var(--zuri-muted)]">Caption</label>
+      <div className="space-y-2">
+        <label className="text-label block">Caption</label>
         <textarea
           value={caption}
           onChange={(e) => setCaption(e.target.value)}
           rows={6}
-          className="w-full rounded-md border border-[var(--zuri-border)] bg-[var(--zuri-bg)] px-3 py-2 text-sm text-[var(--zuri-foreground)] focus:border-[var(--zuri-gold)] focus:outline-none"
+          className="w-full rounded-md border border-[var(--border-solid)] bg-[var(--bg-secondary)] px-3 py-2 text-sm text-[var(--text-primary)] transition-colors [transition-duration:var(--transition-fast)] focus:border-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20"
         />
         <Button
           size="sm"
@@ -136,10 +136,8 @@ export function GeneratedContentView({
 
       {hashtags.length > 0 && (
         <div>
-          <p className="text-xs text-[var(--zuri-muted)]">Hashtags</p>
-          <p className="mt-1 text-sm text-[var(--zuri-gold)]">
-            {hashtags.join(" ")}
-          </p>
+          <p className="text-label">Hashtags</p>
+          <p className="mt-1 text-sm text-[var(--accent)]">{hashtags.join(" ")}</p>
         </div>
       )}
 

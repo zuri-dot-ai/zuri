@@ -6,6 +6,7 @@ import {
   requireProCalendar,
 } from "@/lib/content/api-helpers";
 import { repurposeSlot } from "@/lib/content/repurpose-engine";
+import { RATE_LIMIT_MESSAGE, isRateLimitError } from "@/lib/errors/gemini-errors";
 
 export const maxDuration = 60;
 
@@ -67,14 +68,15 @@ export async function POST(
     );
     return NextResponse.json({ slots, slots_created: slots.length });
   } catch (err) {
+    // Full diagnostic (including any raw Gemini error body) stays in server
+    // logs only — the client only ever sees a sanitized message so a 429
+    // quota error never dumps raw JSON to the user.
     console.error("[repurpose]", err);
+    if (isRateLimitError(err)) {
+      return NextResponse.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
+    }
     return NextResponse.json(
-      {
-        error:
-          err instanceof Error
-            ? err.message
-            : "Could not repurpose to all platforms. Please try again.",
-      },
+      { error: "Could not repurpose to all platforms. Please try again." },
       { status: 500 }
     );
   }

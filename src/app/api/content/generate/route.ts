@@ -13,6 +13,7 @@ import { resolveArchetype } from "@/lib/content/pillars";
 import { checkUsageLimit } from "@/lib/payments/feature-gate";
 import { sanitizeText } from "@/lib/utils/sanitize";
 import type { DesignArchetype } from "@/lib/website/archetypes";
+import { RATE_LIMIT_MESSAGE, isRateLimitError } from "@/lib/errors/gemini-errors";
 
 const STANDALONE_FORMATS = new Set(["blog_post", "newsletter"]);
 
@@ -193,6 +194,9 @@ export async function POST(req: Request) {
     return NextResponse.json(output);
   } catch (err) {
     console.error("Content generation failed:", err);
+    if (isRateLimitError(err)) {
+      return NextResponse.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
+    }
     return NextResponse.json(
       { error: "Generation failed. Please try again." },
       { status: 500 }

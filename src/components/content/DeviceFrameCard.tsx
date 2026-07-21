@@ -5,14 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ContentRatingStars } from "@/components/content/ContentRatingStars";
 import { getAspectRatio } from "@/lib/content/image-dimensions";
 import { cn } from "@/lib/utils";
-
-const PLATFORM_LABELS: Record<string, string> = {
-  instagram: "Instagram",
-  facebook: "Facebook",
-  linkedin: "LinkedIn",
-  x: "X",
-  tiktok: "TikTok",
-};
+import { PLATFORM_LABELS } from "@/lib/content/format-meta";
 
 function aspectClass(ratio: string): string {
   switch (ratio) {
@@ -65,42 +58,30 @@ export function DeviceFrameCard({
   return (
     <article
       className={cn(
-        "flex w-full max-w-[320px] shrink-0 flex-col overflow-hidden rounded-xl border border-[var(--zuri-border)] bg-[var(--zuri-surface)]",
+        "content-card flex w-full max-w-[320px] shrink-0 flex-col overflow-hidden",
         !item.generated && "opacity-60"
       )}
     >
-      <header className="flex items-center justify-between gap-2 border-b border-[var(--zuri-border)] px-3 py-2.5">
+      <header className="flex items-center justify-between gap-2 border-b border-[var(--border-solid)] px-3 py-3">
         <div className="flex min-w-0 items-center gap-2">
-          <span className="h-8 w-8 shrink-0 rounded-full bg-[var(--zuri-border)]" />
+          <span className="h-8 w-8 shrink-0 rounded-full bg-[var(--border-solid)]" />
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-[var(--zuri-foreground)]">
-              Your Business
-            </p>
-            <p className="text-[10px] uppercase tracking-wide text-[var(--zuri-muted)]">
-              {PLATFORM_LABELS[item.platform] ?? item.platform}
-            </p>
+            <p className="text-card-title truncate">Your Business</p>
+            <p className="text-label">{PLATFORM_LABELS[item.platform] ?? item.platform}</p>
           </div>
         </div>
-        {dateLabel && (
-          <span className="shrink-0 text-[10px] text-[var(--zuri-muted)]">
-            {dateLabel}
-          </span>
-        )}
+        {dateLabel && <span className="text-card-meta shrink-0">{dateLabel}</span>}
       </header>
 
       {!item.generated ? (
         <div
           className={cn(
-            "flex flex-col items-center justify-center gap-3 bg-[var(--zuri-bg)] px-4 py-10",
+            "flex flex-col items-center justify-center gap-3 bg-[var(--bg-primary)] px-4 py-10",
             aspectClass(ratio)
           )}
         >
-          <p className="text-center text-sm text-[var(--zuri-muted)]">
-            Not generated yet
-          </p>
-          <p className="text-center text-xs text-[var(--zuri-muted)] line-clamp-2">
-            {item.topic}
-          </p>
+          <p className="text-card-body text-center">Not generated yet</p>
+          <p className="text-card-meta line-clamp-2 text-center">{item.topic}</p>
           {onGenerate && (
             <Button
               size="sm"
@@ -116,7 +97,7 @@ export function DeviceFrameCard({
         <>
           <div
             className={cn(
-              "relative w-full overflow-hidden bg-[var(--zuri-bg)]",
+              "relative w-full overflow-hidden bg-[var(--bg-primary)]",
               aspectClass(ratio)
             )}
           >
@@ -128,20 +109,20 @@ export function DeviceFrameCard({
                 className="h-full w-full object-cover"
               />
             ) : (
-              <div className="flex h-full items-center justify-center px-4 text-center text-xs text-[var(--zuri-muted)]">
+              <div className="text-card-meta flex h-full items-center justify-center px-4 text-center">
                 {item.topic}
               </div>
             )}
           </div>
 
-          <div className="space-y-2 border-t border-[var(--zuri-border)] px-3 py-3">
+          <div className="space-y-2 border-t border-[var(--border-solid)] px-3 py-3">
             {item.caption && (
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-[var(--zuri-foreground)]">
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-[var(--text-primary)]">
                 {item.caption}
               </p>
             )}
             {item.hashtags && item.hashtags.length > 0 && (
-              <p className="border-t border-[var(--zuri-border)] pt-2 text-xs text-[#C9A84C]">
+              <p className="border-t border-[var(--border-solid)] pt-2 text-xs text-[#C9A84C]">
                 {item.hashtags.join(" ")}
               </p>
             )}

@@ -227,24 +227,22 @@ export function CampaignPreviewClient({
     <div className="mx-auto max-w-6xl px-4 py-6">
       <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-heading text-2xl font-semibold text-[var(--zuri-foreground)]">
-            Campaign preview
-          </h1>
-          <p className="mt-1 text-sm text-[var(--zuri-muted)]">
+          <h1 className="text-page-title">Campaign preview</h1>
+          <p className="text-card-meta mt-1">
             {frames.length} post{frames.length === 1 ? "" : "s"}
             {notGenerated > 0 ? ` · ${notGenerated} not generated yet` : ""}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex rounded-md border border-[var(--zuri-border)]">
+          <div className="flex gap-1 rounded-full border border-[var(--border-solid)] p-1">
             <button
               type="button"
               onClick={() => setGroupBy("date")}
               className={cn(
-                "px-3 py-1.5 text-xs",
+                "rounded-full px-3 py-1 text-xs font-medium transition-colors [transition-duration:var(--transition-fast)]",
                 groupBy === "date"
-                  ? "bg-[var(--zuri-gold)]/10 text-[var(--zuri-foreground)]"
-                  : "text-[var(--zuri-muted)]"
+                  ? "bg-[var(--accent)] text-[var(--accent-foreground)]"
+                  : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
               )}
             >
               By date
@@ -253,10 +251,10 @@ export function CampaignPreviewClient({
               type="button"
               onClick={() => setGroupBy("platform")}
               className={cn(
-                "px-3 py-1.5 text-xs",
+                "rounded-full px-3 py-1 text-xs font-medium transition-colors [transition-duration:var(--transition-fast)]",
                 groupBy === "platform"
-                  ? "bg-[var(--zuri-gold)]/10 text-[var(--zuri-foreground)]"
-                  : "text-[var(--zuri-muted)]"
+                  ? "bg-[var(--accent)] text-[var(--accent-foreground)]"
+                  : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
               )}
             >
               By platform
@@ -276,12 +274,12 @@ export function CampaignPreviewClient({
       </header>
 
       {loading ? (
-        <div className="flex items-center gap-2 text-sm text-[var(--zuri-muted)]">
+        <div className="text-card-body flex items-center gap-2">
           <Loader2 className="h-4 w-4 animate-spin" />
           Loading preview…
         </div>
       ) : frames.length === 0 ? (
-        <p className="text-sm text-[var(--zuri-muted)]">
+        <p className="text-card-body">
           No slots selected.{" "}
           <button
             type="button"
@@ -295,7 +293,7 @@ export function CampaignPreviewClient({
         <div className="space-y-8">
           {Array.from(grouped.entries()).map(([key, group]) => (
             <section key={key}>
-              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--zuri-muted)]">
+              <h2 className="text-section-header mb-3">
                 {groupBy === "platform"
                   ? key
                   : key === "unscheduled"

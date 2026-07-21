@@ -8,6 +8,23 @@ export type GeminiErrorType =
   | "SAFETY_BLOCK" // Content blocked by safety filter
   | "JSON_PARSE_FAILURE"; // Response was not valid JSON
 
+/** User-facing copy for a rate-limited Gemini call — never show the raw
+ * `{"error":{"code":429,...}}` body a 429 response carries in its message. */
+export const RATE_LIMIT_MESSAGE =
+  "Generation is temporarily rate-limited. Please wait a moment and try again.";
+
+/**
+ * True when the underlying error is a Gemini quota/rate-limit failure
+ * (status=429 / RESOURCE_EXHAUSTED). API routes use this to decide whether
+ * to return the friendly rate-limit message (status 429) instead of a
+ * generic failure — the full error still goes to server logs via the
+ * caller's console.error, only the client-facing string changes.
+ */
+export function isRateLimitError(err: unknown): boolean {
+  const msg = String(err instanceof Error ? err.message : err);
+  return msg.includes("RESOURCE_EXHAUSTED") || msg.includes("429") || /status=429/.test(msg);
+}
+
 export async function handleGeminiError(
   err: unknown,
   context: string

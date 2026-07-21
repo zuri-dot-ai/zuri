@@ -250,39 +250,34 @@ function BrandVoiceTab() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="font-heading text-2xl font-semibold">Brand Voice</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h2 className="text-page-title">Brand Voice</h2>
+        <p className="text-card-body mt-1">
           Examples Zuri learns from when you edit captions or rate posts highly.
           These shape future generation after at least two examples exist.
         </p>
       </div>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <p className="text-card-body">Loading…</p>
       ) : examples.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-card-body">
           No voice examples yet. Edit a generated caption or rate a post 4–5
           stars to start building your voice bank.
         </p>
       ) : (
         <ul className="space-y-3">
           {examples.map((ex) => (
-            <li
-              key={ex.id}
-              className="flex gap-3 rounded-sm border border-border bg-background p-3"
-            >
+            <li key={ex.id} className="content-card flex gap-3 p-3">
               <div className="min-w-0 flex-1">
-                <Badge variant="outline" className="mb-1.5">
+                <Badge variant="outline" className="text-label mb-2 border-border">
                   {sourceLabel(ex.source)}
                 </Badge>
-                <p className="text-sm leading-relaxed text-foreground line-clamp-4">
-                  {ex.text}
-                </p>
+                <p className="text-card-body line-clamp-4">{ex.text}</p>
               </div>
               <button
                 type="button"
                 onClick={() => void remove(ex.id)}
-                className="shrink-0 rounded p-1 text-muted-foreground hover:text-foreground"
+                className="shrink-0 rounded p-1 text-muted-foreground transition-colors [transition-duration:var(--transition-fast)] hover:text-foreground"
                 aria-label="Delete voice example"
               >
                 <X className="size-4" />

@@ -46,13 +46,13 @@ export function ContentRatingStars({
   const display = hover || rating;
 
   return (
-    <div className={cn("space-y-1", className)}>
-      <p className="text-xs text-[var(--zuri-muted)]">
+    <div className={cn("space-y-2", className)}>
+      <p className="text-card-meta">
         {rating > 0
           ? `Rated ${"★".repeat(rating)}${"☆".repeat(5 - rating)} — tap to change`
           : "Rate this content"}
       </p>
-      <div className="flex items-center gap-0.5" role="group" aria-label="Content rating">
+      <div className="flex items-center gap-1" role="group" aria-label="Content rating">
         {[1, 2, 3, 4, 5].map((n) => (
           <button
             key={n}
@@ -62,10 +62,10 @@ export function ContentRatingStars({
             onMouseEnter={() => setHover(n)}
             onMouseLeave={() => setHover(0)}
             onClick={() => void submit(n)}
-            className="rounded p-0.5 transition hover:scale-110 disabled:opacity-50"
+            className="rounded p-1 transition-transform [transition-duration:var(--transition-fast)] hover:scale-110 disabled:opacity-50"
           >
             <Star
-              className="h-5 w-5"
+              className="h-5 w-5 transition-colors [transition-duration:var(--transition-fast)]"
               style={{
                 color: GOLD,
                 fill: n <= display ? GOLD : "transparent",

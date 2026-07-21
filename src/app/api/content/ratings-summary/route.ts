@@ -14,7 +14,7 @@ export async function GET() {
   const { data } = await auth.supabase
     .from("content_ratings")
     .select(
-      "rating, generated_content(id, platform, calendar_slot_id, content_calendar(pillar_id, content_pillars(name)))"
+      "rating, generated_content(id, platform, calendar_slot_id, content_calendar(pillar_id, content_pillars(name, color)))"
     )
     .eq("user_id", auth.user.id);
 

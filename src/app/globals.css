@@ -62,6 +62,25 @@
     --font-cormorant: var(--font-heading), Georgia, serif;
     --font-inter: var(--font-body), system-ui, sans-serif;
     --font-jetbrains: var(--font-body), system-ui, sans-serif;
+
+    /* Strict 4px spacing scale — every touched component maps to one of
+       these, no arbitrary padding/margin values. */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-6: 24px;
+    --space-8: 32px;
+    --space-12: 48px;
+    --space-16: 64px;
+
+    /* One transition curve for hover/focus states across the Content
+       section — reference this instead of ad-hoc per-component values. */
+    --transition-fast: 140ms cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Hover glow — soft, low-opacity, Linear-style (not a heavy drop
+       shadow). Distinct from --elevation-2/3 which are neutral-black. */
+    --glow-hover: 0 0 0 1px rgba(201, 168, 76, 0.14), 0 4px 16px rgba(0, 0, 0, 0.28);
   }
 
   html[data-theme="light"],
@@ -542,6 +561,78 @@
     color: var(--text-tertiary);
     font-weight: 500;
     font-family: var(--font-body), system-ui, sans-serif;
+  }
+
+  /* ── Content section type scale ──────────────────────────────────
+     One explicit scale for page title / section header / card title /
+     card body / card meta / badge label — reused across the calendar
+     list, drawer, ratings card, preview grid, and Brand Voice list so
+     text weight is never "everything looks the same size". */
+  .text-page-title {
+    font-family: var(--font-heading), Georgia, serif;
+    font-weight: 500;
+    font-size: 1.75rem;
+    letter-spacing: 0.02em;
+  }
+  .text-section-header {
+    font-family: var(--font-body), system-ui, sans-serif;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+  }
+  .text-card-title {
+    font-family: var(--font-body), system-ui, sans-serif;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.35;
+  }
+  .text-card-body {
+    font-family: var(--font-body), system-ui, sans-serif;
+    font-size: 0.8125rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+  .text-card-meta {
+    font-family: var(--font-body), system-ui, sans-serif;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    color: var(--text-tertiary);
+  }
+  .text-label {
+    font-family: var(--font-body), system-ui, sans-serif;
+    font-size: 0.625rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+  }
+
+  /* ── Content card ─────────────────────────────────────────────────
+     Resting: subtle 1px border, no shadow, surface slightly lighter
+     than page bg (matches .zuri-card). Hover: soft low-opacity glow +
+     border brightening, fast transition. Focus/active: full gold
+     outline, e.g. the drawer's source card. */
+  .content-card {
+    position: relative;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-solid);
+    border-radius: var(--radius-md);
+    box-shadow: none;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast),
+      transform var(--transition-fast);
+  }
+  .content-card:hover {
+    border-color: var(--border-hover);
+    box-shadow: var(--glow-hover);
+  }
+  .content-card--active,
+  .content-card:focus-visible {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
   }
 
   .icon-btn {

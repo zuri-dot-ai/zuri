@@ -101,6 +101,41 @@ export function ContentSlotSkeleton() {
   );
 }
 
+/** Skeleton: single day-grouped calendar list card (matches SlotCard's
+ * shape — icon row, title, meta row) so the Content list never flashes
+ * blank or pops in with a mismatched layout. */
+export function ContentCardSkeleton() {
+  return (
+    <div className="content-card space-y-2 p-3">
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-3.5 w-3.5 rounded-full" />
+        <Skeleton className="h-3 w-16" />
+        <Skeleton className="ml-auto h-3 w-14 rounded-full" />
+      </div>
+      <Skeleton className="h-4 w-4/5" />
+      <Skeleton className="h-3 w-12" />
+    </div>
+  );
+}
+
+/** Skeleton: one day-group block (header + a row of cards), repeated to
+ * match the real day-grouped Content list. */
+export function ContentDayGroupSkeleton() {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 border-b border-[var(--border-solid)] pb-2">
+        <Skeleton className="h-3 w-40" />
+        <Skeleton className="ml-auto h-3 w-16" />
+      </div>
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <ContentCardSkeleton key={i} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /** Skeleton: agency marketplace card */
 export function AgencyCardSkeleton() {
   return (
