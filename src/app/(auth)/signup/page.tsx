@@ -220,7 +220,7 @@ function SignupForm() {
 
           <label
             htmlFor="terms_consent"
-            className="mt-4 flex items-start gap-3 rounded-sm p-3 -mx-3 transition-colors hover:bg-[var(--bg-elevated)] cursor-pointer"
+            className="mt-4 flex items-start gap-3 rounded-sm p-3.5 -mx-3.5 transition-colors hover:bg-[var(--bg-elevated)] cursor-pointer"
           >
             <input
               type="checkbox"
@@ -228,7 +228,7 @@ function SignupForm() {
               required
               checked={termsAccepted}
               onChange={(e) => setTermsAccepted(e.target.checked)}
-              className="mt-0.5 h-5 w-5 shrink-0 accent-[#d4a656]"
+              className="mt-0.5 h-6 w-6 shrink-0 accent-[#d4a656]"
             />
             <span className="text-sm text-[var(--chrome-mid)]">
               I agree to Zuri&apos;s{" "}

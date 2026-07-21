@@ -35,19 +35,25 @@ export function PasswordChecklist({ password }: PasswordChecklistProps) {
           <li
             key={rule.label}
             className={cn(
-              "flex items-center gap-1.5 text-xs transition-colors duration-200",
+              "flex items-center gap-1.5 text-xs transition-colors duration-200 ease-out",
               met ? "text-[#4ADE80]" : "text-[var(--chrome-dark)]"
             )}
           >
             <span
               className={cn(
-                "flex size-3.5 shrink-0 items-center justify-center rounded-full border transition-colors duration-200",
+                "flex size-3.5 shrink-0 items-center justify-center rounded-full border transition-[background-color,border-color] duration-200 ease-out",
                 met
-                  ? "border-[#4ADE80] bg-[#4ADE80]/15"
-                  : "border-[var(--chrome-dark)]"
+                  ? "border-[#4ADE80] bg-[#4ADE80]"
+                  : "border-[var(--chrome-dark)] bg-transparent"
               )}
             >
-              {met && <Check className="size-2.5" aria-hidden />}
+              <Check
+                className={cn(
+                  "size-2.5 text-[#0d0c0a] transition-opacity duration-200 ease-out",
+                  met ? "opacity-100" : "opacity-0"
+                )}
+                aria-hidden
+              />
             </span>
             {rule.label}
           </li>

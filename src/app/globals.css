@@ -138,6 +138,13 @@
     color: var(--chrome-light);
   }
 
+  /* Squared-off buttons on auth surfaces specifically (login/signup/forgot-password) —
+     does not affect .btn-gold/.btn-ghost usage elsewhere in the app. */
+  .auth-canvas .btn-gold,
+  .auth-canvas .btn-ghost {
+    border-radius: 0;
+  }
+
   /* Prevent Chrome/Edge autofill from flashing a white background on
      dark auth inputs — fill the field with the dark surface color instead. */
   .auth-canvas input:-webkit-autofill,
@@ -378,11 +385,11 @@
   .btn-gold:hover {
     background: #e0bd42;
     box-shadow: 0 0 28px rgba(212, 175, 55, 0.35);
-    transform: scale(1.015);
+    transform: scale(1.02);
   }
   .btn-gold:active {
     background: #c9a227;
-    transform: scale(0.94);
+    transform: scale(0.98);
     box-shadow: 0 0 12px rgba(212, 175, 55, 0.2);
   }
   .btn-gold:disabled {

@@ -25,17 +25,19 @@ export function AuthShell({
 }: AuthShellProps) {
   return (
     <div className="relative grid min-h-screen w-full grid-cols-1 overflow-x-hidden bg-transparent md:grid-cols-2 lg:grid-cols-[2fr_3fr]">
-      <aside className="relative z-10 hidden flex-col justify-between overflow-hidden p-10 md:flex lg:p-14">
-        {/* Gradient/glow divider unifying the left panel with the form card */}
-        <div
-          aria-hidden
-          className="absolute right-0 top-0 z-20 h-full w-px bg-gradient-to-b from-transparent via-[rgba(201,168,76,0.4)] to-transparent"
-        />
-        <div
-          aria-hidden
-          className="absolute right-0 top-0 z-20 h-full w-8 -translate-x-1/2 bg-gradient-to-b from-transparent via-[rgba(201,168,76,0.14)] to-transparent blur-md"
-        />
+      {/* Gradient/glow divider unifying the left panel with the form card — fixed to
+          the viewport (not the scrolling aside) so it stays put across scroll and
+          content-height changes (e.g. toast/error states growing the form column). */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-y-0 z-20 hidden w-px bg-gradient-to-b from-transparent via-[rgba(201,168,76,0.4)] to-transparent md:block md:left-1/2 lg:left-[40%]"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-y-0 z-20 hidden w-8 -translate-x-1/2 bg-gradient-to-b from-transparent via-[rgba(201,168,76,0.14)] to-transparent blur-md md:block md:left-1/2 lg:left-[40%]"
+      />
 
+      <aside className="relative z-10 hidden flex-col justify-between overflow-hidden p-10 md:flex lg:p-14">
         {/* Abstract dashboard-silhouette motif behind the headline, layered above the starfield but behind the copy */}
         <svg
           aria-hidden
