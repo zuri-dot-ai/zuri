@@ -8,7 +8,6 @@ import {
   ChevronRight,
   Copy,
   Diamond,
-  Loader2,
   Pencil,
   RefreshCw,
   Share2,
@@ -109,6 +108,15 @@ export function ContentCalendar({
   const [active, setActive] = useState<SlotWithPillar | null>(null);
   const [generating, setGenerating] = useState(false);
   const [busy, setBusy] = useState(false);
+  // Per-action pending state so a slow AI action (regenerate/repurpose)
+  // doesn't disable the fast, optimistic ones (approve/delete) and vice
+  // versa — approve/delete no longer share the single `busy` flag above.
+  const [approvingIds, setApprovingIds] = useState<Set<string>>(new Set());
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+  const [regenerating, setRegenerating] = useState(false);
+  const [repurposing, setRepurposing] = useState(false);
+  const [generatingContent, setGeneratingContent] = useState(false);
+  const [savingEdit, setSavingEdit] = useState(false);
   const [editTopic, setEditTopic] = useState("");
   const [editHook, setEditHook] = useState("");
   const [editBrief, setEditBrief] = useState("");
@@ -281,24 +289,36 @@ export function ContentCalendar({
   }
 
   async function approveSlot(slot: SlotWithPillar) {
-    setBusy(true);
+    // Optimistic: this is a plain DB status flip, so paint the approved
+    // state immediately and only roll back if the request actually fails.
+    const previous = slot;
+    const optimistic: SlotWithPillar = { ...slot, status: "approved" };
+    setApprovingIds((prev) => new Set(prev).add(slot.id));
+    setSlots((prev) => prev.map((s) => (s.id === slot.id ? optimistic : s)));
+    setActive((cur) => (cur?.id === slot.id ? optimistic : cur));
     try {
       const data = await safeFetchJSON<{ slot: SlotWithPillar }>(
         `/api/content/calendar/${slot.id}/approve`,
         { method: "POST" }
       );
       setSlots((prev) => prev.map((s) => (s.id === slot.id ? data.slot : s)));
-      setActive(data.slot);
+      setActive((cur) => (cur?.id === slot.id ? data.slot : cur));
       toast.success("Slot approved");
     } catch (e) {
+      setSlots((prev) => prev.map((s) => (s.id === slot.id ? previous : s)));
+      setActive((cur) => (cur?.id === slot.id ? previous : cur));
       toast.error(e instanceof Error ? e.message : "Could not approve");
     } finally {
-      setBusy(false);
+      setApprovingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(slot.id);
+        return next;
+      });
     }
   }
 
   async function regenerateSlot(slot: SlotWithPillar) {
-    setBusy(true);
+    setRegenerating(true);
     try {
       const data = await safeFetchJSON<{ slot: SlotWithPillar }>(
         `/api/content/calendar/${slot.id}/regenerate`,
@@ -318,24 +338,40 @@ export function ContentCalendar({
         toast.error(e instanceof Error ? e.message : "Could not regenerate");
       }
     } finally {
-      setBusy(false);
+      setRegenerating(false);
     }
   }
 
   async function deleteSlot(slot: SlotWithPillar) {
     if (!confirm("Delete this calendar slot?")) return;
-    setBusy(true);
+    // Optimistic: remove immediately and close the drawer; if the delete
+    // actually fails on the server, restore the slot and reopen it rather
+    // than leaving the user staring at a spinner for a DB-only op.
+    const previous = slot;
+    const previousIndex = slots.findIndex((s) => s.id === slot.id);
+    setDeletingIds((prev) => new Set(prev).add(slot.id));
+    setSlots((prev) => prev.filter((s) => s.id !== slot.id));
+    setActive(null);
     try {
       await safeFetchJSON(`/api/content/calendar/${slot.id}`, {
         method: "DELETE",
       });
-      setSlots((prev) => prev.filter((s) => s.id !== slot.id));
-      setActive(null);
       toast.success("Slot deleted");
     } catch (e) {
+      setSlots((prev) => {
+        const next = [...prev];
+        const insertAt = Math.min(Math.max(previousIndex, 0), next.length);
+        next.splice(insertAt, 0, previous);
+        return next;
+      });
+      setActive(previous);
       toast.error(e instanceof Error ? e.message : "Could not delete");
     } finally {
-      setBusy(false);
+      setDeletingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(slot.id);
+        return next;
+      });
     }
   }
 
@@ -347,7 +383,7 @@ export function ContentCalendar({
     const targets = ["instagram", "facebook", "linkedin", "x", "tiktok"].filter(
       (p) => p !== slot.platform
     );
-    setBusy(true);
+    setRepurposing(true);
     try {
       const data = await safeFetchJSON<{ slots: SlotWithPillar[] }>(
         `/api/content/calendar/${slot.id}/repurpose`,
@@ -369,7 +405,7 @@ export function ContentCalendar({
         toast.error(e instanceof Error ? e.message : "Could not repurpose");
       }
     } finally {
-      setBusy(false);
+      setRepurposing(false);
     }
   }
 
@@ -410,7 +446,7 @@ export function ContentCalendar({
   }
 
   async function saveEdit(slot: SlotWithPillar) {
-    setBusy(true);
+    setSavingEdit(true);
     try {
       const data = await safeFetchJSON<{ slot: SlotWithPillar }>(
         `/api/content/calendar/${slot.id}`,
@@ -431,12 +467,12 @@ export function ContentCalendar({
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not save");
     } finally {
-      setBusy(false);
+      setSavingEdit(false);
     }
   }
 
   async function generateContent(slot: SlotWithPillar) {
-    setBusy(true);
+    setGeneratingContent(true);
     try {
       const output = await safeFetchJSON<{
         id: string;
@@ -481,7 +517,7 @@ export function ContentCalendar({
         toast.error(e instanceof Error ? e.message : "Could not generate content");
       }
     } finally {
-      setBusy(false);
+      setGeneratingContent(false);
     }
   }
 
@@ -560,7 +596,7 @@ export function ContentCalendar({
                   disabled={generating}
                 >
                   {generating ? (
-                    <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                    <span className="zuri-spinner mr-1 !size-3.5" />
                   ) : (
                     <RefreshCw className="mr-1 h-3.5 w-3.5" />
                   )}
@@ -690,7 +726,7 @@ export function ContentCalendar({
             <Button onClick={generateMonth} disabled={generating}>
               {generating ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <span className="zuri-spinner mr-2 !size-4" />
                   Generating…
                 </>
               ) : (
@@ -780,7 +816,7 @@ export function ContentCalendar({
             disabled={generating}
           >
             {generating ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <span className="zuri-spinner mr-2 !size-4" />
             ) : (
               <Sparkles className="mr-2 h-4 w-4" />
             )}
@@ -903,14 +939,18 @@ export function ContentCalendar({
                     <Button
                       size="sm"
                       onClick={() => saveEdit(active)}
-                      disabled={busy}
+                      disabled={savingEdit}
                     >
+                      {savingEdit && (
+                        <span className="zuri-spinner mr-1 !size-3.5" />
+                      )}
                       Save
                     </Button>
                     <Button
                       size="sm"
                       variant="ghost"
                       onClick={() => setEditing(false)}
+                      disabled={savingEdit}
                     >
                       Cancel
                     </Button>
@@ -976,9 +1016,13 @@ export function ContentCalendar({
                 <Button
                   size="sm"
                   onClick={() => approveSlot(active)}
-                  disabled={busy}
+                  disabled={approvingIds.has(active.id)}
                 >
-                  <Check className="mr-1 h-3.5 w-3.5" />
+                  {approvingIds.has(active.id) ? (
+                    <span className="zuri-spinner mr-1 !size-3.5" />
+                  ) : (
+                    <Check className="mr-1 h-3.5 w-3.5" />
+                  )}
                   Approve
                 </Button>
               )}
@@ -986,9 +1030,13 @@ export function ContentCalendar({
                 <Button
                   size="sm"
                   onClick={() => generateContent(active)}
-                  disabled={busy}
+                  disabled={generatingContent}
                 >
-                  <Sparkles className="mr-1 h-3.5 w-3.5" />
+                  {generatingContent ? (
+                    <span className="zuri-spinner mr-1 !size-3.5" />
+                  ) : (
+                    <Sparkles className="mr-1 h-3.5 w-3.5" />
+                  )}
                   Generate
                 </Button>
               )}
@@ -996,19 +1044,27 @@ export function ContentCalendar({
                 size="sm"
                 variant="outline"
                 onClick={() => regenerateSlot(active)}
-                disabled={busy}
+                disabled={regenerating}
               >
-                <RefreshCw className="mr-1 h-3.5 w-3.5" />
+                {regenerating ? (
+                  <span className="zuri-spinner mr-1 !size-3.5" />
+                ) : (
+                  <RefreshCw className="mr-1 h-3.5 w-3.5" />
+                )}
                 Regenerate
               </Button>
               <Button
                 size="sm"
                 variant="outline"
                 onClick={() => repurposeSlot(active)}
-                disabled={busy || !growth}
+                disabled={repurposing || !growth}
                 title={growth ? undefined : "Growth+"}
               >
-                <Share2 className="mr-1 h-3.5 w-3.5" />
+                {repurposing ? (
+                  <span className="zuri-spinner mr-1 !size-3.5" />
+                ) : (
+                  <Share2 className="mr-1 h-3.5 w-3.5" />
+                )}
                 Repurpose
               </Button>
               <Button
@@ -1029,9 +1085,13 @@ export function ContentCalendar({
                 variant="ghost"
                 className="ml-auto border-l border-[var(--border-solid)] pl-3 text-error hover:bg-error/10 hover:text-error"
                 onClick={() => deleteSlot(active)}
-                disabled={busy}
+                disabled={deletingIds.has(active.id)}
               >
-                <Trash2 className="mr-1 h-3.5 w-3.5" />
+                {deletingIds.has(active.id) ? (
+                  <span className="zuri-spinner mr-1 !size-3.5" />
+                ) : (
+                  <Trash2 className="mr-1 h-3.5 w-3.5" />
+                )}
                 Delete
               </Button>
             </div>
@@ -1095,7 +1155,7 @@ export function ContentCalendar({
                 </Button>
                 <Button size="sm" onClick={() => void createSeries()} disabled={busy}>
                   {busy ? (
-                    <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                    <span className="zuri-spinner mr-1 !size-3.5" />
                   ) : null}
                   Generate series
                 </Button>
@@ -1124,7 +1184,7 @@ function FilterChip({
       type="button"
       onClick={onClick}
       className={cn(
-        "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition-colors [transition-duration:var(--transition-fast)]",
+        "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition-all [transition-duration:var(--transition-fast)] active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(201,162,39,0.35)] focus-visible:ring-offset-1 focus-visible:ring-offset-background",
         active
           ? "border-transparent bg-[var(--accent)] text-[var(--accent-foreground)]"
           : "border-[var(--border-solid)] text-[var(--text-tertiary)] hover:border-[var(--border-hover)] hover:text-[var(--text-secondary)]"
@@ -1196,7 +1256,7 @@ function SlotCard({
         type="button"
         onClick={onClick}
         className={cn(
-          "min-w-0 flex-1 py-3 pr-3 text-left",
+          "min-w-0 flex-1 py-3 pr-3 text-left transition-transform active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(201,162,39,0.35)] focus-visible:ring-offset-1 focus-visible:ring-offset-background",
           onToggleSelect ? "pl-2" : "pl-3"
         )}
       >

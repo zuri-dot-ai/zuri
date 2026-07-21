@@ -58,7 +58,7 @@ export function ThemePanel({
               disabled={busy !== null}
               onClick={() => select(t.id)}
               className={cn(
-                "content-card relative p-4 text-left",
+                "content-card relative p-4 text-left transition-transform active:scale-[0.98]",
                 selected && "content-card--active"
               )}
             >
@@ -67,13 +67,11 @@ export function ThemePanel({
               />
               <p className="text-card-title">{t.label}</p>
               <p className="text-card-meta">{t.id}</p>
-              {selected && (
+              {selected && busy !== t.id && (
                 <Check className="absolute right-3 top-3 size-4 text-gold" />
               )}
               {busy === t.id && (
-                <span className="absolute right-3 top-3 text-label">
-                  …
-                </span>
+                <span className="zuri-spinner absolute right-3 top-3 !size-3.5" />
               )}
             </button>
           );

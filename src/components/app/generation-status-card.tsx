@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AlertTriangle, Loader2, RefreshCw } from "lucide-react";
+import { AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -146,7 +146,7 @@ export function GenerationStatusCard({
 
   return (
     <div className="surface flex items-start gap-3 border border-gold/30 p-5">
-      <Loader2 className="mt-0.5 size-5 shrink-0 animate-spin text-gold" />
+      <span className="zuri-spinner mt-0.5 shrink-0" />
       <div>
         <h3 className="font-medium">{statusLabel}</h3>
         <p className="mt-1 text-sm text-muted-foreground">

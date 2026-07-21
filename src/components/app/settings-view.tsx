@@ -8,7 +8,6 @@ import {
   CreditCard,
   Bell,
   Trash2,
-  Save,
   ExternalLink,
   LogOut,
   Moon,
@@ -66,7 +65,7 @@ export function SettingsView({
             <button
               key={id}
               onClick={() => setTab(id)}
-              className={`flex items-center gap-3 rounded-sm px-3 py-2.5 text-left text-sm font-medium transition-colors ${
+              className={`flex items-center gap-3 rounded-sm px-3 py-2.5 text-left text-sm font-medium transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(201,162,39,0.35)] ${
                 tab === id
                   ? "bg-surface text-gold"
                   : "text-muted-foreground hover:bg-surface hover:text-foreground"
@@ -246,13 +245,23 @@ function BrandVoiceTab() {
   }, []);
 
   async function remove(id: string) {
+    // Optimistic: plain DB delete, so drop it from the list immediately and
+    // only restore it (at its original position) if the request fails.
+    const index = examples.findIndex((e) => e.id === id);
+    const removed = examples[index];
+    if (!removed) return;
+    setExamples((prev) => prev.filter((e) => e.id !== id));
     try {
       await safeFetchJSON(`/api/settings/voice-examples?id=${id}`, {
         method: "DELETE",
       });
-      setExamples((prev) => prev.filter((e) => e.id !== id));
       toast.success("Example removed");
     } catch (e) {
+      setExamples((prev) => {
+        const next = [...prev];
+        next.splice(Math.min(index, next.length), 0, removed);
+        return next;
+      });
       toast.error(e instanceof Error ? e.message : "Could not delete");
     }
   }
@@ -620,23 +629,37 @@ function NotificationsTab() {
     nudge_emails: true,
     badge_alerts: true,
   });
-  const [saving, setSaving] = useState(false);
+  const { status: saveStatus, run: runSave } = useSaveStatus();
 
-  async function save() {
-    setSaving(true);
-    // In V1 these prefs are stored client-side only; wire to DB in V2
-    await new Promise((r) => setTimeout(r, 600));
-    setSaving(false);
-    toast.success("Notification preferences saved.");
+  // Optimistic toggle-and-autosave (Notion-style): flipping a switch commits
+  // immediately and persists in the background, instead of batching changes
+  // behind an explicit "Save preferences" click-and-wait.
+  // NOTE: no notification_prefs column exists yet — this still persists to
+  // localStorage only (V1 behavior unchanged); wiring to a real DB column
+  // is a backend follow-up, not a UI polish change.
+  async function toggle(key: keyof typeof prefs) {
+    const next = { ...prefs, [key]: !prefs[key] };
+    setPrefs(next);
+    try {
+      await runSave(async () => {
+        await new Promise((r) => setTimeout(r, 400));
+      });
+    } catch {
+      setPrefs((p) => ({ ...p, [key]: !p[key] }));
+      toast.error("Could not save preference");
+    }
   }
 
   return (
     <div className="space-y-5">
-      <div>
-        <h2 className="text-page-title">Notifications</h2>
-        <p className="text-card-body mt-1">
-          Control which emails Zuri sends you.
-        </p>
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <h2 className="text-page-title">Notifications</h2>
+          <p className="text-card-body mt-1">
+            Control which emails Zuri sends you.
+          </p>
+        </div>
+        <SaveStatus status={saveStatus} />
       </div>
 
       <div className="space-y-4">
@@ -668,8 +691,8 @@ function NotificationsTab() {
               <p className="mt-0.5 text-card-meta">{desc}</p>
             </div>
             <div
-              onClick={() => setPrefs((p) => ({ ...p, [key]: !p[key] }))}
-              className={`relative inline-flex h-6 w-11 cursor-pointer items-center rounded-full transition-colors ${
+              onClick={() => void toggle(key)}
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors active:scale-95 ${
                 prefs[key] ? "bg-gold" : "bg-border"
               }`}
             >
@@ -682,11 +705,6 @@ function NotificationsTab() {
           </label>
         ))}
       </div>
-
-      <Button onClick={save} disabled={saving}>
-        {saving ? <span className="zuri-spinner" /> : <Save className="size-4" />}
-        Save preferences
-      </Button>
     </div>
   );
 }

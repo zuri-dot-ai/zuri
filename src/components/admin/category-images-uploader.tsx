@@ -6,6 +6,7 @@ import { Upload, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import {
   Card,
   CardContent,
@@ -25,12 +26,48 @@ import { safeFetchJSON } from "@/lib/utils/safe-fetch";
 const selectClassName =
   "flex h-11 w-full rounded-none border border-[hsl(var(--input))] bg-[hsl(var(--surface-form))] px-4 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:border-gold";
 
+/**
+ * fetch() exposes no upload progress event, so the batch upload leg uses
+ * XMLHttpRequest to drive a real byte-progress percentage instead of a
+ * fake animated bar.
+ */
+function uploadFormWithProgress<T>(
+  url: string,
+  form: FormData,
+  onProgress: (pct: number) => void
+): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", url);
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        onProgress(Math.round((e.loaded / e.total) * 100));
+      }
+    };
+    xhr.onload = () => {
+      try {
+        const data = xhr.responseText ? JSON.parse(xhr.responseText) : {};
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve(data as T);
+        } else {
+          reject(new Error(data?.error ?? `Upload failed (${xhr.status})`));
+        }
+      } catch {
+        reject(new Error("Upload failed"));
+      }
+    };
+    xhr.onerror = () => reject(new Error("Network error during upload"));
+    xhr.send(form);
+  });
+}
+
 export function CategoryImagesUploader() {
   const [archetype, setArchetype] = useState<DesignArchetype>("warm-sensory");
   const [slotType, setSlotType] = useState<CategorySlotType>("hero");
   const [tags, setTags] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [uploadPct, setUploadPct] = useState<number | null>(null);
   const [images, setImages] = useState<CategoryImageRow[]>([]);
   const [loadingList, setLoadingList] = useState(true);
 
@@ -71,6 +108,7 @@ export function CategoryImagesUploader() {
     }
 
     setUploading(true);
+    setUploadPct(0);
     try {
       const form = new FormData();
       form.set("archetype", archetype);
@@ -80,14 +118,11 @@ export function CategoryImagesUploader() {
         form.append("files", file);
       }
 
-      const data = await safeFetchJSON<{
+      const data = await uploadFormWithProgress<{
         count?: number;
         failures?: { name: string; error: string }[];
         error?: string;
-      }>("/api/admin/category-images", {
-        method: "POST",
-        body: form,
-      });
+      }>("/api/admin/category-images", form, (pct) => setUploadPct(pct));
 
       const ok = data.count ?? 0;
       const fail = (data.failures ?? []).length;
@@ -116,6 +151,7 @@ export function CategoryImagesUploader() {
       toast.error(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploading(false);
+      setUploadPct(null);
     }
   }
 
@@ -236,7 +272,7 @@ export function CategoryImagesUploader() {
               {uploading ? (
                 <>
                   <span className="zuri-spinner" />
-                  Uploading…
+                  Uploading… {uploadPct ?? 0}%
                 </>
               ) : (
                 <>
@@ -246,6 +282,9 @@ export function CategoryImagesUploader() {
                 </>
               )}
             </Button>
+            {uploading && uploadPct !== null && (
+              <Progress value={uploadPct} className="mt-2" />
+            )}
           </form>
         </CardContent>
       </Card>

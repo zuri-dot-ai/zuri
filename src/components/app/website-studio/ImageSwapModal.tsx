@@ -5,6 +5,7 @@ import Cropper, { type Area } from "react-easy-crop";
 import { toast } from "sonner";
 import { ImagePlus, Library, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { safeFetchJSON } from "@/lib/utils/safe-fetch";
 import { getSlotAspectRatio } from "@/lib/website/slot-aspect";
@@ -20,6 +21,39 @@ import type {
 } from "@/types/website";
 
 type Tab = "upload" | "library";
+
+/**
+ * fetch() has no upload progress event, so the actual byte-upload leg uses
+ * XMLHttpRequest instead — this drives a real percentage bar rather than a
+ * fake animated one. Only this network leg reports progress; the
+ * crop/compress steps stay client-side stage labels.
+ */
+function uploadFormWithProgress(
+  url: string,
+  form: FormData,
+  onProgress: (pct: number) => void
+): Promise<{ status: number; data: Record<string, unknown> }> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", url);
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        onProgress(Math.round((e.loaded / e.total) * 100));
+      }
+    };
+    xhr.onload = () => {
+      let data: Record<string, unknown> = {};
+      try {
+        data = xhr.responseText ? JSON.parse(xhr.responseText) : {};
+      } catch {
+        /* ignore parse failure, handled by caller via status check */
+      }
+      resolve({ status: xhr.status, data });
+    };
+    xhr.onerror = () => reject(new Error("Network error during upload"));
+    xhr.send(form);
+  });
+}
 
 export function ImageSwapModal({
   slot,
@@ -38,6 +72,9 @@ export function ImageSwapModal({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<string | null>(null);
+  // Real byte-progress for the network upload leg only (0-100), driven by
+  // XMLHttpRequest's upload.onprogress — not a fake animated bar.
+  const [uploadPct, setUploadPct] = useState<number | null>(null);
 
   // Crop state
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -60,6 +97,7 @@ export function ImageSwapModal({
       });
       setError(null);
       setProgress(null);
+      setUploadPct(null);
       setCrop({ x: 0, y: 0 });
       setZoom(1);
       setCroppedArea(null);
@@ -176,6 +214,7 @@ export function ImageSwapModal({
     setBusy(true);
     setError(null);
     setProgress("Cropping…");
+    setUploadPct(null);
     try {
       const cropped = await cropImageToFile(
         previewUrl,
@@ -185,20 +224,23 @@ export function ImageSwapModal({
       setProgress("Compressing…");
       const compressed = await compressImageForUpload(cropped);
       setProgress("Uploading…");
+      setUploadPct(0);
       const form = new FormData();
       form.set("slot", slot);
       form.set("action", "upload");
       form.set("file", compressed);
-      const res = await fetch("/api/website/image", {
-        method: "POST",
-        body: form,
-      });
-      const data = (await res.json().catch(() => ({}))) as {
+      const { status, data: rawData } = await uploadFormWithProgress(
+        "/api/website/image",
+        form,
+        (pct) => setUploadPct(pct)
+      );
+      const data = rawData as {
         image?: ResolvedImage;
         needsReview?: boolean;
         error?: string;
         debug?: Record<string, unknown>;
       };
+      const res = { ok: status >= 200 && status < 300, status };
       // #region agent log
       fetch("http://127.0.0.1:7419/ingest/076876bf-f6bf-42a9-9aff-97004d9bbbbe", {
         method: "POST",
@@ -256,6 +298,7 @@ export function ImageSwapModal({
     } finally {
       setBusy(false);
       setProgress(null);
+      setUploadPct(null);
     }
   }
 
@@ -350,7 +393,13 @@ export function ImageSwapModal({
             </div>
           )}
           {progress && (
-            <p className="mb-3 text-xs text-muted-foreground">{progress}</p>
+            <div className="mb-3 space-y-1.5">
+              <p className="text-xs text-muted-foreground">
+                {progress}
+                {uploadPct !== null ? ` ${uploadPct}%` : ""}
+              </p>
+              {uploadPct !== null && <Progress value={uploadPct} />}
+            </div>
           )}
 
           {tab === "upload" && (
@@ -419,6 +468,7 @@ export function ImageSwapModal({
                       onClick={commitUpload}
                       className="flex-1"
                     >
+                      {busy && <span className="zuri-spinner !size-3.5" />}
                       {busy ? "Saving…" : "Save image"}
                     </Button>
                   </div>

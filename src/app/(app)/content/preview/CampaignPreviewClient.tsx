@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Copy, Loader2 } from "lucide-react";
+import { ArrowLeft, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -275,7 +275,7 @@ export function CampaignPreviewClient({
 
       {loading ? (
         <div className="text-card-body flex items-center gap-2">
-          <Loader2 className="h-4 w-4 animate-spin" />
+          <span className="zuri-spinner !size-4" />
           Loading preview…
         </div>
       ) : frames.length === 0 ? (

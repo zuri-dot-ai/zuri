@@ -35,10 +35,11 @@ function DrawerLink({
   return (
     <Link
       href={href}
+      prefetch
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "relative flex min-h-[44px] items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium tracking-[-0.01em] [transition-duration:var(--transition-fast)] transition-colors",
+        "relative flex min-h-[44px] items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium tracking-[-0.01em] transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(201,162,39,0.35)]",
         active
           ? "bg-gold/5 text-gold"
           : "text-muted-foreground hover:bg-[var(--bg-elevated)] hover:text-foreground"

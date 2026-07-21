@@ -6,6 +6,8 @@ import { ChevronDown, Plus, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SaveStatus } from "@/components/ui/SaveStatus";
+import { useSaveStatus } from "@/hooks/use-save-status";
 import {
   fieldInputType,
   formatFieldLabel,
@@ -29,8 +31,8 @@ function FieldEditor({
   onNeedsReview?: (needsReview: boolean) => void;
 }) {
   const [local, setLocal] = useState(value);
-  const [saving, setSaving] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
+  const { status: saveStatus, run: runSave } = useSaveStatus();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputType = fieldInputType(field);
   const isTextarea = inputType === "textarea";
@@ -41,17 +43,27 @@ function FieldEditor({
 
   const save = useCallback(
     async (next: string, action: "edit" | "regenerate" = "edit") => {
-      if (action === "edit") setSaving(true);
-      else setRegenerating(true);
+      if (action === "regenerate") setRegenerating(true);
       try {
-        const data = await safeFetchJSON<{
-          value?: string;
-          needsReview?: boolean;
-        }>("/api/website/placeholder", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ field, value: next, action }),
-        });
+        const data = await (action === "edit"
+          ? runSave(() =>
+              safeFetchJSON<{ value?: string; needsReview?: boolean }>(
+                "/api/website/placeholder",
+                {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ field, value: next, action }),
+                }
+              )
+            )
+          : safeFetchJSON<{ value?: string; needsReview?: boolean }>(
+              "/api/website/placeholder",
+              {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ field, value: next, action }),
+              }
+            ));
         setLocal(data.value ?? next);
         onSaved(field, data.value ?? next);
         if (typeof data.needsReview === "boolean") {
@@ -61,11 +73,10 @@ function FieldEditor({
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Save failed");
       } finally {
-        setSaving(false);
         setRegenerating(false);
       }
     },
-    [field, onSaved, onNeedsReview]
+    [field, onSaved, onNeedsReview, runSave]
   );
 
   function scheduleSave(next: string) {
@@ -79,16 +90,14 @@ function FieldEditor({
       <div className="flex items-center justify-between gap-2">
         <Label htmlFor={field}>{formatFieldLabel(field)}</Label>
         <div className="flex items-center gap-2">
-          {saving && (
-            <span className="text-label">Saving…</span>
-          )}
+          <SaveStatus status={saveStatus} />
           {isTextarea && (
             <Button
               type="button"
               variant="ghost"
               size="sm"
               className="h-7 px-2 text-xs text-gold"
-              disabled={regenerating || saving}
+              disabled={regenerating || saveStatus === "saving"}
               onClick={() => save(local, "regenerate")}
             >
               <Sparkles className="mr-1 size-3" />

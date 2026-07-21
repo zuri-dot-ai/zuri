@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Loader2, Save } from "lucide-react";
+import { Save } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ContentRatingStars } from "@/components/content/ContentRatingStars";
@@ -84,7 +84,7 @@ export function GeneratedContentView({
   if (loading) {
     return (
       <div className="flex items-center gap-2 py-4 text-sm text-[var(--text-tertiary)]">
-        <Loader2 className="h-4 w-4 animate-spin" />
+        <span className="zuri-spinner !size-4" />
         Loading generated content…
       </div>
     );
@@ -126,7 +126,7 @@ export function GeneratedContentView({
           disabled={saving || caption === (content.caption ?? "")}
         >
           {saving ? (
-            <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+            <span className="zuri-spinner mr-1 !size-3.5" />
           ) : (
             <Save className="mr-1 h-3.5 w-3.5" />
           )}

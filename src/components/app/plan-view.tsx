@@ -34,7 +34,12 @@ export function PlanView({
 
   async function toggle(task: ActionPlanTaskRow) {
     if (task.is_completed) return;
+    // Optimistic: this is a plain DB flip, so tick the checkbox immediately
+    // and only revert it if the request actually fails.
     setBusyId(task.id);
+    setTasks((prev) =>
+      prev.map((t) => (t.id === task.id ? { ...t, is_completed: true } : t))
+    );
     try {
       const data = await safeFetchJSON<CompleteTaskResult>(
         "/api/tasks/complete",
@@ -44,14 +49,14 @@ export function PlanView({
           body: JSON.stringify({ taskId: task.id }),
         }
       );
-      setTasks((prev) =>
-        prev.map((t) => (t.id === task.id ? { ...t, is_completed: true } : t))
-      );
       data.new_badges?.forEach((b) => {
         const badge = BADGES[b];
         if (badge) toast(`${badge.emoji} Badge earned: ${badge.label}`);
       });
     } catch (e) {
+      setTasks((prev) =>
+        prev.map((t) => (t.id === task.id ? { ...t, is_completed: false } : t))
+      );
       toast.error(e instanceof Error ? e.message : "Could not update task.");
     } finally {
       setBusyId(null);
@@ -124,11 +129,9 @@ export function PlanView({
                       <button
                         onClick={() => toggle(task)}
                         disabled={busyId === task.id || task.is_completed}
-                        className="mt-0.5 shrink-0"
+                        className="mt-0.5 shrink-0 transition-transform active:scale-90"
                       >
-                        {busyId === task.id ? (
-                          <span className="zuri-spinner" />
-                        ) : task.is_completed ? (
+                        {task.is_completed ? (
                           <CheckCircle2 className="size-5 text-success" />
                         ) : (
                           <Circle className="size-5 text-muted-foreground transition-colors hover:text-gold" />

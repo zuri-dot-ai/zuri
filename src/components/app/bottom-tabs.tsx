@@ -23,8 +23,9 @@ export function BottomTabs() {
             <Link
               key={href}
               href={href}
+              prefetch
               className={cn(
-                "flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-medium tracking-wide transition-colors",
+                "flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-medium tracking-wide transition-all active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(201,162,39,0.35)]",
                 active ? "text-gold" : "text-[var(--text-tertiary)]"
               )}
             >

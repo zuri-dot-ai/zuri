@@ -4,19 +4,19 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex max-w-full items-center justify-center gap-2 truncate text-sm font-medium tracking-[-0.01em] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(201,162,39,0.35)] focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 rounded-sm",
+  "inline-flex max-w-full items-center justify-center gap-2 truncate text-sm font-medium tracking-[-0.01em] transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(201,162,39,0.35)] focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 disabled:active:scale-100 [&_svg]:size-4 [&_svg]:shrink-0 rounded-sm",
   {
     variants: {
       variant: {
         default:
-          "bg-gold text-[var(--accent-foreground)] hover:brightness-110 active:scale-[0.98]",
+          "bg-gold text-[var(--accent-foreground)] hover:brightness-110",
         outline:
           "border border-border bg-transparent text-foreground hover:bg-[var(--bg-elevated)] hover:border-[var(--border-hover)]",
         secondary:
           "border border-border bg-transparent text-foreground hover:bg-[var(--bg-elevated)] hover:border-[var(--border-hover)]",
         ghost:
           "bg-transparent text-muted-foreground hover:bg-[var(--bg-elevated)] hover:text-foreground",
-        link: "text-gold underline-offset-4 hover:underline",
+        link: "text-gold underline-offset-4 hover:underline active:scale-100",
         destructive:
           "bg-error text-foreground hover:bg-error/90",
       },

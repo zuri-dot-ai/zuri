@@ -462,12 +462,20 @@ export function WebsiteStudio({
               disabled={busy}
               className="border-destructive/40 text-destructive hover:bg-destructive/10"
             >
-              <Undo2 className="size-4" />
+              {busyAction === "unpublish" ? (
+                <span className="zuri-spinner !size-3.5" />
+              ) : (
+                <Undo2 className="size-4" />
+              )}
               {busyAction === "unpublish" ? "Unpublishing…" : "Unpublish"}
             </Button>
           ) : (
             <Button size="sm" onClick={publish} disabled={busy}>
-              <Rocket className="size-4" />
+              {busyAction === "publish" ? (
+                <span className="zuri-spinner !size-3.5" />
+              ) : (
+                <Rocket className="size-4" />
+              )}
               {busyAction === "publish"
                 ? "Publishing…"
                 : canPublish
@@ -592,12 +600,20 @@ export function WebsiteStudio({
             onClick={unpublish}
             disabled={busy}
           >
-            <Undo2 className="size-4" />
+            {busyAction === "unpublish" ? (
+              <span className="zuri-spinner !size-3.5" />
+            ) : (
+              <Undo2 className="size-4" />
+            )}
             Unpublish
           </Button>
         ) : (
           <Button className="flex-1" onClick={publish} disabled={busy}>
-            <Rocket className="size-4" />
+            {busyAction === "publish" ? (
+              <span className="zuri-spinner !size-3.5" />
+            ) : (
+              <Rocket className="size-4" />
+            )}
             {canPublish ? "Publish" : "Upgrade"}
           </Button>
         )}

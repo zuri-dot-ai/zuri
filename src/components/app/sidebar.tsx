@@ -38,11 +38,12 @@ function NavLink({
   return (
     <Link
       href={href}
+      prefetch
       title={collapsed ? label : undefined}
       aria-label={label}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "relative flex min-h-[40px] items-center rounded-md text-sm font-medium tracking-[-0.01em] transition-colors",
+        "relative flex min-h-[40px] items-center rounded-md text-sm font-medium tracking-[-0.01em] transition-all active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(201,162,39,0.35)] focus-visible:ring-offset-1 focus-visible:ring-offset-background",
         collapsed ? "justify-center px-2 py-2" : "gap-3 px-3 py-2",
         active
           ? "bg-[var(--bg-elevated)] text-gold"
@@ -127,7 +128,7 @@ function SidebarAvatarMenu({ collapsed }: { collapsed: boolean }) {
         type="button"
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "flex w-full items-center rounded-md text-left transition-colors hover:bg-[var(--bg-elevated)]",
+          "flex w-full items-center rounded-md text-left transition-all active:scale-[0.98] hover:bg-[var(--bg-elevated)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(201,162,39,0.35)]",
           collapsed ? "justify-center px-1 py-2" : "gap-3 px-2 py-2"
         )}
         aria-expanded={open}
@@ -178,9 +179,19 @@ function SidebarAvatarMenu({ collapsed }: { collapsed: boolean }) {
   );
 }
 
+const HOVER_EXPAND_DELAY_MS = 350;
+const HOVER_COLLAPSE_DELAY_MS = 150;
+
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [ready, setReady] = useState(false);
+  // Hover-expand is a purely visual, temporary overlay on top of the
+  // pinned `collapsed` state — it never touches localStorage or flips the
+  // click-to-pin toggle, and only engages after a short intentional delay
+  // so an accidental mouse-over doesn't cause flicker (Linear/Vercel
+  // pattern).
+  const [hoverExpanded, setHoverExpanded] = useState(false);
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     try {
@@ -190,6 +201,12 @@ export function Sidebar() {
       /* ignore */
     }
     setReady(true);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    };
   }, []);
 
   function toggle() {
@@ -202,25 +219,64 @@ export function Sidebar() {
       }
       return next;
     });
+    setHoverExpanded(false);
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
   }
+
+  function handleMouseEnter() {
+    if (!collapsed) return;
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    hoverTimerRef.current = setTimeout(
+      () => setHoverExpanded(true),
+      HOVER_EXPAND_DELAY_MS
+    );
+  }
+
+  function handleMouseLeave() {
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    if (!hoverExpanded) return;
+    hoverTimerRef.current = setTimeout(
+      () => setHoverExpanded(false),
+      HOVER_COLLAPSE_DELAY_MS
+    );
+  }
+
+  const visuallyExpanded = !collapsed || hoverExpanded;
+  // While hover-expanded, the outer <aside> keeps its pinned collapsed
+  // width (no layout shift for the main content) and the inner panel
+  // absolutely overlays on top at full width — the Linear/Vercel rail
+  // pattern. When pinned open/closed (no hover), inner panel just tracks
+  // the outer box 1:1.
+  const overlaying = collapsed && hoverExpanded;
 
   return (
     <aside
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       className={cn(
-        "relative hidden h-full shrink-0 flex-col border-r border-border bg-background md:flex",
+        "relative hidden h-full shrink-0 md:flex",
         "transition-[width] duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]",
         collapsed ? "w-[72px]" : "w-[240px]",
         !ready && "transition-none"
       )}
     >
+      <div
+        className={cn(
+          "flex h-full flex-col border-r border-border bg-background",
+          "transition-[width] duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)]",
+          overlaying
+            ? "absolute left-0 top-0 z-40 w-[240px] shadow-[var(--elevation-3)]"
+            : "w-full"
+        )}
+      >
       {/* Logo row + underline + collapse toggle */}
       <div
         className={cn(
           "flex shrink-0 flex-col px-4 pt-5",
-          collapsed ? "items-center pb-3" : "pb-4"
+          visuallyExpanded ? "pb-4" : "items-center pb-3"
         )}
       >
-        {collapsed ? (
+        {!visuallyExpanded ? (
           <>
             <Link
               href="/dashboard"
@@ -238,7 +294,7 @@ export function Sidebar() {
                 <button
                   type="button"
                   onClick={toggle}
-                  className="mt-3 flex items-center justify-center rounded-md p-2 text-muted-foreground transition-colors hover:bg-[var(--bg-elevated)] hover:text-gold"
+                  className="mt-3 flex items-center justify-center rounded-md p-2 text-muted-foreground transition-all active:scale-[0.92] hover:bg-[var(--bg-elevated)] hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(201,162,39,0.35)]"
                   aria-label="Expand sidebar"
                 >
                   <PanelLeft className="size-[18px]" strokeWidth={1.75} />
@@ -256,7 +312,7 @@ export function Sidebar() {
                   <button
                     type="button"
                     onClick={toggle}
-                    className="flex shrink-0 items-center justify-center rounded-md p-2 text-muted-foreground transition-colors hover:bg-[var(--bg-elevated)] hover:text-gold"
+                    className="flex shrink-0 items-center justify-center rounded-md p-2 text-muted-foreground transition-all active:scale-[0.92] hover:bg-[var(--bg-elevated)] hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(201,162,39,0.35)]"
                     aria-label="Collapse sidebar"
                   >
                     <PanelLeftClose className="size-[18px]" strokeWidth={1.75} />
@@ -274,30 +330,31 @@ export function Sidebar() {
       </div>
 
       <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-y-contain p-2">
-        <NavGroup items={PRIMARY_NAV} collapsed={collapsed} />
+        <NavGroup items={PRIMARY_NAV} collapsed={!visuallyExpanded} />
         <NavGroup
           label="Workspace"
           items={WORKSPACE_NAV}
-          collapsed={collapsed}
+          collapsed={!visuallyExpanded}
         />
         <div
           className={cn(
             "my-3 border-t border-border",
-            collapsed ? "mx-2" : "mx-3"
+            visuallyExpanded ? "mx-3" : "mx-2"
           )}
         />
-        <NavGroup items={MARKETPLACE_NAV} collapsed={collapsed} />
+        <NavGroup items={MARKETPLACE_NAV} collapsed={!visuallyExpanded} />
         <div
           className={cn(
             "my-3 border-t border-border",
-            collapsed ? "mx-2" : "mx-3"
+            visuallyExpanded ? "mx-3" : "mx-2"
           )}
         />
-        <NavGroup items={UTILITY_NAV} collapsed={collapsed} />
+        <NavGroup items={UTILITY_NAV} collapsed={!visuallyExpanded} />
       </nav>
 
       <div className="sidebar-foot shrink-0 border-t border-border p-2">
-        <SidebarAvatarMenu collapsed={collapsed} />
+        <SidebarAvatarMenu collapsed={!visuallyExpanded} />
+      </div>
       </div>
     </aside>
   );
