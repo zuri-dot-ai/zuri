@@ -10,7 +10,7 @@ import {
 } from "@/lib/payments/get-plan";
 import { validateFilledHtml } from "@/lib/website/generation-pipeline";
 import { getPublicSiteUrl } from "@/lib/website/public-site-url";
-import { sendSitePublishedEmail } from "@/lib/email/templates";
+import { createNotificationAsync } from "@/lib/notifications/create-notification";
 import { createAuditLog } from "@/lib/security/audit";
 import { ERROR_MESSAGES } from "@/lib/errors/messages";
 
@@ -130,16 +130,25 @@ export async function POST(req: Request) {
     .eq("id", user.id)
     .maybeSingle();
 
-  if (profile?.email) {
-    // Log-only until EMAIL_DELIVERY_MODE=send is approved
-    await sendSitePublishedEmail({
-      to: profile.email,
-      name: profile.full_name ?? null,
-      siteUrl: liveUrl,
-    }).catch((err) =>
-      console.error("[publish] site-live email failed:", err)
-    );
-  }
+  createNotificationAsync({
+    userId: user.id,
+    type: "website_published",
+    title: "Your website is live",
+    body: `Your website is now live at ${liveUrl}.`,
+    actionUrl: liveUrl,
+    actionLabel: "Visit my website",
+    email: profile?.email
+      ? {
+          to: profile.email,
+          subject: "Your site is live on Zuri",
+          template: "website_published",
+          templateProps: {
+            firstName: profile.full_name?.split(" ")[0] ?? "there",
+            siteUrl: liveUrl,
+          },
+        }
+      : undefined,
+  });
 
   await createAuditLog(
     supabase,

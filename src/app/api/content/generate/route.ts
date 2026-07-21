@@ -11,6 +11,7 @@ import {
 } from "@/lib/content/api-helpers";
 import { resolveArchetype } from "@/lib/content/pillars";
 import { checkUsageLimit } from "@/lib/payments/feature-gate";
+import { createNotificationAsync } from "@/lib/notifications/create-notification";
 import { sanitizeText } from "@/lib/utils/sanitize";
 import type { DesignArchetype } from "@/lib/website/archetypes";
 import { RATE_LIMIT_MESSAGE, isRateLimitError } from "@/lib/errors/gemini-errors";
@@ -84,6 +85,14 @@ export async function POST(req: Request) {
   if (isImageFormat) {
     const gate = await checkUsageLimit(supabase, user.id, "images_generated");
     if (!gate.allowed) {
+      createNotificationAsync({
+        userId: user.id,
+        type: "usage_limit_reached",
+        title: "You've reached your images limit",
+        body: `You've used all ${gate.limit ?? 0} images this month.`,
+        actionUrl: "/settings?tab=billing",
+        actionLabel: "Upgrade my plan",
+      });
       return NextResponse.json(
         {
           error: "Image generation limit reached",
@@ -103,6 +112,14 @@ export async function POST(req: Request) {
       "blog_posts_generated"
     );
     if (!gate.allowed) {
+      createNotificationAsync({
+        userId: user.id,
+        type: "usage_limit_reached",
+        title: "You've reached your blog posts limit",
+        body: `You've used all ${gate.limit ?? 0} blog posts this month.`,
+        actionUrl: "/settings?tab=billing",
+        actionLabel: "Upgrade my plan",
+      });
       return NextResponse.json(
         { error: "Blog post limit reached" },
         { status: 403 }
@@ -117,6 +134,14 @@ export async function POST(req: Request) {
       "newsletters_generated"
     );
     if (!gate.allowed) {
+      createNotificationAsync({
+        userId: user.id,
+        type: "usage_limit_reached",
+        title: "You've reached your newsletters limit",
+        body: `You've used all ${gate.limit ?? 0} newsletters this month.`,
+        actionUrl: "/settings?tab=billing",
+        actionLabel: "Upgrade my plan",
+      });
       return NextResponse.json(
         { error: "Newsletter limit reached" },
         { status: 403 }

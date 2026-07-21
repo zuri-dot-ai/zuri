@@ -1,21 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Bell } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { useUser } from "@/hooks/use-user";
+import { useNotifications } from "@/hooks/use-notifications";
 import { Popover } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-
-interface NotifRow {
-  id: string;
-  title: string;
-  body: string | null;
-  action_url: string | null;
-  created_at: string;
-  read_at: string | null;
-}
 
 type NotificationsPopoverProps = {
   collapsed?: boolean;
@@ -26,30 +16,9 @@ export function NotificationsPopover({
   collapsed = false,
   className,
 }: NotificationsPopoverProps) {
-  const { user } = useUser();
-  const supabase = createClient();
   const [open, setOpen] = useState(false);
-  const [items, setItems] = useState<NotifRow[]>([]);
-
-  const unread = items.filter((i) => !i.read_at).length;
+  const { items, unreadCount, markAsRead } = useNotifications(8);
   const active = open;
-
-  useEffect(() => {
-    if (!user?.id) return;
-    let alive = true;
-    (async () => {
-      const { data } = await supabase
-        .from("notifications")
-        .select("id, title, body, action_url, created_at, read_at")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(8);
-      if (alive) setItems((data as NotifRow[]) ?? []);
-    })();
-    return () => {
-      alive = false;
-    };
-  }, [user?.id, supabase, open]);
 
   return (
     <Popover
@@ -82,7 +51,7 @@ export function NotificationsPopover({
           )}
           <span className="relative shrink-0">
             <Bell className="size-[18px]" strokeWidth={1.75} />
-            {unread > 0 && (
+            {unreadCount > 0 && (
               <span className="absolute -right-1 -top-0.5 size-2 rounded-full bg-gold ring-2 ring-background" />
             )}
           </span>
@@ -119,8 +88,14 @@ export function NotificationsPopover({
             <Link
               key={n.id}
               href={n.action_url || "/notifications"}
-              onClick={() => setOpen(false)}
-              className="block border-b border-border px-4 py-3 last:border-b-0 hover:bg-[var(--bg-secondary)]"
+              onClick={() => {
+                if (!n.is_read) markAsRead(n.id);
+                setOpen(false);
+              }}
+              className={cn(
+                "block border-b border-border px-4 py-3 last:border-b-0 hover:bg-[var(--bg-secondary)]",
+                !n.is_read && "bg-[var(--bg-elevated)]/40"
+              )}
             >
               <p className="truncate text-sm font-medium text-foreground" title={n.title}>
                 {n.title}

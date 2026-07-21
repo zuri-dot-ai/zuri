@@ -1,8 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import {
-  sendDowngradeEmail,
-  sendPaymentFailedEmail,
-} from "@/lib/email/templates";
+import { createNotificationAsync } from "@/lib/notifications/create-notification";
 
 export async function handleFailedPayment(
   supabase: SupabaseClient,
@@ -28,14 +25,30 @@ export async function handleFailedPayment(
     .eq("id", userId)
     .single();
 
-  if (profile?.email) {
-    await sendPaymentFailedEmail({
-      to: profile.email,
-      name: profile.full_name,
-      gracePeriodEnd: graceEnd.toLocaleDateString("en-NG"),
-      updatePaymentUrl: `${process.env.NEXT_PUBLIC_APP_URL}/settings/billing`,
-    });
-  }
+  const gracePeriodEndLabel = graceEnd.toLocaleDateString("en-NG");
+  const updatePaymentUrl = `${process.env.NEXT_PUBLIC_APP_URL}/settings/billing`;
+
+  createNotificationAsync({
+    userId,
+    type: "payment_failed",
+    title: "We couldn't process your payment",
+    body: `Update your payment method by ${gracePeriodEndLabel} to avoid losing access.`,
+    actionUrl: "/settings?tab=billing",
+    actionLabel: "Update payment method",
+    email: profile?.email
+      ? {
+          to: profile.email,
+          subject: "Action needed — Zuri payment failed",
+          template: "payment_failed",
+          templateProps: {
+            firstName: profile.full_name?.split(" ")[0] ?? "there",
+            planName: "current",
+            gracePeriodEnd: gracePeriodEndLabel,
+            updatePaymentUrl,
+          },
+        }
+      : undefined,
+  });
 }
 
 /**
@@ -70,11 +83,24 @@ export async function processExpiredGracePeriods(supabase: SupabaseClient) {
       .eq("id", sub.user_id)
       .single();
 
-    if (profile?.email) {
-      await sendDowngradeEmail({
-        to: profile.email,
-        name: profile.full_name,
-      });
-    }
+    createNotificationAsync({
+      userId: sub.user_id,
+      type: "plan_downgraded",
+      title: "Your plan is now Free",
+      body: "Your grace period ended without a successful payment, so your account is now on the Free plan.",
+      actionUrl: "/settings?tab=billing",
+      actionLabel: "Resubscribe",
+      email: profile?.email
+        ? {
+            to: profile.email,
+            subject: "Your Zuri plan has been updated to Free",
+            template: "plan_downgraded",
+            templateProps: {
+              firstName: profile.full_name?.split(" ")[0] ?? "there",
+              billingUrl: `${process.env.NEXT_PUBLIC_APP_URL}/settings?tab=billing`,
+            },
+          }
+        : undefined,
+    });
   }
 }

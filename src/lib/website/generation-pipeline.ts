@@ -18,6 +18,7 @@ import {
   getTemplatesForArchetype,
 } from "@/lib/website/template-registry";
 import { createServiceClient } from "@/lib/supabase/service";
+import { createNotificationAsync } from "@/lib/notifications/create-notification";
 import type { BusinessProfile } from "@/types/brand";
 import type {
   CategoryImageRow,
@@ -570,9 +571,29 @@ export async function generateWebsite(
     if (error) throw error;
 
     await markJob(supabase, jobId, "completed");
+
+    createNotificationAsync({
+      userId,
+      type: "website_generated",
+      title: "Your website is ready to preview",
+      body: `Your AI-generated website for ${brand.business_name} is ready. Review it and publish when you're happy.`,
+      actionUrl: "/website",
+      actionLabel: "Preview my website",
+    });
+
     return { handle: website.handle, needsReview };
   } catch (err) {
     await markJob(supabase, jobId, "failed", String(err));
+
+    createNotificationAsync({
+      userId,
+      type: "website_generation_failed",
+      title: "We couldn't generate your website",
+      body: "Something went wrong while generating your website. Please try again.",
+      actionUrl: "/website",
+      actionLabel: "Try again",
+    });
+
     throw err;
   }
 }

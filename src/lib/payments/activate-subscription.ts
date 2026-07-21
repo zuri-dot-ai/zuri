@@ -1,6 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { PLAN_CONFIG, isPlanId } from "./plans";
-import { sendPlanActivationEmail } from "@/lib/email/templates";
+import { createNotificationAsync } from "@/lib/notifications/create-notification";
 
 export async function activateSubscription(
   supabase: SupabaseClient,
@@ -87,13 +87,26 @@ export async function activateSubscription(
     .eq("id", userId)
     .single();
 
-  if (profile?.email) {
-    await sendPlanActivationEmail({
-      to: profile.email,
-      name: profile.full_name,
-      planName: plan.name,
-      billingCycle,
-      nextBillingDate: periodEnd.toLocaleDateString("en-NG"),
-    });
-  }
+  createNotificationAsync({
+    userId,
+    type: "payment_successful",
+    title: `You're all set on ${plan.name}`,
+    body: `Your ${plan.name} plan is now active (${billingCycle} billing).`,
+    actionUrl: "/dashboard",
+    actionLabel: "Go to dashboard",
+    email: profile?.email
+      ? {
+          to: profile.email,
+          subject: `Welcome to Zuri ${plan.name} — you're all set`,
+          template: "payment_successful",
+          templateProps: {
+            firstName: profile.full_name?.split(" ")[0] ?? "there",
+            planName: plan.name,
+            billingCycle,
+            nextBillingDate: periodEnd.toLocaleDateString("en-NG"),
+            dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
+          },
+        }
+      : undefined,
+  });
 }

@@ -16,7 +16,7 @@ import {
   checkRateLimit,
   rateLimitExceededResponse,
 } from "@/lib/security/rate-limit";
-import { sendContactFormNotification } from "@/lib/email/templates";
+import { createNotificationAsync } from "@/lib/notifications/create-notification";
 
 const ROOT_DOMAIN =
   process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "buildzuri.com";
@@ -213,20 +213,29 @@ export async function POST(req: Request) {
     .eq("id", website.user_id)
     .maybeSingle();
 
-  if (profile?.email) {
-    // Log-only until EMAIL_DELIVERY_MODE=send is approved
-    await sendContactFormNotification({
-      ownerEmail: profile.email,
-      ownerName: profile.full_name ?? null,
-      senderName: name,
-      senderEmail: emailRaw,
-      message,
-      handle,
-      serviceInterest,
-    }).catch((err) =>
-      console.error("[contact-form] notification email failed:", err)
-    );
-  }
+  createNotificationAsync({
+    userId: website.user_id,
+    type: "contact_form_received",
+    title: `New enquiry from ${name}`,
+    body: message.slice(0, 140),
+    actionUrl: "/dashboard",
+    actionLabel: "View enquiry",
+    email: profile?.email
+      ? {
+          to: profile.email,
+          subject: `New enquiry on ${handle}.buildzuri.com`,
+          template: "contact_form_received",
+          templateProps: {
+            ownerName: profile.full_name ?? null,
+            ownerBusinessName: handle,
+            senderName: name,
+            senderEmail: emailRaw,
+            message,
+            serviceInterest,
+          },
+        }
+      : undefined,
+  });
 
   return NextResponse.json({ success: true }, { headers });
 }

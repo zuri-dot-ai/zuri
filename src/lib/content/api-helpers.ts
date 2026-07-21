@@ -7,6 +7,7 @@ import {
 } from "@/lib/payments/feature-gate";
 import { getActivePlanId, isGrowthPlus } from "@/lib/payments/get-plan";
 import { PLAN_CONFIG, type PlanId } from "@/lib/payments/plans";
+import { createNotificationAsync } from "@/lib/notifications/create-notification";
 
 export async function requireContentUser(): Promise<
   | { supabase: SupabaseClient; user: User; planId: PlanId }
@@ -82,6 +83,14 @@ export async function assertCalendarQuota(
     const limit = PLAN_CONFIG[planId].limits.calendar_posts_per_month;
     const nextMonth = new Date();
     nextMonth.setMonth(nextMonth.getMonth() + 1, 1);
+    createNotificationAsync({
+      userId,
+      type: "usage_limit_reached",
+      title: "You've reached your calendar posts limit",
+      body: `You've used all ${limit ?? usage.limit ?? 0} calendar posts this month.`,
+      actionUrl: "/settings?tab=billing",
+      actionLabel: "Upgrade my plan",
+    });
     return {
       error: NextResponse.json(
         {

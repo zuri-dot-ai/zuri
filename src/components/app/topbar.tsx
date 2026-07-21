@@ -2,14 +2,14 @@
 
 import { useState, useCallback } from "react";
 import { Logo } from "@/components/ui/logo";
+import { NotificationBell } from "@/components/app/notification-bell";
 import {
   HamburgerButton,
   MobileNavDrawer,
 } from "@/components/app/mobile-nav-drawer";
 
 /**
- * Mobile-only top bar: logo + gold hamburger.
- * Notifications live in the drawer / sidebar utility nav.
+ * Mobile-only top bar: logo + notification bell + gold hamburger.
  */
 export function Topbar() {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -22,10 +22,13 @@ export function Topbar() {
           <Logo variant="app" href="/dashboard" size="sm" />
         </div>
 
-        <HamburgerButton
-          open={drawerOpen}
-          onClick={() => setDrawerOpen((v) => !v)}
-        />
+        <div className="flex items-center gap-1">
+          <NotificationBell />
+          <HamburgerButton
+            open={drawerOpen}
+            onClick={() => setDrawerOpen((v) => !v)}
+          />
+        </div>
       </header>
 
       <MobileNavDrawer open={drawerOpen} onClose={closeDrawer} />
