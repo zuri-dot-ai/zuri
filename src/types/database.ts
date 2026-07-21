@@ -38,7 +38,16 @@ export type ContentStatus =
   | "draft" | "approved" | "generated" | "posted" | "skipped";
 export type ContentFormatType =
   | "static_image" | "carousel" | "reel" | "story" | "text_post"
-  | "article" | "thread" | "poll" | "short_video" | "video";
+  | "article" | "thread" | "poll" | "short_video" | "video"
+  | "blog_post" | "newsletter";
+
+export type {
+  BlogContent,
+  GeneratedContentRow,
+  NewsletterContent,
+  VideoScript,
+} from "@/lib/content/types";
+
 export type TaskType = "website" | "content" | "engagement" | "setup";
 export type MatchStatus =
   | "pending" | "contacted" | "hired" | "completed" | "declined";

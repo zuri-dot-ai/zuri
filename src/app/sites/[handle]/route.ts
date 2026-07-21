@@ -2,6 +2,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import {
   htmlResponse,
   injectContactFormEndpoint,
+  injectTrackingScript,
   loadDevFixtureHtml,
   notFoundResponse,
   sanitizeServedImages,
@@ -24,7 +25,7 @@ export async function GET(
 
   const { data: website, error } = await supabase
     .from("websites")
-    .select("template_html, status, user_id, archetype")
+    .select("template_html, status, user_id, archetype, analytics_enabled")
     .eq("handle", handle)
     .maybeSingle();
 
@@ -88,10 +89,13 @@ export async function GET(
     website.template_html,
     website.archetype as DesignArchetype | null
   );
-  const html = injectContactFormEndpoint(sanitized, {
+  let html = injectContactFormEndpoint(sanitized, {
     handle,
     ownerEmail,
   });
+  if (website.analytics_enabled !== false) {
+    html = injectTrackingScript(html, handle);
+  }
 
   return htmlResponse(html);
 }

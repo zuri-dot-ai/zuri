@@ -2,6 +2,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import {
   htmlResponse,
   injectContactFormEndpoint,
+  injectTrackingScript,
   notFoundResponse,
   SUSPENDED_PAGE_HTML,
 } from "@/lib/website/serve-html";
@@ -23,7 +24,7 @@ export async function GET(
 
   const { data: website } = await supabase
     .from("websites")
-    .select("template_html, status, user_id, handle")
+    .select("template_html, status, user_id, handle, analytics_enabled")
     .eq("custom_domain", domain)
     .maybeSingle();
 
@@ -45,10 +46,13 @@ export async function GET(
     ownerEmail = profile?.email ?? "";
   }
 
-  const html = injectContactFormEndpoint(website.template_html, {
+  let html = injectContactFormEndpoint(website.template_html, {
     handle: website.handle,
     ownerEmail,
   });
+  if (website.analytics_enabled !== false) {
+    html = injectTrackingScript(html, website.handle);
+  }
 
   return htmlResponse(html);
 }

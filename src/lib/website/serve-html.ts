@@ -4,6 +4,7 @@
 
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
+import { getTrackingScript } from "@/lib/analytics/tracking-script";
 import {
   getArchetypeFallback,
   isBrokenImageUrl,
@@ -208,4 +209,19 @@ export function injectContactFormEndpoint(
     return html.replace(/<\/body>/i, `${script}</body>`);
   }
   return html + script;
+}
+
+/**
+ * Inject cookie-free analytics tracking into <head> for published sites
+ * when analytics_enabled is true.
+ */
+export function injectTrackingScript(html: string, handle: string): string {
+  const script = getTrackingScript(handle);
+  if (/<\/head>/i.test(html)) {
+    return html.replace(/<\/head>/i, `${script}</head>`);
+  }
+  if (/<body[^>]*>/i.test(html)) {
+    return html.replace(/<body([^>]*)>/i, `<body$1>${script}`);
+  }
+  return script + html;
 }

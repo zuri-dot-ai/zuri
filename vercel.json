@@ -11,6 +11,26 @@
     {
       "path": "/api/cron/process-subscriptions",
       "schedule": "0 23 * * *"
+    },
+    {
+      "path": "/api/cron/aggregate-analytics",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/purge-analytics",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/sync-meta-insights",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/sync-search-console",
+      "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/cron/generate-monthly-reports",
+      "schedule": "0 6 1 * *"
     }
   ]
 }
