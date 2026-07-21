@@ -88,7 +88,7 @@ export interface BusinessProfileRow {
   industry: string | null;
   services: string[];
   target_audience: string | null;
-  tone: string | null;
+  brand_tone: string | null;
   unique_value: string | null;
   location: string | null;
   tagline: string | null;

@@ -68,16 +68,16 @@ export function Banner({
         className
       )}
     >
-      <div className="flex items-start gap-2">
+      <div className="flex min-w-0 flex-1 items-start gap-2">
         <Icon className={cn("mt-0.5 h-4 w-4 shrink-0", styles.icon)} />
-        <div>
+        <div className="min-w-0 flex-1">
           {title && (
-            <p className="text-card-title text-[var(--text-primary)]">{title}</p>
+            <p className="text-card-title break-words text-[var(--text-primary)]">{title}</p>
           )}
-          <p className="text-card-body">{message}</p>
+          <p className="text-card-body break-words">{message}</p>
         </div>
       </div>
-      {actions && <div className="flex items-center gap-2">{actions}</div>}
+      {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
     </div>
   );
 }

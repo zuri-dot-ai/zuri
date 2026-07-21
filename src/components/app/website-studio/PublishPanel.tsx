@@ -51,15 +51,15 @@ export function PublishPanel({
 
   return (
     <div className="space-y-6">
-      <div className="space-y-3">
+      <div className="content-card space-y-3 p-4">
         {checks.map((c) => (
-          <div key={c.label} className="flex items-start gap-2 text-sm">
+          <div key={c.label} className="flex items-start gap-2">
             {c.ok ? (
               <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-500" />
             ) : (
               <AlertCircle className="mt-0.5 size-4 shrink-0 text-amber-500" />
             )}
-            <span className={c.ok ? "text-foreground" : "text-muted-foreground"}>
+            <span className={c.ok ? "text-card-body text-[var(--text-primary)]" : "text-card-body"}>
               {c.label}
             </span>
           </div>
@@ -67,7 +67,7 @@ export function PublishPanel({
       </div>
 
       {urlMode === "path" && (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-card-meta">
           Live sites are public at{" "}
           <span className="font-mono">/sites/your-handle</span> until your custom
           domain wildcard is configured.

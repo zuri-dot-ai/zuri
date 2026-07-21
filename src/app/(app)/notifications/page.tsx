@@ -44,9 +44,9 @@ export default async function NotificationsPage() {
                 href={n.action_url || "#"}
                 className="block px-5 py-4 transition-colors hover:bg-muted"
               >
-                <p className="font-medium">{n.title}</p>
+                <p className="break-words font-medium">{n.title}</p>
                 {n.body && (
-                  <p className="mt-1 text-sm text-muted-foreground">{n.body}</p>
+                  <p className="mt-1 break-words text-sm text-muted-foreground">{n.body}</p>
                 )}
                 <p className="mt-2 font-mono text-xs text-muted-foreground">
                   {new Date(n.created_at).toLocaleString()}

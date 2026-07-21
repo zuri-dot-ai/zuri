@@ -77,12 +77,10 @@ function FieldEditor({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <Label htmlFor={field} className="text-xs text-muted-foreground">
-          {formatFieldLabel(field)}
-        </Label>
+        <Label htmlFor={field}>{formatFieldLabel(field)}</Label>
         <div className="flex items-center gap-2">
           {saving && (
-            <span className="text-[10px] text-muted-foreground">Saving…</span>
+            <span className="text-label">Saving…</span>
           )}
           {isTextarea && (
             <Button
@@ -107,8 +105,8 @@ function FieldEditor({
           onFocus={() => onFocusField?.(field)}
           onChange={(e) => scheduleSave(e.target.value)}
           className={cn(
-            "flex w-full rounded-sm border border-[hsl(var(--input))] bg-[hsl(var(--surface-form))] px-3.5 py-2 text-sm",
-            "focus-visible:outline-none focus-visible:border-gold focus-visible:ring-2 focus-visible:ring-[rgba(201,168,76,0.25)]"
+            "flex w-full rounded-sm border border-[var(--border-solid)] bg-[var(--bg-secondary)] px-3.5 py-2 text-sm [transition-duration:var(--transition-fast)] transition-colors",
+            "focus-visible:outline-none focus-visible:border-[var(--accent)] focus-visible:ring-2 focus-visible:ring-[var(--accent)]/20"
           )}
         />
       ) : (
@@ -178,7 +176,7 @@ function ItemCards({
               onClick={() =>
                 setExpandedOptional((s) => new Set(s).add(card.id))
               }
-              className="flex w-full items-center gap-2 rounded-sm border border-dashed border-border px-3 py-2.5 text-left text-xs text-muted-foreground hover:border-gold/40 hover:text-foreground"
+              className="flex w-full items-center gap-2 rounded-sm border border-dashed border-[var(--border-solid)] px-3 py-2.5 text-left text-xs text-muted-foreground [transition-duration:var(--transition-fast)] transition-colors hover:border-[var(--border-hover)] hover:text-foreground"
             >
               <Plus className="size-3.5" />
               Optional — add {card.label.toLowerCase()}
@@ -187,11 +185,8 @@ function ItemCards({
         }
 
         return (
-          <div
-            key={card.id}
-            className="space-y-3 rounded-sm border border-border bg-background/40 p-3"
-          >
-            <p className="text-xs font-medium text-foreground">{card.label}</p>
+          <div key={card.id} className="content-card space-y-3 p-3">
+            <p className="text-card-title">{card.label}</p>
             {card.fields.map((field) => (
               <FieldEditor
                 key={field}
@@ -245,7 +240,7 @@ export function ContentPanel({
 
   if (keys.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
+      <p className="text-card-body">
         Content fields will appear here once your site is generated.
       </p>
     );
@@ -277,13 +272,13 @@ export function ContentPanel({
           return (
             <div
               key={group.id}
-              className="overflow-hidden rounded-sm border border-border"
+              className="overflow-hidden rounded-sm border border-[var(--border-solid)]"
             >
               <button
                 type="button"
                 onClick={() => onExpandGroup?.(open ? "" : group.id)}
                 className={cn(
-                  "flex w-full items-center justify-between px-3 py-2.5 text-left text-sm font-medium transition-colors",
+                  "flex w-full items-center justify-between px-3 py-2.5 text-left text-sm font-medium [transition-duration:var(--transition-fast)] transition-colors",
                   open ? "bg-surface text-gold" : "hover:bg-surface/60"
                 )}
               >
@@ -296,7 +291,7 @@ export function ContentPanel({
                 />
               </button>
               {open && (
-                <div className="border-t border-border p-3">
+                <div className="border-t border-[var(--border-solid)] p-3">
                   <ItemCards
                     groupId={group.id}
                     fields={group.fields}
@@ -318,7 +313,7 @@ export function ContentPanel({
     <div className="space-y-6">
       {groups.map((group) => (
         <section key={group.id} className="space-y-4">
-          <h3 className="text-sm font-medium text-foreground">{group.label}</h3>
+          <h3 className="text-section-header">{group.label}</h3>
           <ItemCards
             groupId={group.id}
             fields={group.fields}

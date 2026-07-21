@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { Logo } from "@/components/ui/logo";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { useUser } from "@/hooks/use-user";
+import { useSubscription } from "@/hooks/use-subscription";
 import {
   Tooltip,
   TooltipContent,
@@ -37,9 +38,9 @@ function DrawerLink({
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "relative flex min-h-[44px] items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium tracking-[-0.01em] transition-colors",
+        "relative flex min-h-[44px] items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium tracking-[-0.01em] [transition-duration:var(--transition-fast)] transition-colors",
         active
-          ? "bg-[var(--bg-elevated)] text-gold"
+          ? "bg-gold/5 text-gold"
           : "text-muted-foreground hover:bg-[var(--bg-elevated)] hover:text-foreground"
       )}
     >
@@ -64,6 +65,7 @@ export function MobileNavDrawer({ open, onClose }: MobileNavDrawerProps) {
   const pathname = usePathname();
   const prevPathname = useRef(pathname);
   const { user, avatarUrl } = useUser();
+  const { planName } = useSubscription();
   const displayName = user?.full_name || user?.email || "Account";
 
   useEffect(() => {
@@ -91,11 +93,11 @@ export function MobileNavDrawer({ open, onClose }: MobileNavDrawerProps) {
           <motion.button
             type="button"
             aria-label="Close menu"
-            className="absolute inset-0 bg-black/50"
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
             onClick={onClose}
           />
 
@@ -104,11 +106,18 @@ export function MobileNavDrawer({ open, onClose }: MobileNavDrawerProps) {
             style={{
               paddingTop: "env(safe-area-inset-top)",
               paddingBottom: "env(safe-area-inset-bottom)",
+              touchAction: "pan-y",
             }}
             initial={{ x: "-100%" }}
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}
             transition={{ duration: 0.28, ease: [0.25, 0.1, 0.25, 1] }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={{ left: 0, right: 0.5 }}
+            onDragEnd={(_, info) => {
+              if (info.offset.x > 80 || info.velocity.x > 500) onClose();
+            }}
           >
             <div className="flex h-16 shrink-0 items-center border-b border-border px-5">
               <Logo variant="app" size="navbar" href="/dashboard" />
@@ -141,6 +150,9 @@ export function MobileNavDrawer({ open, onClose }: MobileNavDrawerProps) {
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-medium text-foreground">
                     {displayName}
+                    {planName && (
+                      <span className="text-muted-foreground"> · {planName}</span>
+                    )}
                   </span>
                   <span className="block text-caption text-[var(--text-tertiary)]">
                     View profile

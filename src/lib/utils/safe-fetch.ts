@@ -74,14 +74,35 @@ function messageFromBody(json: unknown | null, text: string, status: number): st
   return `Request failed (${status})`;
 }
 
+/** Default request timeout so a hung backend can never leave a UI stuck loading forever. */
+const DEFAULT_TIMEOUT_MS = 20_000;
+
 /**
  * Fetch and parse JSON safely. Throws FetchError on non-OK or non-JSON errors.
+ * Always applies a timeout (default 20s, override via `timeoutMs`) so callers
+ * never hang indefinitely waiting on a stalled request.
  */
 export async function safeFetchJSON<T = unknown>(
   url: string,
-  options?: RequestInit
+  options?: RequestInit & { timeoutMs?: number }
 ): Promise<T> {
-  const res = await fetch(url, options);
+  const { timeoutMs = DEFAULT_TIMEOUT_MS, signal, ...rest } = options ?? {};
+  const timeoutSignal = AbortSignal.timeout(timeoutMs);
+  const combinedSignal = signal
+    ? ("any" in AbortSignal
+        ? AbortSignal.any([signal, timeoutSignal])
+        : signal)
+    : timeoutSignal;
+
+  let res: Response;
+  try {
+    res = await fetch(url, { ...rest, signal: combinedSignal });
+  } catch (e) {
+    if (timeoutSignal.aborted) {
+      throw new FetchError("Request timed out. Please try again.", 0, "");
+    }
+    throw e;
+  }
   const { json, text } = await parseBody(res);
 
   if (!res.ok) {

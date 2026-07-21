@@ -85,14 +85,18 @@ export function SelectionCard({
         <div className="min-w-0 flex-1">
           <p
             className={cn(
-              "text-sm font-medium tracking-[-0.01em]",
+              "truncate text-sm font-medium tracking-[-0.01em]",
               selected ? "text-foreground" : "text-foreground"
             )}
+            title={label}
           >
             {label}
           </p>
           {descriptor && !compact && (
-            <p className="mt-0.5 text-xs leading-snug text-[var(--text-tertiary)]">
+            <p
+              className="mt-0.5 line-clamp-2 text-xs leading-snug text-[var(--text-tertiary)]"
+              title={descriptor}
+            >
               {descriptor}
             </p>
           )}

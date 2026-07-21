@@ -21,7 +21,7 @@ export function ImagesPanel({
 
   if (slots.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
+      <p className="text-card-body">
         No image slots found for this template.
       </p>
     );
@@ -38,9 +38,9 @@ export function ImagesPanel({
             type="button"
             id={`slot-${slot}`}
             onClick={() => onOpenSlot(slot)}
-            className="flex w-full gap-4 rounded-sm border border-border bg-background p-3 text-left transition-colors hover:border-gold/50"
+            className="content-card flex w-full gap-4 p-3 text-left"
           >
-            <div className="size-20 shrink-0 overflow-hidden rounded-sm border border-border bg-surface">
+            <div className="size-20 shrink-0 overflow-hidden rounded-sm border border-[var(--border-solid)] bg-surface">
               {!broken ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -49,16 +49,16 @@ export function ImagesPanel({
                   className="size-full object-cover"
                 />
               ) : (
-                <div className="flex size-full items-center justify-center text-xs text-muted-foreground">
+                <div className="flex size-full items-center justify-center text-label">
                   Empty
                 </div>
               )}
             </div>
             <div className="min-w-0 flex-1 space-y-2 self-center">
-              <p className="text-sm font-medium capitalize">
+              <p className="text-card-title capitalize">
                 {slot.replace(/_/g, " ")}
               </p>
-              <p className="truncate text-xs text-muted-foreground">
+              <p className="truncate text-card-meta">
                 {broken ? "Needs an image" : (image?.source ?? "Set")}
               </p>
               <span className="inline-flex items-center gap-1 text-xs text-gold">

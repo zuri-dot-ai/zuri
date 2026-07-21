@@ -117,11 +117,11 @@ export function GenerationStatusCard({
   if (status === "failed") {
     return (
       <div className="surface flex flex-col gap-3 border border-[var(--danger,#e2555a)]/40 p-5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex gap-3">
+        <div className="flex min-w-0 gap-3">
           <AlertTriangle className="mt-0.5 size-5 shrink-0 text-[var(--danger,#e2555a)]" />
-          <div>
+          <div className="min-w-0">
             <h3 className="font-medium">Website generation failed</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 break-words text-sm text-muted-foreground">
               {errorMessage ||
                 "Something went wrong while building your site. You can retry without losing your onboarding answers."}
             </p>

@@ -142,11 +142,11 @@ export function PlanView({
                             <Clock className="size-3" /> {task.estimated_minutes}m
                           </span>
                         </div>
-                        <p className={cn("mt-1 font-medium", task.is_completed && "text-muted-foreground line-through")}>
+                        <p className={cn("mt-1 break-words font-medium", task.is_completed && "text-muted-foreground line-through")}>
                           {task.task_title}
                         </p>
                         {task.task_description && (
-                          <p className="mt-1 text-sm text-muted-foreground">{task.task_description}</p>
+                          <p className="mt-1 break-words text-sm text-muted-foreground">{task.task_description}</p>
                         )}
                       </div>
                     </div>

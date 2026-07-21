@@ -119,36 +119,47 @@ export function AgencyMarketplace({ agencies, plan }: { agencies: AgencyRow[]; p
       <div className="grid gap-4 md:grid-cols-2">
         {filtered.map((agency) => (
           <div key={agency.id} className="zuri-card flex flex-col">
-            <div className="flex items-start justify-between">
-              <div>
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <h3 className="font-heading text-xl font-semibold">{agency.name}</h3>
-                  {agency.is_verified && <CheckCircle2 className="size-4 text-gold" />}
+                  <h3
+                    className="truncate font-heading text-xl font-semibold"
+                    title={agency.name}
+                  >
+                    {agency.name}
+                  </h3>
+                  {agency.is_verified && (
+                    <CheckCircle2 className="size-4 shrink-0 text-gold" />
+                  )}
                 </div>
                 <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1"><Star className="size-3.5 fill-gold text-gold" /> {agency.rating} ({agency.review_count})</span>
-                  {agency.location && <span className="flex items-center gap-1"><MapPin className="size-3.5" /> {agency.location}</span>}
+                  <span className="flex shrink-0 items-center gap-1"><Star className="size-3.5 fill-gold text-gold" /> {agency.rating} ({agency.review_count})</span>
+                  {agency.location && <span className="flex min-w-0 items-center gap-1 truncate"><MapPin className="size-3.5 shrink-0" /> <span className="truncate" title={agency.location}>{agency.location}</span></span>}
                 </div>
               </div>
-              {agency.is_featured && <Badge>Featured</Badge>}
+              {agency.is_featured && <Badge className="shrink-0">Featured</Badge>}
             </div>
 
             <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">{agency.description}</p>
 
             <div className="mt-3 flex flex-wrap gap-1.5">
               {agency.specialties.map((s) => (
-                <Badge key={s} variant="outline" className="capitalize">{s}</Badge>
+                <Badge key={s} variant="outline" className="max-w-full capitalize">
+                  {s}
+                </Badge>
               ))}
             </div>
 
-            <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
-              <div>
-                <p className="font-mono text-sm font-semibold text-gold">{agency.price_range}</p>
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+              <div className="min-w-0">
+                <p className="truncate font-mono text-sm font-semibold text-gold" title={agency.price_range ?? undefined}>
+                  {agency.price_range}
+                </p>
                 <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Clock className="size-3" /> Responds in {agency.response_time_hours}h
+                  <Clock className="size-3 shrink-0" /> Responds in {agency.response_time_hours}h
                 </p>
               </div>
-              <Button size="sm" disabled={!isGrowth} onClick={() => openMatch(agency)}>
+              <Button size="sm" disabled={!isGrowth} onClick={() => openMatch(agency)} className="shrink-0">
                 {isGrowth ? "Get Matched" : "Upgrade"}
               </Button>
             </div>
@@ -160,9 +171,11 @@ export function AgencyMarketplace({ agencies, plan }: { agencies: AgencyRow[]; p
       {active && (
         <div className="fixed inset-0 z-50 flex justify-end bg-background/80" onClick={() => setActive(null)}>
           <div className="h-full w-full max-w-md overflow-y-auto border-l border-border bg-surface p-6" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between">
-              <h2 className="font-heading text-2xl font-semibold">Match with {active.name}</h2>
-              <button onClick={() => setActive(null)} className="rounded-sm p-1.5 text-muted-foreground hover:bg-muted">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="min-w-0 truncate font-heading text-2xl font-semibold" title={`Match with ${active.name}`}>
+                Match with {active.name}
+              </h2>
+              <button onClick={() => setActive(null)} className="shrink-0 rounded-sm p-1.5 text-muted-foreground hover:bg-muted">
                 <X className="size-5" />
               </button>
             </div>

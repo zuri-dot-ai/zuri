@@ -19,9 +19,11 @@ export function TrafficSourcesBreakdown({ sources }: Props) {
         const opacity = Math.max(0.35, 1 - i * 0.18);
         return (
           <li key={s.domain}>
-            <div className="mb-1 flex items-center justify-between text-sm">
-              <span>{s.domain}</span>
-              <span className="font-mono text-muted-foreground">
+            <div className="mb-1 flex items-center justify-between gap-2 text-sm">
+              <span className="min-w-0 truncate" title={s.domain}>
+                {s.domain}
+              </span>
+              <span className="shrink-0 font-mono text-muted-foreground">
                 {s.share}%
               </span>
             </div>

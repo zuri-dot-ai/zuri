@@ -29,7 +29,7 @@ export async function POST() {
   try {
     const brief = await geminiJSON<AgencyBrief>(
       `Write an agency brief for: ${profile.business_name} (${profile.industry}) in ${profile.location}. ` +
-      `Services: ${(profile.services || []).join(", ")}. Audience: ${profile.target_audience}. Tone: ${profile.tone}.`,
+      `Services: ${(profile.services || []).join(", ")}. Audience: ${profile.target_audience}. Tone: ${profile.brand_tone}.`,
       { model: FLASH, system: BRIEF_SYSTEM, temperature: 0.6 }
     );
     return NextResponse.json({ brief });

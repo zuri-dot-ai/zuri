@@ -68,15 +68,18 @@ export function StatCard({
         </p>
         <p
           className={cn(
-            "mt-2 flex items-center gap-2 font-sans text-2xl font-semibold tracking-[-0.02em]",
+            "mt-2 flex items-center gap-2 truncate font-sans text-2xl font-semibold tracking-[-0.02em]",
             accent && "text-gold"
           )}
+          title={typeof value === "string" ? value : undefined}
         >
-          {live && <span className="streak-live__dot" aria-hidden />}
-          {value}
+          {live && <span className="streak-live__dot shrink-0" aria-hidden />}
+          <span className="truncate">{value}</span>
         </p>
         {hint && (
-          <p className="mt-1 text-caption text-[var(--text-tertiary)]">{hint}</p>
+          <p className="mt-1 truncate text-caption text-[var(--text-tertiary)]" title={hint}>
+            {hint}
+          </p>
         )}
         <Sparkline trend={trend} />
       </div>

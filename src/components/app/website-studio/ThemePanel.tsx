@@ -45,7 +45,7 @@ export function ThemePanel({
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
+      <p className="text-card-body">
         Pick a color theme. Changes apply instantly to your preview.
       </p>
       <div className="grid gap-3 sm:grid-cols-3">
@@ -58,22 +58,20 @@ export function ThemePanel({
               disabled={busy !== null}
               onClick={() => select(t.id)}
               className={cn(
-                "relative rounded-sm border p-4 text-left transition-colors",
-                selected
-                  ? "border-gold bg-surface"
-                  : "border-border hover:border-gold/50"
+                "content-card relative p-4 text-left",
+                selected && "content-card--active"
               )}
             >
               <div
                 className={cn("mb-3 h-10 w-full rounded-sm", t.swatch)}
               />
-              <p className="text-sm font-medium">{t.label}</p>
-              <p className="text-xs text-muted-foreground">{t.id}</p>
+              <p className="text-card-title">{t.label}</p>
+              <p className="text-card-meta">{t.id}</p>
               {selected && (
                 <Check className="absolute right-3 top-3 size-4 text-gold" />
               )}
               {busy === t.id && (
-                <span className="absolute right-3 top-3 text-[10px] text-muted-foreground">
+                <span className="absolute right-3 top-3 text-label">
                   …
                 </span>
               )}

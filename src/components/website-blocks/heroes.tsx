@@ -13,7 +13,7 @@ export function HeroFullscreen({ composition, images, imageIndex }: BlockProps) 
       <div className="absolute inset-0" style={{ background: `linear-gradient(to top, ${palette.bg}, ${palette.bg}99, ${palette.bg}55)` }} />
       <motion.div className="relative z-10 max-w-3xl px-6 text-center"
         initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9 }}>
-        <h1 className="font-heading text-5xl font-semibold leading-tight md:text-7xl">{content.hero_headline}</h1>
+        <h1 className="break-words font-heading text-5xl font-semibold leading-tight md:text-7xl">{content.hero_headline}</h1>
         <p className="mx-auto mt-6 max-w-xl text-lg opacity-80">{content.hero_subheadline}</p>
         <a href="#contact" className="mt-8 inline-block rounded-full px-8 py-3 font-medium"
           style={{ background: palette.accent, color: palette.bg }}>{content.cta_text}</a>
@@ -29,7 +29,7 @@ export function HeroSplit({ composition, images, imageIndex }: BlockProps) {
     <section className="grid min-h-[80vh] items-center md:grid-cols-2">
       <motion.div className="px-6 py-16 md:px-12"
         initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }}>
-        <h1 className="font-heading text-4xl font-semibold leading-tight md:text-6xl">{content.hero_headline}</h1>
+        <h1 className="break-words font-heading text-4xl font-semibold leading-tight md:text-6xl">{content.hero_headline}</h1>
         <p className="mt-6 max-w-md text-lg opacity-80">{content.hero_subheadline}</p>
         <a href="#contact" className="mt-8 inline-block rounded-full px-8 py-3 font-medium"
           style={{ background: palette.accent, color: palette.bg }}>{content.cta_text}</a>
@@ -47,7 +47,7 @@ export function HeroTypographic({ composition }: BlockProps) {
     <section className="flex min-h-[80vh] items-center justify-center px-6">
       <motion.div className="text-center"
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
-        <h1 className="font-heading text-6xl font-semibold leading-[1.05] md:text-8xl"
+        <h1 className="break-words font-heading text-6xl font-semibold leading-[1.05] md:text-8xl"
           style={{ color: palette.primary }}>{content.hero_headline}</h1>
         <p className="mx-auto mt-8 max-w-xl text-xl opacity-70">{content.hero_subheadline}</p>
         <a href="#contact" className="mt-10 inline-block border-b-2 pb-1 text-lg font-medium"
@@ -69,7 +69,7 @@ export function HeroGradient({ composition }: BlockProps) {
         ] }}
         transition={{ duration: 12, repeat: Infinity, ease: "linear" }} />
       <div className="relative z-10 max-w-3xl text-center">
-        <h1 className="font-heading text-5xl font-semibold md:text-7xl">{content.hero_headline}</h1>
+        <h1 className="break-words font-heading text-5xl font-semibold md:text-7xl">{content.hero_headline}</h1>
         <p className="mx-auto mt-6 max-w-xl text-lg opacity-80">{content.hero_subheadline}</p>
         <a href="#contact" className="mt-8 inline-block rounded-full px-8 py-3 font-medium"
           style={{ background: palette.accent, color: palette.bg }}>{content.cta_text}</a>
@@ -88,7 +88,7 @@ export function HeroFloatingCard({ composition, images, imageIndex }: BlockProps
       <motion.div className="relative z-10 max-w-lg rounded-2xl border p-10 backdrop-blur-xl"
         style={{ borderColor: `${palette.accent}33`, background: `${palette.bg}cc` }}
         initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-        <h1 className="font-heading text-4xl font-semibold md:text-5xl">{content.hero_headline}</h1>
+        <h1 className="break-words font-heading text-4xl font-semibold md:text-5xl">{content.hero_headline}</h1>
         <p className="mt-5 text-lg opacity-80">{content.hero_subheadline}</p>
         <a href="#contact" className="mt-7 inline-block rounded-full px-7 py-3 font-medium"
           style={{ background: palette.accent, color: palette.bg }}>{content.cta_text}</a>
@@ -106,7 +106,7 @@ export function HeroMinimal({ composition }: BlockProps) {
         <span className="font-heading text-3xl font-semibold" style={{ color: palette.primary }}>
           {content.hero_headline?.split(" ").slice(0, 2).join(" ")}
         </span>
-        <h1 className="mx-auto mt-6 max-w-2xl font-heading text-4xl font-medium leading-snug md:text-5xl">
+        <h1 className="mx-auto mt-6 max-w-2xl break-words font-heading text-4xl font-medium leading-snug md:text-5xl">
           {content.hero_subheadline}
         </h1>
         <a href="#contact" className="mt-10 inline-block text-sm uppercase tracking-widest opacity-70 hover:opacity-100"

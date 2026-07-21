@@ -1,19 +1,27 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
+  Briefcase,
+  Building2,
   ChevronLeft,
   Eye,
   ExternalLink,
   FileText,
   Globe,
+  HelpCircle,
   ImageIcon,
+  Info,
   Palette,
+  Phone,
   Rocket,
   Settings,
+  Share2,
+  Sparkles,
+  Star,
   Undo2,
-  X,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -64,7 +72,20 @@ type PanelId =
   | "publish"
   | "settings";
 
-type MobileScreen = "list" | "edit" | "preview";
+type MobileScreen = "list" | "edit";
+
+/** Semantic icon per content/section id — keeps every section visually distinct instead of a generic file icon. */
+const SECTION_ICONS: Record<string, React.ElementType> = {
+  hero: Sparkles,
+  about: Info,
+  services: Briefcase,
+  testimonials: Star,
+  faq: HelpCircle,
+  contact: Phone,
+  social: Share2,
+  business: Building2,
+  other: FileText,
+};
 
 export function WebsiteStudio({
   websiteId,
@@ -91,6 +112,7 @@ export function WebsiteStudio({
   plan: string;
   needsReview: boolean;
 }) {
+  const router = useRouter();
   const [expanded, setExpanded] = useState<PanelId | "">("hero");
   const [mobileScreen, setMobileScreen] = useState<MobileScreen>("list");
   const [placeholders, setPlaceholders] = useState(initialPlaceholders);
@@ -333,8 +355,8 @@ export function WebsiteStudio({
     }
     if (id === "settings") {
       return (
-        <div className="space-y-4 text-sm text-muted-foreground">
-          <p>
+        <div className="space-y-4">
+          <p className="text-card-body">
             Custom domains are available on Growth plans. Connect your own
             domain from billing when you upgrade.
           </p>
@@ -352,10 +374,22 @@ export function WebsiteStudio({
     setMobileScreen("edit");
   }
 
-  const sidebarItems: { id: PanelId; label: string }[] = [
-    ...contentGroups.map((g) => ({ id: g.id as PanelId, label: g.label })),
-    ...staticPanels.map((p) => ({ id: p.id, label: p.label })),
-  ];
+  function openFullScreenPreview() {
+    if (!previewHandle) return;
+    router.push(
+      `/website-preview?handle=${encodeURIComponent(previewHandle)}&v=${previewKey}`
+    );
+  }
+
+  const sidebarItems: { id: PanelId; label: string; icon: React.ElementType }[] =
+    [
+      ...contentGroups.map((g) => ({
+        id: g.id as PanelId,
+        label: g.label,
+        icon: SECTION_ICONS[g.id] ?? FileText,
+      })),
+      ...staticPanels.map((p) => ({ id: p.id, label: p.label, icon: p.icon })),
+    ];
 
   return (
     <div className="flex min-h-[calc(100vh-6rem)] flex-col gap-4 page-enter">
@@ -400,7 +434,7 @@ export function WebsiteStudio({
               <Badge variant="outline">Free — preview only</Badge>
             )}
           </div>
-          <p className="text-sm text-muted-foreground capitalize">
+          <p className="text-card-body capitalize">
             {archetype?.replace(/-/g, " ") ?? "Custom template"} ·{" "}
             {activeTheme.replace("-", " ")}
           </p>
@@ -450,25 +484,29 @@ export function WebsiteStudio({
           <div className="min-h-0 flex-1 overflow-y-auto">
             {sidebarItems.map((item) => {
               const open = expanded === item.id;
+              const Icon = item.icon;
               return (
-                <div key={item.id} className="border-b border-border">
+                <div key={item.id} className="border-b border-[var(--border-solid)]">
                   <button
                     type="button"
                     onClick={() => setExpanded(open ? "" : item.id)}
                     className={cn(
-                      "flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium transition-colors",
+                      "flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium [transition-duration:var(--transition-fast)] transition-colors",
                       open
                         ? "bg-surface text-gold"
                         : "text-foreground hover:bg-surface/50"
                     )}
                   >
-                    {item.label}
-                    <span className="text-xs text-muted-foreground">
+                    <span className="flex min-w-0 items-center gap-2.5">
+                      <Icon className="size-4 shrink-0 text-muted-foreground" />
+                      <span className="truncate">{item.label}</span>
+                    </span>
+                    <span className="text-label">
                       {open ? "−" : "+"}
                     </span>
                   </button>
                   {open && (
-                    <div className="border-t border-border px-4 py-4">
+                    <div className="border-t border-[var(--border-solid)] px-4 py-4">
                       {renderPanelBody(item.id)}
                     </div>
                   )}
@@ -493,21 +531,24 @@ export function WebsiteStudio({
       <div className="flex flex-1 flex-col lg:hidden">
         {mobileScreen === "list" && (
           <div className="space-y-1">
-            {sidebarItems.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => openPanel(item.id)}
-                className="flex w-full items-center gap-3 rounded-sm border border-border px-4 py-3.5 text-left text-sm font-medium hover:border-gold/40"
-              >
-                <FileText className="size-4 text-muted-foreground" />
-                {item.label}
-              </button>
-            ))}
+            {sidebarItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => openPanel(item.id)}
+                  className="content-card flex w-full items-center gap-3 px-4 py-3.5 text-left text-sm font-medium"
+                >
+                  <Icon className="size-4 shrink-0 text-muted-foreground" />
+                  <span className="truncate">{item.label}</span>
+                </button>
+              );
+            })}
             <Button
               variant="outline"
               className="mt-4 w-full"
-              onClick={() => setMobileScreen("preview")}
+              onClick={openFullScreenPreview}
             >
               <Eye className="size-4" /> Preview site
             </Button>
@@ -527,42 +568,9 @@ export function WebsiteStudio({
               {sidebarItems.find((i) => i.id === expanded)?.label}
             </h2>
             <div className="zuri-card">{renderPanelBody(expanded)}</div>
-            <Button
-              variant="outline"
-              onClick={() => setMobileScreen("preview")}
-            >
+            <Button variant="outline" onClick={openFullScreenPreview}>
               <Eye className="size-4" /> Preview
             </Button>
-          </div>
-        )}
-
-        {mobileScreen === "preview" && (
-          <div className="fixed inset-0 z-40 flex flex-col bg-background">
-            <div className="flex items-center justify-between border-b border-border px-4 py-3">
-              <p className="text-sm font-medium">Preview</p>
-              <button
-                type="button"
-                onClick={() =>
-                  setMobileScreen(expanded ? "edit" : "list")
-                }
-                className="rounded-sm p-1.5 hover:bg-surface"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-            <div className="min-h-0 flex-1">
-              <PreviewFrame
-                handle={previewHandle}
-                refreshKey={previewKey}
-                rootDomain={rootDomain}
-                highlightSection={highlightSection}
-                onImageSlotClick={(slot) => {
-                  setImageModalSlot(slot);
-                  setExpanded("images");
-                  setMobileScreen("edit");
-                }}
-              />
-            </div>
           </div>
         )}
       </div>
@@ -572,7 +580,7 @@ export function WebsiteStudio({
           <Button
             variant="outline"
             className="flex-1"
-            onClick={() => setMobileScreen("preview")}
+            onClick={openFullScreenPreview}
           >
             <Globe className="size-4" /> Preview
           </Button>

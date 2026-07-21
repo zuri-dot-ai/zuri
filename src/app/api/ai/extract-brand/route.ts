@@ -36,7 +36,7 @@ export async function POST(request: Request) {
           industry: brand.industry,
           services: brand.services,
           target_audience: brand.target_audience,
-          tone: brand.tone,
+          brand_tone: brand.tone,
           unique_value: brand.unique_value,
           location: brand.location,
           tagline: brand.tagline_suggestion,

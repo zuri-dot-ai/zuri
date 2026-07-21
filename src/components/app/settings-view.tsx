@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   User,
@@ -15,6 +15,7 @@ import {
   Sun,
   Sparkles,
   X,
+  RefreshCw,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -23,7 +24,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Banner } from "@/components/ui/Banner";
+import { SaveStatus } from "@/components/ui/SaveStatus";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { useSaveStatus } from "@/hooks/use-save-status";
 import { PRICING } from "@/lib/constants";
 import { formatNGN as fmtNGN } from "@/lib/utils";
 import { safeFetchJSON } from "@/lib/utils/safe-fetch";
@@ -94,17 +98,28 @@ function ProfileTab({ account }: { account: AccountView | null }) {
   const supabase = createClient();
   const { theme, toggleTheme } = useTheme();
   const [name, setName] = useState(account?.full_name ?? "");
-  const [saving, setSaving] = useState(false);
+  const { status: saveStatus, run: runSave } = useSaveStatus();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  async function save() {
-    setSaving(true);
-    const { error } = await supabase
-      .from("profiles")
-      .update({ full_name: name, updated_at: new Date().toISOString() })
-      .eq("id", account!.id);
-    setSaving(false);
-    if (error) return toast.error("Could not save profile.");
-    toast.success("Profile updated.");
+  async function save(next: string) {
+    if (!account) return;
+    try {
+      await runSave(async () => {
+        const { error } = await supabase
+          .from("profiles")
+          .update({ full_name: next, updated_at: new Date().toISOString() })
+          .eq("id", account.id);
+        if (error) throw error;
+      });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not save profile.");
+    }
+  }
+
+  function onNameChange(next: string) {
+    setName(next);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => void save(next), 500);
   }
 
   async function signOut() {
@@ -116,8 +131,8 @@ function ProfileTab({ account }: { account: AccountView | null }) {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="font-heading text-2xl font-semibold">Profile</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h2 className="text-page-title">Profile</h2>
+        <p className="text-card-body mt-1">
           Your personal account information.
         </p>
       </div>
@@ -142,10 +157,13 @@ function ProfileTab({ account }: { account: AccountView | null }) {
           </div>
         </div>
         <div className="space-y-2">
-          <Label>Full name</Label>
+          <div className="flex items-center justify-between gap-2">
+            <Label>Full name</Label>
+            <SaveStatus status={saveStatus} />
+          </div>
           <Input
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => onNameChange(e.target.value)}
             placeholder="Ada Obi"
           />
         </div>
@@ -157,11 +175,6 @@ function ProfileTab({ account }: { account: AccountView | null }) {
           </p>
         </div>
       </div>
-
-      <Button onClick={save} disabled={saving}>
-        {saving ? <span className="zuri-spinner" /> : <Save className="size-4" />}
-        Save changes
-      </Button>
 
       <div className="border-t border-border pt-5">
         <h3 className="text-sm font-medium text-foreground">Appearance</h3>
@@ -203,9 +216,11 @@ function BrandVoiceTab() {
     { id: string; text: string; source: string; created_at: string }[]
   >([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
+    setLoadError(null);
     try {
       const data = await safeFetchJSON<{
         examples: {
@@ -214,12 +229,13 @@ function BrandVoiceTab() {
           source: string;
           created_at: string;
         }[];
-      }>("/api/settings/voice-examples");
+      }>("/api/settings/voice-examples", { timeoutMs: 15_000 });
       setExamples(data.examples ?? []);
     } catch (e) {
-      toast.error(
-        e instanceof Error ? e.message : "Could not load voice examples"
-      );
+      const message =
+        e instanceof Error ? e.message : "Could not load voice examples";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -258,7 +274,20 @@ function BrandVoiceTab() {
       </div>
 
       {loading ? (
-        <p className="text-card-body">Loading…</p>
+        <p className="text-card-body flex items-center gap-2">
+          <span className="zuri-spinner" /> Loading…
+        </p>
+      ) : loadError ? (
+        <Banner
+          variant="error"
+          title="Couldn't load your voice examples"
+          message={loadError}
+          actions={
+            <Button size="sm" variant="outline" onClick={() => void load()}>
+              <RefreshCw className="size-4" /> Retry
+            </Button>
+          }
+        />
       ) : examples.length === 0 ? (
         <p className="text-card-body">
           No voice examples yet. Edit a generated caption or rate a post 4–5
@@ -298,30 +327,50 @@ function BusinessTab({ profile }: { profile: BusinessProfileRow | null }) {
     industry: profile?.industry ?? "",
     services: (profile?.services ?? []).join(", "),
     target_audience: profile?.target_audience ?? "",
-    tone: profile?.tone ?? "professional",
+    tone: profile?.brand_tone ?? "professional",
     tagline: profile?.tagline ?? "",
     location: profile?.location ?? "",
   });
-  const [saving, setSaving] = useState(false);
+  const { status: saveStatus, run: runSave } = useSaveStatus();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  async function save() {
+  async function save(next: typeof f) {
     if (!profile) return;
-    setSaving(true);
-    const { error } = await supabase
-      .from("business_profiles")
-      .update({
-        business_name: f.business_name,
-        industry: f.industry,
-        services: f.services.split(",").map((s) => s.trim()).filter(Boolean),
-        target_audience: f.target_audience,
-        tone: f.tone,
-        tagline: f.tagline,
-        location: f.location,
-      })
-      .eq("id", profile.id);
-    setSaving(false);
-    if (error) return toast.error("Could not save.");
-    toast.success("Business profile updated.");
+    try {
+      await runSave(async () => {
+        const { error } = await supabase
+          .from("business_profiles")
+          .update({
+            business_name: next.business_name,
+            industry: next.industry,
+            services: next.services.split(",").map((s) => s.trim()).filter(Boolean),
+            target_audience: next.target_audience,
+            brand_tone: next.tone,
+            tagline: next.tagline,
+            location: next.location,
+          })
+          .eq("id", profile.id);
+        if (error) throw error;
+      });
+    } catch (e) {
+      toast.error(
+        e instanceof Error && e.message
+          ? `Could not save: ${e.message}`
+          : "Could not save."
+      );
+    }
+  }
+
+  function updateField(next: typeof f) {
+    setF(next);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => void save(next), 500);
+  }
+
+  function updateFieldNow(next: typeof f) {
+    setF(next);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    void save(next);
   }
 
   if (!profile) {
@@ -337,11 +386,14 @@ function BusinessTab({ profile }: { profile: BusinessProfileRow | null }) {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h2 className="font-heading text-2xl font-semibold">Business Profile</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          This is what Zuri uses to generate your website and content.
-        </p>
+      <div className="flex items-center justify-between gap-2">
+        <div>
+          <h2 className="text-page-title">Business Profile</h2>
+          <p className="text-card-body mt-1">
+            This is what Zuri uses to generate your website and content.
+          </p>
+        </div>
+        <SaveStatus status={saveStatus} />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -357,7 +409,7 @@ function BusinessTab({ profile }: { profile: BusinessProfileRow | null }) {
             <Label>{label}</Label>
             <Input
               value={f[key]}
-              onChange={(e) => setF({ ...f, [key]: e.target.value })}
+              onChange={(e) => updateField({ ...f, [key]: e.target.value })}
             />
           </div>
         ))}
@@ -367,7 +419,7 @@ function BusinessTab({ profile }: { profile: BusinessProfileRow | null }) {
         <Label>Services (comma-separated)</Label>
         <Input
           value={f.services}
-          onChange={(e) => setF({ ...f, services: e.target.value })}
+          onChange={(e) => updateField({ ...f, services: e.target.value })}
           placeholder="Cakes, pastries, event catering"
         />
       </div>
@@ -376,7 +428,9 @@ function BusinessTab({ profile }: { profile: BusinessProfileRow | null }) {
         <Label>Target audience</Label>
         <Input
           value={f.target_audience}
-          onChange={(e) => setF({ ...f, target_audience: e.target.value })}
+          onChange={(e) =>
+            updateField({ ...f, target_audience: e.target.value })
+          }
         />
       </div>
 
@@ -384,8 +438,8 @@ function BusinessTab({ profile }: { profile: BusinessProfileRow | null }) {
         <Label>Brand tone</Label>
         <select
           value={f.tone}
-          onChange={(e) => setF({ ...f, tone: e.target.value })}
-          className="flex h-11 w-full rounded-sm border border-border bg-background px-4 text-sm focus:border-gold/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(201,162,39,0.35)]"
+          onChange={(e) => updateFieldNow({ ...f, tone: e.target.value })}
+          className="flex h-11 w-full rounded-sm border border-[var(--border-solid)] bg-[var(--bg-secondary)] px-4 text-sm [transition-duration:var(--transition-fast)] transition-colors focus:border-[var(--accent)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/20"
         >
           {["professional", "warm", "bold", "playful"].map((t) => (
             <option key={t} value={t} className="capitalize">
@@ -394,11 +448,6 @@ function BusinessTab({ profile }: { profile: BusinessProfileRow | null }) {
           ))}
         </select>
       </div>
-
-      <Button onClick={save} disabled={saving}>
-        {saving ? <span className="zuri-spinner" /> : <Save className="size-4" />}
-        Save changes
-      </Button>
     </div>
   );
 }
@@ -455,8 +504,8 @@ function BillingTab({ account }: { account: AccountView | null }) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="font-heading text-2xl font-semibold">Billing</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h2 className="text-page-title">Billing</h2>
+        <p className="text-card-body mt-1">
           Manage your subscription and payment details.
         </p>
       </div>
@@ -498,19 +547,23 @@ function BillingTab({ account }: { account: AccountView | null }) {
                 p.highlight ? "border-gold bg-muted" : "border-border"
               }`}
             >
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="font-heading text-xl font-semibold">{p.name}</p>
-                  <p className="mt-0.5 text-sm text-muted-foreground">{p.description}</p>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-heading text-xl font-semibold" title={p.name}>
+                    {p.name}
+                  </p>
+                  <p className="mt-0.5 break-words text-sm text-muted-foreground">
+                    {p.description}
+                  </p>
                 </div>
-                <div className="text-right">
-                  <p className="font-heading text-2xl font-semibold">
+                <div className="shrink-0 text-right">
+                  <p className="truncate font-heading text-2xl font-semibold">
                     {fmtNGN(p.ngnMonthly)}
                   </p>
                   <p className="text-xs text-muted-foreground">/month</p>
                 </div>
               </div>
-              <div className="mt-4 flex gap-3">
+              <div className="mt-4 flex flex-wrap gap-3">
                 <Button
                   size="sm"
                   variant={p.highlight ? "default" : "outline"}
@@ -580,8 +633,8 @@ function NotificationsTab() {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="font-heading text-2xl font-semibold">Notifications</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h2 className="text-page-title">Notifications</h2>
+        <p className="text-card-body mt-1">
           Control which emails Zuri sends you.
         </p>
       </div>
@@ -608,11 +661,11 @@ function NotificationsTab() {
         ).map(({ key, label, desc }) => (
           <label
             key={key}
-            className="flex cursor-pointer items-start gap-4 rounded-sm border border-border p-4 transition-colors hover:bg-muted/50"
+            className="flex cursor-pointer items-start gap-4 rounded-sm border border-[var(--border-solid)] p-4 [transition-duration:var(--transition-fast)] transition-colors hover:bg-muted/50"
           >
             <div className="mt-0.5 flex-1">
-              <p className="font-medium">{label}</p>
-              <p className="mt-0.5 text-sm text-muted-foreground">{desc}</p>
+              <p className="text-card-title">{label}</p>
+              <p className="mt-0.5 text-card-meta">{desc}</p>
             </div>
             <div
               onClick={() => setPrefs((p) => ({ ...p, [key]: !p[key] }))}
@@ -661,8 +714,8 @@ function DangerTab() {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="font-heading text-2xl font-semibold">Danger Zone</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h2 className="text-page-title">Danger Zone</h2>
+        <p className="text-card-body mt-1">
           Permanent actions. These cannot be undone.
         </p>
       </div>

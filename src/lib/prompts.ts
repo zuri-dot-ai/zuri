@@ -90,7 +90,7 @@ Compose a website for:
 - Industry: ${profile.industry}
 - Services: ${(profile.services || []).join(", ")}
 - Audience: ${profile.target_audience}
-- Tone: ${profile.tone}
+- Tone: ${profile.brand_tone}
 - Unique value: ${profile.unique_value}
 - Location: ${profile.location}
 - Tagline: ${profile.tagline}
@@ -136,7 +136,7 @@ export function contentDraftPrompt(args: {
 Write a ${postType} post for ${platform}.
 Business: ${profile.business_name} (${profile.industry}) in ${profile.location}.
 Services: ${(profile.services || []).join(", ")}.
-Tone: ${profile.tone}. Audience: ${profile.target_audience}.
+Tone: ${profile.brand_tone}. Audience: ${profile.target_audience}.
 Week theme: ${theme}. This is day ${dayNumber} of their plan.
 ${includeVideo ? "Include a 15–30 second video_script." : "Do NOT include video_script."}
 `.trim();
@@ -185,7 +185,7 @@ export function actionPlanPrompt(args: {
 Create the 90-day plan for:
 Business: ${profile.business_name} (${profile.industry}) in ${profile.location}.
 Services: ${(profile.services || []).join(", ")}.
-Audience: ${profile.target_audience}. Tone: ${profile.tone}.
+Audience: ${profile.target_audience}. Tone: ${profile.brand_tone}.
 Platforms to focus on: ${platforms.join(", ")}.
 Owner skill level: ${skillLevel}.
 `.trim();

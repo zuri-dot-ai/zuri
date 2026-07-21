@@ -76,7 +76,7 @@ export async function PATCH(req: Request) {
     const prompt = `Regenerate copy for the "${blockId}" block of a website for ${brand?.business_name || "the business"}.
 Business industry: ${brand?.industry || "general"}
 Services: ${(brand?.services || []).join(", ")}
-Tone: ${brand?.tone || "professional"}
+Tone: ${brand?.brand_tone || "professional"}
 Location: ${brand?.location || "Lagos, Nigeria"}
 
 This is the SAME block on the site; preserve its purpose but write fresh copy.

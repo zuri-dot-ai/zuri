@@ -122,7 +122,9 @@ export function NotificationsPopover({
               onClick={() => setOpen(false)}
               className="block border-b border-border px-4 py-3 last:border-b-0 hover:bg-[var(--bg-secondary)]"
             >
-              <p className="text-sm font-medium text-foreground">{n.title}</p>
+              <p className="truncate text-sm font-medium text-foreground" title={n.title}>
+                {n.title}
+              </p>
               {n.body && (
                 <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
                   {n.body}

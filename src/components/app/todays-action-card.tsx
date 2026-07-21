@@ -108,11 +108,11 @@ export function TodaysActionCard({ task, websitePublished = true }: Props) {
         </span>
       </div>
 
-      <h2 className="mt-4 font-heading text-h1 font-medium tracking-[0.015em] md:text-[1.75rem]">
+      <h2 className="mt-4 break-words font-heading text-h1 font-medium tracking-[0.015em] md:text-[1.75rem]">
         {task.task_title}
       </h2>
       {preview && (
-        <p className="mt-2 max-w-2xl text-sm text-muted-foreground leading-relaxed">
+        <p className="mt-2 max-w-2xl break-words text-sm text-muted-foreground leading-relaxed">
           {preview}
         </p>
       )}
