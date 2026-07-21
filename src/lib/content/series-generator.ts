@@ -164,6 +164,7 @@ Output ONLY valid JSON:
       coming_soon: false,
       repurposed_from: null,
       needs_review: false,
+      generation_source: "ai" as const,
     };
   });
 }

@@ -14,9 +14,35 @@ export async function handleGeminiError(
 ): Promise<{ shouldRetry: boolean; fallback?: string }> {
   const errMessage = String(err);
 
+  // Model deprecated/mistyped — retrying the same model will never succeed.
+  // This is the exact failure class that caused calendar generation to
+  // silently fall back to template content (retired gemini-2.0-flash /
+  // gemini-2.5-flash IDs returning 404). Fail loud so it's visible in logs
+  // instead of being lumped into "Unknown error".
+  if (
+    errMessage.includes("status=404") ||
+    errMessage.includes("NOT_FOUND") ||
+    /is not found for API version|no longer available to new users/i.test(
+      errMessage
+    )
+  ) {
+    console.error(
+      `[Gemini] Model not found/unavailable in ${context} — check GEMINI_FLASH_MODEL/GEMINI_PRO_MODEL against ` +
+        `https://generativelanguage.googleapis.com/v1beta/models?key=YOUR_KEY. Raw error: ${errMessage}`
+    );
+    return { shouldRetry: false };
+  }
+
+  // Bad request — malformed body (safety settings, tools, schema). Retrying
+  // identically will not help; surface loudly instead of silently retrying.
+  if (errMessage.includes("status=400") || errMessage.includes("INVALID_ARGUMENT")) {
+    console.error(`[Gemini] Invalid request in ${context}: ${errMessage}`);
+    return { shouldRetry: false };
+  }
+
   // Safety filter block — do NOT retry with same prompt
   if (errMessage.includes("SAFETY") || errMessage.includes("blocked")) {
-    console.warn(`[Gemini] Safety block in ${context}`);
+    console.warn(`[Gemini] Safety block in ${context}: ${errMessage}`);
     return { shouldRetry: false };
   }
 

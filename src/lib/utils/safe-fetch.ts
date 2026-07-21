@@ -58,7 +58,10 @@ async function parseBody(res: Response): Promise<{
 function messageFromBody(json: unknown | null, text: string, status: number): string {
   if (json && typeof json === "object") {
     const obj = json as Record<string, unknown>;
-    if (typeof obj.error === "string" && obj.error.trim()) return obj.error;
+    const detail = typeof obj.detail === "string" ? obj.detail.trim() : "";
+    if (typeof obj.error === "string" && obj.error.trim()) {
+      return detail ? `${obj.error} (${detail})` : obj.error;
+    }
     if (typeof obj.message === "string" && obj.message.trim()) return obj.message;
   }
   if (text.trim()) {

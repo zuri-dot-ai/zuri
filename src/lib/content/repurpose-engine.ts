@@ -108,6 +108,7 @@ Output ONLY valid JSON:
         series_total: null,
         repurposed_from: sourceSlotId,
         needs_review: false,
+        generation_source: "ai" as const,
       }));
 
     if (newSlots.length === 0) return [];

@@ -108,11 +108,23 @@ Output ONLY valid JSON:
       p_amount: 1,
     });
 
-    return NextResponse.json({ slot: data });
+    return NextResponse.json({ slot: { ...data, generation_source: "ai" } });
   } catch (err) {
-    console.error("[calendar regenerate]", err);
+    // err.message from geminiJSON now carries the real status code + a
+    // truncated response body (see src/lib/gemini.ts) — log it in full for
+    // Vercel function logs, and pass a truncated version back to the client
+    // so the UI can distinguish "AI unavailable" from other 500s instead of
+    // showing the same opaque generic message for every failure.
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(
+      `[calendar regenerate] slotId=${id} userId=${auth.user.id}:`,
+      err
+    );
     return NextResponse.json(
-      { error: "Could not regenerate. Please try again." },
+      {
+        error: "Could not regenerate. Please try again.",
+        detail: message.slice(0, 300),
+      },
       { status: 500 }
     );
   }

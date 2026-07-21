@@ -98,7 +98,7 @@ export async function POST(req: Request) {
     platformLimit === null ? allPlatforms : allPlatforms.slice(0, platformLimit);
 
   const now = new Date();
-  const slots = await generateMonthlyCalendar({
+  const { slots, usedFallback, reason } = await generateMonthlyCalendar({
     userId,
     month: now.getMonth() + 1,
     year: now.getFullYear(),
@@ -107,6 +107,12 @@ export async function POST(req: Request) {
     platforms: activePlatforms,
     postsPerMonth: planLimits.calendar_posts_per_month,
   });
+
+  if (usedFallback) {
+    console.error(
+      `[seed-calendar] AI generation failed for userId=${userId} — starter/template content was created instead. reason=${reason}`
+    );
+  }
 
   if (slots.length > 0) {
     const { error } = await supabase.from("content_calendar").insert(
@@ -126,5 +132,10 @@ export async function POST(req: Request) {
 
   await incrementCalendarUsage(supabase, userId, slots.length);
 
-  return NextResponse.json({ success: true, slots_created: slots.length });
+  return NextResponse.json({
+    success: true,
+    slots_created: slots.length,
+    usedFallback,
+    ...(usedFallback ? { reason } : {}),
+  });
 }

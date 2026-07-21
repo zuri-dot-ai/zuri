@@ -29,7 +29,15 @@ export type CalendarSlot = Omit<
 > & {
   id?: string;
   content_id?: string | null;
+  generation_source: "ai" | "fallback";
 };
+
+export interface CalendarGenerationResult {
+  slots: CalendarSlot[];
+  usedFallback: boolean;
+  /** Human-readable reason when usedFallback is true, safe to show/log. */
+  reason?: string;
+}
 
 interface PostFormat {
   type: string;
@@ -268,8 +276,27 @@ export function buildCalendarPrompt(params: CalendarPromptParams): string {
   const location = sanitizeForPrompt(
     brandField(brand, "location_city") || brandField(brand, "location", "Lagos")
   );
-  const audience = sanitizeForPrompt(brandField(brand, "target_audience"));
+  const rawAudience = brandField(brand, "target_audience");
+  const audience = sanitizeForPrompt(rawAudience);
   const tone = sanitizeForPrompt(brandField(brand, "brand_tone", "professional"));
+
+  // Onboarding frequently leaves these thin (e.g. "everyone", a single
+  // generic service, no city) — a working Gemini call with thin input
+  // still produces generic output. Detect that and explicitly ask Gemini
+  // to infer specifics rather than silently generating "everyone"-flavoured
+  // posts from a blank/lazy value.
+  const isThinAudience =
+    !rawAudience.trim() ||
+    /^(everyone|everybody|anyone|general public|all)$/i.test(rawAudience.trim());
+  const isThinServices = !services.trim() || services.split(",").length <= 1;
+  const inferenceNote =
+    isThinAudience || isThinServices
+      ? `\nNOTE: Some business details above are thin or generic (e.g. a vague target audience` +
+        ` or a single generic service). Where that's the case, infer sensible, specific details` +
+        ` for a typical Nigerian ${industry || "small"} business in ${location} rather than writing` +
+        ` generic posts aimed at "everyone" — pick a plausible specific audience segment and service` +
+        ` angle for each post instead.\n`
+      : "";
 
   return `
 You are a social media strategist specialising in Nigerian small businesses.
@@ -282,6 +309,7 @@ BUSINESS:
 - Location: ${location}, Nigeria
 - Target audience: ${audience}
 - Brand tone: ${tone}
+${inferenceNote}
 
 CONTENT PILLARS (rotate through these):
 ${pillars.map((p) => `- ${sanitizeForPrompt(p.name)}: ${sanitizeForPrompt(p.description ?? "")}`).join("\n")}
@@ -402,6 +430,7 @@ function buildTemplateSlots(
       repurposed_from: null,
       needs_review: false,
       trend_source: null,
+      generation_source: "fallback" as const,
     };
   });
 }
@@ -502,13 +531,14 @@ export function mergeCalendarOutput(
             fetched_at: new Date().toISOString(),
           }
         : null,
+      generation_source: "ai" as const,
     };
   });
 }
 
 export async function generateMonthlyCalendar(
   input: CalendarGenerationInput
-): Promise<CalendarSlot[]> {
+): Promise<CalendarGenerationResult> {
   const { month, year, brand, pillars, platforms, postsPerMonth } = input;
 
   const culturalMoments = getNigerianCulturalMoments(month, year);
@@ -526,7 +556,7 @@ export async function generateMonthlyCalendar(
   const formatsDistribution = distributeFormats(totalPosts, platforms);
 
   if (scheduledDates.length === 0) {
-    return [];
+    return { slots: [], usedFallback: false };
   }
 
   const calendarPrompt = buildCalendarPrompt({
@@ -541,22 +571,51 @@ export async function generateMonthlyCalendar(
     year,
   });
 
+  let generated: { slots: GeneratedSlot[] };
   try {
-    let generated: { slots: GeneratedSlot[] };
     try {
       generated = await geminiJSON<{ slots: GeneratedSlot[] }>(
         calendarPrompt,
         "flash"
       );
-    } catch {
+    } catch (initialErr) {
+      console.warn(
+        "[generateMonthlyCalendar] initial Gemini call failed, retrying with stricter JSON instruction:",
+        initialErr
+      );
       generated = await geminiJSON<{ slots: GeneratedSlot[] }>(
         calendarPrompt +
           "\n\nIMPORTANT: Output ONLY valid JSON. No markdown fences. Start with { end with }.",
         "flash"
       );
     }
+  } catch (err) {
+    // Both the initial call and the stricter-JSON retry failed. This is the
+    // failure mode that used to silently produce indistinguishable template
+    // content — now logged with full diagnostic detail and flagged via
+    // usedFallback so callers/UI can surface it instead of hiding it.
+    console.error(
+      "[generateMonthlyCalendar] both Gemini attempts failed — falling back to template slots. " +
+        `userId=${input.userId} month=${month} year=${year}. Error:`,
+      err
+    );
+    return {
+      slots: buildTemplateSlots(
+        input,
+        scheduledDates.length,
+        pillarRotation,
+        scheduledDates,
+        formatsDistribution,
+        culturalMoments
+      ),
+      usedFallback: true,
+      reason:
+        "We couldn't reach the AI right now, so starter content was created instead.",
+    };
+  }
 
-    return mergeCalendarOutput(
+  return {
+    slots: mergeCalendarOutput(
       generated.slots ?? [],
       pillarRotation,
       scheduledDates,
@@ -565,16 +624,7 @@ export async function generateMonthlyCalendar(
       input.userId,
       pillars,
       trends
-    );
-  } catch (err) {
-    console.error("[generateMonthlyCalendar] falling back to template:", err);
-    return buildTemplateSlots(
-      input,
-      scheduledDates.length,
-      pillarRotation,
-      scheduledDates,
-      formatsDistribution,
-      culturalMoments
-    );
-  }
+    ),
+    usedFallback: false,
+  };
 }

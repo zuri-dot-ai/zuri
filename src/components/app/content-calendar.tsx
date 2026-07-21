@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
@@ -8,8 +8,6 @@ import {
   ChevronRight,
   Copy,
   Diamond,
-  LayoutGrid,
-  List,
   Loader2,
   Pencil,
   RefreshCw,
@@ -19,7 +17,22 @@ import {
   Sparkles,
   TrendingUp,
   X,
+  Image as ImageIcon,
+  Images,
+  Video,
+  FileText,
+  BarChart3,
+  MonitorPlay,
+  ChevronDown,
 } from "lucide-react";
+import {
+  FaInstagram,
+  FaFacebook,
+  FaLinkedin,
+  FaXTwitter,
+  FaTiktok,
+} from "react-icons/fa6";
+import type { IconType } from "react-icons";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/app/empty-state";
@@ -61,6 +74,16 @@ const PLATFORM_LABELS: Record<string, string> = {
   tiktok: "TT",
 };
 
+// Real brand-colored icons instead of monochrome "IG"/"LI" text, so the
+// calendar reads as visually distinct per platform at a glance.
+const PLATFORM_META: Record<string, { Icon: IconType; color: string; label: string }> = {
+  instagram: { Icon: FaInstagram, color: "#E4405F", label: "Instagram" },
+  facebook: { Icon: FaFacebook, color: "#1877F2", label: "Facebook" },
+  linkedin: { Icon: FaLinkedin, color: "#0A66C2", label: "LinkedIn" },
+  x: { Icon: FaXTwitter, color: "#E7E9EA", label: "X" },
+  tiktok: { Icon: FaTiktok, color: "#25F4EE", label: "TikTok" },
+};
+
 const STATUS_LABELS: Record<string, string> = {
   draft: "Draft",
   approved: "Approved",
@@ -68,6 +91,48 @@ const STATUS_LABELS: Record<string, string> = {
   posted: "Posted",
   skipped: "Skipped",
 };
+
+// Distinct color per status instead of one muted pill style for everything.
+const STATUS_STYLES: Record<string, { bg: string; text: string; border: string }> = {
+  draft: { bg: "bg-slate-500/10", text: "text-slate-300", border: "border-slate-500/40" },
+  approved: { bg: "bg-emerald-500/10", text: "text-emerald-400", border: "border-emerald-500/40" },
+  generated: { bg: "bg-sky-500/10", text: "text-sky-400", border: "border-sky-500/40" },
+  posted: { bg: "bg-violet-500/10", text: "text-violet-400", border: "border-violet-500/40" },
+  skipped: { bg: "bg-red-500/10", text: "text-red-400", border: "border-red-500/40" },
+  coming_soon: { bg: "bg-amber-500/10", text: "text-amber-400", border: "border-amber-500/40" },
+};
+
+function statusStyle(slot: { status: string; coming_soon: boolean }) {
+  return slot.coming_soon
+    ? STATUS_STYLES.coming_soon
+    : STATUS_STYLES[slot.status] ?? STATUS_STYLES.draft;
+}
+
+// Small format-specific icon + label so a user scanning the week can tell
+// content types apart without reading every card's text.
+const FORMAT_META: Record<string, { Icon: typeof ImageIcon; label: string }> = {
+  static_image: { Icon: ImageIcon, label: "Image" },
+  carousel: { Icon: Images, label: "Carousel" },
+  reel: { Icon: Video, label: "Reel" },
+  short_video: { Icon: Video, label: "Video" },
+  video: { Icon: Video, label: "Video" },
+  story: { Icon: MonitorPlay, label: "Story" },
+  text_post: { Icon: FileText, label: "Text" },
+  article: { Icon: FileText, label: "Article" },
+  thread: { Icon: FileText, label: "Thread" },
+  poll: { Icon: BarChart3, label: "Poll" },
+};
+
+function formatMeta(formatType: string) {
+  return (
+    FORMAT_META[formatType] ?? {
+      Icon: ImageIcon,
+      label: formatType.replace(/_/g, " "),
+    }
+  );
+}
+
+const DAYS_PER_PAGE = 7;
 
 function monthBounds(year: number, month: number) {
   const start = `${year}-${String(month).padStart(2, "0")}-01`;
@@ -99,7 +164,7 @@ export function ContentCalendar({
   const [slots, setSlots] = useState<SlotWithPillar[]>(initialSlots);
   const [month, setMonth] = useState(initialMonth);
   const [year, setYear] = useState(initialYear);
-  const [view, setView] = useState<"month" | "list">("month");
+  const [visibleDayCount, setVisibleDayCount] = useState(DAYS_PER_PAGE);
   const [platformFilter, setPlatformFilter] = useState<string>("all");
   const [pillarFilter, setPillarFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -120,6 +185,7 @@ export function ContentCalendar({
   const [seriesPlatform, setSeriesPlatform] = useState("instagram");
   const [lastSeriesIds, setLastSeriesIds] = useState<string[]>([]);
   const [lastRepurposeIds, setLastRepurposeIds] = useState<string[]>([]);
+  const [fallbackNotice, setFallbackNotice] = useState<string | null>(null);
 
   const growth = plan === "growth" || plan === "premium";
   const monthName = formatMonthLabel(year, month);
@@ -167,7 +233,9 @@ export function ContentCalendar({
     });
   }
 
-  const slotsByDate = useMemo(() => {
+  // Chronological, day-grouped list — only days that actually have
+  // scheduled content are rendered, no empty grid cells.
+  const dayGroups = useMemo(() => {
     const map = new Map<string, SlotWithPillar[]>();
     for (const s of filtered) {
       const key = s.scheduled_date;
@@ -175,8 +243,25 @@ export function ContentCalendar({
       list.push(s);
       map.set(key, list);
     }
-    return map;
+    return Array.from(map.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, daySlots]) => ({
+        date,
+        slots: daySlots.sort((a, b) =>
+          (a.scheduled_time ?? "").localeCompare(b.scheduled_time ?? "")
+        ),
+      }));
   }, [filtered]);
+
+  const visibleDayGroups = dayGroups.slice(0, visibleDayCount);
+  const hasMoreDays = dayGroups.length > visibleDayCount;
+
+  // Collapse back to the first week whenever the filters or the loaded
+  // month change, so switching filters doesn't leave the reader scrolled
+  // deep into a list that just changed shape.
+  useEffect(() => {
+    setVisibleDayCount(DAYS_PER_PAGE);
+  }, [platformFilter, pillarFilter, statusFilter, trendingOnly, month, year]);
 
   async function loadMonth(nextMonth: number, nextYear: number) {
     setBusy(true);
@@ -215,6 +300,8 @@ export function ContentCalendar({
         slots: SlotWithPillar[];
         slots_created: number;
         message?: string;
+        usedFallback?: boolean;
+        reason?: string;
       }>("/api/content/calendar/generate-month", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -226,11 +313,23 @@ export function ContentCalendar({
           return [...prev, ...data.slots.filter((s) => !ids.has(s.id))];
         });
       }
-      toast.success(
-        data.slots_created
-          ? `Added ${data.slots_created} posts to ${monthName}`
-          : data.message ?? "Calendar ready"
-      );
+
+      if (data.usedFallback) {
+        // Never let this look like a normal success — the slots that just
+        // landed are hardcoded starter content, not real AI output.
+        setFallbackNotice(
+          data.reason ??
+            "We couldn't reach the AI right now, so starter content was created instead."
+        );
+        toast.error("AI generation unavailable — starter content created instead");
+      } else {
+        setFallbackNotice(null);
+        toast.success(
+          data.slots_created
+            ? `Added ${data.slots_created} posts to ${monthName}`
+            : data.message ?? "Calendar ready"
+        );
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not generate calendar");
     } finally {
@@ -266,6 +365,10 @@ export function ContentCalendar({
       setActive(data.slot);
       toast.success("Brief regenerated");
     } catch (e) {
+      // safeFetchJSON surfaces the API's { error, detail } body — show the
+      // real diagnostic (e.g. "status=404 model not found") instead of the
+      // same opaque message for every failure, so a user/support agent can
+      // tell "AI unavailable" apart from a genuine bug report.
       toast.error(e instanceof Error ? e.message : "Could not regenerate");
     } finally {
       setBusy(false);
@@ -380,21 +483,22 @@ export function ContentCalendar({
   async function generateContent(slot: SlotWithPillar) {
     setBusy(true);
     try {
-      const output = await safeFetchJSON<{ id: string }>(
-        "/api/content/generate",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            platform: slot.platform,
-            formatType: slot.format_type,
-            topic: slot.topic,
-            hook: slot.hook ?? "",
-            brief: slot.brief ?? "",
-            calendarSlotId: slot.id,
-          }),
-        }
-      );
+      const output = await safeFetchJSON<{
+        id: string;
+        status?: "ready" | "partial";
+        warnings?: string[];
+      }>("/api/content/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          platform: slot.platform,
+          formatType: slot.format_type,
+          topic: slot.topic,
+          hook: slot.hook ?? "",
+          brief: slot.brief ?? "",
+          calendarSlotId: slot.id,
+        }),
+      });
       const updated = {
         ...slot,
         status: "generated" as ContentStatus,
@@ -405,7 +509,16 @@ export function ContentCalendar({
         setActive(updated);
       }
       setContentRefreshKey((k) => k + 1);
-      toast.success("Content generated");
+
+      // These warnings (image safety fallback, script partially generated,
+      // caption needs review, etc.) were previously collected server-side
+      // but never surfaced — a "partial" result looked identical to a full
+      // success. Show each one explicitly instead of a blanket "success".
+      if (output.warnings && output.warnings.length > 0) {
+        output.warnings.forEach((w) => toast.warning(w));
+      } else {
+        toast.success("Content generated");
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not generate content");
     } finally {
@@ -437,16 +550,6 @@ export function ContentCalendar({
       </div>
     );
   }
-
-  const { lastDay } = monthBounds(year, month);
-  const firstWeekday = new Date(year, month - 1, 1).getDay(); // 0 Sun
-  // Start week on Monday
-  const startOffset = (firstWeekday + 6) % 7;
-  const cells: Array<{ day: number | null }> = [
-    ...Array.from({ length: startOffset }, () => ({ day: null })),
-    ...Array.from({ length: lastDay }, (_, i) => ({ day: i + 1 })),
-  ];
-  while (cells.length % 7 !== 0) cells.push({ day: null });
 
   const platformsInUse = Array.from(new Set(slots.map((s) => s.platform)));
 
@@ -481,28 +584,40 @@ export function ContentCalendar({
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <div className="ml-2 flex rounded-md border border-[var(--zuri-border)]">
+        </div>
+      </header>
+
+      {fallbackNotice && (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3">
+          <div className="flex items-start gap-2">
+            <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+            <p className="text-sm text-[var(--zuri-foreground)]">{fallbackNotice}</p>
+          </div>
+          <div className="flex items-center gap-2">
             <Button
-              variant="ghost"
-              size="icon"
-              className={cn(view === "month" && "bg-[var(--zuri-surface)]")}
-              onClick={() => setView("month")}
-              aria-label="Month view"
+              size="sm"
+              variant="outline"
+              onClick={generateMonth}
+              disabled={generating}
             >
-              <LayoutGrid className="h-4 w-4" />
+              {generating ? (
+                <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <RefreshCw className="mr-1 h-3.5 w-3.5" />
+              )}
+              Retry Generation
             </Button>
             <Button
+              size="sm"
               variant="ghost"
-              size="icon"
-              className={cn(view === "list" && "bg-[var(--zuri-surface)]")}
-              onClick={() => setView("list")}
-              aria-label="List view"
+              onClick={() => setFallbackNotice(null)}
+              aria-label="Dismiss"
             >
-              <List className="h-4 w-4" />
+              <X className="h-3.5 w-3.5" />
             </Button>
           </div>
         </div>
-      </header>
+      )}
 
       <RatingsSummaryCard />
 
@@ -628,81 +743,62 @@ export function ContentCalendar({
         </div>
       )}
 
-      {filtered.length > 0 && view === "month" && (
-        <div className="overflow-x-auto rounded-lg border border-[var(--zuri-border)]">
-          <div className="grid min-w-[700px] grid-cols-7 border-b border-[var(--zuri-border)] bg-[var(--zuri-surface)] text-center text-xs font-medium text-[var(--zuri-muted)]">
-            {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
-              <div key={d} className="px-2 py-2">
-                {d}
-              </div>
-            ))}
-          </div>
-          <div className="grid min-w-[700px] grid-cols-7">
-            {cells.map((cell, idx) => {
-              if (cell.day == null) {
-                return (
-                  <div
-                    key={`e-${idx}`}
-                    className="min-h-[110px] border-b border-r border-[var(--zuri-border)] bg-[var(--zuri-bg)]/40"
-                  />
-                );
-              }
-              const dateKey = `${year}-${String(month).padStart(2, "0")}-${String(cell.day).padStart(2, "0")}`;
-              const daySlots = slotsByDate.get(dateKey) ?? [];
-              const cultural = culturalByDay.get(cell.day);
-              return (
-                <div
-                  key={dateKey}
-                  className="min-h-[110px] border-b border-r border-[var(--zuri-border)] p-1.5"
-                >
-                  <div className="mb-1 flex items-center justify-between px-0.5">
-                    <span className="text-xs font-medium text-[var(--zuri-muted)]">
-                      {cell.day}
+      {filtered.length > 0 && (
+        <div className="space-y-5">
+          {visibleDayGroups.map(({ date, slots: daySlots }) => {
+            const dayNum = Number(date.slice(8, 10));
+            const cultural = culturalByDay.get(dayNum);
+            const dateLabel = new Date(date + "T00:00:00").toLocaleDateString(
+              "en-NG",
+              { weekday: "long", day: "numeric", month: "long" }
+            );
+            return (
+              <div key={date}>
+                <div className="mb-2 flex items-center gap-2 border-b border-[var(--zuri-border)] pb-1.5">
+                  <h3 className="text-sm font-semibold text-[var(--zuri-foreground)]">
+                    {dateLabel}
+                  </h3>
+                  {cultural && (
+                    <span
+                      title={cultural}
+                      className="inline-flex items-center gap-1 text-[10px] font-medium text-[#C9A84C]"
+                    >
+                      <Diamond className="h-3 w-3 fill-current" />
+                      {cultural}
                     </span>
-                    {cultural && (
-                      <span title={cultural} className="text-[#C9A84C]">
-                        <Diamond className="h-3 w-3 fill-current" />
-                      </span>
-                    )}
-                  </div>
-                  <div className="space-y-1">
-                    {daySlots.slice(0, 3).map((slot) => (
-                      <SlotCard
-                        key={slot.id}
-                        slot={slot}
-                        compact
-                        selected={selectedIds.has(slot.id)}
-                        onToggleSelect={(e) => toggleSelect(slot.id, e)}
-                        onClick={() => openSlot(slot)}
-                      />
-                    ))}
-                    {daySlots.length > 3 && (
-                      <p className="px-1 text-[10px] text-[var(--zuri-muted)]">
-                        +{daySlots.length - 3} more
-                      </p>
-                    )}
-                  </div>
+                  )}
+                  <span className="ml-auto text-xs text-[var(--zuri-muted)]">
+                    {daySlots.length} {daySlots.length === 1 ? "post" : "posts"}
+                  </span>
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {daySlots.map((slot) => (
+                    <SlotCard
+                      key={slot.id}
+                      slot={slot}
+                      selected={selectedIds.has(slot.id)}
+                      onToggleSelect={(e) => toggleSelect(slot.id, e)}
+                      onClick={() => openSlot(slot)}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
 
-      {filtered.length > 0 && view === "list" && (
-        <div className="space-y-2">
-          {filtered
-            .slice()
-            .sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date))
-            .map((slot) => (
-              <SlotCard
-                key={slot.id}
-                slot={slot}
-                selected={selectedIds.has(slot.id)}
-                onToggleSelect={(e) => toggleSelect(slot.id, e)}
-                onClick={() => openSlot(slot)}
-              />
-            ))}
+          {hasMoreDays && (
+            <div className="flex justify-center pt-2">
+              <Button
+                variant="outline"
+                onClick={() =>
+                  setVisibleDayCount((n) => n + DAYS_PER_PAGE)
+                }
+              >
+                <ChevronDown className="mr-2 h-4 w-4" />
+                Load more days
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
@@ -736,10 +832,26 @@ export function ContentCalendar({
       {active && (
         <div className="fixed inset-0 z-50 flex justify-end bg-black/40">
           <div className="flex h-full w-full max-w-md flex-col border-l border-[var(--zuri-border)] bg-[var(--zuri-bg)] shadow-xl">
-            <div className="flex items-center justify-between border-b border-[var(--zuri-border)] px-4 py-3">
+            <div
+              className="flex items-center justify-between border-b border-[var(--zuri-border)] px-4 py-3"
+              style={{
+                boxShadow: `inset 3px 0 0 0 ${active.content_pillars?.color ?? "#C9A84C"}`,
+              }}
+            >
               <div>
-                <p className="text-xs uppercase tracking-wide text-[var(--zuri-muted)]">
-                  {PLATFORM_LABELS[active.platform] ?? active.platform} ·{" "}
+                <p className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-[var(--zuri-muted)]">
+                  {(() => {
+                    const platformMeta = PLATFORM_META[active.platform];
+                    if (!platformMeta) return null;
+                    const PlatformIcon = platformMeta.Icon;
+                    return (
+                      <PlatformIcon
+                        className="h-3.5 w-3.5"
+                        style={{ color: platformMeta.color }}
+                      />
+                    );
+                  })()}
+                  {formatMeta(active.format_type).label} ·{" "}
                   {active.format_type.replace(/_/g, " ")}
                 </p>
                 <p className="text-sm font-medium">
@@ -763,11 +875,18 @@ export function ContentCalendar({
 
             <div className="flex-1 space-y-4 overflow-y-auto p-4">
               <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="outline">
+                <span
+                  className={cn(
+                    "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium",
+                    statusStyle(active).bg,
+                    statusStyle(active).text,
+                    statusStyle(active).border
+                  )}
+                >
                   {active.coming_soon
                     ? "Coming Soon"
                     : STATUS_LABELS[active.status] ?? active.status}
-                </Badge>
+                </span>
                 {active.content_pillars && (
                   <span className="inline-flex items-center gap-1.5 text-xs text-[var(--zuri-muted)]">
                     <span
@@ -781,6 +900,11 @@ export function ContentCalendar({
                 )}
                 {active.needs_review && (
                   <Badge variant="outline">Needs review</Badge>
+                )}
+                {active.generation_source === "fallback" && (
+                  <Badge className="border-amber-500 text-amber-500" variant="outline">
+                    Starter content — not AI generated
+                  </Badge>
                 )}
                 {active.is_cultural_moment && (
                   <Badge variant="muted">
@@ -1062,34 +1186,37 @@ function FilterChip({
 function SlotCard({
   slot,
   onClick,
-  compact,
   selected,
   onToggleSelect,
 }: {
   slot: SlotWithPillar;
   onClick: () => void;
-  compact?: boolean;
   selected?: boolean;
   onToggleSelect?: (e: React.MouseEvent) => void;
 }) {
-  const color = slot.content_pillars?.color ?? "#C9A84C";
+  const pillarColor = slot.content_pillars?.color ?? "#C9A84C";
   const trendTip = slot.trend_source
     ? `${slot.trend_source.topic} — ${slot.trend_source.angle}`
     : undefined;
+  const platform = PLATFORM_META[slot.platform];
+  const format = formatMeta(slot.format_type);
+  const status = statusStyle(slot);
 
   return (
     <div
       className={cn(
-        "relative w-full rounded-md border bg-[var(--zuri-surface)] text-left transition hover:border-[var(--zuri-gold)]/50",
-        selected
-          ? "border-[var(--zuri-gold)]"
-          : "border-[var(--zuri-border)]",
-        compact ? "px-1.5 py-1" : "px-3 py-2.5"
+        "relative w-full overflow-hidden rounded-lg border bg-[var(--zuri-surface)] text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md",
+        selected ? "border-[var(--zuri-gold)]" : "border-[var(--zuri-border)]"
       )}
+      style={{
+        // Pillar-color left accent stripe — a genuine visual hierarchy cue
+        // per content pillar, not a generic gold dot regardless of pillar.
+        boxShadow: `inset 3px 0 0 0 ${pillarColor}`,
+      }}
     >
       {onToggleSelect && (
         <label
-          className="absolute left-1 top-1 z-10"
+          className="absolute right-1.5 top-1.5 z-10"
           onClick={(e) => e.stopPropagation()}
         >
           <input
@@ -1103,62 +1230,64 @@ function SlotCard({
           />
         </label>
       )}
-      <button
-        type="button"
-        onClick={onClick}
-        className={cn("w-full text-left", onToggleSelect && "pl-4")}
-      >
-        <div className="flex items-start gap-1.5">
-          <span
-            className="mt-1 inline-block h-1.5 w-1.5 shrink-0 rounded-full"
-            style={{ background: color }}
-          />
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-1">
-              <span className="text-[10px] font-semibold uppercase text-[var(--zuri-muted)]">
-                {PLATFORM_LABELS[slot.platform] ?? slot.platform}
-              </span>
-              {!compact && (
-                <span className="text-[10px] text-[var(--zuri-muted)]">
-                  · {slot.format_type.replace(/_/g, " ")}
-                </span>
-              )}
-              {slot.trend_source && (
-                <span
-                  title={trendTip}
-                  className="inline-flex items-center gap-0.5 rounded-full border border-[#C9A84C] px-1.5 py-0 text-[9px] font-medium text-[#C9A84C]"
-                >
-                  <TrendingUp className="h-2.5 w-2.5" />
-                  Trending
-                </span>
-              )}
-              {slot.coming_soon ? (
-                <Badge className="ml-auto h-4 px-1 text-[9px]" variant="muted">
-                  Soon
-                </Badge>
-              ) : (
-                <Badge className="ml-auto h-4 px-1 text-[9px]" variant="outline">
-                  {STATUS_LABELS[slot.status] ?? slot.status}
-                </Badge>
-              )}
-            </div>
-            <p
-              className={cn(
-                "truncate text-[var(--zuri-foreground)]",
-                compact ? "text-[11px] leading-tight" : "text-sm"
-              )}
+      <button type="button" onClick={onClick} className="w-full px-3 py-2.5 text-left">
+        <div className="flex items-center gap-1.5">
+          {platform && (
+            <platform.Icon
+              className="h-3.5 w-3.5 shrink-0"
+              style={{ color: platform.color }}
+              aria-label={platform.label}
+            />
+          )}
+          <span className="inline-flex items-center gap-1 text-[10px] text-[var(--zuri-muted)]">
+            <format.Icon className="h-3 w-3" />
+            {format.label}
+          </span>
+          {slot.content_pillars?.name && (
+            <span
+              className="truncate text-[10px] font-medium"
+              style={{ color: pillarColor }}
             >
-              {slot.topic}
-            </p>
-            {!compact && (
-              <p className="mt-0.5 text-xs text-[var(--zuri-muted)]">
-                {new Date(slot.scheduled_date).toLocaleDateString("en-NG", {
-                  day: "numeric",
-                  month: "short",
-                })}
-              </p>
+              {slot.content_pillars.name}
+            </span>
+          )}
+          <span
+            className={cn(
+              "ml-auto shrink-0 rounded-full border px-1.5 py-0 text-[9px] font-medium",
+              status.bg,
+              status.text,
+              status.border
             )}
-          </div>
+          >
+            {slot.coming_soon ? "Coming Soon" : STATUS_LABELS[slot.status] ?? slot.status}
+          </span>
+        </div>
+
+        <p className="mt-1.5 truncate text-sm font-medium text-[var(--zuri-foreground)]">
+          {slot.topic}
+        </p>
+
+        <div className="mt-1.5 flex flex-wrap items-center gap-1">
+          <span className="text-xs text-[var(--zuri-muted)]">
+            {slot.scheduled_time ? slot.scheduled_time.slice(0, 5) : ""}
+          </span>
+          {slot.trend_source && (
+            <span
+              title={trendTip}
+              className="inline-flex items-center gap-0.5 rounded-full border border-[#C9A84C] px-1.5 py-0 text-[9px] font-medium text-[#C9A84C]"
+            >
+              <TrendingUp className="h-2.5 w-2.5" />
+              Trending
+            </span>
+          )}
+          {slot.generation_source === "fallback" && (
+            <span
+              title="AI generation failed for this post — this is starter template content, not real AI output."
+              className="inline-flex items-center gap-0.5 rounded-full border border-amber-500 px-1.5 py-0 text-[9px] font-medium text-amber-500"
+            >
+              Starter content
+            </span>
+          )}
         </div>
       </button>
     </div>

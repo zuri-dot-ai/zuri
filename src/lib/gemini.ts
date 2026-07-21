@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { ApiError, GoogleGenAI } from "@google/genai";
 import * as fs from "fs";
 import * as path from "path";
 import { handleGeminiError } from "@/lib/errors/gemini-errors";
@@ -124,17 +124,65 @@ export async function geminiGenerate(
   } = opts;
 
   const ai = getAI();
-  const response = await ai.models.generateContent({
-    model,
-    contents: prompt,
-    config: {
-      temperature,
-      systemInstruction: system,
-      ...(json ? { responseMimeType: "application/json" } : {}),
-    },
-  });
 
-  return response.text ?? "";
+  let response;
+  try {
+    response = await ai.models.generateContent({
+      model,
+      contents: prompt,
+      config: {
+        temperature,
+        systemInstruction: system,
+        ...(json ? { responseMimeType: "application/json" } : {}),
+      },
+    });
+  } catch (err) {
+    throw new Error(describeGeminiError(err, model));
+  }
+
+  const candidate = response.candidates?.[0];
+  const finishReason = candidate?.finishReason;
+
+  // A safety block or other non-STOP finish can return candidates: [] or a
+  // candidate with no text parts — this must not look like an empty-but-ok
+  // response, or callers silently proceed with "".
+  if (
+    finishReason &&
+    finishReason !== "STOP" &&
+    finishReason !== "MAX_TOKENS"
+  ) {
+    throw new Error(
+      `Gemini generateContent (model=${model}) returned no usable content — finishReason=${finishReason}. ` +
+        `promptFeedback=${JSON.stringify(response.promptFeedback ?? {}).slice(0, 300)}`
+    );
+  }
+
+  const text = response.text ?? "";
+  if (!text && (!response.candidates || response.candidates.length === 0)) {
+    throw new Error(
+      `Gemini generateContent (model=${model}) returned zero candidates. ` +
+        `promptFeedback=${JSON.stringify(response.promptFeedback ?? {}).slice(0, 300)}`
+    );
+  }
+
+  return text;
+}
+
+/**
+ * Turn an SDK/fetch error into a message that always carries the real
+ * status code + a truncated response body — never a bare generic message.
+ * This is what makes model deprecations (404), quota exhaustion (429), and
+ * malformed-request errors (400) distinguishable from Vercel function logs
+ * alone, without needing to reproduce the failure locally.
+ */
+function describeGeminiError(err: unknown, model: string): string {
+  if (err instanceof ApiError) {
+    return `Gemini API error (model=${model}, status=${err.status}): ${err.message.slice(0, 500)}`;
+  }
+  if (err instanceof Error) {
+    return `Gemini call failed (model=${model}): ${err.message.slice(0, 500)}`;
+  }
+  return `Gemini call failed (model=${model}): ${String(err).slice(0, 500)}`;
 }
 
 export async function geminiJSON<T>(

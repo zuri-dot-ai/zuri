@@ -79,7 +79,7 @@ export async function POST(req: Request) {
       ? requested
       : Math.min(requested, quota.remaining);
 
-  const slots = await generateMonthlyCalendar({
+  const { slots, usedFallback, reason } = await generateMonthlyCalendar({
     userId: auth.user.id,
     month,
     year,
@@ -88,6 +88,12 @@ export async function POST(req: Request) {
     platforms: activePlatforms,
     postsPerMonth: effectivePosts,
   });
+
+  if (usedFallback) {
+    console.error(
+      `[generate-month] AI generation failed for userId=${auth.user.id} month=${month}/${year} — starter/template content was created instead. reason=${reason}`
+    );
+  }
 
   if (slots.length > 0) {
     const { data: inserted, error } = await auth.supabase
@@ -109,6 +115,8 @@ export async function POST(req: Request) {
       success: true,
       slots: inserted ?? [],
       slots_created: inserted?.length ?? 0,
+      usedFallback,
+      ...(usedFallback ? { reason } : {}),
     });
   }
 
@@ -118,5 +126,7 @@ export async function POST(req: Request) {
     slots_created: 0,
     message:
       "No remaining days in this month to schedule. Try next month.",
+    usedFallback,
+    ...(usedFallback ? { reason } : {}),
   });
 }

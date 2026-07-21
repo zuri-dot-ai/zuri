@@ -129,6 +129,7 @@ export interface ContentCalendarRow {
   repurposed_from: string | null;
   needs_review?: boolean;
   trend_source?: TrendSource | null;
+  generation_source?: "ai" | "fallback";
   created_at: string;
   updated_at?: string;
 }

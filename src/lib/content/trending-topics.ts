@@ -26,7 +26,10 @@ export async function getTrendingTopics(
     await cacheTrends(industry, topics);
     return topics;
   } catch (err) {
-    console.error("Trending topics fetch failed:", err);
+    console.error(
+      `[getTrendingTopics] falling back to hardcoded topics for industry="${industry}":`,
+      err
+    );
     return getFallbackTopics(industry);
   }
 }
@@ -40,7 +43,7 @@ export async function fetchTrendingWithGemini(
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY missing");
 
-  const model = FLASH || "gemini-2.0-flash";
+  const model = FLASH || "gemini-flash-latest";
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
     {
@@ -75,7 +78,10 @@ No markdown, no explanation.`,
   );
 
   if (!response.ok) {
-    throw new Error(`Gemini trending fetch failed: ${response.status}`);
+    const errBody = await response.text();
+    throw new Error(
+      `Gemini trending fetch failed: ${response.status} ${errBody.slice(0, 500)}`
+    );
   }
 
   const data = await response.json();

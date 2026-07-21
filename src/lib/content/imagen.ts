@@ -22,8 +22,15 @@ export async function generateImage(
     throw new Error("GEMINI_API_KEY is missing");
   }
 
+  // imagen-3.0-generate-001 was retired ("no longer available to new users").
+  // imagen-4.0-generate-001 is the current model ID as of 2026-07-21, though
+  // note: on a free-tier Gemini API key this endpoint currently has zero
+  // image-generation quota (confirmed via live 429 "limit: 0" response) —
+  // callers must treat that as an expected failure mode, not a bug, and the
+  // warning strings below already handle it as "temporarily unavailable".
+  const model = process.env.GEMINI_IMAGEN_MODEL?.trim() || "imagen-4.0-generate-001";
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:predict?key=${apiKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
