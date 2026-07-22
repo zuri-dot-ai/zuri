@@ -4,6 +4,7 @@ import { EmptyState } from "@/components/app/empty-state";
 import { WebsiteStudio } from "@/components/app/website-studio";
 import { getActivePlanId } from "@/lib/payments/get-plan";
 import { normalizeFilledImages } from "@/lib/website/recompose-html";
+import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
 import type { ActiveTheme, DesignArchetype } from "@/types/website";
 
 export default async function WebsitePage() {
@@ -57,20 +58,22 @@ export default async function WebsitePage() {
   const htmlHasPicsum = /picsum\.photos/i.test(website.template_html ?? "");
 
   return (
-    <WebsiteStudio
-      websiteId={website.id}
-      filledPlaceholders={
-        (website.filled_placeholders as Record<string, string>) ?? {}
-      }
-      filledImages={normalizeFilledImages(website.filled_images)}
-      imageSlots={imageSlots}
-      activeTheme={(website.active_theme as ActiveTheme) ?? "theme-1"}
-      archetype={(website.archetype as DesignArchetype | null) ?? null}
-      isPublished={isPublished}
-      slug={slug}
-      handle={(website.handle as string | null) ?? slug}
-      plan={planId}
-      needsReview={Boolean(website.needs_review) || htmlHasPicsum}
-    />
+    <ErrorBoundary context="website-builder">
+      <WebsiteStudio
+        websiteId={website.id}
+        filledPlaceholders={
+          (website.filled_placeholders as Record<string, string>) ?? {}
+        }
+        filledImages={normalizeFilledImages(website.filled_images)}
+        imageSlots={imageSlots}
+        activeTheme={(website.active_theme as ActiveTheme) ?? "theme-1"}
+        archetype={(website.archetype as DesignArchetype | null) ?? null}
+        isPublished={isPublished}
+        slug={slug}
+        handle={(website.handle as string | null) ?? slug}
+        plan={planId}
+        needsReview={Boolean(website.needs_review) || htmlHasPicsum}
+      />
+    </ErrorBoundary>
   );
 }

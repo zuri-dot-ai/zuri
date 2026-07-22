@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { createPaymentPlan } from "@/lib/flutterwave";
 import { PLAN_CONFIG } from "@/lib/payments/plans";
+import { generateSupportRef } from "@/lib/errors/support-ref";
+import { captureError } from "@/lib/monitoring/sentry";
+import { ERROR_MESSAGES } from "@/lib/errors/messages";
 
 // Protect with admin secret
 export async function POST(request: Request) {
@@ -57,6 +60,11 @@ export async function POST(request: Request) {
       FLW_PLAN_PREMIUM_ANNUAL: pra?.data?.id,
     });
   } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+    const ref = generateSupportRef();
+    captureError(err, { supportRef: ref, route: "/api/billing/create-plans" });
+    return NextResponse.json(
+      { error: ERROR_MESSAGES.SERVER_ERROR, support_ref: ref },
+      { status: 500 }
+    );
   }
 }

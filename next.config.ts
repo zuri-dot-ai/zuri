@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 /** Non-CSP headers — safe for user-site HTML (/preview, /sites). */
 const baseSecurityHeaders = [
@@ -132,4 +133,15 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Only wrap with the Sentry build plugin (source map upload, etc.) when a
+// DSN is actually configured — keeps local dev / competition builds free of
+// any Sentry auth requirement when no account is set up yet.
+export default process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN
+  ? withSentryConfig(nextConfig, {
+      silent: true,
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
+      disableLogger: true,
+      widenClientFileUpload: false,
+    })
+  : nextConfig;

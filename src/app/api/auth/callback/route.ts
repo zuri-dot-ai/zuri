@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { safeNextPath } from "@/lib/auth/redirect";
+import { generateSupportRef } from "@/lib/errors/support-ref";
+import { captureError } from "@/lib/monitoring/sentry";
 
 /**
  * Public: Supabase OAuth / email-confirm callback.
@@ -54,54 +56,60 @@ export async function GET(request: Request) {
     }
   );
 
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
-  if (error) {
+  try {
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (error) {
+      return NextResponse.redirect(`${origin}/login?error=auth`);
+    }
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    let dest = next;
+    if (user) {
+      const meta = user.user_metadata as Record<string, unknown> | undefined;
+      const metaAvatar =
+        (typeof meta?.avatar_url === "string" && meta.avatar_url) ||
+        (typeof meta?.picture === "string" && meta.picture) ||
+        null;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("onboarding_completed, terms_accepted_at, avatar_url")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      const profilePatch: Record<string, string> = {};
+      if (!profile?.terms_accepted_at) {
+        profilePatch.terms_accepted_at = new Date().toISOString();
+        profilePatch.terms_version = "1.0";
+      }
+      if (!profile?.avatar_url && metaAvatar) {
+        profilePatch.avatar_url = metaAvatar;
+      }
+      if (Object.keys(profilePatch).length > 0) {
+        await supabase.from("profiles").update(profilePatch).eq("id", user.id);
+      }
+
+      dest = profile?.onboarding_completed ? next : "/onboarding";
+    }
+
+    const forwardedHost = request.headers.get("x-forwarded-host");
+    const isLocalEnv = process.env.NODE_ENV === "development";
+    const redirectUrl =
+      !isLocalEnv && forwardedHost
+        ? `https://${forwardedHost}${dest}`
+        : `${origin}${dest}`;
+
+    const response = NextResponse.redirect(redirectUrl);
+    pendingCookies.forEach(({ name, value, options }) => {
+      response.cookies.set(name, value, options);
+    });
+    return response;
+  } catch (err) {
+    const ref = generateSupportRef();
+    captureError(err, { supportRef: ref, route: "/api/auth/callback" });
     return NextResponse.redirect(`${origin}/login?error=auth`);
   }
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  let dest = next;
-  if (user) {
-    const meta = user.user_metadata as Record<string, unknown> | undefined;
-    const metaAvatar =
-      (typeof meta?.avatar_url === "string" && meta.avatar_url) ||
-      (typeof meta?.picture === "string" && meta.picture) ||
-      null;
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("onboarding_completed, terms_accepted_at, avatar_url")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    const profilePatch: Record<string, string> = {};
-    if (!profile?.terms_accepted_at) {
-      profilePatch.terms_accepted_at = new Date().toISOString();
-      profilePatch.terms_version = "1.0";
-    }
-    if (!profile?.avatar_url && metaAvatar) {
-      profilePatch.avatar_url = metaAvatar;
-    }
-    if (Object.keys(profilePatch).length > 0) {
-      await supabase.from("profiles").update(profilePatch).eq("id", user.id);
-    }
-
-    dest = profile?.onboarding_completed ? next : "/onboarding";
-  }
-
-  const forwardedHost = request.headers.get("x-forwarded-host");
-  const isLocalEnv = process.env.NODE_ENV === "development";
-  const redirectUrl =
-    !isLocalEnv && forwardedHost
-      ? `https://${forwardedHost}${dest}`
-      : `${origin}${dest}`;
-
-  const response = NextResponse.redirect(redirectUrl);
-  pendingCookies.forEach(({ name, value, options }) => {
-    response.cookies.set(name, value, options);
-  });
-  return response;
 }

@@ -5,7 +5,12 @@
 
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { requireAuth } from "@/lib/auth/require-auth";
+import { checkRateLimit, rateLimitExceededResponse } from "@/lib/security/rate-limit";
 import { checkFeatureAccess } from "@/lib/payments/feature-gate";
+import { ERROR_MESSAGES } from "@/lib/errors/messages";
+import { generateSupportRef } from "@/lib/errors/support-ref";
+import { captureError } from "@/lib/monitoring/sentry";
 
 interface DnsInstruction {
   type: "A" | "CNAME";
@@ -56,13 +61,13 @@ function buildDnsInstructions(domain: string): DnsInstruction[] {
 }
 
 export async function POST(req: Request) {
+  const { user, error: authError } = await requireAuth();
+  if (authError) return authError;
+
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+
+  const rateLimit = await checkRateLimit(supabase, user.id, "website:custom_domain_add");
+  if (!rateLimit.allowed) return rateLimitExceededResponse(rateLimit.resetIn);
 
   const gate = await checkFeatureAccess(supabase, user.id, "custom_domain");
   if (!gate.allowed) {
@@ -92,162 +97,183 @@ export async function POST(req: Request) {
   const domainPattern = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z]{2,})+$/;
   if (!domainPattern.test(domain)) {
     return NextResponse.json(
-      {
-        error:
-          "Invalid domain format. Enter your domain as: example.com or www.example.com",
-      },
+      { error: ERROR_MESSAGES.CUSTOM_DOMAIN_INVALID },
       { status: 400 }
     );
   }
 
   if (domain.endsWith(".zuri.com") || domain === "zuri.com") {
     return NextResponse.json(
-      { error: "You cannot use a zuri.com domain as a custom domain." },
+      { error: ERROR_MESSAGES.CUSTOM_DOMAIN_ZURI },
       { status: 400 }
     );
   }
 
-  const { data: existingWebsite } = await supabase
-    .from("websites")
-    .select("user_id")
-    .eq("custom_domain", domain)
-    .maybeSingle();
+  try {
+    const { data: existingWebsite } = await supabase
+      .from("websites")
+      .select("user_id")
+      .eq("custom_domain", domain)
+      .maybeSingle();
 
-  if (existingWebsite && existingWebsite.user_id !== user.id) {
-    return NextResponse.json(
-      { error: "This domain is already connected to another Zuri site." },
-      { status: 409 }
-    );
-  }
-
-  const { data: website } = await supabase
-    .from("websites")
-    .select("id, status, handle")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (!website) {
-    return NextResponse.json(
-      { error: "No website found. Generate your website first." },
-      { status: 404 }
-    );
-  }
-
-  // ── Add domain to Vercel project ──────────────────────────────────────────
-  const vercelRes = await fetch(
-    `https://api.vercel.com/v9/projects/${process.env.VERCEL_PROJECT_ID}/domains`,
-    {
-      method: "POST",
-      headers: vercelHeaders(),
-      body: JSON.stringify({ name: domain }),
-    }
-  );
-
-  if (!vercelRes.ok) {
-    let errData: { error?: { code?: string } } = {};
-    try {
-      errData = await vercelRes.json();
-    } catch {
-      // ignore parse errors
-    }
-    if (errData.error?.code !== "domain_already_in_use") {
-      console.error("Vercel domain add error:", errData);
+    if (existingWebsite && existingWebsite.user_id !== user.id) {
       return NextResponse.json(
-        {
-          error:
-            "Could not configure your domain. Please try again or contact support.",
-        },
-        { status: 500 }
+        { error: ERROR_MESSAGES.CUSTOM_DOMAIN_TAKEN },
+        { status: 409 }
       );
     }
+
+    const { data: website } = await supabase
+      .from("websites")
+      .select("id, status, handle")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (!website) {
+      return NextResponse.json(
+        { error: ERROR_MESSAGES.WEBSITE_NOT_FOUND },
+        { status: 404 }
+      );
+    }
+
+    // ── Add domain to Vercel project ──────────────────────────────────────────
+    const vercelRes = await fetch(
+      `https://api.vercel.com/v9/projects/${process.env.VERCEL_PROJECT_ID}/domains`,
+      {
+        method: "POST",
+        headers: vercelHeaders(),
+        body: JSON.stringify({ name: domain }),
+      }
+    );
+
+    if (!vercelRes.ok) {
+      let errData: { error?: { code?: string } } = {};
+      try {
+        errData = await vercelRes.json();
+      } catch {
+        // ignore parse errors
+      }
+      if (errData.error?.code !== "domain_already_in_use") {
+        console.error("Vercel domain add error:", errData);
+        return NextResponse.json(
+          {
+            error:
+              "Could not configure your domain. Please try again or contact support.",
+          },
+          { status: 500 }
+        );
+      }
+    }
+
+    // ── Save to DB ───────────────────────────────────────────────────────────
+    await supabase
+      .from("websites")
+      .update({
+        custom_domain: domain,
+        custom_domain_status: "pending_verification",
+        custom_domain_added_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", user.id);
+
+    const dnsInstructions = buildDnsInstructions(domain);
+
+    return NextResponse.json({
+      success: true,
+      domain,
+      status: "pending_verification",
+      dns_instructions: dnsInstructions,
+      estimated_propagation: "Up to 48 hours, usually within a few minutes",
+    });
+  } catch (err) {
+    const ref = generateSupportRef();
+    captureError(err, { supportRef: ref, userId: user?.id, route: "/api/website/custom-domain" });
+    return NextResponse.json(
+      { error: ERROR_MESSAGES.SERVER_ERROR, support_ref: ref },
+      { status: 500 }
+    );
   }
-
-  // ── Save to DB ───────────────────────────────────────────────────────────
-  await supabase
-    .from("websites")
-    .update({
-      custom_domain: domain,
-      custom_domain_status: "pending_verification",
-      custom_domain_added_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .eq("user_id", user.id);
-
-  const dnsInstructions = buildDnsInstructions(domain);
-
-  return NextResponse.json({
-    success: true,
-    domain,
-    status: "pending_verification",
-    dns_instructions: dnsInstructions,
-    estimated_propagation: "Up to 48 hours, usually within a few minutes",
-  });
 }
 
 export async function GET() {
+  const { user, error: authError } = await requireAuth();
+  if (authError) return authError;
+
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  try {
+    const { data: website } = await supabase
+      .from("websites")
+      .select("custom_domain, custom_domain_status, custom_domain_added_at")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (!website?.custom_domain) {
+      return NextResponse.json({ has_custom_domain: false });
+    }
+
+    return NextResponse.json({
+      has_custom_domain: true,
+      domain: website.custom_domain,
+      status: website.custom_domain_status,
+      // status: pending_verification | verified | verification_failed
+      added_at: website.custom_domain_added_at,
+    });
+  } catch (err) {
+    const ref = generateSupportRef();
+    captureError(err, { supportRef: ref, userId: user?.id, route: "/api/website/custom-domain" });
+    return NextResponse.json(
+      { error: ERROR_MESSAGES.SERVER_ERROR, support_ref: ref },
+      { status: 500 }
+    );
   }
-
-  const { data: website } = await supabase
-    .from("websites")
-    .select("custom_domain, custom_domain_status, custom_domain_added_at")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (!website?.custom_domain) {
-    return NextResponse.json({ has_custom_domain: false });
-  }
-
-  return NextResponse.json({
-    has_custom_domain: true,
-    domain: website.custom_domain,
-    status: website.custom_domain_status,
-    // status: pending_verification | verified | verification_failed
-    added_at: website.custom_domain_added_at,
-  });
 }
 
 export async function DELETE() {
+  const { user, error: authError } = await requireAuth();
+  if (authError) return authError;
+
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
 
-  const { data: website } = await supabase
-    .from("websites")
-    .select("custom_domain")
-    .eq("user_id", user.id)
-    .maybeSingle();
+  const rateLimit = await checkRateLimit(supabase, user.id, "api:general");
+  if (!rateLimit.allowed) return rateLimitExceededResponse(rateLimit.resetIn);
 
-  if (!website?.custom_domain) {
-    return NextResponse.json({ error: "No custom domain to remove" }, { status: 404 });
-  }
+  try {
+    const { data: website } = await supabase
+      .from("websites")
+      .select("custom_domain")
+      .eq("user_id", user.id)
+      .maybeSingle();
 
-  await fetch(
-    `https://api.vercel.com/v9/projects/${process.env.VERCEL_PROJECT_ID}/domains/${website.custom_domain}`,
-    {
-      method: "DELETE",
-      headers: vercelHeaders(),
+    if (!website?.custom_domain) {
+      return NextResponse.json({ error: "No custom domain to remove" }, { status: 404 });
     }
-  ).catch((err) => console.error("Vercel domain remove error:", err));
 
-  await supabase
-    .from("websites")
-    .update({
-      custom_domain: null,
-      custom_domain_status: null,
-      custom_domain_added_at: null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("user_id", user.id);
+    await fetch(
+      `https://api.vercel.com/v9/projects/${process.env.VERCEL_PROJECT_ID}/domains/${website.custom_domain}`,
+      {
+        method: "DELETE",
+        headers: vercelHeaders(),
+      }
+    ).catch((err) => console.error("Vercel domain remove error:", err));
 
-  return NextResponse.json({ success: true });
+    await supabase
+      .from("websites")
+      .update({
+        custom_domain: null,
+        custom_domain_status: null,
+        custom_domain_added_at: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", user.id);
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    const ref = generateSupportRef();
+    captureError(err, { supportRef: ref, userId: user?.id, route: "/api/website/custom-domain" });
+    return NextResponse.json(
+      { error: ERROR_MESSAGES.SERVER_ERROR, support_ref: ref },
+      { status: 500 }
+    );
+  }
 }

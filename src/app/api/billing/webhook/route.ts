@@ -3,6 +3,8 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { verifyWebhookSignature, planTierFromFlwId } from "@/lib/flutterwave";
 import { activateSubscription } from "@/lib/payments/activate-subscription";
 import { getResend } from "@/lib/email/resend-client";
+import { generateSupportRef } from "@/lib/errors/support-ref";
+import { captureError } from "@/lib/monitoring/sentry";
 
 export async function POST(request: Request) {
   const signature = request.headers.get("verif-hash");
@@ -167,7 +169,8 @@ export async function POST(request: Request) {
         console.log("[webhook] Unhandled event:", eventType);
     }
   } catch (err) {
-    console.error("[webhook] Handler error:", err);
+    const ref = generateSupportRef();
+    captureError(err, { supportRef: ref, route: "/api/billing/webhook" });
   }
 
   return NextResponse.json({ received: true });

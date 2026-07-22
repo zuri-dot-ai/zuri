@@ -1,15 +1,22 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { requireAuth } from "@/lib/auth/require-auth";
+import { checkRateLimit, rateLimitExceededResponse } from "@/lib/security/rate-limit";
+import { generateSupportRef } from "@/lib/errors/support-ref";
+import { captureError } from "@/lib/monitoring/sentry";
+import { ERROR_MESSAGES } from "@/lib/errors/messages";
 import { initCheckout } from "@/lib/flutterwave";
 import { PRICING } from "@/lib/constants";
 import type { PlanId } from "@/lib/payments/plans";
 
 export async function POST(request: Request) {
+  const { user, error: authError } = await requireAuth();
+  if (authError) return authError;
+
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const rateLimit = await checkRateLimit(supabase, user.id, "api:general");
+  if (!rateLimit.allowed) return rateLimitExceededResponse(rateLimit.resetIn);
 
   const { planId, interval } = (await request.json()) as {
     planId: PlanId;
@@ -56,9 +63,14 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ checkoutUrl: result.data.link });
   } catch (err) {
-    console.error("[billing/checkout]", err);
+    const ref = generateSupportRef();
+    captureError(err, {
+      supportRef: ref,
+      userId: user?.id,
+      route: "/api/billing/checkout",
+    });
     return NextResponse.json(
-      { error: "Could not create checkout. Please try again." },
+      { error: ERROR_MESSAGES.PAYMENT_INITIATION_FAILED, support_ref: ref },
       { status: 500 }
     );
   }

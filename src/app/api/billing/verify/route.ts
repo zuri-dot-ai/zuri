@@ -4,6 +4,8 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { verifyTransaction } from "@/lib/flutterwave";
 import { activateSubscription } from "@/lib/payments/activate-subscription";
 import { isPlanId } from "@/lib/payments/plans";
+import { generateSupportRef } from "@/lib/errors/support-ref";
+import { captureError } from "@/lib/monitoring/sentry";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -62,7 +64,8 @@ export async function GET(request: Request) {
 
     return NextResponse.redirect(`${appUrl}/dashboard?payment=success`);
   } catch (err) {
-    console.error("[billing/verify]", err);
+    const ref = generateSupportRef();
+    captureError(err, { supportRef: ref, route: "/api/billing/verify" });
     return NextResponse.redirect(
       `${appUrl}/settings?tab=billing&payment=error`
     );

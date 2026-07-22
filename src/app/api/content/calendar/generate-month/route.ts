@@ -8,12 +8,25 @@ import {
   requireProCalendar,
 } from "@/lib/content/api-helpers";
 import { PLAN_CONFIG } from "@/lib/payments/plans";
+import { checkRateLimit, rateLimitExceededResponse } from "@/lib/security/rate-limit";
+import { generateSupportRef } from "@/lib/errors/support-ref";
+import { captureError } from "@/lib/monitoring/sentry";
+import { classifySupabaseError } from "@/lib/errors/supabase-errors";
+import { isRateLimitError, RATE_LIMIT_MESSAGE } from "@/lib/errors/gemini-errors";
+import { ERROR_MESSAGES } from "@/lib/errors/messages";
 
 export const maxDuration = 120;
 
 export async function POST(req: Request) {
   const auth = await requireContentUser();
   if ("error" in auth) return auth.error;
+
+  const rateLimit = await checkRateLimit(
+    auth.supabase,
+    auth.user.id,
+    "generation:content"
+  );
+  if (!rateLimit.allowed) return rateLimitExceededResponse(rateLimit.resetIn);
 
   const pro = await requireProCalendar(auth.supabase, auth.user.id);
   if ("error" in pro) return pro.error;
@@ -44,89 +57,114 @@ export async function POST(req: Request) {
   );
   if ("error" in quota) return quota.error;
 
-  const [{ data: brand }, { data: pillars }] = await Promise.all([
-    auth.supabase
-      .from("business_profiles")
-      .select("*")
-      .eq("user_id", auth.user.id)
-      .single(),
-    auth.supabase
-      .from("content_pillars")
-      .select("*")
-      .eq("user_id", auth.user.id)
-      .eq("is_active", true)
-      .order("sort_order"),
-  ]);
+  try {
+    const [{ data: brand }, { data: pillars }] = await Promise.all([
+      auth.supabase
+        .from("business_profiles")
+        .select("*")
+        .eq("user_id", auth.user.id)
+        .single(),
+      auth.supabase
+        .from("content_pillars")
+        .select("*")
+        .eq("user_id", auth.user.id)
+        .eq("is_active", true)
+        .order("sort_order"),
+    ]);
 
-  if (!brand) {
-    return NextResponse.json({ error: "No brand profile" }, { status: 404 });
-  }
+    if (!brand) {
+      return NextResponse.json({ error: "No brand profile" }, { status: 404 });
+    }
 
-  const mapped = mapBrandForCalendar(brand as Record<string, unknown>);
-  const allPlatforms =
-    mapped.platforms.length > 0
-      ? mapped.platforms.filter((p) =>
-          ["instagram", "facebook", "linkedin", "x", "tiktok"].includes(p)
-        )
-      : ["instagram", "facebook"];
-  const platformLimit = planLimits.social_platforms;
-  const activePlatforms =
-    platformLimit === null ? allPlatforms : allPlatforms.slice(0, platformLimit);
+    const mapped = mapBrandForCalendar(brand as Record<string, unknown>);
+    const allPlatforms =
+      mapped.platforms.length > 0
+        ? mapped.platforms.filter((p) =>
+            ["instagram", "facebook", "linkedin", "x", "tiktok"].includes(p)
+          )
+        : ["instagram", "facebook"];
+    const platformLimit = planLimits.social_platforms;
+    const activePlatforms =
+      platformLimit === null ? allPlatforms : allPlatforms.slice(0, platformLimit);
 
-  // Cap generation to remaining quota when limited
-  const effectivePosts =
-    quota.remaining === null
-      ? requested
-      : Math.min(requested, quota.remaining);
+    // Cap generation to remaining quota when limited
+    const effectivePosts =
+      quota.remaining === null
+        ? requested
+        : Math.min(requested, quota.remaining);
 
-  const { slots, usedFallback, reason } = await generateMonthlyCalendar({
-    userId: auth.user.id,
-    month,
-    year,
-    brand: mapped,
-    pillars: pillars ?? [],
-    platforms: activePlatforms,
-    postsPerMonth: effectivePosts,
-  });
+    const { slots, usedFallback, reason } = await generateMonthlyCalendar({
+      userId: auth.user.id,
+      month,
+      year,
+      brand: mapped,
+      pillars: pillars ?? [],
+      platforms: activePlatforms,
+      postsPerMonth: effectivePosts,
+    });
 
-  if (usedFallback) {
-    console.error(
-      `[generate-month] AI generation failed for userId=${auth.user.id} month=${month}/${year} — starter/template content was created instead. reason=${reason}`
-    );
-  }
-
-  if (slots.length > 0) {
-    const { data: inserted, error } = await auth.supabase
-      .from("content_calendar")
-      .insert(slots.map((s) => ({ ...s, user_id: auth.user.id })))
-      .select();
-
-    if (error) {
-      console.error("[generate-month]", error);
-      return NextResponse.json(
-        { error: "Failed to save calendar" },
-        { status: 500 }
+    if (usedFallback) {
+      console.error(
+        `[generate-month] AI generation failed for userId=${auth.user.id} month=${month}/${year} — starter/template content was created instead. reason=${reason}`
       );
     }
 
-    await incrementCalendarUsage(auth.supabase, auth.user.id, inserted?.length ?? 0);
+    if (slots.length > 0) {
+      const { data: inserted, error } = await auth.supabase
+        .from("content_calendar")
+        .insert(slots.map((s) => ({ ...s, user_id: auth.user.id })))
+        .select();
+
+      if (error) {
+        const { status, message } = classifySupabaseError(error);
+        return NextResponse.json(
+          { error: message || ERROR_MESSAGES.CALENDAR_GENERATION_FAILED },
+          { status }
+        );
+      }
+
+      await incrementCalendarUsage(auth.supabase, auth.user.id, inserted?.length ?? 0);
+
+      return NextResponse.json({
+        success: true,
+        slots: inserted ?? [],
+        slots_created: inserted?.length ?? 0,
+        usedFallback,
+        ...(usedFallback ? { reason } : {}),
+      });
+    }
 
     return NextResponse.json({
       success: true,
-      slots: inserted ?? [],
-      slots_created: inserted?.length ?? 0,
+      slots: [],
+      slots_created: 0,
+      message:
+        "No remaining days in this month to schedule. Try next month.",
       usedFallback,
       ...(usedFallback ? { reason } : {}),
     });
+  } catch (err) {
+    if (isRateLimitError(err)) {
+      return NextResponse.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
+    }
+    const ref = generateSupportRef();
+    captureError(err, {
+      supportRef: ref,
+      userId: auth.user.id,
+      route: "/api/content/calendar/generate-month",
+    });
+    const isTimeout =
+      err instanceof Error &&
+      (err.name === "AbortError" || err.message.includes("timeout"));
+    if (isTimeout) {
+      return NextResponse.json(
+        { error: "The request timed out. Please try again." },
+        { status: 504 }
+      );
+    }
+    return NextResponse.json(
+      { error: ERROR_MESSAGES.CALENDAR_GENERATION_FAILED, support_ref: ref },
+      { status: 500 }
+    );
   }
-
-  return NextResponse.json({
-    success: true,
-    slots: [],
-    slots_created: 0,
-    message:
-      "No remaining days in this month to schedule. Try next month.",
-    usedFallback,
-    ...(usedFallback ? { reason } : {}),
-  });
 }

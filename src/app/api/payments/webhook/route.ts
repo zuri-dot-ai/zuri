@@ -6,6 +6,8 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { activateSubscription } from "@/lib/payments/activate-subscription";
 import { handleFailedPayment } from "@/lib/payments/handle-failed-payment";
 import { flutterwaveWebhookHash } from "@/lib/payments/env";
+import { generateSupportRef } from "@/lib/errors/support-ref";
+import { captureError } from "@/lib/monitoring/sentry";
 
 export async function POST(req: Request) {
   // Step 1: Verify webhook signature
@@ -105,7 +107,8 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ received: true });
   } catch (err) {
-    console.error("Webhook processing error:", err);
+    const ref = generateSupportRef();
+    captureError(err, { supportRef: ref, route: "/api/payments/webhook" });
     // Return 200 even on error to prevent Flutterwave from retrying endlessly
     // The unprocessed event remains in the log for manual inspection
     return NextResponse.json({

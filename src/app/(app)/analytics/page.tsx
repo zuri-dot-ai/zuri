@@ -28,6 +28,7 @@ import {
 } from "@/lib/analytics/website-stats";
 import { formatCompactNumber } from "@/lib/dashboard/home-helpers";
 import { EmptyState } from "@/components/app/empty-state";
+import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
 import type { MonthlyReport } from "@/lib/analytics/monthly-report-generator";
 
 function parseRange(raw: string | string[] | undefined): AnalyticsRange {
@@ -233,6 +234,7 @@ export default async function AnalyticsPage({
             : null;
 
   return (
+    <ErrorBoundary context="analytics">
     <div className="relative mx-auto max-w-5xl space-y-7 pb-8 page-enter">
       <header className="page-head flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
@@ -563,5 +565,6 @@ export default async function AnalyticsPage({
         </>
       )}
     </div>
+    </ErrorBoundary>
   );
 }

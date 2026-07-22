@@ -11,9 +11,15 @@ import { uploadImageToStorage } from "@/lib/content/image-storage";
 import { resolveArchetype } from "@/lib/content/pillars";
 import { createServiceClient } from "@/lib/supabase/service";
 import { checkUsageLimit } from "@/lib/payments/feature-gate";
+import { checkRateLimit, rateLimitExceededResponse } from "@/lib/security/rate-limit";
 import { createNotificationAsync } from "@/lib/notifications/create-notification";
 import type { DesignArchetype } from "@/lib/website/archetypes";
 import type { GenerationInput } from "@/lib/content/types";
+import { generateSupportRef } from "@/lib/errors/support-ref";
+import { captureError } from "@/lib/monitoring/sentry";
+import { classifySupabaseError } from "@/lib/errors/supabase-errors";
+import { isRateLimitError, RATE_LIMIT_MESSAGE } from "@/lib/errors/gemini-errors";
+import { ERROR_MESSAGES } from "@/lib/errors/messages";
 
 const VALID_FIELDS = new Set(["caption", "hashtags", "image", "all"]);
 
@@ -21,6 +27,9 @@ export async function POST(req: Request) {
   const auth = await requireContentUser();
   if ("error" in auth) return auth.error;
   const { supabase, user } = auth;
+
+  const rateLimit = await checkRateLimit(supabase, user.id, "generation:content");
+  if (!rateLimit.allowed) return rateLimitExceededResponse(rateLimit.resetIn);
 
   let body: Record<string, unknown>;
   try {
@@ -193,10 +202,8 @@ export async function POST(req: Request) {
       .single();
 
     if (error) {
-      return NextResponse.json(
-        { error: "Failed to update content" },
-        { status: 500 }
-      );
+      const { status, message } = classifySupabaseError(error);
+      return NextResponse.json({ error: message }, { status });
     }
 
     return NextResponse.json({
@@ -205,9 +212,26 @@ export async function POST(req: Request) {
       warnings,
     });
   } catch (err) {
-    console.error("Regeneration failed:", err);
+    if (isRateLimitError(err)) {
+      return NextResponse.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
+    }
+    const ref = generateSupportRef();
+    captureError(err, {
+      supportRef: ref,
+      userId: user.id,
+      route: "/api/content/regenerate",
+    });
+    const isTimeout =
+      err instanceof Error &&
+      (err.name === "AbortError" || err.message.includes("timeout"));
+    if (isTimeout) {
+      return NextResponse.json(
+        { error: "The request timed out. Please try again." },
+        { status: 504 }
+      );
+    }
     return NextResponse.json(
-      { error: "Regeneration failed. Please try again." },
+      { error: ERROR_MESSAGES.CONTENT_GENERATION_FAILED, support_ref: ref },
       { status: 500 }
     );
   }

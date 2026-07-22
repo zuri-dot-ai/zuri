@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { ContentCalendar } from "@/components/app/content-calendar";
 import { getActivePlanId } from "@/lib/payments/get-plan";
+import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
 import type { ContentCalendarRow, ContentPillarRow } from "@/types/database";
 
 export default async function ContentPage() {
@@ -33,12 +34,14 @@ export default async function ContentPage() {
   ]);
 
   return (
-    <ContentCalendar
-      initialSlots={(slots as ContentCalendarRow[]) ?? []}
-      pillars={(pillars as ContentPillarRow[]) ?? []}
-      plan={planId}
-      initialMonth={month}
-      initialYear={year}
-    />
+    <ErrorBoundary context="content-calendar">
+      <ContentCalendar
+        initialSlots={(slots as ContentCalendarRow[]) ?? []}
+        pillars={(pillars as ContentPillarRow[]) ?? []}
+        plan={planId}
+        initialMonth={month}
+        initialYear={year}
+      />
+    </ErrorBoundary>
   );
 }

@@ -15,6 +15,9 @@ import { createNotificationAsync } from "@/lib/notifications/create-notification
 import { sanitizeText } from "@/lib/utils/sanitize";
 import type { DesignArchetype } from "@/lib/website/archetypes";
 import { RATE_LIMIT_MESSAGE, isRateLimitError } from "@/lib/errors/gemini-errors";
+import { generateSupportRef } from "@/lib/errors/support-ref";
+import { captureError } from "@/lib/monitoring/sentry";
+import { ERROR_MESSAGES } from "@/lib/errors/messages";
 
 const STANDALONE_FORMATS = new Set(["blog_post", "newsletter"]);
 
@@ -218,12 +221,26 @@ export async function POST(req: Request) {
 
     return NextResponse.json(output);
   } catch (err) {
-    console.error("Content generation failed:", err);
     if (isRateLimitError(err)) {
       return NextResponse.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
     }
+    const ref = generateSupportRef();
+    captureError(err, {
+      supportRef: ref,
+      userId: user.id,
+      route: "/api/content/generate",
+    });
+    const isTimeout =
+      err instanceof Error &&
+      (err.name === "AbortError" || err.message.includes("timeout"));
+    if (isTimeout) {
+      return NextResponse.json(
+        { error: "The request timed out. Please try again." },
+        { status: 504 }
+      );
+    }
     return NextResponse.json(
-      { error: "Generation failed. Please try again." },
+      { error: ERROR_MESSAGES.CONTENT_GENERATION_FAILED, support_ref: ref },
       { status: 500 }
     );
   }

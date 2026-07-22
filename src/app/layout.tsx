@@ -3,6 +3,8 @@ import { Montserrat, Cormorant_Garamond } from "next/font/google";
 import { Toaster } from "sonner";
 import { BRAND } from "@/lib/constants";
 import { ThemeProvider } from "@/components/theme-provider";
+import { OfflineBanner } from "@/components/ui/OfflineBanner";
+import { RetryQueueProvider } from "@/components/app/retry-queue-provider";
 import "./globals.css";
 import "@/styles/dashboard.css";
 
@@ -77,6 +79,8 @@ export default function RootLayout({
       <body className="min-h-screen bg-background font-sans text-foreground antialiased">
         <ThemeProvider>
           {children}
+          <OfflineBanner />
+          <RetryQueueProvider />
           <Toaster
             theme="dark"
             position="bottom-right"

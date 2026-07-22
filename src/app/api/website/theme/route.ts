@@ -1,21 +1,26 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { requireAuth } from "@/lib/auth/require-auth";
+import { checkRateLimit, rateLimitExceededResponse } from "@/lib/security/rate-limit";
 import {
   normalizeFilledImages,
   persistRecomposedWebsite,
 } from "@/lib/website/recompose-html";
+import { ERROR_MESSAGES } from "@/lib/errors/messages";
+import { generateSupportRef } from "@/lib/errors/support-ref";
+import { captureError } from "@/lib/monitoring/sentry";
 import type { ActiveTheme } from "@/types/website";
 
 const VALID_THEMES = new Set<ActiveTheme>(["theme-1", "theme-2", "theme-3"]);
 
 export async function PATCH(req: Request) {
+  const { user, error: authError } = await requireAuth();
+  if (authError) return authError;
+
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+
+  const rateLimit = await checkRateLimit(supabase, user.id, "api:general");
+  if (!rateLimit.allowed) return rateLimitExceededResponse(rateLimit.resetIn);
 
   const body = (await req.json().catch(() => ({}))) as { theme?: string };
   const theme = body.theme as ActiveTheme;
@@ -33,7 +38,10 @@ export async function PATCH(req: Request) {
     .maybeSingle();
 
   if (!website?.template_id) {
-    return NextResponse.json({ error: "No website found" }, { status: 404 });
+    return NextResponse.json(
+      { error: ERROR_MESSAGES.WEBSITE_NOT_FOUND },
+      { status: 404 }
+    );
   }
 
   const placeholders =
@@ -62,9 +70,11 @@ export async function PATCH(req: Request) {
       theme,
       needsReview: result.needsReview,
     });
-  } catch (e) {
+  } catch (err) {
+    const ref = generateSupportRef();
+    captureError(err, { supportRef: ref, userId: user?.id, route: "/api/website/theme" });
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Theme update failed" },
+      { error: ERROR_MESSAGES.SERVER_ERROR, support_ref: ref },
       { status: 500 }
     );
   }

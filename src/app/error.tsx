@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/ui/logo";
+import { captureError } from "@/lib/monitoring/sentry";
+import { generateSupportRef } from "@/lib/errors/support-ref";
 
 export default function Error({
   error,
@@ -12,9 +14,15 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const supportRef = useMemo(() => generateSupportRef(), []);
+
   useEffect(() => {
-    console.error(error);
-  }, [error]);
+    captureError(error, {
+      context: "route-error",
+      supportRef,
+      route: typeof window !== "undefined" ? window.location.pathname : undefined,
+    });
+  }, [error, supportRef]);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 text-center">
@@ -23,7 +31,9 @@ export default function Error({
         Something went wrong
       </h1>
       <p className="mt-2 max-w-md text-sm text-muted-foreground">
-        An unexpected error occurred. You can try again or return home.
+        An unexpected error occurred. This has been logged and we&apos;ll
+        look into it. If it keeps happening, contact support with reference:{" "}
+        <span className="font-mono text-foreground">{supportRef}</span>
       </p>
       <div className="mt-8 flex flex-wrap justify-center gap-3">
         <Button type="button" onClick={reset}>

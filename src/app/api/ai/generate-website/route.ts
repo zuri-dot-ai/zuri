@@ -4,9 +4,14 @@
 // Generation is allowed on all plans (Free = preview; Pro+ can publish).
 
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { requireAuth } from "@/lib/auth/require-auth";
+import { checkRateLimit, rateLimitExceededResponse } from "@/lib/security/rate-limit";
 import { createServiceClient } from "@/lib/supabase/service";
 import { generateWebsite } from "@/lib/website/generation-pipeline";
+import { generateSupportRef } from "@/lib/errors/support-ref";
+import { captureError } from "@/lib/monitoring/sentry";
+import { classifySupabaseError } from "@/lib/errors/supabase-errors";
+import { ERROR_MESSAGES } from "@/lib/errors/messages";
 import type { BusinessProfile } from "@/types/brand";
 
 export const maxDuration = 120;
@@ -62,16 +67,13 @@ export async function POST(req: Request) {
 
   let userId: string | undefined = body.userId;
   let jobId: string | undefined = body.jobId;
+  let authUserId: string | undefined;
 
   if (!internal) {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { user, error: authError } = await requireAuth();
+    if (authError) return authError;
     userId = user.id;
+    authUserId = user.id;
   }
 
   if (!userId) {
@@ -83,6 +85,11 @@ export async function POST(req: Request) {
 
   const service = createServiceClient();
 
+  if (!internal) {
+    const rateLimit = await checkRateLimit(service, userId, "generation:website");
+    if (!rateLimit.allowed) return rateLimitExceededResponse(rateLimit.resetIn);
+  }
+
   // Ensure a generation job row exists
   if (!jobId) {
     const { data: job, error: jobErr } = await service
@@ -91,10 +98,8 @@ export async function POST(req: Request) {
       .select("id")
       .single();
     if (jobErr || !job) {
-      return NextResponse.json(
-        { error: jobErr?.message ?? "Failed to create generation job" },
-        { status: 500 }
-      );
+      const { status, message } = classifySupabaseError(jobErr);
+      return NextResponse.json({ error: message }, { status });
     }
     jobId = job.id;
   } else {
@@ -147,13 +152,23 @@ export async function POST(req: Request) {
       jobId,
     });
   } catch (err) {
-    console.error("[generate-website]", err);
+    const ref = generateSupportRef();
+    captureError(err, {
+      supportRef: ref,
+      userId: authUserId ?? userId,
+      route: "/api/ai/generate-website",
+    });
+    const isTimeout =
+      err instanceof Error &&
+      (err.name === "AbortError" || err.message.includes("timeout"));
+    if (isTimeout) {
+      return NextResponse.json(
+        { error: "The request timed out. Please try again.", jobId },
+        { status: 504 }
+      );
+    }
     return NextResponse.json(
-      {
-        error: "Website generation failed",
-        detail: err instanceof Error ? err.message : String(err),
-        jobId,
-      },
+      { error: ERROR_MESSAGES.WEBSITE_GENERATION_FAILED, support_ref: ref, jobId },
       { status: 500 }
     );
   }
