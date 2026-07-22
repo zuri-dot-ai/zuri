@@ -2,7 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { AgencyMarketplace } from "@/components/app/agency-marketplace";
 import { getActivePlanId } from "@/lib/payments/get-plan";
 
-export default async function AgenciesPage() {
+/** Legacy AI brief-matching UI — kept separate from the public /agencies directory. */
+export default async function AgencyMatchPage() {
   const supabase = await createClient();
   const {
     data: { user },
@@ -18,7 +19,5 @@ export default async function AgenciesPage() {
     getActivePlanId(supabase, user!.id),
   ]);
 
-  return (
-    <AgencyMarketplace agencies={agencies ?? []} plan={planId} />
-  );
+  return <AgencyMarketplace agencies={agencies ?? []} plan={planId} />;
 }

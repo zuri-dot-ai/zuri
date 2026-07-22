@@ -32,8 +32,37 @@ set slug = coalesce(
 )
 where slug is null;
 
-update agencies set tagline = coalesce(tagline, left(description, 80), name) where tagline is null;
-update agencies set location_city = coalesce(location_city, location, 'Lagos') where location_city is null;
+-- Backfill tagline — legacy table may or may not have description.
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'agencies' and column_name = 'description'
+  ) then
+    update agencies
+    set tagline = coalesce(tagline, left(description, 80), name)
+    where tagline is null;
+  else
+    update agencies set tagline = coalesce(tagline, name) where tagline is null;
+  end if;
+end;
+$$;
+
+-- Backfill location_city — legacy table may use location, or neither column.
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'agencies' and column_name = 'location'
+  ) then
+    update agencies
+    set location_city = coalesce(location_city, location, 'Lagos')
+    where location_city is null;
+  else
+    update agencies set location_city = coalesce(location_city, 'Lagos') where location_city is null;
+  end if;
+end;
+$$;
 
 alter table agencies alter column slug set not null;
 alter table agencies alter column tagline set not null;

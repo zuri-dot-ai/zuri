@@ -12,7 +12,7 @@ const PROTECTED_PREFIXES = [
   "/website",
   "/content",
   "/analytics",
-  "/agencies",
+  "/agency-match",
   "/plan",
   "/help",
   "/notifications",
