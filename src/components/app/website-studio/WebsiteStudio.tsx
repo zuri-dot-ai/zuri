@@ -552,6 +552,38 @@ export function WebsiteStudio({
                 </button>
               );
             })}
+
+            {/* Publish stays in the normal scroll flow — last item in the
+                section list, not floating. Preview is the only floating
+                action (see the fixed pill below). */}
+            {published && canPublish ? (
+              <Button
+                variant="outline"
+                className="mt-4 w-full border-destructive/40 text-destructive"
+                onClick={unpublish}
+                disabled={busy}
+              >
+                {busyAction === "unpublish" ? (
+                  <span className="zuri-spinner !size-3.5" />
+                ) : (
+                  <Undo2 className="size-4" />
+                )}
+                Unpublish
+              </Button>
+            ) : (
+              <Button
+                className="mt-4 w-full"
+                onClick={publish}
+                disabled={busy}
+              >
+                {busyAction === "publish" ? (
+                  <span className="zuri-spinner !size-3.5" />
+                ) : (
+                  <Rocket className="size-4" />
+                )}
+                {canPublish ? "Publish" : "Upgrade"}
+              </Button>
+            )}
           </div>
         )}
 
@@ -572,53 +604,22 @@ export function WebsiteStudio({
         )}
       </div>
 
-      {/* Floating Preview/Publish pill — fixed above BottomTabs (z-50),
-          mobile only. Publish is the primary (filled gold) action; Preview
-          is a compact icon-only segment attached to the same pill. */}
-      <div
-        className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 z-40 flex items-stretch overflow-hidden rounded-full border border-[var(--border-solid)] bg-[var(--bg-elevated)] shadow-[0_8px_24px_rgba(0,0,0,0.35)] lg:hidden"
-      >
-        {previewUrl && (
-          <button
-            type="button"
-            onClick={openFullScreenPreview}
-            aria-label="Preview site"
-            title="Preview site"
-            className="flex items-center justify-center px-4 py-3 text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <Eye className="size-[18px]" />
-          </button>
-        )}
-        {published && canPublish ? (
-          <button
-            type="button"
-            onClick={unpublish}
-            disabled={busy}
-            className="flex items-center gap-2 border-l border-[var(--border-solid)] px-5 py-3 text-sm font-medium text-destructive transition-colors disabled:opacity-60"
-          >
-            {busyAction === "unpublish" ? (
-              <span className="zuri-spinner !size-3.5" />
-            ) : (
-              <Undo2 className="size-4" />
-            )}
-            Unpublish
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={publish}
-            disabled={busy}
-            className="flex items-center gap-2 border-l border-[var(--border-solid)] bg-gold px-5 py-3 text-sm font-semibold text-[var(--accent-foreground)] transition-colors disabled:opacity-60"
-          >
-            {busyAction === "publish" ? (
-              <span className="zuri-spinner !size-3.5" />
-            ) : (
-              <Rocket className="size-4" />
-            )}
-            {canPublish ? "Publish" : "Upgrade"}
-          </button>
-        )}
-      </div>
+      {/* Floating Preview pill — fixed above BottomTabs (z-50), mobile only.
+          This is the ONLY floating action; Publish/Unpublish lives inline
+          at the bottom of the scrollable section list (and edit screen)
+          instead of floating. */}
+      {previewUrl && (
+        <button
+          type="button"
+          onClick={openFullScreenPreview}
+          aria-label="Preview site"
+          title="Preview site"
+          className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 z-40 flex items-center gap-2 rounded-full border border-[var(--border-solid)] bg-[var(--bg-elevated)] px-4 py-3 text-sm font-medium text-foreground shadow-[0_8px_24px_rgba(0,0,0,0.35)] transition-colors hover:text-gold lg:hidden"
+        >
+          <Eye className="size-[18px]" />
+          Preview
+        </button>
+      )}
 
       {imageModalSlot && (
         <ImageSwapModal

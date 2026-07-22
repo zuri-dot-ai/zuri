@@ -284,6 +284,18 @@
   .glass-card,
   .surface {
     padding: 1.5rem;
+    max-width: 100%;
+    overflow-wrap: break-word;
+  }
+
+  /* Narrow viewports: tighter card padding so content (labels, inputs,
+     avatar rows) has more room and never forces horizontal scroll. */
+  @media (max-width: 480px) {
+    .zuri-card,
+    .glass-card,
+    .surface {
+      padding: 1rem;
+    }
   }
 
   .surface-hairline {

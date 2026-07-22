@@ -54,32 +54,32 @@ export function SettingsView({
   const [tab, setTab] = useState<Tab>("profile");
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="mx-auto min-w-0 max-w-4xl space-y-6 overflow-x-hidden">
       <header className="page-head">
         <h1>Settings</h1>
       </header>
 
-      <div className="grid gap-6 md:grid-cols-[200px_1fr]">
+      <div className="grid min-w-0 gap-4 sm:gap-6 md:grid-cols-[200px_1fr]">
         {/* Tab nav */}
-        <nav className="flex flex-col gap-1">
+        <nav className="flex min-w-0 flex-col gap-1 overflow-x-auto">
           {TABS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               onClick={() => setTab(id)}
-              className={`flex items-center gap-3 rounded-sm px-3 py-2.5 text-left text-sm font-medium transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(201,162,39,0.35)] ${
+              className={`flex min-w-0 items-center gap-3 rounded-sm px-3 py-2.5 text-left text-sm font-medium transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(201,162,39,0.35)] ${
                 tab === id
                   ? "bg-surface text-gold"
                   : "text-muted-foreground hover:bg-surface hover:text-foreground"
               }`}
             >
               <Icon className="size-4 shrink-0" />
-              {label}
+              <span className="truncate">{label}</span>
             </button>
           ))}
         </nav>
 
         {/* Tab content */}
-        <div className="zuri-card">
+        <div className="zuri-card min-w-0 overflow-hidden">
           {tab === "profile" && <ProfileTab account={account} />}
           {tab === "business" && <BusinessTab profile={profile} />}
           {tab === "voice" && <BrandVoiceTab />}
@@ -138,14 +138,14 @@ function ProfileTab({ account }: { account: AccountView | null }) {
       </div>
 
       <div className="space-y-4">
-        <div className="flex items-center gap-4">
+        <div className="flex min-w-0 items-center gap-3 sm:gap-4">
           <UserAvatar
             name={account?.full_name}
             email={account?.email}
             src={account?.avatar_url}
-            size={56}
+            size={48}
           />
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-foreground">
               {account?.full_name || "Your profile"}
             </p>
@@ -157,7 +157,7 @@ function ProfileTab({ account }: { account: AccountView | null }) {
           </div>
         </div>
         <div className="space-y-2">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <Label>Full name</Label>
             <SaveStatus status={saveStatus} />
           </div>
@@ -167,9 +167,9 @@ function ProfileTab({ account }: { account: AccountView | null }) {
             placeholder="Ada Obi"
           />
         </div>
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           <Label>Email</Label>
-          <Input value={account?.email ?? ""} disabled />
+          <Input value={account?.email ?? ""} disabled className="truncate" />
           <p className="text-xs text-muted-foreground">
             Email cannot be changed here.
           </p>
