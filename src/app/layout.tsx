@@ -78,8 +78,8 @@ export default function RootLayout({
         <ThemeProvider>
           {children}
           <Toaster
-            theme="system"
-            position="top-center"
+            theme="dark"
+            position="bottom-right"
             toastOptions={{
               style: {
                 background: "hsl(var(--surface))",

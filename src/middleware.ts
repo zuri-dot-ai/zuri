@@ -19,6 +19,8 @@ const PROTECTED_PREFIXES = [
 ];
 const AUTH_ROUTES = ["/login", "/signup", "/forgot-password"];
 
+const MAINTENANCE_MODE = process.env.MAINTENANCE_MODE === "true";
+
 export async function middleware(req: NextRequest) {
   const hostname = req.headers.get("host") ?? "";
   const { pathname } = req.nextUrl;
@@ -28,6 +30,16 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith("/api") ||
     pathname.startsWith("/static") ||
     pathname === "/favicon.ico";
+
+  // ── 0. Maintenance mode — allow admin access, rewrite everything else ────
+  if (
+    MAINTENANCE_MODE &&
+    !isInternalPath &&
+    !pathname.startsWith("/admin") &&
+    !pathname.startsWith("/maintenance")
+  ) {
+    return NextResponse.rewrite(new URL("/maintenance", req.url));
+  }
 
   // ── 1. Subdomain routing — handle.buildzuri.com → /sites/[handle] ────────
   if (!isInternalPath) {
