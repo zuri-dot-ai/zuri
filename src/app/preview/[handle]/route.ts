@@ -2,7 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
   htmlResponse,
-  injectPreviewBanner,
   notFoundResponse,
   sanitizeServedImages,
 } from "@/lib/website/serve-html";
@@ -13,7 +12,10 @@ export const dynamic = "force-dynamic";
 /**
  * Owner-only preview — serves template_html for the authenticated owner's
  * site regardless of publish status (docs/02_WEBSITE_BUILDER.md §7.4).
- * Injects a fixed PreviewBanner via server-side string injection.
+ * No in-page banner injection: the studio/full-screen preview chrome
+ * (back button + site name, Preview/Publish controls) already communicates
+ * preview status, so an injected `<div id="zuri-preview-banner">` would
+ * just duplicate it as a second bar inside the iframe content.
  */
 export async function GET(
   _req: Request,
@@ -45,6 +47,5 @@ export async function GET(
     website.template_html,
     website.archetype as DesignArchetype | null
   );
-  const html = injectPreviewBanner(sanitized, website.status);
-  return htmlResponse(html);
+  return htmlResponse(sanitized);
 }

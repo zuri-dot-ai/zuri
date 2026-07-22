@@ -1,6 +1,7 @@
 import { createServiceClient } from "@/lib/supabase/service";
 import {
   htmlResponse,
+  injectConsentBanner,
   injectContactFormEndpoint,
   injectTrackingScript,
   notFoundResponse,
@@ -51,6 +52,7 @@ export async function GET(
     ownerEmail,
   });
   if (website.analytics_enabled !== false) {
+    html = injectConsentBanner(html);
     html = injectTrackingScript(html, website.handle);
   }
 

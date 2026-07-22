@@ -13,6 +13,9 @@ const REQUIRED_SERVER_VARS = [
   "NEXT_PUBLIC_APP_URL",
   "VERCEL_API_TOKEN",
   "VERCEL_PROJECT_ID",
+  "VAPID_PUBLIC_KEY",
+  "VAPID_PRIVATE_KEY",
+  "VAPID_SUBJECT",
 ];
 
 export function validateRequiredEnvVars(): void {

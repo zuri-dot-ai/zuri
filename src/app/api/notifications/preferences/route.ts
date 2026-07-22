@@ -11,6 +11,7 @@ const ALLOWED_FIELDS = [
   "email_usage_alerts",
   "email_marketing",
   "in_app_all",
+  "push_enabled",
 ];
 
 export async function GET() {
@@ -40,6 +41,7 @@ export async function GET() {
       email_usage_alerts: true,
       email_marketing: true,
       in_app_all: true,
+      push_enabled: true,
     },
   });
 }
@@ -73,6 +75,13 @@ export async function PATCH(req: Request) {
 
   if (error) {
     return NextResponse.json({ error: "Failed to update preferences" }, { status: 500 });
+  }
+
+  // Toggling push off should remove stored subscriptions server-side too —
+  // best-effort, since the client-side unsubscribeFromPush() unsubscribe
+  // call may not always run (e.g. tab closed mid-toggle).
+  if (updates.push_enabled === false) {
+    await supabase.from("push_subscriptions").delete().eq("user_id", user.id);
   }
 
   return NextResponse.json({ success: true });

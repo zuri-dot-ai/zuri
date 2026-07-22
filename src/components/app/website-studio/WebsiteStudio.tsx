@@ -10,7 +10,6 @@ import {
   Eye,
   ExternalLink,
   FileText,
-  Globe,
   HelpCircle,
   ImageIcon,
   Info,
@@ -553,13 +552,6 @@ export function WebsiteStudio({
                 </button>
               );
             })}
-            <Button
-              variant="outline"
-              className="mt-4 w-full"
-              onClick={openFullScreenPreview}
-            >
-              <Eye className="size-4" /> Preview site
-            </Button>
           </div>
         )}
 
@@ -576,29 +568,33 @@ export function WebsiteStudio({
               {sidebarItems.find((i) => i.id === expanded)?.label}
             </h2>
             <div className="zuri-card">{renderPanelBody(expanded)}</div>
-            <Button variant="outline" onClick={openFullScreenPreview}>
-              <Eye className="size-4" /> Preview
-            </Button>
           </div>
         )}
       </div>
 
-      <div className="sticky bottom-0 flex gap-2 border-t border-border bg-background/95 p-3 backdrop-blur lg:hidden">
+      {/* Floating Preview/Publish pill — fixed above BottomTabs (z-50),
+          mobile only. Publish is the primary (filled gold) action; Preview
+          is a compact icon-only segment attached to the same pill. */}
+      <div
+        className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 z-40 flex items-stretch overflow-hidden rounded-full border border-[var(--border-solid)] bg-[var(--bg-elevated)] shadow-[0_8px_24px_rgba(0,0,0,0.35)] lg:hidden"
+      >
         {previewUrl && (
-          <Button
-            variant="outline"
-            className="flex-1"
+          <button
+            type="button"
             onClick={openFullScreenPreview}
+            aria-label="Preview site"
+            title="Preview site"
+            className="flex items-center justify-center px-4 py-3 text-muted-foreground transition-colors hover:text-foreground"
           >
-            <Globe className="size-4" /> Preview
-          </Button>
+            <Eye className="size-[18px]" />
+          </button>
         )}
         {published && canPublish ? (
-          <Button
-            variant="outline"
-            className="flex-1 border-destructive/40 text-destructive"
+          <button
+            type="button"
             onClick={unpublish}
             disabled={busy}
+            className="flex items-center gap-2 border-l border-[var(--border-solid)] px-5 py-3 text-sm font-medium text-destructive transition-colors disabled:opacity-60"
           >
             {busyAction === "unpublish" ? (
               <span className="zuri-spinner !size-3.5" />
@@ -606,16 +602,21 @@ export function WebsiteStudio({
               <Undo2 className="size-4" />
             )}
             Unpublish
-          </Button>
+          </button>
         ) : (
-          <Button className="flex-1" onClick={publish} disabled={busy}>
+          <button
+            type="button"
+            onClick={publish}
+            disabled={busy}
+            className="flex items-center gap-2 border-l border-[var(--border-solid)] bg-gold px-5 py-3 text-sm font-semibold text-[var(--accent-foreground)] transition-colors disabled:opacity-60"
+          >
             {busyAction === "publish" ? (
               <span className="zuri-spinner !size-3.5" />
             ) : (
               <Rocket className="size-4" />
             )}
             {canPublish ? "Publish" : "Upgrade"}
-          </Button>
+          </button>
         )}
       </div>
 

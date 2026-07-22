@@ -3,37 +3,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-/** Original mark path — used for marketing/auth wordmark */
-const MARK_PATH = `
-  M50 6
-  L92 82
-  L70 82
-  L70 66
-  L60 66
-  L60 50
-  L50 30
-  L28 78
-  L8 82
-  Z
-  M50 40
-  L64 68
-  L36 68
-  Z
-`;
-
 type LogoSize = "sm" | "md" | "lg" | "navbar";
 
 interface LogoProps {
   className?: string;
   href?: string | null;
-  /** Mark only — SVG without text (wordmark / wood variants) */
-  showMark?: boolean;
   /**
-   * `wordmark` = theme-aware SVG mark + ZURI text.
-   * `image` = full chrome PNG (auth / onboarding hero).
-   * `app` / `wood` = Cormorant “ZURI” wordmark for dashboard chrome.
+   * `app` = the single Cormorant “ZURI” wordmark lockup used everywhere in
+   * the product (dashboard chrome, marketing pages, error/offline states).
+   * `image` = full chrome PNG, reserved for the auth/onboarding hero only.
    */
-  variant?: "wordmark" | "image" | "app" | "wood";
+  variant?: "app" | "image";
   size?: LogoSize;
 }
 
@@ -47,34 +27,13 @@ const SIZE: Record<
   navbar: { mark: 28, word: "22px", gap: "14px", tracking: "0.2em", imgH: 30 },
 };
 
-function Mark({ size }: { size: number }) {
-  return (
-    <svg
-      className="zuri-mark"
-      width={size}
-      height={size}
-      viewBox="0 0 100 100"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden
-    >
-      <path
-        d={MARK_PATH}
-        fillRule="evenodd"
-        style={{ fill: "var(--logo-color)", transition: "fill 0.35s ease" }}
-      />
-    </svg>
-  );
-}
-
 export function Logo({
   className,
   href = "/",
-  showMark = false,
-  variant = "wordmark",
+  variant = "app",
   size = "md",
 }: LogoProps) {
   const s = SIZE[size];
-  const isWood = variant === "app" || variant === "wood";
 
   let content: ReactNode;
 
@@ -92,8 +51,8 @@ export function Logo({
         />
       </span>
     );
-  } else if (isWood) {
-    /* Dashboard chrome: Cormorant wordmark only (no triangular mark) */
+  } else {
+    /* Single app-wide lockup: Cormorant wordmark only, no triangular mark */
     content = (
       <span
         className={cn("zuri-logo inline-flex items-center select-none", className)}
@@ -110,28 +69,6 @@ export function Logo({
         >
           ZURI
         </span>
-      </span>
-    );
-  } else {
-    content = (
-      <span
-        className={cn("zuri-logo inline-flex items-center select-none", className)}
-        style={{ gap: s.gap }}
-      >
-        <Mark size={s.mark} />
-        {!showMark && (
-          <span
-            className="zuri-word font-heading font-semibold leading-none"
-            style={{
-              fontSize: s.word,
-              letterSpacing: s.tracking,
-              color: "var(--logo-color)",
-              paddingRight: s.tracking,
-            }}
-          >
-            ZURI
-          </span>
-        )}
       </span>
     );
   }

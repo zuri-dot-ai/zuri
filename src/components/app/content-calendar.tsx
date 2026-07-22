@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select } from "@/components/ui/select";
 import { Banner, type BannerVariant } from "@/components/ui/Banner";
 import { EmptyState } from "@/components/app/empty-state";
 import { RatingsSummaryCard } from "@/components/content/RatingsSummaryCard";
@@ -1117,24 +1118,24 @@ export function ContentCalendar({
             <div className="space-y-3">
               <label className="block text-xs text-[var(--text-tertiary)]">
                 Template
-                <select
+                <Select
                   value={seriesTemplate}
                   onChange={(e) => setSeriesTemplate(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-[var(--border-solid)] bg-[var(--bg-primary)] px-3 py-2 text-sm"
+                  className="mt-1 rounded-md bg-[var(--bg-primary)]"
                 >
                   {SERIES_OPTIONS.map((t) => (
                     <option key={t.name} value={t.name}>
                       {t.name} ({t.post_count} posts)
                     </option>
                   ))}
-                </select>
+                </Select>
               </label>
               <label className="block text-xs text-[var(--text-tertiary)]">
                 Platform
-                <select
+                <Select
                   value={seriesPlatform}
                   onChange={(e) => setSeriesPlatform(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-[var(--border-solid)] bg-[var(--bg-primary)] px-3 py-2 text-sm"
+                  className="mt-1 rounded-md bg-[var(--bg-primary)]"
                 >
                   {["instagram", "facebook", "linkedin", "x", "tiktok"].map(
                     (p) => (
@@ -1143,7 +1144,7 @@ export function ContentCalendar({
                       </option>
                     )
                   )}
-                </select>
+                </Select>
               </label>
               <div className="flex justify-end gap-2 pt-2">
                 <Button

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Upload, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -24,7 +25,7 @@ import type { CategoryImageRow } from "@/types/website";
 import { safeFetchJSON } from "@/lib/utils/safe-fetch";
 
 const selectClassName =
-  "flex h-11 w-full rounded-none border border-[hsl(var(--input))] bg-[hsl(var(--surface-form))] px-4 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:border-gold";
+  "h-11 rounded-none border-[hsl(var(--input))] bg-[hsl(var(--surface-form))] pl-4 py-2 text-foreground";
 
 /**
  * fetch() exposes no upload progress event, so the batch upload leg uses
@@ -182,7 +183,7 @@ export function CategoryImagesUploader() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="archetype">Archetype</Label>
-                <select
+                <Select
                   id="archetype"
                   className={selectClassName}
                   value={archetype}
@@ -195,11 +196,11 @@ export function CategoryImagesUploader() {
                       {a}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="slot_type">Slot type</Label>
-                <select
+                <Select
                   id="slot_type"
                   className={selectClassName}
                   value={slotType}
@@ -212,7 +213,7 @@ export function CategoryImagesUploader() {
                       {s}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
             </div>
 

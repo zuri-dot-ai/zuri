@@ -46,6 +46,35 @@ const appSecurityHeaders = [
   },
 ];
 
+/**
+ * CSP for rendered user-site HTML (`/preview`, `/sites`). Tighter than the
+ * app CSP (no Flutterwave/Resend/etc — sites don't call those), but still
+ * needs to allow whatever origins template_html actually renders: Google
+ * Fonts (link tags in every template), Supabase (image storage + any
+ * client-side data fetches from injected scripts), and the stock image
+ * providers used for fallback/slot images. Explicitly enumerated — never `*`.
+ */
+const previewSecurityHeaders = [
+  ...baseSecurityHeaders,
+  {
+    key: "Content-Security-Policy",
+    value: [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline'",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com",
+      "img-src 'self' data: blob: https://images.unsplash.com https://images.pexels.com https://*.supabase.co https://*.supabase.in",
+      "connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com https://api.unsplash.com https://api.pexels.com",
+      "media-src 'self' blob: https://*.supabase.co",
+      "frame-ancestors 'self'",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "upgrade-insecure-requests",
+    ].join("; "),
+  },
+];
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
 
@@ -69,13 +98,14 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        // User-site HTML — no app CSP (sites load their own image CDNs)
+        // User-site HTML — own (tighter) CSP, not the app CSP, since sites
+        // don't need Flutterwave/Resend/etc and shouldn't be able to reach them.
         source: "/preview/:path*",
-        headers: baseSecurityHeaders,
+        headers: previewSecurityHeaders,
       },
       {
         source: "/sites/:path*",
-        headers: baseSecurityHeaders,
+        headers: previewSecurityHeaders,
       },
       {
         // App chrome — exclude preview/sites so CSP is not merged onto them

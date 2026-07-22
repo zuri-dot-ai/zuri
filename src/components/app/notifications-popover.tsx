@@ -52,7 +52,12 @@ export function NotificationsPopover({
           <span className="relative shrink-0">
             <Bell className="size-[18px]" strokeWidth={1.75} />
             {unreadCount > 0 && (
-              <span className="absolute -right-1 -top-0.5 size-2 rounded-full bg-gold ring-2 ring-background" />
+              <span
+                className="absolute -right-1.5 -top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-gold px-1 text-[9px] font-semibold leading-none text-[var(--accent-foreground)] ring-2 ring-background"
+                aria-label={`${unreadCount} unread notifications`}
+              >
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
             )}
           </span>
           <span

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import { safeFetchJSON } from "@/lib/utils/safe-fetch";
 import { AGENCY_SERVICE_LABELS, type AgencyService } from "@/lib/agencies/types";
 
@@ -133,8 +134,7 @@ export default function AgencyApplyPage() {
         </Field>
 
         <Field label="Team size">
-          <select
-            className="input"
+          <Select
             value={form.team_size}
             onChange={(e) => setForm({ ...form, team_size: e.target.value })}
           >
@@ -142,19 +142,18 @@ export default function AgencyApplyPage() {
             <option value="small">Small team (2–10)</option>
             <option value="medium">Medium team (11–50)</option>
             <option value="large">Large agency (50+)</option>
-          </select>
+          </Select>
         </Field>
 
         <Field label="Price range">
-          <select
-            className="input"
+          <Select
             value={form.price_range}
             onChange={(e) => setForm({ ...form, price_range: e.target.value })}
           >
             <option value="budget">₦ Budget-friendly</option>
             <option value="mid">₦₦ Mid-range</option>
             <option value="premium">₦₦₦ Premium</option>
-          </select>
+          </Select>
         </Field>
 
         <Field label="Describe your agency (30–500 characters)">

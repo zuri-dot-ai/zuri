@@ -2,6 +2,7 @@
 
 import { createServiceClient } from "@/lib/supabase/service";
 import { sendEmail } from "@/lib/email/resend";
+import { sendPushNotification } from "./send-push";
 import { NOTIFICATION_DISPLAY, type NotificationType } from "./types";
 
 export interface CreateNotificationParams {
@@ -50,6 +51,20 @@ export async function createNotification(
       templateProps: params.email.templateProps,
       userId: params.userId,
     });
+  }
+
+  // Web push rides on the same single entry point as in-app + email —
+  // an additional channel on the existing event, not a parallel system.
+  // Best-effort: never let a push failure affect the notification result.
+  try {
+    await sendPushNotification({
+      userId: params.userId,
+      title: params.title,
+      body: params.body,
+      url: params.actionUrl,
+    });
+  } catch (err) {
+    console.error("Push notification send failed:", err);
   }
 }
 

@@ -9,6 +9,7 @@ import {
   type AgencyService,
 } from "@/lib/agencies/types";
 import { cn } from "@/lib/utils";
+import { Select } from "@/components/ui/select";
 
 export const metadata = {
   title: "Find a professional — Agency Marketplace",
@@ -63,89 +64,90 @@ export default async function AgenciesDirectoryPage({
     await loadAgencies(resolvedParams);
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8 px-5 py-10">
-      <header className="space-y-2">
-        <h1 className="font-heading text-3xl font-semibold">Find a professional</h1>
-        <p className="text-muted-foreground">
-          Vetted Nigerian agencies ready to grow your business.
-        </p>
-      </header>
+    <div className="min-h-full">
+      <div className="mx-auto max-w-5xl space-y-8 px-5 py-10">
+        <header className="space-y-2">
+          <h1 className="font-heading text-3xl font-semibold">Find a professional</h1>
+          <p className="text-muted-foreground">
+            Vetted Nigerian agencies ready to grow your business.
+          </p>
+        </header>
 
-      <form method="get" className="flex flex-wrap items-end gap-3">
-        <div className="flex flex-col gap-1">
-          <label htmlFor="q" className="text-xs text-muted-foreground">
-            Search agencies
-          </label>
-          <input
-            id="q"
-            name="q"
-            defaultValue={search ?? ""}
-            placeholder="Search by name or service"
-            className="min-w-[220px] rounded-sm border border-border bg-transparent px-3 py-2 text-sm"
-          />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="price_range" className="text-xs text-muted-foreground">
-            Price range
-          </label>
-          <select
-            id="price_range"
-            name="price_range"
-            defaultValue={priceRange ?? ""}
-            className="rounded-sm border border-border bg-transparent px-3 py-2 text-sm"
+        <form method="get" className="zuri-card flex flex-wrap items-end gap-3">
+          <div className="flex flex-col gap-1">
+            <label htmlFor="q" className="text-xs text-muted-foreground">
+              Search agencies
+            </label>
+            <input
+              id="q"
+              name="q"
+              defaultValue={search ?? ""}
+              placeholder="Search by name or service"
+              className="min-w-[220px] rounded-sm border border-border bg-transparent px-3 py-2 text-sm"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label htmlFor="price_range" className="text-xs text-muted-foreground">
+              Price range
+            </label>
+            <Select
+              id="price_range"
+              name="price_range"
+              defaultValue={priceRange ?? ""}
+            >
+              <option value="">All price ranges</option>
+              {Object.entries(PRICE_RANGE_LABELS).map(([key, label]) => (
+                <option key={key} value={key}>
+                  {label}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label htmlFor="location" className="text-xs text-muted-foreground">
+              Location
+            </label>
+            <input
+              id="location"
+              name="location"
+              defaultValue={location ?? ""}
+              placeholder="Lagos, Abuja…"
+              className="min-w-[160px] rounded-sm border border-border bg-transparent px-3 py-2 text-sm"
+            />
+          </div>
+          <button
+            type="submit"
+            className="rounded-sm bg-gold px-5 py-2 text-sm font-medium text-[var(--accent-foreground)]"
           >
-            <option value="">All price ranges</option>
-            {Object.entries(PRICE_RANGE_LABELS).map(([key, label]) => (
-              <option key={key} value={key}>
-                {label}
-              </option>
+            Filter
+          </button>
+          {(services.length > 0 || priceRange || location || search) && (
+            <Link href="/agencies" className="text-sm text-muted-foreground underline">
+              Clear filters
+            </Link>
+          )}
+        </form>
+
+        {agencies.length === 0 ? (
+          <div className="zuri-card text-center text-sm text-muted-foreground">
+            No agencies match your filters. Try removing some filters or browse all agencies.
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+            {agencies.map((agency) => (
+              <AgencyCard key={agency.id} agency={agency} />
             ))}
-          </select>
-        </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="location" className="text-xs text-muted-foreground">
-            Location
-          </label>
-          <input
-            id="location"
-            name="location"
-            defaultValue={location ?? ""}
-            placeholder="Lagos, Abuja…"
-            className="min-w-[160px] rounded-sm border border-border bg-transparent px-3 py-2 text-sm"
-          />
-        </div>
-        <button
-          type="submit"
-          className="rounded-sm bg-gold px-5 py-2 text-sm font-medium text-[var(--accent-foreground)]"
-        >
-          Filter
-        </button>
-        {(services.length > 0 || priceRange || location || search) && (
-          <Link href="/agencies" className="text-sm text-muted-foreground underline">
-            Clear filters
-          </Link>
+          </div>
         )}
-      </form>
 
-      {agencies.length === 0 ? (
-        <div className="rounded-md border border-border p-10 text-center text-sm text-muted-foreground">
-          No agencies match your filters. Try removing some filters or browse all agencies.
-        </div>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-          {agencies.map((agency) => (
-            <AgencyCard key={agency.id} agency={agency} />
-          ))}
-        </div>
-      )}
-
-      <p className="text-center text-xs text-muted-foreground">
-        {total} agenc{total === 1 ? "y" : "ies"} listed. Are you an agency?{" "}
-        <Link href="/agencies/apply" className="text-gold underline">
-          Apply to be listed
-        </Link>
-        .
-      </p>
+        <p className="text-center text-xs text-muted-foreground">
+          {total} agenc{total === 1 ? "y" : "ies"} listed. Are you an agency?{" "}
+          <Link href="/agencies/apply" className="text-gold underline">
+            Apply to be listed
+          </Link>
+          .
+        </p>
+      </div>
     </div>
   );
 }
@@ -156,8 +158,8 @@ function AgencyCard({ agency }: { agency: Agency }) {
     <Link
       href={`/agencies/${agency.slug}`}
       className={cn(
-        "flex flex-col rounded-md border p-4 transition-colors hover:border-[var(--border-hover)]",
-        agency.is_featured ? "border-gold" : "border-border"
+        "zuri-card flex flex-col",
+        agency.is_featured && "zuri-card--featured"
       )}
     >
       <div className="flex items-center gap-3">
@@ -166,16 +168,18 @@ function AgencyCard({ agency }: { agency: Agency }) {
           <img
             src={agency.logo_url}
             alt={agency.name}
-            className="size-10 rounded-full object-cover"
+            className="size-10 shrink-0 rounded-full object-cover ring-1 ring-[rgba(201,162,39,0.35)]"
           />
         ) : (
-          <div className="flex size-10 items-center justify-center rounded-full bg-gold/20 font-heading text-lg text-gold">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gold/20 font-heading text-lg text-gold">
             {initial}
           </div>
         )}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <h3 className="truncate text-sm font-semibold">{agency.name}</h3>
+            <h3 className="truncate text-sm font-semibold" title={agency.name}>
+              {agency.name}
+            </h3>
             {agency.is_zuri_certified && (
               <Star className="size-3.5 shrink-0 fill-gold text-gold" />
             )}
@@ -183,10 +187,16 @@ function AgencyCard({ agency }: { agency: Agency }) {
               <BadgeCheck className="size-3.5 shrink-0 text-blue-400" />
             )}
           </div>
-          <p className="flex items-center gap-1 text-xs text-muted-foreground">
-            <MapPin className="size-3 shrink-0" /> {agency.location_city}
+          <p className="flex items-center gap-1 truncate text-xs text-muted-foreground">
+            <MapPin className="size-3 shrink-0" />
+            <span className="truncate">{agency.location_city}</span>
           </p>
         </div>
+        {agency.is_featured && (
+          <span className="shrink-0 rounded-sm border border-gold/40 bg-gold/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-gold">
+            Featured
+          </span>
+        )}
       </div>
 
       <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">{agency.tagline}</p>
@@ -195,21 +205,23 @@ function AgencyCard({ agency }: { agency: Agency }) {
         {agency.services.slice(0, 3).map((s: AgencyService) => (
           <span
             key={s}
-            className="rounded-sm border border-border px-2 py-0.5 text-xs text-muted-foreground"
+            className="rounded-full border border-border bg-[var(--bg-elevated)] px-2.5 py-0.5 text-xs text-muted-foreground"
           >
             {AGENCY_SERVICE_LABELS[s]}
           </span>
         ))}
         {agency.services.length > 3 && (
-          <span className="rounded-sm border border-border px-2 py-0.5 text-xs text-muted-foreground">
+          <span className="rounded-full border border-border bg-[var(--bg-elevated)] px-2.5 py-0.5 text-xs text-muted-foreground">
             +{agency.services.length - 3} more
           </span>
         )}
       </div>
 
-      <div className="mt-4 flex items-center justify-between border-t border-border pt-3 text-xs text-muted-foreground">
-        <span className="font-mono text-gold">{PRICE_RANGE_LABELS[agency.price_range]}</span>
-        <span className="flex items-center gap-1">
+      <div className="mt-4 flex items-center justify-between border-t border-border pt-3 text-xs">
+        <span className="rounded-sm border border-gold/30 bg-gold/10 px-2 py-0.5 font-mono font-semibold text-gold">
+          {PRICE_RANGE_LABELS[agency.price_range]}
+        </span>
+        <span className="flex items-center gap-1 text-muted-foreground">
           <Clock className="size-3" /> {RESPONSE_TIME_LABELS[agency.response_time]}
         </span>
       </div>

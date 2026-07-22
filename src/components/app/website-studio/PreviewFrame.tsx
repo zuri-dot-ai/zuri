@@ -248,7 +248,13 @@ export function PreviewFrame({
                     width: intrinsicWidth,
                     height: intrinsicHeight,
                   }}
-                  sandbox="allow-scripts allow-same-origin allow-forms"
+                  // No `allow-same-origin`: the preview document is a normal
+                  // same-URL response (not srcDoc), so combining it with
+                  // allow-scripts would let injected/AI-generated site
+                  // content script its way into this origin's storage/
+                  // cookies. Scripted communication back to the studio only
+                  // needs postMessage, which works fine without it.
+                  sandbox="allow-scripts allow-forms"
                 />
               </div>
             </div>

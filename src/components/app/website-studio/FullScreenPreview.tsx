@@ -35,11 +35,16 @@ export function FullScreenPreview({
         <button
           type="button"
           onClick={goBack}
-          className="flex items-center gap-1 rounded-sm px-2 py-1.5 text-sm font-medium text-foreground transition-colors [transition-duration:var(--transition-fast)] hover:bg-[var(--bg-elevated)]"
+          className="flex shrink-0 items-center gap-1 rounded-sm px-2 py-1.5 text-sm font-medium text-foreground transition-colors [transition-duration:var(--transition-fast)] hover:bg-[var(--bg-elevated)]"
           aria-label="Back to studio"
         >
           <ChevronLeft className="size-4" /> Back
         </button>
+        <span className="min-w-0 flex-1 truncate text-center text-sm font-medium text-muted-foreground">
+          {handle}
+        </span>
+        {/* Spacer to balance the back button so the site name stays centered */}
+        <span className="w-[52px] shrink-0" aria-hidden />
       </div>
       <div className="relative min-h-0 flex-1">
         {!loaded && (
@@ -53,7 +58,8 @@ export function FullScreenPreview({
           onLoad={onLoad}
           className="h-full w-full border-0 bg-[var(--bg-secondary)] transition-opacity duration-300"
           style={{ opacity: loaded ? 1 : 0 }}
-          sandbox="allow-scripts allow-same-origin allow-forms"
+          // See PreviewFrame.tsx — allow-same-origin intentionally omitted.
+          sandbox="allow-scripts allow-forms"
         />
       </div>
     </div>

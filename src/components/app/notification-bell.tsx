@@ -32,7 +32,12 @@ export function NotificationBell() {
         >
           <Bell className="size-[18px]" strokeWidth={1.75} />
           {unreadCount > 0 && (
-            <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-gold ring-2 ring-background" />
+            <span
+              className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-gold px-1 text-[10px] font-semibold leading-none text-[var(--accent-foreground)] ring-2 ring-background"
+              aria-label={`${unreadCount} unread notifications`}
+            >
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
           )}
         </button>
       }

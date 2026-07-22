@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import { useUser } from "@/hooks/use-user";
 import { safeFetchJSON } from "@/lib/utils/safe-fetch";
 import { AGENCY_SERVICE_LABELS, type AgencyService } from "@/lib/agencies/types";
@@ -93,10 +94,10 @@ export function ContactAgencyModal({
             <div className="mt-4 space-y-3">
               <div>
                 <label className="text-xs text-muted-foreground">Service needed</label>
-                <select
+                <Select
                   value={service}
                   onChange={(e) => setService(e.target.value)}
-                  className="mt-1 w-full rounded-sm border border-border bg-transparent px-3 py-2 text-sm"
+                  className="mt-1 bg-transparent"
                 >
                   <option value="">Select a service (optional)</option>
                   {Object.entries(AGENCY_SERVICE_LABELS).map(([key, label]) => (
@@ -104,7 +105,7 @@ export function ContactAgencyModal({
                       {label}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
 
               <div>

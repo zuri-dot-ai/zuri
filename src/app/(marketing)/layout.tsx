@@ -1,9 +1,11 @@
 import Link from "next/link";
-import { Logo } from "@/components/ui/logo";
+import { NavBar } from "@/components/ui/nav-bar";
 
 /**
  * Minimal public shell for logged-out-accessible pages served from the app
  * domain (agency directory, profiles, application form). No auth required.
+ * Uses the same shared `NavBar` as the in-app chrome so marketing pages
+ * read as part of the same product, not a separate app.
  */
 export default function MarketingLayout({
   children,
@@ -12,9 +14,8 @@ export default function MarketingLayout({
 }) {
   return (
     <div className="flex min-h-dvh flex-col bg-background">
-      <header className="border-b border-border">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-4">
-          <Logo variant="wordmark" size="sm" href="/" />
+      <NavBar
+        right={
           <nav className="flex items-center gap-4 text-sm">
             <Link
               href="/agencies"
@@ -29,8 +30,8 @@ export default function MarketingLayout({
               Sign in
             </Link>
           </nav>
-        </div>
-      </header>
+        }
+      />
       <main className="flex-1">{children}</main>
       <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground">
         © {new Date().getFullYear()} Zuri. Built for Africa.

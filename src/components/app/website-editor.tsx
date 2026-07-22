@@ -195,7 +195,7 @@ export function WebsiteEditor({
             title="Website preview"
             srcDoc={templateHtml}
             className="h-[70vh] w-full border-0 bg-white"
-            sandbox="allow-scripts allow-same-origin allow-forms"
+            sandbox="allow-scripts allow-forms"
           />
         </div>
       </div>

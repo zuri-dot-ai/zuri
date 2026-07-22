@@ -29,7 +29,7 @@ export default async function AppLayout({
             <div className="md:hidden">
               <Topbar />
             </div>
-            <main className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-6 sm:px-5 md:px-8 md:pb-8 md:pt-8">
+            <main className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-6 sm:px-5 md:px-8 md:pb-8 md:pt-8">
               {children}
               <PaymentToast />
               <FirstVisitTour />

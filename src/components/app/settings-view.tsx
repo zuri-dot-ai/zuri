@@ -21,6 +21,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Banner } from "@/components/ui/Banner";
@@ -445,17 +446,17 @@ function BusinessTab({ profile }: { profile: BusinessProfileRow | null }) {
 
       <div className="space-y-2">
         <Label>Brand tone</Label>
-        <select
+        <Select
           value={f.tone}
           onChange={(e) => updateFieldNow({ ...f, tone: e.target.value })}
-          className="flex h-11 w-full rounded-sm border border-[var(--border-solid)] bg-[var(--bg-secondary)] px-4 text-sm [transition-duration:var(--transition-fast)] transition-colors focus:border-[var(--accent)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/20"
+          className="h-11"
         >
           {["professional", "warm", "bold", "playful"].map((t) => (
             <option key={t} value={t} className="capitalize">
               {t.charAt(0).toUpperCase() + t.slice(1)}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
     </div>
   );

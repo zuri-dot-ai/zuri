@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 
 export function PathForm({ onComplete }: { onComplete: (transcript: string) => void }) {
@@ -56,14 +57,17 @@ Preferred tone: ${f.tone}
       </div>
       <div className="space-y-2">
         <Label htmlFor="tone">Tone</Label>
-        <select id="tone" value={f.tone}
+        <Select
+          id="tone"
+          value={f.tone}
           onChange={(e) => setF({ ...f, tone: e.target.value })}
-          className="flex h-11 w-full rounded-lg border border-border bg-background px-4 text-sm focus:border-gold/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(201,162,39,0.35)]">
+          className="h-11 rounded-lg"
+        >
           <option value="professional">Professional</option>
           <option value="warm">Warm</option>
           <option value="bold">Bold</option>
           <option value="playful">Playful</option>
-        </select>
+        </Select>
       </div>
 
       <Button className="w-full" onClick={submit} disabled={!valid}>
