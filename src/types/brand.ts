@@ -22,6 +22,15 @@ export interface BusinessProfile {
   color_primary: string;
   color_accent: string;
   platforms: string[];
+  /** One-sentence differentiator captured in onboarding Step 3. */
+  pitch_line?: string | null;
+  /** 'leads' | 'sales' | 'bookings' | 'credibility' */
+  primary_goal?: string | null;
+  /** Which of two sample sentences the owner picked — tone signal. */
+  tone_sample_choice?: string | null;
+  social_handle?: string | null;
+  logo_url?: string | null;
+  reference_url?: string | null;
 }
 
 export type Tone = "professional" | "warm" | "bold" | "playful";

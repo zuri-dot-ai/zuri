@@ -232,6 +232,8 @@ Pick the best-fit website template for this Nigerian business.
 BUSINESS: ${brand.business_name} — ${brand.industry}
 BRAND VIBE: ${brand.brand_vibe}
 TARGET AUDIENCE: ${brand.target_audience}
+${brand.pitch_line ? `DIFFERENTIATOR: ${brand.pitch_line}` : ""}
+${brand.primary_goal ? `PRIMARY GOAL: ${brand.primary_goal}` : ""}
 
 CANDIDATE TEMPLATES:
 ${candidates.map((c) => `- ${c.id}: mode=${c.mode}, lean=${c.lean}, name="${c.display_name}"`).join("\n")}
@@ -275,6 +277,9 @@ UNIQUE VALUE: ${brand.unique_value}
 TARGET AUDIENCE: ${brand.target_audience}
 LOCATION: ${brand.location_city ?? brand.location}, Nigeria
 BRAND TONE: ${brand.brand_tone}
+${brand.pitch_line ? `OWNER'S OWN PITCH LINE (use as a strong signal for hero/subheadline copy, do not quote verbatim unless it fits naturally): ${brand.pitch_line}` : ""}
+${brand.primary_goal ? `PRIMARY GOAL: ${brand.primary_goal} — bias CTA copy and section emphasis toward this outcome (leads = contact/inquiry CTAs, sales = product/pricing focus, bookings = booking CTAs, credibility = trust/social proof emphasis)` : ""}
+${brand.tone_sample_choice ? `VOICE SAMPLE THE OWNER PREFERRED (match this register throughout): "${brand.tone_sample_choice}"` : ""}
 
 PLACEHOLDERS TO FILL (exact keys, no others): ${JSON.stringify(metadata.placeholder_fields)}
 

@@ -99,6 +99,16 @@ export function Step8Building({ state }: Step8BuildingProps) {
           state.platforms.length > 0
             ? state.platforms
             : ["instagram", "facebook"],
+        pitchLine: state.pitchLine ? sanitizeText(state.pitchLine) : undefined,
+        primaryGoal: state.primaryGoal || undefined,
+        toneSampleChoice: state.toneSampleChoice
+          ? sanitizeText(state.toneSampleChoice)
+          : undefined,
+        logoUrl: state.logoUrl || undefined,
+        socialHandle: state.socialHandle
+          ? sanitizeText(state.socialHandle)
+          : undefined,
+        referenceUrl: state.referenceUrl || undefined,
       };
 
       try {
@@ -156,9 +166,7 @@ export function Step8Building({ state }: Step8BuildingProps) {
   return (
     <div className="flex flex-col items-center justify-center gap-8 py-6 text-center md:py-10">
       <div className="w-full max-w-md space-y-3">
-        <h1 className="text-[1.75rem] font-semibold tracking-[-0.02em] text-foreground md:text-[2rem]">
-          Building your presence
-        </h1>
+        <h1 className="onboarding-headline">Building your presence</h1>
         {statusMessage && (
           <p className="text-sm text-[var(--text-secondary)]">{statusMessage}</p>
         )}

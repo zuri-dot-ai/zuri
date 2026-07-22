@@ -52,6 +52,9 @@ const BUSINESS_TYPES: Array<{
   { id: "other", icon: MoreHorizontal, label: "Other" },
 ];
 
+/** Primary set sized to fit viewport height without scroll on mobile (2-col grid). */
+const PRIMARY_BUSINESS_TYPE_COUNT = 8;
+
 interface Step2BusinessIdentityProps {
   businessName: string;
   handle: string;
@@ -74,7 +77,17 @@ export function Step2BusinessIdentity({
   const [handleAvailable, setHandleAvailable] = useState(false);
   const [handleChecking, setHandleChecking] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
+  const [showAllTypes, setShowAllTypes] = useState(false);
   const unsupported = isUnsupportedBusinessType(businessType);
+
+  const primaryTypes = BUSINESS_TYPES.slice(0, PRIMARY_BUSINESS_TYPE_COUNT);
+  const moreTypes = BUSINESS_TYPES.slice(PRIMARY_BUSINESS_TYPE_COUNT);
+  // Always show the full set once a type from the "more" bucket is already selected
+  // (e.g. returning to this step), so the selection stays visible.
+  const visibleTypes =
+    showAllTypes || moreTypes.some((t) => t.id === businessType)
+      ? BUSINESS_TYPES
+      : primaryTypes;
 
   const validateName = useCallback((name: string): string | null => {
     const clean = sanitizeText(name);
@@ -143,17 +156,15 @@ export function Step2BusinessIdentity({
   return (
     <div className="space-y-10">
       <div>
-        <h1 className="text-[1.75rem] font-semibold tracking-[-0.02em] text-foreground md:text-[2rem]">
-          Tell us about your business
-        </h1>
-        <p className="mt-2 text-[0.9375rem] text-[var(--text-secondary)]">
+        <h1 className="onboarding-headline">Tell us about your business</h1>
+        <p className="onboarding-subtext">
           Name, address, and category — so we can set up the right foundation.
         </p>
       </div>
 
       <section className="space-y-4">
         <p className="onboarding-eyebrow">Business name & address</p>
-        <div className="space-y-5 rounded-md border border-border bg-[var(--bg-secondary)] p-5 sm:p-6">
+        <div className="onboarding-panel space-y-5">
           <div className="space-y-2">
             <Input
               value={businessName}
@@ -175,8 +186,8 @@ export function Step2BusinessIdentity({
 
       <section className="space-y-4">
         <p className="onboarding-eyebrow">Business category</p>
-        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-          {BUSINESS_TYPES.map((type) => (
+        <div className="grid grid-cols-2 gap-2.5">
+          {visibleTypes.map((type) => (
             <SelectionCard
               key={type.id}
               icon={type.icon}
@@ -184,9 +195,19 @@ export function Step2BusinessIdentity({
               selected={businessType === type.id}
               onSelect={() => onBusinessTypeChange(type.id)}
               compact
+              scaleOnSelect
             />
           ))}
         </div>
+        {!showAllTypes && moreTypes.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setShowAllTypes(true)}
+            className="min-h-[44px] w-full rounded-sm border border-dashed border-border px-3.5 py-2.5 text-sm text-[var(--text-secondary)] transition-colors duration-150 hover:border-[var(--border-hover)] hover:text-foreground"
+          >
+            More categories…
+          </button>
+        )}
         {unsupported && (
           <CustomSiteCTA
             context="onboarding"

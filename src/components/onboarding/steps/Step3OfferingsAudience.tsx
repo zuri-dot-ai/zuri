@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { TagInput } from "@/components/onboarding/TagInput";
-import { SelectionCard } from "@/components/onboarding/SelectionCard";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { sanitizeText } from "@/lib/utils/sanitize";
@@ -96,10 +95,8 @@ export function Step3OfferingsAudience({
   return (
     <div className="space-y-10">
       <div>
-        <h1 className="text-[1.75rem] font-semibold tracking-[-0.02em] text-foreground md:text-[2rem]">
-          What do you offer — and who for?
-        </h1>
-        <p className="mt-2 text-[0.9375rem] text-[var(--text-secondary)]">
+        <h1 className="onboarding-headline">What do you offer — and who for?</h1>
+        <p className="onboarding-subtext">
           Services first, then the people and place you serve.
         </p>
       </div>
@@ -107,11 +104,11 @@ export function Step3OfferingsAudience({
       <section className="space-y-4">
         <div>
           <p className="onboarding-eyebrow">What you offer</p>
-          <p className="mt-1.5 text-sm text-[var(--text-secondary)]">
+          <p className="onboarding-helper mt-1.5">
             Add your main services or products.
           </p>
         </div>
-        <div className="rounded-md border border-border bg-[var(--bg-secondary)] p-5 sm:p-6">
+        <div className="onboarding-panel">
           <TagInput
             value={services}
             onChange={onServicesChange}
@@ -123,26 +120,35 @@ export function Step3OfferingsAudience({
       <section className="space-y-4">
         <div>
           <p className="onboarding-eyebrow">Who you serve</p>
-          <p className="mt-1.5 text-sm text-[var(--text-secondary)]">
-            Choose all that apply.
+          <p className="onboarding-helper mt-1.5">
+            Choose all that apply — swipe to see more.
           </p>
         </div>
-        <div className="grid grid-cols-1 gap-2">
+        <div
+          className="flex snap-x gap-2 overflow-x-auto pb-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin]"
+          role="group"
+          aria-label="Who you serve"
+        >
           {AUDIENCE_OPTIONS.map((opt) => (
-            <SelectionCard
+            <button
               key={opt.id}
-              label={opt.label}
-              selected={audienceTypes.includes(opt.id)}
-              onSelect={() => toggleAudience(opt.id)}
-              multi
-            />
+              type="button"
+              onClick={() => toggleAudience(opt.id)}
+              aria-pressed={audienceTypes.includes(opt.id)}
+              className={cn(
+                "min-h-[44px] shrink-0 snap-start whitespace-nowrap rounded-full border px-4 py-2.5 text-sm transition-all duration-150",
+                audienceTypes.includes(opt.id)
+                  ? "scale-[1.02] border-gold bg-gold/[0.08] text-foreground"
+                  : "border-border bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:border-[var(--border-hover)]"
+              )}
+            >
+              {opt.label}
+            </button>
           ))}
         </div>
 
         <div className="space-y-3 pt-2">
-          <p className="text-sm font-medium text-[var(--text-secondary)]">
-            Primary location
-          </p>
+          <p className="onboarding-label">Primary location</p>
           <div className="flex flex-wrap gap-2">
             {LOCATION_OPTIONS.map((opt) => (
               <button

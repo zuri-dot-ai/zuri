@@ -10,7 +10,9 @@ import { cn } from "@/lib/utils";
 import {
   ONBOARDING_STEP_LABELS,
   ONBOARDING_TOTAL_STEPS,
+  type OnboardingState,
 } from "@/lib/onboarding/types";
+import { LivePreviewPanel } from "@/components/onboarding/LivePreviewPanel";
 
 function StepProgress({ currentStep }: { currentStep: number }) {
   const label = ONBOARDING_STEP_LABELS[currentStep] ?? "";
@@ -61,6 +63,8 @@ interface OnboardingShellProps {
   hideControls?: boolean;
   /** Brief launch spinner before advancing from final data step */
   launchOnContinue?: boolean;
+  /** Onboarding state — drives the live preview from step 2 onward. */
+  previewState?: OnboardingState;
 }
 
 export function OnboardingShell({
@@ -73,6 +77,7 @@ export function OnboardingShell({
   children,
   hideControls = false,
   launchOnContinue = false,
+  previewState,
 }: OnboardingShellProps) {
   const reducedMotion = useReducedMotion();
   const [launching, setLaunching] = useState(false);
@@ -103,11 +108,14 @@ export function OnboardingShell({
     onContinue();
   }
 
+  const showPreview =
+    Boolean(previewState?.businessName) && !isBuilding && step >= 2;
+
   return (
     <div className="onboarding-shell flex min-h-screen w-full flex-col px-5 sm:px-6">
       {/* Fixed header: logo + progress */}
-      <header className="sticky top-0 z-20 -mx-5 border-b border-transparent bg-[var(--bg-primary)]/80 px-5 pb-4 pt-5 backdrop-blur-md sm:-mx-6 sm:px-6 sm:pt-6">
-        <div className="mx-auto flex w-full max-w-[680px] flex-col items-center gap-4">
+      <header className="onboarding-safe-top sticky top-0 z-20 -mx-5 border-b border-transparent bg-[var(--bg-primary)]/80 px-5 pb-4 backdrop-blur-md sm:-mx-6 sm:px-6">
+        <div className="mx-auto flex w-full max-w-[1140px] flex-col items-center gap-4">
           <Logo variant="image" size="navbar" href={marketingUrl()} />
           {!isBuilding && <StepProgress currentStep={step} />}
           {showWelcomeBack && !isBuilding && (
@@ -118,57 +126,71 @@ export function OnboardingShell({
         </div>
       </header>
 
-      {/* Content column — centered, upper-third bias */}
-      <div className="mx-auto flex w-full max-w-[680px] flex-1 flex-col pb-8 pt-6 md:pt-10">
-        <div className="flex flex-1 flex-col justify-start md:justify-center md:pb-[8vh]">
-          <AnimatePresence mode="wait" custom={direction}>
-            <motion.div
-              key={step}
-              custom={direction}
-              variants={variants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ duration: 0.22, ease: "easeInOut" }}
-            >
-              {children}
-            </motion.div>
-          </AnimatePresence>
+      {/* Content row — form column + persistent desktop preview */}
+      <div className="mx-auto flex w-full max-w-[1140px] flex-1 flex-col gap-10 pb-8 pt-6 md:pt-10 lg:flex-row lg:items-start">
+        <div className="flex w-full flex-1 flex-col lg:max-w-[680px]">
+          {showPreview && previewState && (
+            <div className="mb-6 lg:hidden">
+              <LivePreviewPanel state={previewState} variant="mobile" />
+            </div>
+          )}
+
+          <div className="flex flex-1 flex-col justify-start md:justify-center md:pb-[8vh]">
+            <AnimatePresence mode="wait" custom={direction}>
+              <motion.div
+                key={step}
+                custom={direction}
+                variants={variants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.22, ease: "easeInOut" }}
+              >
+                {children}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {!hideControls && (
+            <div className="onboarding-safe-bottom mt-8 flex flex-col-reverse gap-3 sm:mt-10 sm:flex-row sm:items-center sm:justify-between">
+              {step > 1 ? (
+                <button
+                  type="button"
+                  onClick={onBack}
+                  disabled={launching}
+                  className="text-center text-sm text-[var(--text-tertiary)] transition-colors duration-150 hover:text-foreground sm:text-left"
+                >
+                  ← Back
+                </button>
+              ) : (
+                <span className="hidden sm:block" />
+              )}
+              <Button
+                type="button"
+                onClick={handleContinue}
+                disabled={!canContinue || launching}
+                className={cn(
+                  "w-full min-w-[140px] sm:w-auto",
+                  (!canContinue || launching) &&
+                    "cursor-not-allowed opacity-40 hover:brightness-100"
+                )}
+              >
+                {launching ? (
+                  <span className="inline-flex items-center gap-2">
+                    <span className="zuri-spinner" />
+                    Starting…
+                  </span>
+                ) : (
+                  "Continue"
+                )}
+              </Button>
+            </div>
+          )}
         </div>
 
-        {!hideControls && (
-          <div className="mt-8 flex flex-col-reverse gap-3 sm:mt-10 sm:flex-row sm:items-center sm:justify-between">
-            {step > 1 ? (
-              <button
-                type="button"
-                onClick={onBack}
-                disabled={launching}
-                className="text-center text-sm text-[var(--text-tertiary)] transition-colors duration-150 hover:text-foreground sm:text-left"
-              >
-                ← Back
-              </button>
-            ) : (
-              <span className="hidden sm:block" />
-            )}
-            <Button
-              type="button"
-              onClick={handleContinue}
-              disabled={!canContinue || launching}
-              className={cn(
-                "w-full min-w-[140px] sm:w-auto",
-                (!canContinue || launching) &&
-                  "cursor-not-allowed opacity-40 hover:brightness-100"
-              )}
-            >
-              {launching ? (
-                <span className="inline-flex items-center gap-2">
-                  <span className="zuri-spinner" />
-                  Starting…
-                </span>
-              ) : (
-                "Continue"
-              )}
-            </Button>
+        {showPreview && previewState && (
+          <div className="hidden w-full max-w-[380px] lg:block">
+            <LivePreviewPanel state={previewState} variant="desktop" />
           </div>
         )}
       </div>

@@ -279,6 +279,8 @@ export function buildCalendarPrompt(params: CalendarPromptParams): string {
   const rawAudience = brandField(brand, "target_audience");
   const audience = sanitizeForPrompt(rawAudience);
   const tone = sanitizeForPrompt(brandField(brand, "brand_tone", "professional"));
+  const pitchLine = sanitizeForPrompt(brandField(brand, "pitch_line"));
+  const toneSample = sanitizeForPrompt(brandField(brand, "tone_sample_choice"));
 
   // Onboarding frequently leaves these thin (e.g. "everyone", a single
   // generic service, no city) — a working Gemini call with thin input
@@ -309,6 +311,8 @@ BUSINESS:
 - Location: ${location}, Nigeria
 - Target audience: ${audience}
 - Brand tone: ${tone}
+${pitchLine ? `- Differentiator: ${pitchLine}` : ""}
+${toneSample ? `- Preferred voice sample (match this register): "${toneSample}"` : ""}
 ${inferenceNote}
 
 CONTENT PILLARS (rotate through these):

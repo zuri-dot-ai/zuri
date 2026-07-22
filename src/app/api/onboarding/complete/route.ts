@@ -6,6 +6,7 @@ import {
   VALID_BUSINESS_TYPES,
   VALID_LOCATIONS,
   VALID_PLATFORMS,
+  VALID_PRIMARY_GOALS,
   isUnsupportedBusinessType,
 } from "@/lib/onboarding/types";
 import {
@@ -64,6 +65,33 @@ export async function POST(req: Request) {
         .map((a) => sanitizeText(a))
         .filter((a): a is string => Boolean(a))
     : [];
+
+  // ── New (Part A) fields — all optional, all nullable in DB ─────────────
+  const pitchLine =
+    typeof body.pitchLine === "string" && body.pitchLine.trim()
+      ? sanitizeText(body.pitchLine).slice(0, 140)
+      : undefined;
+  const primaryGoal =
+    typeof body.primaryGoal === "string" &&
+    (VALID_PRIMARY_GOALS as readonly string[]).includes(body.primaryGoal)
+      ? body.primaryGoal
+      : undefined;
+  const toneSampleChoice =
+    typeof body.toneSampleChoice === "string" && body.toneSampleChoice.trim()
+      ? sanitizeText(body.toneSampleChoice).slice(0, 200)
+      : undefined;
+  const socialHandle =
+    typeof body.socialHandle === "string" && body.socialHandle.trim()
+      ? sanitizeText(body.socialHandle).slice(0, 60)
+      : undefined;
+  const logoUrl =
+    typeof body.logoUrl === "string" && /^https?:\/\//.test(body.logoUrl)
+      ? body.logoUrl.slice(0, 2048)
+      : undefined;
+  const referenceUrl =
+    typeof body.referenceUrl === "string" && body.referenceUrl.trim()
+      ? body.referenceUrl.slice(0, 2048)
+      : undefined;
 
   const services: string[] = (Array.isArray(body.services) ? body.services : [])
     .map((s: unknown) => sanitizeText(s))
@@ -222,6 +250,9 @@ export async function POST(req: Request) {
       location,
       locationCity,
       brandVibe,
+      pitchLine,
+      primaryGoal,
+      toneSampleChoice,
     });
   } catch (err) {
     console.error("Brand extraction failed, using raw data:", err);
@@ -282,6 +313,12 @@ export async function POST(req: Request) {
         color_primary: enrichedBrand.color_primary_suggestion,
         color_accent: enrichedBrand.color_accent_suggestion,
         platforms: finalPlatforms,
+        pitch_line: pitchLine ?? null,
+        primary_goal: primaryGoal ?? null,
+        tone_sample_choice: toneSampleChoice ?? null,
+        social_handle: socialHandle ?? null,
+        logo_url: logoUrl ?? null,
+        reference_url: referenceUrl ?? null,
         updated_at: new Date().toISOString(),
       },
       { onConflict: "user_id" }

@@ -330,6 +330,13 @@ function BrandVoiceTab() {
 }
 
 // ── BUSINESS PROFILE TAB ────────────────────────────────
+const PRIMARY_GOAL_LABELS: Record<string, string> = {
+  leads: "Get leads",
+  sales: "Sell products",
+  bookings: "Book appointments",
+  credibility: "Build credibility",
+};
+
 function BusinessTab({ profile }: { profile: BusinessProfileRow | null }) {
   const supabase = createClient();
   const [f, setF] = useState({
@@ -340,9 +347,23 @@ function BusinessTab({ profile }: { profile: BusinessProfileRow | null }) {
     tone: profile?.brand_tone ?? "professional",
     tagline: profile?.tagline ?? "",
     location: profile?.location ?? "",
+    pitch_line: profile?.pitch_line ?? "",
+    primary_goal: profile?.primary_goal ?? "",
+    social_handle: profile?.social_handle ?? "",
+    reference_url: profile?.reference_url ?? "",
+    logo_url: profile?.logo_url ?? "",
   });
   const { status: saveStatus, run: runSave } = useSaveStatus();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+
+  const isPreMigration =
+    !!profile &&
+    profile.pitch_line == null &&
+    profile.primary_goal == null &&
+    profile.social_handle == null &&
+    profile.logo_url == null &&
+    profile.reference_url == null;
 
   async function save(next: typeof f) {
     if (!profile) return;
@@ -358,6 +379,11 @@ function BusinessTab({ profile }: { profile: BusinessProfileRow | null }) {
             brand_tone: next.tone,
             tagline: next.tagline,
             location: next.location,
+            pitch_line: next.pitch_line || null,
+            primary_goal: next.primary_goal || null,
+            social_handle: next.social_handle || null,
+            reference_url: next.reference_url || null,
+            logo_url: next.logo_url || null,
           })
           .eq("id", profile.id);
         if (error) throw error;
@@ -368,6 +394,25 @@ function BusinessTab({ profile }: { profile: BusinessProfileRow | null }) {
           ? `Could not save: ${e.message}`
           : "Could not save."
       );
+    }
+  }
+
+  async function uploadLogo(file: File) {
+    setUploadingLogo(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch("/api/onboarding/logo-upload", {
+        method: "POST",
+        body: form,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Upload failed");
+      updateFieldNow({ ...f, logo_url: data.logoUrl });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Logo upload failed.");
+    } finally {
+      setUploadingLogo(false);
     }
   }
 
@@ -405,6 +450,14 @@ function BusinessTab({ profile }: { profile: BusinessProfileRow | null }) {
         </div>
         <SaveStatus status={saveStatus} />
       </div>
+
+      {isPreMigration && (
+        <Banner
+          variant="info"
+          title="Complete your profile"
+          message="Add a pitch line, goal, logo, and a couple other details so Zuri's AI can write more specific copy for you."
+        />
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2">
         {(
@@ -457,6 +510,84 @@ function BusinessTab({ profile }: { profile: BusinessProfileRow | null }) {
             </option>
           ))}
         </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Pitch line</Label>
+        <Input
+          value={f.pitch_line}
+          onChange={(e) => updateField({ ...f, pitch_line: e.target.value })}
+          placeholder="What makes you different, in one sentence"
+          maxLength={140}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label>Primary goal</Label>
+        <Select
+          value={f.primary_goal}
+          onChange={(e) => updateFieldNow({ ...f, primary_goal: e.target.value })}
+          className="h-11"
+        >
+          <option value="">Not set</option>
+          {Object.entries(PRIMARY_GOAL_LABELS).map(([id, label]) => (
+            <option key={id} value={id}>
+              {label}
+            </option>
+          ))}
+        </Select>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label>Social handle</Label>
+          <Input
+            value={f.social_handle}
+            onChange={(e) => updateField({ ...f, social_handle: e.target.value })}
+            placeholder="@yourbusiness"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Reference site (a site whose feel you like)</Label>
+          <Input
+            value={f.reference_url}
+            onChange={(e) => updateField({ ...f, reference_url: e.target.value })}
+            placeholder="https://example.com"
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Logo</Label>
+        <div className="flex items-center gap-3">
+          {f.logo_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={f.logo_url}
+              alt="Business logo"
+              className="size-12 rounded-sm border border-border object-cover"
+            />
+          ) : (
+            <div className="flex size-12 items-center justify-center rounded-sm border border-dashed border-border text-xs text-muted-foreground">
+              None
+            </div>
+          )}
+          <label className="cursor-pointer">
+            <span className="inline-flex h-9 items-center rounded-md border border-border px-3 text-sm text-foreground transition-colors hover:border-gold">
+              {uploadingLogo ? "Uploading…" : f.logo_url ? "Replace" : "Upload"}
+            </span>
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="hidden"
+              disabled={uploadingLogo}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) void uploadLogo(file);
+              }}
+            />
+          </label>
+        </div>
       </div>
     </div>
   );

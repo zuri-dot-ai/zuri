@@ -96,6 +96,11 @@ export interface BusinessProfileRow {
   logo_url: string | null;
   onboarding_transcript: string | null;
   onboarding_method: OnboardingMethod | null;
+  pitch_line: string | null;
+  primary_goal: string | null;
+  tone_sample_choice: string | null;
+  social_handle: string | null;
+  reference_url: string | null;
   created_at: string;
   updated_at: string;
 }

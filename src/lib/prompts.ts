@@ -94,6 +94,8 @@ Compose a website for:
 - Unique value: ${profile.unique_value}
 - Location: ${profile.location}
 - Tagline: ${profile.tagline}
+- Differentiator: ${profile.pitch_line ?? "n/a"}
+- Primary goal: ${profile.primary_goal ?? "n/a"}
 - Website type: ${websiteType}
 - Style preference: ${stylePreference}
 - Must-have features: ${features.join(", ") || "standard"}
@@ -137,6 +139,7 @@ Write a ${postType} post for ${platform}.
 Business: ${profile.business_name} (${profile.industry}) in ${profile.location}.
 Services: ${(profile.services || []).join(", ")}.
 Tone: ${profile.brand_tone}. Audience: ${profile.target_audience}.
+${profile.pitch_line ? `Differentiator: ${profile.pitch_line}` : ""}
 Week theme: ${theme}. This is day ${dayNumber} of their plan.
 ${includeVideo ? "Include a 15–30 second video_script." : "Do NOT include video_script."}
 `.trim();
@@ -186,6 +189,8 @@ Create the 90-day plan for:
 Business: ${profile.business_name} (${profile.industry}) in ${profile.location}.
 Services: ${(profile.services || []).join(", ")}.
 Audience: ${profile.target_audience}. Tone: ${profile.brand_tone}.
+${profile.pitch_line ? `Differentiator: ${profile.pitch_line}` : ""}
+${profile.primary_goal ? `Primary goal: ${profile.primary_goal}` : ""}
 Platforms to focus on: ${platforms.join(", ")}.
 Owner skill level: ${skillLevel}.
 `.trim();

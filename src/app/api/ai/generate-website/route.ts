@@ -52,6 +52,15 @@ function mapBrand(
     color_primary: String(row.color_primary ?? row.primary_color ?? "#0C0C0E"),
     color_accent: String(row.color_accent ?? "#C9A84C"),
     platforms,
+    pitch_line: row.pitch_line == null ? null : String(row.pitch_line),
+    primary_goal: row.primary_goal == null ? null : String(row.primary_goal),
+    tone_sample_choice:
+      row.tone_sample_choice == null ? null : String(row.tone_sample_choice),
+    social_handle:
+      row.social_handle == null ? null : String(row.social_handle),
+    logo_url: row.logo_url == null ? null : String(row.logo_url),
+    reference_url:
+      row.reference_url == null ? null : String(row.reference_url),
   };
 }
 

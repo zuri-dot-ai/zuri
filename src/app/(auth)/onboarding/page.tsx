@@ -4,8 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { Step1Name } from "@/components/onboarding/steps/Step1Name";
 import { Step2BusinessIdentity } from "@/components/onboarding/steps/Step2BusinessIdentity";
+import { Step9Positioning } from "@/components/onboarding/steps/Step9Positioning";
 import { Step3OfferingsAudience } from "@/components/onboarding/steps/Step3OfferingsAudience";
 import { Step6BrandVibe } from "@/components/onboarding/steps/Step6BrandVibe";
+import { Step10AssetsReference } from "@/components/onboarding/steps/Step10AssetsReference";
 import { Step7Platforms } from "@/components/onboarding/steps/Step7Platforms";
 import { Step8Building } from "@/components/onboarding/steps/Step8Building";
 import {
@@ -16,7 +18,7 @@ import {
 } from "@/lib/onboarding/types";
 
 const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000;
-const BUILDING_STEP = ONBOARDING_TOTAL_STEPS + 1; // 6
+const BUILDING_STEP = ONBOARDING_TOTAL_STEPS + 1; // 8
 
 function loadSavedState(): {
   state: OnboardingState;
@@ -101,6 +103,25 @@ export default function OnboardingPage() {
     }
   }, [state, hydrated]);
 
+  // Mobile keyboard handling: keep the focused field visible above the
+  // keyboard and avoid the Continue button being clipped.
+  useEffect(() => {
+    if (!hydrated) return;
+    function onFocusIn(e: FocusEvent) {
+      const target = e.target;
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement
+      ) {
+        window.setTimeout(() => {
+          target.scrollIntoView({ block: "center", behavior: "smooth" });
+        }, 150);
+      }
+    }
+    document.addEventListener("focusin", onFocusIn);
+    return () => document.removeEventListener("focusin", onFocusIn);
+  }, [hydrated]);
+
   const update = useCallback((patch: Partial<OnboardingState>) => {
     setState((prev) => ({ ...prev, ...patch }));
   }, []);
@@ -154,6 +175,7 @@ export default function OnboardingPage() {
       onContinue={goNext}
       hideControls={step === BUILDING_STEP}
       launchOnContinue={step === ONBOARDING_TOTAL_STEPS}
+      previewState={state}
     >
       {step === 1 && (
         <Step1Name
@@ -174,6 +196,15 @@ export default function OnboardingPage() {
         />
       )}
       {step === 3 && (
+        <Step9Positioning
+          pitchLine={state.pitchLine}
+          primaryGoal={state.primaryGoal}
+          onPitchLineChange={(pitchLine) => update({ pitchLine })}
+          onPrimaryGoalChange={(primaryGoal) => update({ primaryGoal })}
+          onValidityChange={setCanContinue}
+        />
+      )}
+      {step === 4 && (
         <Step3OfferingsAudience
           businessType={state.businessType}
           services={state.services}
@@ -187,14 +218,30 @@ export default function OnboardingPage() {
           onValidityChange={setCanContinue}
         />
       )}
-      {step === 4 && (
+      {step === 5 && (
         <Step6BrandVibe
           value={state.brandVibe}
           onChange={(brandVibe) => update({ brandVibe })}
+          businessType={state.businessType}
+          toneSampleChoice={state.toneSampleChoice}
+          onToneSampleChoiceChange={(toneSampleChoice) =>
+            update({ toneSampleChoice })
+          }
           onValidityChange={setCanContinue}
         />
       )}
-      {step === 5 && (
+      {step === 6 && (
+        <Step10AssetsReference
+          logoUrl={state.logoUrl}
+          socialHandle={state.socialHandle}
+          referenceUrl={state.referenceUrl}
+          onLogoUrlChange={(logoUrl) => update({ logoUrl })}
+          onSocialHandleChange={(socialHandle) => update({ socialHandle })}
+          onReferenceUrlChange={(referenceUrl) => update({ referenceUrl })}
+          onValidityChange={setCanContinue}
+        />
+      )}
+      {step === 7 && (
         <Step7Platforms
           value={state.platforms}
           onChange={(platforms) => update({ platforms })}

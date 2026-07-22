@@ -725,6 +725,55 @@
     font-family: var(--font-body), system-ui, sans-serif;
   }
 
+  /* Typography scale — applied identically on every onboarding step. */
+  .onboarding-headline {
+    font-size: 1.75rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    line-height: 1.15;
+  }
+  @media (min-width: 640px) {
+    .onboarding-headline {
+      font-size: 2rem;
+    }
+  }
+  .onboarding-subtext {
+    margin-top: 0.5rem;
+    font-size: 0.9375rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+  .onboarding-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+  .onboarding-helper {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    line-height: 1.4;
+  }
+
+  /* Elevation — consistent depth for panels, cards, and the preview frame. */
+  .onboarding-panel {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-solid);
+    border-radius: var(--radius-md);
+    box-shadow: var(--elevation-2);
+    padding: 1.25rem;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  }
+  @media (min-width: 640px) {
+    .onboarding-panel {
+      padding: 1.5rem;
+    }
+  }
+  .onboarding-panel:focus-within {
+    border-color: var(--border-hover);
+    box-shadow: var(--elevation-3);
+  }
+
   .onboarding-input {
     background: var(--bg-secondary) !important;
     border: 1px solid var(--border-solid) !important;
@@ -735,6 +784,37 @@
     border-color: var(--accent) !important;
     box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.18);
     outline: none !important;
+  }
+
+  /* Safe-area insets — iOS notch / home-indicator on progress bar + button row. */
+  .onboarding-safe-top {
+    padding-top: max(1.25rem, env(safe-area-inset-top));
+  }
+  .onboarding-safe-bottom {
+    padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+  }
+
+  /* Live preview: browser-chrome device frame. */
+  .preview-frame {
+    border-radius: var(--radius-lg, 1rem);
+    border: 1px solid var(--border-solid);
+    background: var(--bg-secondary);
+    box-shadow: var(--elevation-3);
+    overflow: hidden;
+  }
+  .preview-frame-chrome {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border-solid);
+  }
+
+  @media (orientation: landscape) and (max-height: 480px) {
+    .onboarding-preview-mobile {
+      display: none;
+    }
   }
 }
 

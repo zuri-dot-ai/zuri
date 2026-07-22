@@ -9,6 +9,9 @@ export interface RawOnboardingData {
   location: string;
   locationCity?: string;
   brandVibe: string;
+  pitchLine?: string;
+  primaryGoal?: string;
+  toneSampleChoice?: string;
 }
 
 export interface EnrichedBrandProfile {
@@ -35,6 +38,13 @@ export async function extractBrandProfile(
     ? sanitizeForPrompt(data.locationCity)
     : undefined;
   const location = sanitizeForPrompt(data.location);
+  const pitchLine = data.pitchLine ? sanitizeForPrompt(data.pitchLine) : undefined;
+  const primaryGoal = data.primaryGoal
+    ? sanitizeForPrompt(data.primaryGoal)
+    : undefined;
+  const toneSampleChoice = data.toneSampleChoice
+    ? sanitizeForPrompt(data.toneSampleChoice)
+    : undefined;
 
   const locationLabel = locationCity
     ? `${locationCity}, Nigeria`
@@ -54,6 +64,9 @@ Services offered: ${services.join(", ")}
 Target audience: ${audienceTypes.join(", ")}
 Location: ${locationLabel}
 Desired brand vibe: ${brandVibe}
+${pitchLine ? `Owner's own pitch line / differentiator: "${pitchLine}" — treat this as ground truth for unique_value and tagline, don't contradict it.` : ""}
+${primaryGoal ? `Primary business goal: ${primaryGoal}` : ""}
+${toneSampleChoice ? `Preferred tone sample (match this register): "${toneSampleChoice}"` : ""}
 
 Output ONLY valid JSON with these exact keys. No markdown, no preamble, no explanation:
 {

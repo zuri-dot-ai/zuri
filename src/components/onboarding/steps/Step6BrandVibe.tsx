@@ -1,7 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+import { Check } from "lucide-react";
 import { SelectionCard } from "@/components/onboarding/SelectionCard";
+import { cn } from "@/lib/utils";
+import { getToneSamplePair } from "@/lib/onboarding/types";
 
 const BRAND_VIBES = [
   {
@@ -45,25 +48,34 @@ const BRAND_VIBES = [
 interface Step6BrandVibeProps {
   value: string;
   onChange: (value: string) => void;
+  businessType: string;
+  toneSampleChoice: string;
+  onToneSampleChoiceChange: (value: string) => void;
   onValidityChange: (valid: boolean) => void;
 }
 
 export function Step6BrandVibe({
   value,
   onChange,
+  businessType,
+  toneSampleChoice,
+  onToneSampleChoiceChange,
   onValidityChange,
 }: Step6BrandVibeProps) {
+  const [sampleA, sampleB] = useMemo(
+    () => getToneSamplePair(businessType),
+    [businessType]
+  );
+
   useEffect(() => {
-    onValidityChange(Boolean(value));
-  }, [value, onValidityChange]);
+    onValidityChange(Boolean(value) && Boolean(toneSampleChoice));
+  }, [value, toneSampleChoice, onValidityChange]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-[1.75rem] font-semibold tracking-[-0.02em] text-foreground md:text-[2rem]">
-          How should your brand feel?
-        </h1>
-        <p className="mt-2 text-[0.9375rem] text-[var(--text-secondary)]">
+        <h1 className="onboarding-headline">How should your brand feel?</h1>
+        <p className="onboarding-subtext">
           Pick the mood that should come through on your site.
         </p>
       </div>
@@ -81,6 +93,38 @@ export function Step6BrandVibe({
           />
         ))}
       </div>
+
+      <section className="space-y-3">
+        <div>
+          <p className="onboarding-eyebrow">Which sounds more like you?</p>
+          <p className="onboarding-helper mt-1.5">
+            This helps set the voice for your site copy.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+          {[sampleA, sampleB].map((sample) => (
+            <button
+              key={sample}
+              type="button"
+              onClick={() => onToneSampleChoiceChange(sample)}
+              aria-pressed={toneSampleChoice === sample}
+              className={cn(
+                "min-h-[44px] rounded-md border p-4 text-left text-sm transition-all duration-150",
+                toneSampleChoice === sample
+                  ? "scale-[1.01] border-gold bg-gold/[0.08] text-foreground"
+                  : "border-border bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:border-[var(--border-hover)]"
+              )}
+            >
+              <span className="flex items-start justify-between gap-2">
+                <span>&ldquo;{sample}&rdquo;</span>
+                {toneSampleChoice === sample && (
+                  <Check className="size-4 shrink-0 text-gold" strokeWidth={2.5} />
+                )}
+              </span>
+            </button>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

@@ -51,10 +51,13 @@ export function Step1Name({ value, onChange, onValidityChange }: Step1NameProps)
 
   return (
     <div className="space-y-6">
-      <h1 className="text-[1.75rem] font-semibold tracking-[-0.02em] text-foreground md:text-[2rem]">
-        Welcome to Zuri. What should we call you?
-      </h1>
-      <div className="rounded-md border border-border bg-[var(--bg-secondary)] p-5 sm:p-6">
+      <div>
+        <h1 className="onboarding-headline">
+          Welcome to Zuri. What should we call you?
+        </h1>
+        <p className="onboarding-subtext">Takes about 2 minutes.</p>
+      </div>
+      <div className="onboarding-panel">
         <Input
           value={value}
           onChange={(e) => onChange(e.target.value)}

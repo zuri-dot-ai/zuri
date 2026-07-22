@@ -66,10 +66,8 @@ export function Step7Platforms({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-[1.75rem] font-semibold tracking-[-0.02em] text-foreground md:text-[2rem]">
-          Where do you want to show up?
-        </h1>
-        <p className="mt-2 text-[0.9375rem] text-[var(--text-secondary)]">
+        <h1 className="onboarding-headline">Where do you want to show up?</h1>
+        <p className="onboarding-subtext">
           Choose all that apply. You can change this later.
         </p>
       </div>
