@@ -8,6 +8,7 @@ import {
 import { getActivePlanId, isGrowthPlus } from "@/lib/payments/get-plan";
 import { PLAN_CONFIG, type PlanId } from "@/lib/payments/plans";
 import { createNotificationAsync } from "@/lib/notifications/create-notification";
+import { serviceNames } from "@/types/brand";
 
 export async function requireContentUser(): Promise<
   | { supabase: SupabaseClient; user: User; planId: PlanId }
@@ -117,9 +118,10 @@ export async function incrementCalendarUsage(
 }
 
 export function mapBrandForCalendar(row: Record<string, unknown>) {
-  const services = Array.isArray(row.services)
-    ? row.services.filter((s): s is string => typeof s === "string")
-    : [];
+  // business_profiles.services is jsonb (V2: [{name, description}], legacy
+  // rows: plain strings) — normalize to flat names for the string-based
+  // prompt builders that consume this mapped shape.
+  const services = serviceNames(row.services);
   const platforms = Array.isArray(row.platforms)
     ? row.platforms.filter((s): s is string => typeof s === "string")
     : ["instagram", "facebook"];

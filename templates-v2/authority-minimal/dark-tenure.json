@@ -1,0 +1,30 @@
+{
+  "template_id": "authority-minimal-dark-tenure",
+  "archetype": "authority-minimal",
+  "mode": "dark",
+  "hero_type": "image",
+  "supportedModules": ["founder-split", "credentials-bar", "stats-strip"],
+  "lean": "international",
+  "display_name": "Consultant Dark Tenure",
+  "storage_path": "authority-minimal/dark-tenure.html",
+  "color_themes": [
+    {"key":"theme-1","bg":"#15130F","surface":"#1E1B15","text":"#F3EFE6","text_muted":"#A39C8C","accent":"#8A6D3B","accent_text":"#15130F"},
+    {"key":"theme-2","bg":"#15130F","surface":"#1E1B15","text":"#F3EFE6","text_muted":"#A39C8C","accent":"#9C7A32","accent_text":"#15130F"},
+    {"key":"theme-3","bg":"#15130F","surface":"#1E1B15","text":"#F3EFE6","text_muted":"#A39C8C","accent":"#B08D3E","accent_text":"#15130F"}
+  ],
+  "placeholder_fields": [
+    "business_name", "tagline", "about_body_short", "about_body_long", "first_name",
+    "service_1_name", "service_1_description", "service_2_name", "service_2_description",
+    "service_3_name", "service_3_description", "service_4_name", "service_4_description",
+    "service_5_name", "service_5_description", "service_6_name", "service_6_description",
+    "testimonial_1_quote", "testimonial_1_name", "testimonial_1_role",
+    "testimonial_2_quote", "testimonial_2_name", "testimonial_2_role",
+    "testimonial_3_quote", "testimonial_3_name", "testimonial_3_role",
+    "phone_number", "email_address", "whatsapp_number", "instagram_url", "address",
+    "credential_1_title", "credential_1_detail", "credential_2_title", "credential_2_detail", "credential_3_title", "credential_3_detail",
+    "stat_1_value", "stat_1_label", "stat_2_value", "stat_2_label", "stat_3_value", "stat_3_label", "stat_4_value", "stat_4_label"
+  ],
+  "image_slots": ["hero", "founder"],
+  "has_unique_section": true,
+  "unique_section_name": "founder-split"
+}

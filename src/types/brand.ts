@@ -2,6 +2,47 @@
 //  ZURI — Brand & AI Domain Types
 // ════════════════════════════════════════════════════════
 
+/** A single structured service — Onboarding V2 (docs/01_ONBOARDING_V2.md §9). */
+export interface ServiceEntry {
+  name: string;
+  description: string;
+}
+
+/**
+ * `business_profiles.services` is jsonb and may still hold plain strings for
+ * rows created before the V2 migration (`to_jsonb(text[])` wraps each string
+ * as-is, not as `{name, description}`). Always read through this helper
+ * rather than assuming the richer shape.
+ */
+export function normalizeServices(raw: unknown): ServiceEntry[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((item): ServiceEntry => {
+      if (typeof item === "string") return { name: item, description: "" };
+      if (item && typeof item === "object" && "name" in item) {
+        const obj = item as Record<string, unknown>;
+        return {
+          name: typeof obj.name === "string" ? obj.name : "",
+          description: typeof obj.description === "string" ? obj.description : "",
+        };
+      }
+      return { name: "", description: "" };
+    })
+    .filter((s) => s.name.trim().length > 0);
+}
+
+/** Flat list of service names — for prompts/UI that only need the label. */
+export function serviceNames(raw: unknown): string[] {
+  return normalizeServices(raw).map((s) => s.name);
+}
+
+/** "Name — description" lines — for prompts that benefit from the richer detail. */
+export function serviceLines(raw: unknown): string[] {
+  return normalizeServices(raw).map((s) =>
+    s.description ? `${s.name} — ${s.description}` : s.name
+  );
+}
+
 /** Mirrors `business_profiles` + handle from `profiles` — used by the website generation pipeline. */
 export interface BusinessProfile {
   id: string;
@@ -11,7 +52,7 @@ export interface BusinessProfile {
   business_name: string;
   industry: string;
   business_type: string;
-  services: string[];
+  services: ServiceEntry[];
   target_audience: string;
   location: string;
   location_city: string | null;

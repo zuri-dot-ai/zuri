@@ -17,6 +17,12 @@ export const RATE_LIMITS: Record<string, RateLimitConfig> = {
   "onboarding:complete": { limit: 3, windowSeconds: 3600 },
   "handle:check": { limit: 60, windowSeconds: 60 },
 
+  // Onboarding V2 — anonymous, pre-signup (docs/01_ONBOARDING_V2.md §2.3)
+  // Keyed by ip_hash (no user_id exists yet).
+  "onboarding:start": { limit: 5, windowSeconds: 86400 },
+  // Keyed by anonymous session token.
+  "onboarding:session_patch": { limit: 30, windowSeconds: 3600 },
+
   // AI Generation (expensive — rate limit tightly)
   "generation:website": { limit: 3, windowSeconds: 3600 },
   "generation:content": { limit: 10, windowSeconds: 60 },

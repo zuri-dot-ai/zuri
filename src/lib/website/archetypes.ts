@@ -43,3 +43,24 @@ export function resolveArchetype(
 
   return "authority-minimal"; // final fallback
 }
+
+// Onboarding V2 Step 1 — deterministic category → archetype lookup, zero AI.
+// Category always wins on archetype (docs/00_SESSION_PROMPT_PREMIUM_OVERHAUL.md
+// Decision 3) — brand vibe, asked later, only selects mode/lean/theme within
+// this archetype, it never overrides which archetype is chosen. Keys match
+// VALID_BUSINESS_TYPES in src/lib/onboarding/types.ts (the 9 Step 1 cards).
+const CATEGORY_TO_ARCHETYPE: Record<string, DesignArchetype> = {
+  "food-hospitality": "warm-sensory",
+  "beauty-wellness": "luxury-aspirational",
+  "professional-services": "authority-minimal",
+  "creative-portfolio": "portfolio-dramatic",
+  "retail-fashion": "editorial-bold",
+  technology: "clean-modern",
+  "health-medical": "trust-professional",
+  "events-booking": "community-vibrant",
+  other: "authority-minimal",
+};
+
+export function resolveArchetypeFromCategory(category: string): DesignArchetype {
+  return CATEGORY_TO_ARCHETYPE[category] ?? "authority-minimal";
+}

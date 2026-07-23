@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { geminiJSON, FLASH } from "@/lib/gemini";
 import type { AgencyBrief } from "@/types/brand";
+import { serviceLines } from "@/types/brand";
 
 const BRIEF_SYSTEM = `
 You are Zuri's agency-brief writer. Generate a concise, professional brief
@@ -29,7 +30,7 @@ export async function POST() {
   try {
     const brief = await geminiJSON<AgencyBrief>(
       `Write an agency brief for: ${profile.business_name} (${profile.industry}) in ${profile.location}. ` +
-      `Services: ${(profile.services || []).join(", ")}. Audience: ${profile.target_audience}. Tone: ${profile.brand_tone}.`,
+      `Services: ${serviceLines(profile.services).join("; ")}. Audience: ${profile.target_audience}. Tone: ${profile.brand_tone}.`,
       { model: FLASH, system: BRIEF_SYSTEM, temperature: 0.6 }
     );
     return NextResponse.json({ brief });

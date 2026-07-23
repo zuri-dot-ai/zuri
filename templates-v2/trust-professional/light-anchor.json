@@ -1,0 +1,87 @@
+{
+  "template_id": "trust-professional-light-anchor",
+  "archetype": "trust-professional",
+  "mode": "light",
+  "hero_type": "image",
+  "supportedModules": [
+    "founder-split",
+    "credentials-bar"
+  ],
+  "lean": "international",
+  "display_name": "Medical Light Anchor",
+  "storage_path": "trust-professional/light-anchor.html",
+  "color_themes": [
+    {
+      "key": "theme-1",
+      "bg": "#FFFFFF",
+      "surface": "#F1F5F5",
+      "text": "#1A2226",
+      "text_muted": "#5E6B70",
+      "accent": "#2E7D6B",
+      "accent_text": "#FFFFFF"
+    },
+    {
+      "key": "theme-2",
+      "bg": "#FFFFFF",
+      "surface": "#F1F5F5",
+      "text": "#1A2226",
+      "text_muted": "#5E6B70",
+      "accent": "#2A4D8F",
+      "accent_text": "#FFFFFF"
+    },
+    {
+      "key": "theme-3",
+      "bg": "#FFFFFF",
+      "surface": "#F1F5F5",
+      "text": "#1A2226",
+      "text_muted": "#5E6B70",
+      "accent": "#3D8C7A",
+      "accent_text": "#FFFFFF"
+    }
+  ],
+  "placeholder_fields": [
+    "business_name",
+    "tagline",
+    "about_body_short",
+    "about_body_long",
+    "first_name",
+    "service_1_name",
+    "service_1_description",
+    "service_2_name",
+    "service_2_description",
+    "service_3_name",
+    "service_3_description",
+    "service_4_name",
+    "service_4_description",
+    "service_5_name",
+    "service_5_description",
+    "service_6_name",
+    "service_6_description",
+    "testimonial_1_quote",
+    "testimonial_1_name",
+    "testimonial_1_role",
+    "testimonial_2_quote",
+    "testimonial_2_name",
+    "testimonial_2_role",
+    "testimonial_3_quote",
+    "testimonial_3_name",
+    "testimonial_3_role",
+    "phone_number",
+    "email_address",
+    "whatsapp_number",
+    "instagram_url",
+    "address",
+    "credential_1_title",
+    "credential_1_detail",
+    "credential_2_title",
+    "credential_2_detail",
+    "credential_3_title",
+    "credential_3_detail"
+  ],
+  "image_slots": [
+    "hero",
+    "about"
+  ],
+  "has_unique_section": true,
+  "unique_section_name": "founder-split"
+}

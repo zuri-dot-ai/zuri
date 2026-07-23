@@ -1,17 +1,15 @@
 import { geminiJSON } from "@/lib/gemini";
 import { sanitizeForPrompt } from "@/lib/utils/sanitize";
+import type { ServiceEntry } from "@/types/brand";
 
 export interface RawOnboardingData {
   businessName: string;
   businessType: string;
-  services: string[];
+  services: ServiceEntry[];
   audienceTypes: string[];
   location: string;
   locationCity?: string;
   brandVibe: string;
-  pitchLine?: string;
-  primaryGoal?: string;
-  toneSampleChoice?: string;
 }
 
 export interface EnrichedBrandProfile {
@@ -29,7 +27,13 @@ export async function extractBrandProfile(
 ): Promise<EnrichedBrandProfile> {
   const businessName = sanitizeForPrompt(data.businessName);
   const businessType = sanitizeForPrompt(data.businessType);
-  const services = data.services.map((s) => sanitizeForPrompt(s)).filter(Boolean);
+  const serviceLines = data.services
+    .map((s) => {
+      const name = sanitizeForPrompt(s.name);
+      const description = sanitizeForPrompt(s.description);
+      return description ? `${name} — ${description}` : name;
+    })
+    .filter(Boolean);
   const audienceTypes = data.audienceTypes
     .map((a) => sanitizeForPrompt(a))
     .filter(Boolean);
@@ -38,13 +42,6 @@ export async function extractBrandProfile(
     ? sanitizeForPrompt(data.locationCity)
     : undefined;
   const location = sanitizeForPrompt(data.location);
-  const pitchLine = data.pitchLine ? sanitizeForPrompt(data.pitchLine) : undefined;
-  const primaryGoal = data.primaryGoal
-    ? sanitizeForPrompt(data.primaryGoal)
-    : undefined;
-  const toneSampleChoice = data.toneSampleChoice
-    ? sanitizeForPrompt(data.toneSampleChoice)
-    : undefined;
 
   const locationLabel = locationCity
     ? `${locationCity}, Nigeria`
@@ -60,13 +57,10 @@ from a Nigerian entrepreneur, output a clean, specific brand profile.
 
 Business name: ${businessName}
 Business type: ${businessType}
-Services offered: ${services.join(", ")}
+Services offered: ${serviceLines.join("; ")}
 Target audience: ${audienceTypes.join(", ")}
 Location: ${locationLabel}
 Desired brand vibe: ${brandVibe}
-${pitchLine ? `Owner's own pitch line / differentiator: "${pitchLine}" — treat this as ground truth for unique_value and tagline, don't contradict it.` : ""}
-${primaryGoal ? `Primary business goal: ${primaryGoal}` : ""}
-${toneSampleChoice ? `Preferred tone sample (match this register): "${toneSampleChoice}"` : ""}
 
 Output ONLY valid JSON with these exact keys. No markdown, no preamble, no explanation:
 {

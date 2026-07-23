@@ -13,6 +13,7 @@ import { ERROR_MESSAGES } from "@/lib/errors/messages";
 import { classifySupabaseError } from "@/lib/errors/supabase-errors";
 import { generateSupportRef } from "@/lib/errors/support-ref";
 import { captureError } from "@/lib/monitoring/sentry";
+import { serviceLines } from "@/types/brand";
 import type { WebsiteComposition } from "@/types/website";
 
 export async function PATCH(req: Request) {
@@ -92,7 +93,7 @@ export async function PATCH(req: Request) {
       const currentContent = updatedBlock;
       const prompt = `Regenerate copy for the "${blockId}" block of a website for ${brand?.business_name || "the business"}.
 Business industry: ${brand?.industry || "general"}
-Services: ${(brand?.services || []).join(", ")}
+Services: ${serviceLines(brand?.services).join("; ")}
 Tone: ${brand?.brand_tone || "professional"}
 Location: ${brand?.location || "Lagos, Nigeria"}
 

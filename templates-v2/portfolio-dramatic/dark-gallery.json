@@ -1,0 +1,31 @@
+{
+  "template_id": "portfolio-dramatic-dark-gallery",
+  "archetype": "portfolio-dramatic",
+  "mode": "dark",
+  "hero_type": "image",
+  "supportedModules": ["masonry-work", "case-study-spotlight"],
+  "lean": "international",
+  "display_name": "Photography Dark Gallery",
+  "storage_path": "portfolio-dramatic/dark-gallery.html",
+  "color_themes": [
+    {"key":"theme-1","bg":"#0A0A0A","surface":"#151515","text":"#F2F2F0","text_muted":"#8C8C88","accent":"#D8D4CC","accent_text":"#0A0A0A"},
+    {"key":"theme-2","bg":"#0A0A0A","surface":"#151515","text":"#F2F2F0","text_muted":"#8C8C88","accent":"#C9A96E","accent_text":"#0A0A0A"},
+    {"key":"theme-3","bg":"#0A0A0A","surface":"#151515","text":"#F2F2F0","text_muted":"#8C8C88","accent":"#FFFFFF","accent_text":"#0A0A0A"}
+  ],
+  "placeholder_fields": [
+    "business_name", "tagline", "about_body_short", "about_body_long",
+    "service_1_name", "service_1_description", "service_2_name", "service_2_description",
+    "service_3_name", "service_3_description", "service_4_name", "service_4_description",
+    "service_5_name", "service_5_description", "service_6_name", "service_6_description",
+    "testimonial_1_quote", "testimonial_1_name", "testimonial_1_role",
+    "testimonial_2_quote", "testimonial_2_name", "testimonial_2_role",
+    "testimonial_3_quote", "testimonial_3_name", "testimonial_3_role",
+    "phone_number", "email_address", "whatsapp_number", "instagram_url", "address",
+    "case_study_title", "case_study_description",
+    "hero_image_public_id", "work_1_public_id", "work_2_public_id", "work_3_public_id",
+    "work_4_public_id", "work_5_public_id", "work_6_public_id", "case_study_public_id"
+  ],
+  "image_slots": ["hero", "work_1", "work_2", "work_3", "work_4", "work_5", "work_6", "case_study"],
+  "has_unique_section": true,
+  "unique_section_name": "case-study-spotlight"
+}

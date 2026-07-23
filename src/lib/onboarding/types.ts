@@ -1,121 +1,94 @@
-/** v3 = 7 data steps + building (step 8). Old key abandoned for clean remaps. */
-export const ONBOARDING_STORAGE_KEY = "zuri_onboarding_v3";
+/**
+ * Onboarding V2 (docs/01_ONBOARDING_V2.md) — anonymous-first, 12
+ * user-navigable steps + a 13th generation step. Supersedes the v3
+ * auth-gated, 7-step flow.
+ */
+export const ONBOARDING_STORAGE_KEY = "zuri_onboarding_v2";
 
-export const ONBOARDING_TOTAL_STEPS = 7;
+export const ONBOARDING_TOTAL_STEPS = 11;
 
 export const ONBOARDING_STEP_LABELS: Record<number, string> = {
-  1: "Name",
-  2: "Business identity",
-  3: "Positioning",
-  4: "Offerings & audience",
-  5: "Brand feel",
-  6: "Assets & reference",
-  7: "Where you show up",
+  1: "What you do",
+  2: "What you offer",
+  3: "Photos",
+  4: "Your customers",
+  5: "Where they are",
+  6: "Brand feel",
+  7: "Business name",
+  8: "Web address",
+  9: "Where you show up",
+  10: "Your name",
+  11: "Create account",
 };
+
+export interface ServiceEntry {
+  name: string;
+  description: string;
+}
+
+export interface UploadedImageRef {
+  slotType: string;
+  cloudinaryPublicId: string;
+  cloudinaryUrl: string;
+  pairIndex?: number;
+}
 
 export interface OnboardingState {
   step: number;
-  firstName: string;
-  businessName: string;
-  handle: string;
+  /** Mirrors the anonymous session cookie value (docs/01_ONBOARDING_V2.md §2.2). */
+  sessionToken: string;
+
+  // Step 1 — Business category
   businessType: string;
-  pitchLine: string;
-  primaryGoal: string;
-  services: string[];
+  /** Pre-resolved the moment Step 1 is answered — category always wins on archetype. */
+  resolvedArchetype: string;
+
+  // Step 2 — Services (structured, name + description)
+  services: ServiceEntry[];
+
+  // Step 3 — Conditional photo upload
+  uploadedImages: UploadedImageRef[];
+  photoStepSkipped: boolean;
+
+  // Step 4-5 — Audience + location
   audienceTypes: string[];
   location: string;
   locationCity?: string;
+
+  // Step 6 — Brand vibe
   brandVibe: string;
-  toneSampleChoice: string;
-  logoUrl: string;
-  socialHandle: string;
-  referenceUrl: string;
+
+  // Step 7-8 — Business name + handle
+  businessName: string;
+  handle: string;
+
+  // Step 9 — Platforms
   platforms: string[];
+
+  // Step 10 — Your name (last question, personalizes the signup gateway)
+  firstName: string;
+
   startedAt: string;
 }
 
 export const DEFAULT_ONBOARDING_STATE: OnboardingState = {
   step: 1,
-  firstName: "",
-  businessName: "",
-  handle: "",
+  sessionToken: "",
   businessType: "",
-  pitchLine: "",
-  primaryGoal: "",
+  resolvedArchetype: "",
   services: [],
+  uploadedImages: [],
+  photoStepSkipped: false,
   audienceTypes: [],
   location: "",
   locationCity: undefined,
   brandVibe: "",
-  toneSampleChoice: "",
-  logoUrl: "",
-  socialHandle: "",
-  referenceUrl: "",
+  businessName: "",
+  handle: "",
   platforms: [],
+  firstName: "",
   startedAt: new Date().toISOString(),
 };
-
-export const VALID_PRIMARY_GOALS = [
-  "leads",
-  "sales",
-  "bookings",
-  "credibility",
-] as const;
-
-export const PRIMARY_GOALS: Array<{
-  id: (typeof VALID_PRIMARY_GOALS)[number];
-  label: string;
-  descriptor: string;
-}> = [
-  { id: "leads", label: "Get leads", descriptor: "Inquiries, calls, DMs" },
-  { id: "sales", label: "Sell products", descriptor: "Online or in-store purchases" },
-  { id: "bookings", label: "Book appointments", descriptor: "Fill your calendar" },
-  { id: "credibility", label: "Build credibility", descriptor: "Look established and trustworthy" },
-];
-
-/** Two contrasting sample sentences per category, used as a tone signal. */
-export const TONE_SAMPLE_PAIRS: Record<string, [string, string]> = {
-  "food-hospitality": [
-    "Fresh food, made right, every time.",
-    "We're obsessed with every bite you take.",
-  ],
-  "beauty-wellness": [
-    "Look good. Feel better.",
-    "We're obsessed with helping you feel like your best self.",
-  ],
-  "professional-services": [
-    "We deliver results.",
-    "We're obsessed with getting you results.",
-  ],
-  "creative-portfolio": [
-    "Bold work. Clear vision.",
-    "We're obsessed with telling your story right.",
-  ],
-  "retail-fashion": [
-    "Style that fits you.",
-    "We're obsessed with helping you look your best.",
-  ],
-  technology: [
-    "We build what works.",
-    "We're obsessed with solving your hardest problems.",
-  ],
-  "health-medical": [
-    "Care you can count on.",
-    "We're obsessed with your wellbeing.",
-  ],
-  "events-booking": [
-    "Every detail, handled.",
-    "We're obsessed with making your event unforgettable.",
-  ],
-  default: [
-    "We deliver results.",
-    "We're obsessed with getting you results.",
-  ],
-};
-
-export function getToneSamplePair(businessType: string): [string, string] {
-  return TONE_SAMPLE_PAIRS[businessType] ?? TONE_SAMPLE_PAIRS.default;
-}
 
 export const VALID_BUSINESS_TYPES = [
   "food-hospitality",
@@ -158,6 +131,23 @@ export function isUnsupportedBusinessType(
   return (UNSUPPORTED_BUSINESS_TYPES as readonly string[]).includes(value);
 }
 
+/** Step 1 — Business category cards (docs/01_ONBOARDING_V2.md §4 Step 1). */
+export const BUSINESS_CATEGORIES: Array<{
+  id: string;
+  label: string;
+  icon: string;
+}> = [
+  { id: "food-hospitality", label: "Food & Hospitality", icon: "UtensilsCrossed" },
+  { id: "beauty-wellness", label: "Beauty & Wellness", icon: "Scissors" },
+  { id: "professional-services", label: "Professional Services", icon: "Briefcase" },
+  { id: "creative-portfolio", label: "Creative & Portfolio", icon: "Camera" },
+  { id: "retail-fashion", label: "Retail & Fashion", icon: "ShoppingBag" },
+  { id: "technology", label: "Technology", icon: "Zap" },
+  { id: "health-medical", label: "Health & Medical", icon: "Stethoscope" },
+  { id: "events-booking", label: "Events & Booking", icon: "Calendar" },
+  { id: "other", label: "Other", icon: "MoreHorizontal" },
+];
+
 export const VALID_LOCATIONS = [
   "lagos",
   "abuja",
@@ -186,6 +176,7 @@ export const VALID_BRAND_VIBES = [
   "creative-artistic",
 ] as const;
 
+/** Step 2 — tappable name suggestions, keyed by Step 1's business category. */
 export const SERVICE_SUGGESTIONS: Record<string, string[]> = {
   "food-hospitality": [
     "Dine-in",

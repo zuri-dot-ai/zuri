@@ -1,0 +1,91 @@
+{
+  "template_id": "clean-modern-dark-vertex",
+  "archetype": "clean-modern",
+  "mode": "dark",
+  "hero_type": "typography",
+  "supportedModules": [
+    "credentials-bar",
+    "faq-accordion"
+  ],
+  "lean": "international",
+  "display_name": "Tech Dark Vertex",
+  "storage_path": "clean-modern/dark-vertex.html",
+  "color_themes": [
+    {
+      "key": "theme-1",
+      "bg": "#0E1116",
+      "surface": "#171B22",
+      "text": "#EDEFF3",
+      "text_muted": "#9AA1AE",
+      "accent": "#6C63FF",
+      "accent_text": "#FFFFFF"
+    },
+    {
+      "key": "theme-2",
+      "bg": "#0E1116",
+      "surface": "#171B22",
+      "text": "#EDEFF3",
+      "text_muted": "#9AA1AE",
+      "accent": "#3EC6C0",
+      "accent_text": "#0E1116"
+    },
+    {
+      "key": "theme-3",
+      "bg": "#0E1116",
+      "surface": "#171B22",
+      "text": "#EDEFF3",
+      "text_muted": "#9AA1AE",
+      "accent": "#4C7EF3",
+      "accent_text": "#FFFFFF"
+    }
+  ],
+  "placeholder_fields": [
+    "business_name",
+    "tagline",
+    "about_body_short",
+    "about_body_long",
+    "service_1_name",
+    "service_1_description",
+    "service_2_name",
+    "service_2_description",
+    "service_3_name",
+    "service_3_description",
+    "service_4_name",
+    "service_4_description",
+    "service_5_name",
+    "service_5_description",
+    "service_6_name",
+    "service_6_description",
+    "testimonial_1_quote",
+    "testimonial_1_name",
+    "testimonial_1_role",
+    "testimonial_2_quote",
+    "testimonial_2_name",
+    "testimonial_2_role",
+    "testimonial_3_quote",
+    "testimonial_3_name",
+    "testimonial_3_role",
+    "phone_number",
+    "email_address",
+    "whatsapp_number",
+    "instagram_url",
+    "address",
+    "credential_1_title",
+    "credential_1_detail",
+    "credential_2_title",
+    "credential_2_detail",
+    "credential_3_title",
+    "credential_3_detail",
+    "faq_1_question",
+    "faq_1_answer",
+    "faq_2_question",
+    "faq_2_answer",
+    "faq_3_question",
+    "faq_3_answer"
+  ],
+  "image_slots": [
+    "hero"
+  ],
+  "has_unique_section": true,
+  "unique_section_name": "credentials-bar"
+}

@@ -1,5 +1,11 @@
-import type { BusinessProfile } from "@/types/brand";
 import type { DesignArchetype } from "@/lib/website/archetypes";
+import type { mapBrandForCalendar } from "./api-helpers";
+
+// The content pipeline never receives a raw BusinessProfile — every call
+// site maps the DB row through `mapBrandForCalendar()` first (flat
+// `services: string[]`, no handle/pitch_line/etc.), so type against that
+// shape directly rather than the richer website-generation `BusinessProfile`.
+export type ContentBrand = ReturnType<typeof mapBrandForCalendar>;
 
 export interface GenerationInput {
   userId: string;
@@ -9,7 +15,7 @@ export interface GenerationInput {
   topic: string;
   hook: string;
   brief: string;
-  brand: BusinessProfile;
+  brand: ContentBrand;
   archetype: DesignArchetype;
 }
 

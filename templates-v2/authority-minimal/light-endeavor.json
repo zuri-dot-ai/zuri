@@ -1,0 +1,30 @@
+{
+  "template_id": "authority-minimal-light-endeavor",
+  "archetype": "authority-minimal",
+  "mode": "light",
+  "hero_type": "image",
+  "supportedModules": ["credentials-bar", "faq-accordion", "founder-split"],
+  "lean": "international",
+  "display_name": "Consultant Light Endeavor",
+  "storage_path": "authority-minimal/light-endeavor.html",
+  "color_themes": [
+    {"key":"theme-1","bg":"#FAF9F6","surface":"#F0EDE6","text":"#1B1A18","text_muted":"#6B675E","accent":"#9C7A32","accent_text":"#FAF9F6"},
+    {"key":"theme-2","bg":"#FAF9F6","surface":"#F0EDE6","text":"#1B1A18","text_muted":"#6B675E","accent":"#8A6E4E","accent_text":"#FAF9F6"},
+    {"key":"theme-3","bg":"#FAF9F6","surface":"#F0EDE6","text":"#1B1A18","text_muted":"#6B675E","accent":"#B08D3E","accent_text":"#FAF9F6"}
+  ],
+  "placeholder_fields": [
+    "business_name", "tagline", "about_body_short", "about_body_long", "first_name",
+    "service_1_name", "service_1_description", "service_2_name", "service_2_description",
+    "service_3_name", "service_3_description", "service_4_name", "service_4_description",
+    "service_5_name", "service_5_description", "service_6_name", "service_6_description",
+    "testimonial_1_quote", "testimonial_1_name", "testimonial_1_role",
+    "testimonial_2_quote", "testimonial_2_name", "testimonial_2_role",
+    "testimonial_3_quote", "testimonial_3_name", "testimonial_3_role",
+    "phone_number", "email_address", "whatsapp_number", "instagram_url", "address",
+    "credential_1_title", "credential_1_detail", "credential_2_title", "credential_2_detail", "credential_3_title", "credential_3_detail",
+    "faq_1_question", "faq_1_answer", "faq_2_question", "faq_2_answer", "faq_3_question", "faq_3_answer"
+  ],
+  "image_slots": ["hero", "founder"],
+  "has_unique_section": true,
+  "unique_section_name": "founder-split"
+}

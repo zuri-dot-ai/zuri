@@ -17,6 +17,7 @@ import {
 } from "fs";
 import { join } from "path";
 import type { BusinessProfile } from "../src/types/brand";
+import { serviceNames } from "../src/types/brand";
 import type { DesignArchetype } from "../src/lib/website/archetypes";
 import type { TemplateMetadata, TemplateRow } from "../src/types/website";
 
@@ -52,10 +53,10 @@ const SAMPLES: BusinessProfile[] = [
     industry: "Restaurant",
     business_type: "restaurant",
     services: [
-      "Dine-in Nigerian cuisine",
-      "Private event catering",
-      "Weekend brunch",
-      "Takeaway packs",
+      { name: "Dine-in Nigerian cuisine", description: "Full-service dining, lunch and dinner" },
+      { name: "Private event catering", description: "On-site catering for weddings and corporate events" },
+      { name: "Weekend brunch", description: "Saturday and Sunday brunch menu" },
+      { name: "Takeaway packs", description: "Family-size packs for pickup or delivery" },
     ],
     target_audience: "Lagos food lovers and corporate event planners",
     location: "Lagos, Nigeria",
@@ -77,11 +78,11 @@ const SAMPLES: BusinessProfile[] = [
     industry: "Fintech / SaaS",
     business_type: "saas",
     services: [
-      "Payment collection API",
-      "Merchant dashboard",
-      "Settlement reports",
-      "Fraud alerts",
-      "Developer sandbox",
+      { name: "Payment collection API", description: "Accept card, bank transfer, and USSD payments" },
+      { name: "Merchant dashboard", description: "Real-time transaction and revenue view" },
+      { name: "Settlement reports", description: "Automated daily settlement statements" },
+      { name: "Fraud alerts", description: "Real-time suspicious transaction alerts" },
+      { name: "Developer sandbox", description: "Free test environment for integration" },
     ],
     target_audience: "Nigerian startups and SME merchants",
     location: "Lagos, Nigeria",
@@ -103,10 +104,10 @@ const SAMPLES: BusinessProfile[] = [
     industry: "Beauty & Spa",
     business_type: "salon-spa",
     services: [
-      "Deep tissue massage",
-      "Facial treatments",
-      "Bridal packages",
-      "Sauna & steam",
+      { name: "Deep tissue massage", description: "60 and 90 minute therapeutic sessions" },
+      { name: "Facial treatments", description: "Organic botanical facials for all skin types" },
+      { name: "Bridal packages", description: "Full-day pampering for brides and bridal parties" },
+      { name: "Sauna & steam", description: "Private sauna and steam room access" },
     ],
     target_audience: "Professionals and couples in Lagos Island",
     location: "Ikoyi, Lagos",
@@ -356,7 +357,7 @@ async function main() {
     const expected = resolveArchetype(
       brand.business_type,
       brand.industry,
-      brand.services,
+      serviceNames(brand.services),
       brand.brand_vibe
     );
     console.log(

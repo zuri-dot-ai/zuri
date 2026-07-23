@@ -4,6 +4,7 @@
 // ════════════════════════════════════════════════════════
 
 import type { BusinessProfileRow } from "@/types/database";
+import { serviceLines } from "@/types/brand";
 
 // ── 1. BRAND EXTRACTION (Gemini 2.5 Pro) ────────────────
 export const BRAND_EXTRACTION_SYSTEM = `
@@ -88,7 +89,7 @@ export function websiteCompositionPrompt(
 Compose a website for:
 - Business: ${profile.business_name}
 - Industry: ${profile.industry}
-- Services: ${(profile.services || []).join(", ")}
+- Services: ${serviceLines(profile.services).join("; ")}
 - Audience: ${profile.target_audience}
 - Tone: ${profile.brand_tone}
 - Unique value: ${profile.unique_value}
@@ -137,7 +138,7 @@ export function contentDraftPrompt(args: {
   return `
 Write a ${postType} post for ${platform}.
 Business: ${profile.business_name} (${profile.industry}) in ${profile.location}.
-Services: ${(profile.services || []).join(", ")}.
+Services: ${serviceLines(profile.services).join("; ")}.
 Tone: ${profile.brand_tone}. Audience: ${profile.target_audience}.
 ${profile.pitch_line ? `Differentiator: ${profile.pitch_line}` : ""}
 Week theme: ${theme}. This is day ${dayNumber} of their plan.
@@ -187,7 +188,7 @@ export function actionPlanPrompt(args: {
   return `
 Create the 90-day plan for:
 Business: ${profile.business_name} (${profile.industry}) in ${profile.location}.
-Services: ${(profile.services || []).join(", ")}.
+Services: ${serviceLines(profile.services).join("; ")}.
 Audience: ${profile.target_audience}. Tone: ${profile.brand_tone}.
 ${profile.pitch_line ? `Differentiator: ${profile.pitch_line}` : ""}
 ${profile.primary_goal ? `Primary goal: ${profile.primary_goal}` : ""}

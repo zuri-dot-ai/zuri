@@ -6,6 +6,7 @@
 import { geminiJSON } from "@/lib/gemini";
 import { sanitizeForPrompt } from "@/lib/utils/sanitize";
 import type { BusinessProfile } from "@/types/brand";
+import { serviceLines } from "@/types/brand";
 import type { ContentCalendarRow } from "@/types/database";
 import { getNigerianCulturalMoments, type CulturalMoment } from "./cultural-calendar";
 import type { ContentPillar } from "./pillars";
@@ -272,7 +273,9 @@ export function buildCalendarPrompt(params: CalendarPromptParams): string {
 
   const businessName = sanitizeForPrompt(brandField(brand, "business_name", "Business"));
   const industry = sanitizeForPrompt(brandField(brand, "industry"));
-  const services = sanitizeForPrompt(brandField(brand, "services"));
+  const services = sanitizeForPrompt(
+    serviceLines((brand as Record<string, unknown>).services).join("; ")
+  );
   const location = sanitizeForPrompt(
     brandField(brand, "location_city") || brandField(brand, "location", "Lagos")
   );
@@ -290,7 +293,9 @@ export function buildCalendarPrompt(params: CalendarPromptParams): string {
   const isThinAudience =
     !rawAudience.trim() ||
     /^(everyone|everybody|anyone|general public|all)$/i.test(rawAudience.trim());
-  const isThinServices = !services.trim() || services.split(",").length <= 1;
+  const isThinServices =
+    !services.trim() ||
+    serviceLines((brand as Record<string, unknown>).services).length <= 1;
   const inferenceNote =
     isThinAudience || isThinServices
       ? `\nNOTE: Some business details above are thin or generic (e.g. a vague target audience` +

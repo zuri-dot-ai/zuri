@@ -1,0 +1,30 @@
+{
+  "template_id": "luxury-aspirational-dark-atelier",
+  "archetype": "luxury-aspirational",
+  "mode": "dark",
+  "hero_type": "image",
+  "supportedModules": ["gallery", "founder-split", "stats-strip"],
+  "lean": "international",
+  "display_name": "Beauty Dark Atelier",
+  "storage_path": "luxury-aspirational/dark-atelier.html",
+  "color_themes": [
+    {"key":"theme-1","bg":"#161213","surface":"#211C1D","text":"#F3EDE7","text_muted":"#BDAFA5","accent":"#D4B679","accent_text":"#161213"},
+    {"key":"theme-2","bg":"#161213","surface":"#211C1D","text":"#F3EDE7","text_muted":"#BDAFA5","accent":"#C9A0A0","accent_text":"#161213"},
+    {"key":"theme-3","bg":"#161213","surface":"#211C1D","text":"#F3EDE7","text_muted":"#BDAFA5","accent":"#B08D6B","accent_text":"#161213"}
+  ],
+  "placeholder_fields": [
+    "business_name", "tagline", "about_body_short", "about_body_long", "first_name",
+    "service_1_name", "service_1_description", "service_2_name", "service_2_description",
+    "service_3_name", "service_3_description", "service_4_name", "service_4_description",
+    "service_5_name", "service_5_description", "service_6_name", "service_6_description",
+    "testimonial_1_quote", "testimonial_1_name", "testimonial_1_role",
+    "testimonial_2_quote", "testimonial_2_name", "testimonial_2_role",
+    "testimonial_3_quote", "testimonial_3_name", "testimonial_3_role",
+    "phone_number", "email_address", "whatsapp_number", "instagram_url", "address",
+    "stat_1_value", "stat_1_label", "stat_2_value", "stat_2_label", "stat_3_value", "stat_3_label", "stat_4_value", "stat_4_label",
+    "hero_image_public_id", "gallery_1_public_id", "gallery_2_public_id", "gallery_3_public_id", "founder_image_public_id"
+  ],
+  "image_slots": ["hero", "gallery_1", "gallery_2", "gallery_3", "founder"],
+  "has_unique_section": true,
+  "unique_section_name": "founder-split"
+}

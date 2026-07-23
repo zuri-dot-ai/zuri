@@ -1,6 +1,7 @@
 import { geminiJSON } from "@/lib/gemini";
 import { createServiceClient } from "@/lib/supabase/service";
 import { sanitizeForPrompt } from "@/lib/utils/sanitize";
+import { serviceNames } from "@/types/brand";
 import type { BlogContent, GenerationInput } from "./types";
 import { getVoiceContext } from "./voice-bank";
 
@@ -10,7 +11,7 @@ export async function generateBlogPost(
   const businessName = sanitizeForPrompt(input.brand.business_name);
   const industry = sanitizeForPrompt(input.brand.industry);
   const topic = sanitizeForPrompt(input.topic);
-  const services = input.brand.services
+  const services = serviceNames(input.brand.services)
     .map((s) => sanitizeForPrompt(s))
     .join(", ");
   const audience = sanitizeForPrompt(input.brand.target_audience);

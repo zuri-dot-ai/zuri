@@ -20,6 +20,7 @@ import {
 import { createServiceClient } from "@/lib/supabase/service";
 import { createNotificationAsync } from "@/lib/notifications/create-notification";
 import type { BusinessProfile } from "@/types/brand";
+import { normalizeServices, serviceNames } from "@/types/brand";
 import type {
   CategoryImageRow,
   ResolvedImage,
@@ -151,17 +152,20 @@ function genericPlaceholderFallback(
       continue;
     }
 
+    const services = normalizeServices(brand.services);
+
     const serviceTitle = key.match(/^service_(\d+)_title$/);
     if (serviceTitle) {
       const idx = Number(serviceTitle[1]) - 1;
-      out[key] = brand.services[idx] ?? "";
+      out[key] = services[idx]?.name ?? "";
       continue;
     }
     const serviceDesc = key.match(/^service_(\d+)_description$/);
     if (serviceDesc) {
       const idx = Number(serviceDesc[1]) - 1;
-      out[key] = brand.services[idx]
-        ? `Professional ${brand.services[idx]} from ${brand.business_name}.`
+      out[key] = services[idx]
+        ? services[idx].description ||
+          `Professional ${services[idx].name} from ${brand.business_name}.`
         : "";
       continue;
     }
@@ -268,11 +272,16 @@ export async function fillPlaceholders(
   metadata: TemplateMetadata,
   _archetype: DesignArchetype
 ): Promise<Record<string, string>> {
+  const services = normalizeServices(brand.services);
+  const serviceLines = services
+    .map((s) => (s.description ? `${s.name} — ${s.description}` : s.name))
+    .join("; ");
+
   const prompt = `
 You are a copywriter for African small businesses. Fill every placeholder for this template.
 
 BUSINESS: ${brand.business_name} — ${brand.industry}
-SERVICES: ${brand.services.join(", ")}
+SERVICES: ${serviceLines}
 UNIQUE VALUE: ${brand.unique_value}
 TARGET AUDIENCE: ${brand.target_audience}
 LOCATION: ${brand.location_city ?? brand.location}, Nigeria
@@ -286,7 +295,7 @@ PLACEHOLDERS TO FILL (exact keys, no others): ${JSON.stringify(metadata.placehol
 RULES:
 1. Every field must be specific to ${brand.business_name} — zero generic text, no lorem ipsum, no [brackets]
 2. {{business_name}} = "${brand.business_name}" exactly
-3. Services named exactly as provided where relevant: ${brand.services.join(", ")}
+3. Services named exactly as provided where relevant: ${serviceNames(brand.services).join(", ")}
 4. Fill ALL 6 service slots if the business has 6+ offerings; otherwise fill only slots 1-3 and
    leave slots 4-6 as empty strings "" (they stay hidden — see §4.4)
 5. Testimonials: realistic Nigerian names, no fabricated dates/revenue/unverifiable stats
@@ -501,7 +510,7 @@ export async function composeWebsiteHtml(
   const archetype = resolveArchetype(
     brand.business_type,
     brand.industry,
-    brand.services,
+    serviceNames(brand.services),
     brand.brand_vibe
   );
 

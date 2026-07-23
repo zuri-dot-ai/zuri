@@ -3,7 +3,10 @@
 //  Website/template types: docs/02_WEBSITE_BUILDER.md §3, §11
 // ════════════════════════════════════════════════════════
 
-import type { AgencyBrief } from "./brand";
+import type { AgencyBrief, ServiceEntry } from "./brand";
+
+export type { ServiceEntry } from "./brand";
+export { normalizeServices, serviceNames, serviceLines } from "./brand";
 
 export type {
   ActiveTheme,
@@ -86,7 +89,7 @@ export interface BusinessProfileRow {
   user_id: string;
   business_name: string | null;
   industry: string | null;
-  services: string[];
+  services: ServiceEntry[];
   target_audience: string | null;
   brand_tone: string | null;
   unique_value: string | null;

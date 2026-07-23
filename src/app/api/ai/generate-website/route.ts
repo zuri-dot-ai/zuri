@@ -13,6 +13,7 @@ import { captureError } from "@/lib/monitoring/sentry";
 import { classifySupabaseError } from "@/lib/errors/supabase-errors";
 import { ERROR_MESSAGES } from "@/lib/errors/messages";
 import type { BusinessProfile } from "@/types/brand";
+import { normalizeServices } from "@/types/brand";
 
 export const maxDuration = 120;
 
@@ -26,9 +27,7 @@ function mapBrand(
   row: Record<string, unknown>,
   handle: string
 ): BusinessProfile {
-  const services = Array.isArray(row.services)
-    ? row.services.filter((s): s is string => typeof s === "string")
-    : [];
+  const services = normalizeServices(row.services);
   const platforms = Array.isArray(row.platforms)
     ? row.platforms.filter((s): s is string => typeof s === "string")
     : [];

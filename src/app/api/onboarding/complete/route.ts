@@ -2,17 +2,17 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { extractBrandProfile } from "@/lib/onboarding/brand-extractor";
+import { convertAnonymousSession } from "@/lib/onboarding/convert-session";
+import { clearAnonymousSessionCookie } from "@/lib/onboarding/anonymous-session";
+import { resolveArchetypeFromCategory } from "@/lib/website/archetypes";
 import {
   VALID_BUSINESS_TYPES,
   VALID_LOCATIONS,
   VALID_PLATFORMS,
-  VALID_PRIMARY_GOALS,
   isUnsupportedBusinessType,
+  type OnboardingState,
 } from "@/lib/onboarding/types";
-import {
-  RESERVED_HANDLES,
-  validateHandle,
-} from "@/lib/handle/rules";
+import { RESERVED_HANDLES, validateHandle } from "@/lib/handle/rules";
 import { sanitizeText } from "@/lib/utils/sanitize";
 import {
   collectErrors,
@@ -21,15 +21,17 @@ import {
   type ValidationResult,
 } from "@/lib/utils/validate";
 import { classifySupabaseError } from "@/lib/errors/supabase-errors";
+import { checkRateLimit, rateLimitExceededResponse } from "@/lib/security/rate-limit";
 
 const FIRST_NAME_PATTERN = /^[\p{L}]+(?:[\s'-][\p{L}]+)*$/u;
-const BLOCKED_SERVICE_KEYWORDS = new Set([
-  "drop",
-  "select",
-  "insert",
-  "delete",
-]);
+const BLOCKED_SERVICE_KEYWORDS = new Set(["drop", "select", "insert", "delete"]);
 
+/**
+ * Onboarding V2 (docs/01_ONBOARDING_V2.md §7.5) — fires from the Step 11
+ * signup-success handler. The request body is just `{ sessionToken }`;
+ * everything else is looked up server-side from the anonymous session row.
+ * NEVER trust a client-submitted OnboardingState body directly.
+ */
 export async function POST(req: Request) {
   const supabase = await createClient();
   const {
@@ -39,6 +41,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const rateLimit = await checkRateLimit(supabase, user.id, "onboarding:complete");
+  if (!rateLimit.allowed) return rateLimitExceededResponse(rateLimit.resetIn);
+
   let body: Record<string, unknown>;
   try {
     body = await req.json();
@@ -46,77 +51,102 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const firstName = sanitizeText(body.firstName);
-  const businessName = sanitizeText(body.businessName);
-  const handle = typeof body.handle === "string"
-    ? body.handle.toLowerCase().trim()
-    : "";
+  const sessionToken =
+    typeof body.sessionToken === "string" ? body.sessionToken : "";
+  if (!sessionToken) {
+    return NextResponse.json({ error: "Missing sessionToken" }, { status: 400 });
+  }
+
+  const service = createServiceClient();
+
+  const { data: anonSession, error: anonError } = await service
+    .from("anonymous_onboarding_sessions")
+    .select("data, archetype, expires_at")
+    .eq("session_token", sessionToken)
+    .maybeSingle();
+
+  if (anonError && anonError.code !== "PGRST116") {
+    const classified = classifySupabaseError(anonError);
+    return NextResponse.json({ error: classified.message }, { status: classified.status });
+  }
+  if (!anonSession) {
+    return NextResponse.json(
+      { error: "Onboarding session not found or expired" },
+      { status: 400 }
+    );
+  }
+  if (new Date(anonSession.expires_at).getTime() < Date.now()) {
+    return NextResponse.json(
+      { error: "Onboarding session expired" },
+      { status: 400 }
+    );
+  }
+
+  const onboardingData = (anonSession.data ?? {}) as Partial<OnboardingState>;
+
+  const firstName = sanitizeText(onboardingData.firstName);
+  const businessName = sanitizeText(onboardingData.businessName);
+  const handle =
+    typeof onboardingData.handle === "string"
+      ? onboardingData.handle.toLowerCase().trim()
+      : "";
   const businessType =
-    typeof body.businessType === "string" ? body.businessType : "";
+    typeof onboardingData.businessType === "string" ? onboardingData.businessType : "";
   const brandVibe =
-    typeof body.brandVibe === "string" ? sanitizeText(body.brandVibe) : "";
+    typeof onboardingData.brandVibe === "string"
+      ? sanitizeText(onboardingData.brandVibe)
+      : "";
   const location =
-    typeof body.location === "string" ? body.location : "";
-  const locationCity = body.locationCity
-    ? sanitizeText(body.locationCity)
+    typeof onboardingData.location === "string" ? onboardingData.location : "";
+  const locationCity = onboardingData.locationCity
+    ? sanitizeText(onboardingData.locationCity)
     : undefined;
-  const audienceTypes = Array.isArray(body.audienceTypes)
-    ? body.audienceTypes
+  const audienceTypes = Array.isArray(onboardingData.audienceTypes)
+    ? onboardingData.audienceTypes
         .map((a) => sanitizeText(a))
         .filter((a): a is string => Boolean(a))
     : [];
 
-  // ── New (Part A) fields — all optional, all nullable in DB ─────────────
-  const pitchLine =
-    typeof body.pitchLine === "string" && body.pitchLine.trim()
-      ? sanitizeText(body.pitchLine).slice(0, 140)
-      : undefined;
-  const primaryGoal =
-    typeof body.primaryGoal === "string" &&
-    (VALID_PRIMARY_GOALS as readonly string[]).includes(body.primaryGoal)
-      ? body.primaryGoal
-      : undefined;
-  const toneSampleChoice =
-    typeof body.toneSampleChoice === "string" && body.toneSampleChoice.trim()
-      ? sanitizeText(body.toneSampleChoice).slice(0, 200)
-      : undefined;
-  const socialHandle =
-    typeof body.socialHandle === "string" && body.socialHandle.trim()
-      ? sanitizeText(body.socialHandle).slice(0, 60)
-      : undefined;
-  const logoUrl =
-    typeof body.logoUrl === "string" && /^https?:\/\//.test(body.logoUrl)
-      ? body.logoUrl.slice(0, 2048)
-      : undefined;
-  const referenceUrl =
-    typeof body.referenceUrl === "string" && body.referenceUrl.trim()
-      ? body.referenceUrl.slice(0, 2048)
-      : undefined;
-
-  const services: string[] = (Array.isArray(body.services) ? body.services : [])
-    .map((s: unknown) => sanitizeText(s))
-    .filter((s: string) => {
-      if (s.length < 2 || s.length > 50) return false;
-      if (BLOCKED_SERVICE_KEYWORDS.has(s.toLowerCase())) return false;
-      return /[a-zA-Z]/.test(s);
+  // ── Structured services: { name, description }[] (docs §7.5) ───────────
+  const services = (Array.isArray(onboardingData.services) ? onboardingData.services : [])
+    .filter(
+      (s): s is { name: string; description: string } =>
+        Boolean(s) &&
+        typeof s.name === "string" &&
+        s.name.trim().length >= 2 &&
+        typeof s.description === "string" &&
+        s.description.trim().length >= 10
+    )
+    .filter((s) => {
+      const name = s.name.trim();
+      if (name.length > 40) return false;
+      if (BLOCKED_SERVICE_KEYWORDS.has(name.toLowerCase())) return false;
+      return /[a-zA-Z]/.test(name);
     })
     .filter(
       (s, i, arr) =>
-        arr.findIndex((x) => x.toLowerCase() === s.toLowerCase()) === i
+        arr.findIndex((x) => x.name.toLowerCase() === s.name.toLowerCase()) === i
     )
-    .slice(0, 8);
+    .slice(0, 6)
+    .map((s) => ({
+      name: sanitizeText(s.name).slice(0, 40),
+      description: sanitizeText(s.description).slice(0, 70),
+    }));
 
   const platforms: string[] = (
-    Array.isArray(body.platforms) ? body.platforms : []
+    Array.isArray(onboardingData.platforms) ? onboardingData.platforms : []
   )
     .filter(
-      (p: unknown): p is string =>
-        typeof p === "string" &&
-        (VALID_PLATFORMS as readonly string[]).includes(p)
+      (p): p is string =>
+        typeof p === "string" && (VALID_PLATFORMS as readonly string[]).includes(p)
     )
     .slice(0, 5);
-  const finalPlatforms =
-    platforms.length > 0 ? platforms : ["instagram", "facebook"];
+  const finalPlatforms = platforms.length > 0 ? platforms : ["instagram", "facebook"];
+
+  const archetype =
+    (typeof onboardingData.resolvedArchetype === "string" &&
+      onboardingData.resolvedArchetype) ||
+    resolveArchetypeFromCategory(businessType);
 
   const errors = collectErrors([
     (): ValidationResult => {
@@ -125,10 +155,7 @@ export async function POST(req: Request) {
       const len = validateLength(firstName, "First name", 2, 50);
       if (!len.valid) return len;
       if (!FIRST_NAME_PATTERN.test(firstName)) {
-        return {
-          valid: false,
-          error: "Please enter your name using letters only.",
-        };
+        return { valid: false, error: "Please enter your name using letters only." };
       }
       return { valid: true };
     },
@@ -138,10 +165,7 @@ export async function POST(req: Request) {
       const len = validateLength(businessName, "Business name", 2, 80);
       if (!len.valid) return len;
       if (!/[a-zA-Z]/.test(businessName)) {
-        return {
-          valid: false,
-          error: "Business name must contain at least one letter",
-        };
+        return { valid: false, error: "Business name must contain at least one letter" };
       }
       return { valid: true };
     },
@@ -162,8 +186,7 @@ export async function POST(req: Request) {
       if (isUnsupportedBusinessType(businessType)) {
         return {
           valid: false,
-          error:
-            "This business type needs a custom build. Contact build@buildzuri.com.",
+          error: "This business type needs a custom build. Contact build@buildzuri.com.",
         };
       }
       return { valid: true };
@@ -198,16 +221,10 @@ export async function POST(req: Request) {
           return { valid: false, error: "Please enter your city name." };
         }
         if (locationCity.length > 40) {
-          return {
-            valid: false,
-            error: "City name must be 40 characters or fewer.",
-          };
+          return { valid: false, error: "City name must be 40 characters or fewer." };
         }
         if (!/^[\p{L}\s]+$/u.test(locationCity)) {
-          return {
-            valid: false,
-            error: "City name can only contain letters and spaces.",
-          };
+          return { valid: false, error: "City name can only contain letters and spaces." };
         }
       }
       return { valid: true };
@@ -215,7 +232,6 @@ export async function POST(req: Request) {
   ]);
 
   // Handle uniqueness (race-condition safety) — allow if already this user's
-  const service = createServiceClient();
   const { data: existingHandle, error: handleLookupError } = await service
     .from("profiles")
     .select("id")
@@ -225,10 +241,7 @@ export async function POST(req: Request) {
 
   if (handleLookupError && handleLookupError.code !== "PGRST116") {
     const classified = classifySupabaseError(handleLookupError);
-    return NextResponse.json(
-      { error: classified.message },
-      { status: classified.status }
-    );
+    return NextResponse.json({ error: classified.message }, { status: classified.status });
   }
   if (existingHandle) errors.push("Handle is already taken");
 
@@ -250,15 +263,15 @@ export async function POST(req: Request) {
       location,
       locationCity,
       brandVibe,
-      pitchLine,
-      primaryGoal,
-      toneSampleChoice,
     });
   } catch (err) {
     console.error("Brand extraction failed, using raw data:", err);
     enrichedBrand = {
       industry: businessType,
-      unique_value: `${businessName} offers quality ${services.slice(0, 2).join(" and ")}.`,
+      unique_value: `${businessName} offers quality ${services
+        .slice(0, 2)
+        .map((s) => s.name)
+        .join(" and ")}.`,
       brand_tone: "professional",
       tagline_suggestion: `Your trusted ${businessType.replace(/-/g, " ")} partner.`,
       color_primary_suggestion: "#C9A84C",
@@ -267,9 +280,17 @@ export async function POST(req: Request) {
     };
   }
 
+  // ── Mark anonymous session converted ──────────────────────────────────────
+  try {
+    await convertAnonymousSession(sessionToken, user.id);
+  } catch (err) {
+    // Don't block account creation over this — log and continue. The user
+    // already has a real account; a stuck anonymous row is not fatal.
+    console.error("convertAnonymousSession failed:", err);
+  }
+
   // ── Persist profile ──────────────────────────────────────────────────────
   // Profiles: no INSERT grant/policy for authenticated (trigger + service_role only).
-  // Upsert via service role — same pattern as business_profiles / generation jobs.
   const { error: profileError } = await service.from("profiles").upsert(
     {
       id: user.id,
@@ -313,12 +334,6 @@ export async function POST(req: Request) {
         color_primary: enrichedBrand.color_primary_suggestion,
         color_accent: enrichedBrand.color_accent_suggestion,
         platforms: finalPlatforms,
-        pitch_line: pitchLine ?? null,
-        primary_goal: primaryGoal ?? null,
-        tone_sample_choice: toneSampleChoice ?? null,
-        social_handle: socialHandle ?? null,
-        logo_url: logoUrl ?? null,
-        reference_url: referenceUrl ?? null,
         updated_at: new Date().toISOString(),
       },
       { onConflict: "user_id" }
@@ -339,6 +354,20 @@ export async function POST(req: Request) {
     );
   }
 
+  // ── Migrate onboarding-scoped uploaded images to permanent user images ──
+  const { error: migrateError } = await service.rpc(
+    "migrate_onboarding_images_to_user",
+    { p_session_token: sessionToken, p_user_id: user.id }
+  );
+  if (migrateError) {
+    console.error("migrate_onboarding_images_to_user failed:", migrateError);
+  }
+
+  // ── Persist the resolved archetype on the website row once created; the
+  // generation pipeline re-resolves it deterministically too, so this isn't
+  // load-bearing — best-effort only.
+  void archetype;
+
   // ── Queue website generation (service role — no user INSERT RLS policy) ──
   const { data: job, error: jobError } = await service
     .from("website_generation_jobs")
@@ -356,7 +385,6 @@ export async function POST(req: Request) {
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
   const internalSecret = process.env.INTERNAL_API_SECRET;
-  const hasGenerationEnv = Boolean(appUrl && internalSecret);
 
   if (appUrl && internalSecret) {
     fetch(`${appUrl}/api/ai/generate-website`, {
@@ -366,9 +394,7 @@ export async function POST(req: Request) {
         "x-internal-secret": internalSecret,
       },
       body: JSON.stringify({ userId: user.id, jobId: job?.id }),
-    }).catch((err) =>
-      console.error("Website generation trigger failed:", err)
-    );
+    }).catch((err) => console.error("Website generation trigger failed:", err));
 
     fetch(`${appUrl}/api/content/seed-calendar`, {
       method: "POST",
@@ -383,6 +409,8 @@ export async function POST(req: Request) {
       "Skipping website generation trigger: NEXT_PUBLIC_APP_URL or INTERNAL_API_SECRET missing"
     );
   }
+
+  await clearAnonymousSessionCookie();
 
   return NextResponse.json({ success: true, jobId: job?.id ?? null });
 }

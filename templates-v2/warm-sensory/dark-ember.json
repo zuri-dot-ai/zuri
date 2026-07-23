@@ -1,0 +1,55 @@
+{
+  "template_id": "warm-sensory-dark-ember",
+  "archetype": "warm-sensory",
+  "mode": "dark",
+  "hero_type": "image",
+  "supportedModules": ["opening-hours-cta", "gallery", "faq-accordion"],
+  "lean": "international",
+  "display_name": "Restaurant Dark Ember",
+  "storage_path": "warm-sensory/dark-ember.html",
+  "color_themes": [
+    {
+      "key": "theme-1",
+      "bg": "#181310",
+      "surface": "#241C17",
+      "text": "#F7F1E9",
+      "text_muted": "#C4B8AB",
+      "accent": "#C6642F",
+      "accent_text": "#181310"
+    },
+    {
+      "key": "theme-2",
+      "bg": "#181310",
+      "surface": "#241C17",
+      "text": "#F7F1E9",
+      "text_muted": "#C4B8AB",
+      "accent": "#B8860B",
+      "accent_text": "#181310"
+    },
+    {
+      "key": "theme-3",
+      "bg": "#181310",
+      "surface": "#241C17",
+      "text": "#F7F1E9",
+      "text_muted": "#C4B8AB",
+      "accent": "#A85D2E",
+      "accent_text": "#181310"
+    }
+  ],
+  "placeholder_fields": [
+    "business_name", "tagline", "about_body_short", "about_body_long",
+    "service_1_name", "service_1_description", "service_2_name", "service_2_description",
+    "service_3_name", "service_3_description", "service_4_name", "service_4_description",
+    "service_5_name", "service_5_description", "service_6_name", "service_6_description",
+    "testimonial_1_quote", "testimonial_1_name", "testimonial_1_role",
+    "testimonial_2_quote", "testimonial_2_name", "testimonial_2_role",
+    "testimonial_3_quote", "testimonial_3_name", "testimonial_3_role",
+    "phone_number", "email_address", "whatsapp_number", "instagram_url", "address",
+    "hours_weekday", "hours_saturday", "hours_sunday",
+    "faq_1_question", "faq_1_answer", "faq_2_question", "faq_2_answer", "faq_3_question", "faq_3_answer",
+    "hero_image_public_id", "gallery_1_public_id", "gallery_2_public_id", "gallery_3_public_id", "gallery_4_public_id"
+  ],
+  "image_slots": ["hero", "gallery_1", "gallery_2", "gallery_3", "gallery_4"],
+  "has_unique_section": true,
+  "unique_section_name": "opening-hours-cta"
+}

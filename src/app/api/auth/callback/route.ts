@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { safeNextPath } from "@/lib/auth/redirect";
 import { generateSupportRef } from "@/lib/errors/support-ref";
 import { captureError } from "@/lib/monitoring/sentry";
+import { ANON_COOKIE_NAME } from "@/lib/onboarding/anonymous-session";
 
 /**
  * Public: Supabase OAuth / email-confirm callback.
@@ -93,6 +94,41 @@ export async function GET(request: Request) {
       }
 
       dest = profile?.onboarding_completed ? next : "/onboarding";
+
+      // Onboarding V2 (docs/01_ONBOARDING_V2.md §2.4/§11 item 15) — a
+      // pending anonymous onboarding session may exist from the pre-signup
+      // /start flow. Fire /api/onboarding/complete server-to-server, using
+      // the freshly-set auth cookies to authenticate the internal call,
+      // before routing onward. Never block the redirect on this — if it
+      // fails, the user still lands on /onboarding (or dashboard) and can
+      // retry rather than seeing a broken post-signup state.
+      if (!profile?.onboarding_completed) {
+        const sessionToken = cookieStore.get(ANON_COOKIE_NAME)?.value;
+        if (sessionToken) {
+          try {
+            const cookieHeader = cookieStore
+              .getAll()
+              .map((c) => `${c.name}=${c.value}`)
+              .join("; ");
+            const completeResponse = await fetch(
+              `${origin}/api/onboarding/complete`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Cookie: cookieHeader,
+                },
+                body: JSON.stringify({ sessionToken }),
+              }
+            );
+            if (completeResponse.ok) {
+              dest = "/onboarding"; // Step 12 (Building your presence)
+            }
+          } catch (err) {
+            console.error("[auth/callback] onboarding complete failed:", err);
+          }
+        }
+      }
     }
 
     const forwardedHost = request.headers.get("x-forwarded-host");
