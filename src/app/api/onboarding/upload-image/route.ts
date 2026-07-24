@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { uploadImageToCloudinary } from "@/lib/website/cloudinary";
+import {
+  isCloudinaryConfigured,
+  uploadImageToCloudinary,
+} from "@/lib/website/cloudinary";
 
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const MAX_BYTES = 10 * 1024 * 1024; // 10MB — matches Cloudinary's own limit
@@ -72,6 +75,16 @@ export async function POST(req: Request) {
     return NextResponse.json(
       { error: "You've uploaded the maximum number of photos for now." },
       { status: 429 }
+    );
+  }
+
+  if (!isCloudinaryConfigured()) {
+    console.error(
+      "[upload-image] Cloudinary env vars missing — cannot upload"
+    );
+    return NextResponse.json(
+      { error: "Image upload is temporarily unavailable. Please try again later or skip for now." },
+      { status: 503 }
     );
   }
 

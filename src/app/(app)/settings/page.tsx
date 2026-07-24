@@ -3,7 +3,12 @@ import { SettingsView } from "@/components/app/settings-view";
 import { getActivePlanId } from "@/lib/payments/get-plan";
 import type { AccountView, SubscriptionStatus } from "@/types/database";
 
-export default async function SettingsPage() {
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string; payment?: string }>;
+}) {
+  const sp = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -40,5 +45,12 @@ export default async function SettingsPage() {
     subscription_status: (sub?.status as SubscriptionStatus) ?? "inactive",
   };
 
-  return <SettingsView account={account} profile={biz} />;
+  return (
+    <SettingsView
+      account={account}
+      profile={biz}
+      initialTab={sp.tab}
+      paymentStatus={sp.payment}
+    />
+  );
 }

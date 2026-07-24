@@ -130,8 +130,17 @@ export function PlanView({
                         onClick={() => toggle(task)}
                         disabled={busyId === task.id || task.is_completed}
                         className="mt-0.5 shrink-0 transition-transform active:scale-90"
+                        aria-label={
+                          busyId === task.id
+                            ? "Saving"
+                            : task.is_completed
+                              ? "Completed"
+                              : "Mark complete"
+                        }
                       >
-                        {task.is_completed ? (
+                        {busyId === task.id ? (
+                          <span className="zuri-spinner !size-5" />
+                        ) : task.is_completed ? (
                           <CheckCircle2 className="size-5 text-success" />
                         ) : (
                           <Circle className="size-5 text-muted-foreground transition-colors hover:text-gold" />

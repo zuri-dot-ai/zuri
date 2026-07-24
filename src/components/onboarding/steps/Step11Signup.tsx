@@ -204,7 +204,12 @@ export function Step11Signup({ sessionToken, firstName }: Step11SignupProps) {
             </span>
           </label>
 
-          <button type="submit" className="btn-gold w-full" disabled={loading}>
+          <button
+            type="submit"
+            className="btn-gold inline-flex w-full items-center justify-center gap-2"
+            disabled={loading}
+          >
+            {loading && <span className="zuri-spinner !size-3.5" />}
             {loading ? "Creating account…" : "Create account & build my site"}
           </button>
         </form>

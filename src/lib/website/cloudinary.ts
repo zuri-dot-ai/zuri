@@ -19,8 +19,20 @@ export function cloudinaryUrl(
   return `https://res.cloudinary.com/${cloudName}/image/upload/${ZURI_TRANSFORMS[transform]}/${publicId}`;
 }
 
+/** True when all Cloudinary credentials needed for uploads are present. */
+export function isCloudinaryConfigured(): boolean {
+  return Boolean(
+    process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME &&
+      process.env.CLOUDINARY_API_KEY &&
+      process.env.CLOUDINARY_API_SECRET
+  );
+}
+
 let configured = false;
 function getCloudinary() {
+  if (!isCloudinaryConfigured()) {
+    throw new Error("Cloudinary is not configured");
+  }
   if (!configured) {
     cloudinaryApi.config({
       cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,

@@ -76,7 +76,12 @@ export default function ForgotPasswordPage() {
                 autoComplete="email"
               />
             </div>
-            <button type="submit" className="btn-gold w-full" disabled={loading}>
+            <button
+              type="submit"
+              className="btn-gold inline-flex w-full items-center justify-center gap-2"
+              disabled={loading}
+            >
+              {loading && <span className="zuri-spinner !size-3.5" />}
               {loading ? "Sending…" : "Send reset link"}
             </button>
           </form>

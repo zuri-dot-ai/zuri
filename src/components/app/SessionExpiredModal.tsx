@@ -99,6 +99,7 @@ export function SessionExpiredModal({ open, onResume, onDismiss }: Props) {
             />
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
+            {loading && <span className="zuri-spinner mr-2 !size-3.5" />}
             {loading ? "Signing in…" : "Sign in and resume"}
           </Button>
         </form>

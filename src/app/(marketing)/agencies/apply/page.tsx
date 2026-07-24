@@ -183,6 +183,7 @@ export default function AgencyApplyPage() {
         </Field>
 
         <Button className="w-full" onClick={submit} disabled={submitting}>
+          {submitting && <span className="zuri-spinner mr-2 !size-3.5" />}
           {submitting ? "Submitting…" : "Submit application"}
         </Button>
       </div>

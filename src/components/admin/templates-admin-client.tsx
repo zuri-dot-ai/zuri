@@ -164,6 +164,7 @@ export function TemplatesAdminClient({ templates, storageBaseUrl }: Props) {
                   disabled={pending}
                   onClick={() => flagRevision(true)}
                 >
+                  {pending && <span className="zuri-spinner mr-2 !size-3.5" />}
                   {pending ? "Saving…" : "Flag needs_revision"}
                 </Button>
                 <Button

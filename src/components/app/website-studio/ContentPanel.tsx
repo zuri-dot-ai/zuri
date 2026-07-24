@@ -100,8 +100,12 @@ function FieldEditor({
               disabled={regenerating || saveStatus === "saving"}
               onClick={() => save(local, "regenerate")}
             >
-              <Sparkles className="mr-1 size-3" />
-              {regenerating ? "…" : "AI"}
+              {regenerating ? (
+                <span className="zuri-spinner mr-1 !size-3" />
+              ) : (
+                <Sparkles className="mr-1 size-3" />
+              )}
+              AI
             </Button>
           )}
         </div>

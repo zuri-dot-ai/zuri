@@ -1,9 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { ImagePlus, Loader2, X } from "lucide-react";
+import { ImagePlus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { safeFetchJSON, FetchError } from "@/lib/utils/safe-fetch";
+import { ZuriSpinner } from "@/components/ui/skeleton";
 import type { UploadedImageRef } from "@/lib/onboarding/types";
 
 interface PhotoUploadZoneProps {
@@ -50,6 +51,11 @@ export function PhotoUploadZone({
       return;
     }
 
+    if (!sessionToken) {
+      setError("Upload session isn’t ready yet. Please wait a moment and try again.");
+      return;
+    }
+
     setUploading(true);
     try {
       const form = new FormData();
@@ -64,6 +70,7 @@ export function PhotoUploadZone({
       }>("/api/onboarding/upload-image", {
         method: "POST",
         body: form,
+        timeoutMs: 60_000,
       });
 
       onChange([
@@ -76,7 +83,11 @@ export function PhotoUploadZone({
         },
       ]);
     } catch (err) {
-      setError(err instanceof FetchError ? err.message : "Upload failed. Please try again.");
+      setError(
+        err instanceof FetchError
+          ? err.message
+          : "Upload failed. Please try again."
+      );
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -85,6 +96,11 @@ export function PhotoUploadZone({
 
   function removeImage(publicId: string) {
     onChange(images.filter((img) => img.cloudinaryPublicId !== publicId));
+  }
+
+  function retryUpload() {
+    setError(null);
+    inputRef.current?.click();
   }
 
   return (
@@ -120,11 +136,12 @@ export function PhotoUploadZone({
             disabled={uploading}
             className={cn(
               "flex aspect-square flex-col items-center justify-center gap-1.5 rounded-sm border border-dashed border-border text-[var(--text-tertiary)] transition-colors duration-150",
-              "hover:border-gold hover:text-gold"
+              "hover:border-gold hover:text-gold",
+              uploading && "pointer-events-none"
             )}
           >
             {uploading ? (
-              <Loader2 className="size-5 animate-spin" />
+              <ZuriSpinner size={20} label="Uploading" />
             ) : (
               <>
                 <ImagePlus className="size-5" strokeWidth={1.75} />
@@ -144,7 +161,19 @@ export function PhotoUploadZone({
           if (file) void handleFile(file);
         }}
       />
-      {error && <p className="text-sm text-error">{error}</p>}
+      {error && (
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-sm text-error">{error}</p>
+          <button
+            type="button"
+            onClick={retryUpload}
+            disabled={uploading}
+            className="text-sm font-medium text-gold underline-offset-2 hover:underline"
+          >
+            Retry
+          </button>
+        </div>
+      )}
     </div>
   );
 }

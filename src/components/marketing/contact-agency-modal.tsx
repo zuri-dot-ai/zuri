@@ -137,6 +137,7 @@ export function ContactAgencyModal({
               </p>
 
               <Button className="w-full" onClick={submit} disabled={submitting}>
+                {submitting && <span className="zuri-spinner mr-2 !size-3.5" />}
                 {submitting ? "Sending…" : "Send inquiry"}
               </Button>
             </div>

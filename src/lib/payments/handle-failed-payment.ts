@@ -26,7 +26,7 @@ export async function handleFailedPayment(
     .single();
 
   const gracePeriodEndLabel = graceEnd.toLocaleDateString("en-NG");
-  const updatePaymentUrl = `${process.env.NEXT_PUBLIC_APP_URL}/settings/billing`;
+  const updatePaymentUrl = `${process.env.NEXT_PUBLIC_APP_URL}/settings?tab=billing`;
 
   createNotificationAsync({
     userId,

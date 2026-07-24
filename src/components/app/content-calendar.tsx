@@ -60,7 +60,15 @@ type SlotWithPillar = ContentCalendarRow & {
   } | null;
 };
 
-type Notice = { variant: BannerVariant; message: string };
+type Notice = {
+  variant: BannerVariant;
+  message: string;
+  /** When set, Banner shows a Retry action for this flow. */
+  retryKind?: "month" | "content";
+};
+
+/** AI content jobs regularly exceed the default 20s safeFetch timeout. */
+const AI_FETCH_TIMEOUT_MS = 120_000;
 
 /** True when a caught error is a Gemini quota/rate-limit failure surfaced
  * by the API as HTTP 429 — this must show the friendly Banner message,
@@ -117,6 +125,10 @@ export function ContentCalendar({
   const [regenerating, setRegenerating] = useState(false);
   const [repurposing, setRepurposing] = useState(false);
   const [generatingContent, setGeneratingContent] = useState(false);
+  const [generatingContentSlow, setGeneratingContentSlow] = useState(false);
+  const [retryContentSlot, setRetryContentSlot] = useState<SlotWithPillar | null>(
+    null
+  );
   const [savingEdit, setSavingEdit] = useState(false);
   const [editTopic, setEditTopic] = useState("");
   const [editHook, setEditHook] = useState("");
@@ -135,6 +147,15 @@ export function ContentCalendar({
 
   const growth = plan === "growth" || plan === "premium";
   const monthName = formatMonthLabel(year, month);
+
+  useEffect(() => {
+    if (!generatingContent) {
+      setGeneratingContentSlow(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setGeneratingContentSlow(true), 15_000);
+    return () => window.clearTimeout(timer);
+  }, [generatingContent]);
 
   const culturalMoments = useMemo(
     () => getNigerianCulturalMoments(month, year),
@@ -252,6 +273,7 @@ export function ContentCalendar({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ month, year }),
+        timeoutMs: AI_FETCH_TIMEOUT_MS,
       });
       if (data.slots?.length) {
         setSlots((prev) => {
@@ -268,6 +290,7 @@ export function ContentCalendar({
           message:
             data.reason ??
             "We couldn't reach the AI right now, so starter content was created instead.",
+          retryKind: "month",
         });
         toast.error("AI generation unavailable — starter content created instead");
       } else {
@@ -282,7 +305,12 @@ export function ContentCalendar({
       if (isRateLimited(e)) {
         setNotice({ variant: "error", message: RATE_LIMIT_MESSAGE });
       } else {
-        toast.error(e instanceof Error ? e.message : "Could not generate calendar");
+        setNotice({
+          variant: "error",
+          message:
+            e instanceof Error ? e.message : "Could not generate calendar",
+          retryKind: "month",
+        });
       }
     } finally {
       setGenerating(false);
@@ -323,7 +351,7 @@ export function ContentCalendar({
     try {
       const data = await safeFetchJSON<{ slot: SlotWithPillar }>(
         `/api/content/calendar/${slot.id}/regenerate`,
-        { method: "POST" }
+        { method: "POST", timeoutMs: AI_FETCH_TIMEOUT_MS }
       );
       setSlots((prev) => prev.map((s) => (s.id === slot.id ? data.slot : s)));
       setActive(data.slot);
@@ -392,6 +420,7 @@ export function ContentCalendar({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ platforms: targets.slice(0, 3) }),
+          timeoutMs: AI_FETCH_TIMEOUT_MS,
         }
       );
       if (data.slots?.length) {
@@ -427,6 +456,7 @@ export function ContentCalendar({
             platform: seriesPlatform,
             startDate: new Date().toISOString().slice(0, 10),
           }),
+          timeoutMs: AI_FETCH_TIMEOUT_MS,
         }
       );
       if (data.slots?.length) {
@@ -474,6 +504,7 @@ export function ContentCalendar({
 
   async function generateContent(slot: SlotWithPillar) {
     setGeneratingContent(true);
+    setRetryContentSlot(slot);
     try {
       const output = await safeFetchJSON<{
         id: string;
@@ -490,6 +521,7 @@ export function ContentCalendar({
           brief: slot.brief ?? "",
           calendarSlotId: slot.id,
         }),
+        timeoutMs: AI_FETCH_TIMEOUT_MS,
       });
       const updated = {
         ...slot,
@@ -501,6 +533,8 @@ export function ContentCalendar({
         setActive(updated);
       }
       setContentRefreshKey((k) => k + 1);
+      setNotice(null);
+      setRetryContentSlot(null);
 
       // These warnings (image safety fallback, script partially generated,
       // caption needs review, etc.) were previously collected server-side
@@ -515,7 +549,12 @@ export function ContentCalendar({
       if (isRateLimited(e)) {
         setNotice({ variant: "error", message: RATE_LIMIT_MESSAGE });
       } else {
-        toast.error(e instanceof Error ? e.message : "Could not generate content");
+        setNotice({
+          variant: "error",
+          message:
+            e instanceof Error ? e.message : "Could not generate content",
+          retryKind: "content",
+        });
       }
     } finally {
       setGeneratingContent(false);
@@ -541,7 +580,7 @@ export function ContentCalendar({
           title="Content calendar starts on Pro"
           description="Upgrade to get an AI-planned posting calendar tailored to your business."
           actionLabel="View plans"
-          actionHref="/billing"
+          actionHref="/settings?tab=billing"
         />
       </div>
     );
@@ -589,7 +628,7 @@ export function ContentCalendar({
           message={notice.message}
           actions={
             <>
-              {notice.variant === "warning" && (
+              {notice.retryKind === "month" && (
                 <Button
                   size="sm"
                   variant="outline"
@@ -604,10 +643,28 @@ export function ContentCalendar({
                   Retry Generation
                 </Button>
               )}
+              {notice.retryKind === "content" && retryContentSlot && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => generateContent(retryContentSlot)}
+                  disabled={generatingContent}
+                >
+                  {generatingContent ? (
+                    <span className="zuri-spinner mr-1 !size-3.5" />
+                  ) : (
+                    <RefreshCw className="mr-1 h-3.5 w-3.5" />
+                  )}
+                  Retry
+                </Button>
+              )}
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => setNotice(null)}
+                onClick={() => {
+                  setNotice(null);
+                  setRetryContentSlot(null);
+                }}
                 aria-label="Dismiss"
               >
                 <X className="h-3.5 w-3.5" />
@@ -1038,7 +1095,11 @@ export function ContentCalendar({
                   ) : (
                     <Sparkles className="mr-1 h-3.5 w-3.5" />
                   )}
-                  Generate
+                  {generatingContent
+                    ? generatingContentSlow
+                      ? "Still working…"
+                      : "Generating…"
+                    : "Generate"}
                 </Button>
               )}
               <Button

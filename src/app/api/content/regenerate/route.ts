@@ -21,6 +21,9 @@ import { classifySupabaseError } from "@/lib/errors/supabase-errors";
 import { isRateLimitError, RATE_LIMIT_MESSAGE } from "@/lib/errors/gemini-errors";
 import { ERROR_MESSAGES } from "@/lib/errors/messages";
 
+/** Caption/image regenerate can include a full Imagen call — match generate route. */
+export const maxDuration = 120;
+
 const VALID_FIELDS = new Set(["caption", "hashtags", "image", "all"]);
 
 export async function POST(req: Request) {

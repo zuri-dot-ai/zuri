@@ -19,6 +19,9 @@ import { generateSupportRef } from "@/lib/errors/support-ref";
 import { captureError } from "@/lib/monitoring/sentry";
 import { ERROR_MESSAGES } from "@/lib/errors/messages";
 
+/** Gemini + Imagen pipeline can exceed the platform default; align with generate-month. */
+export const maxDuration = 120;
+
 const STANDALONE_FORMATS = new Set(["blog_post", "newsletter"]);
 
 export async function POST(req: Request) {

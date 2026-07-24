@@ -16,7 +16,7 @@ import {
   X,
   RefreshCw,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,15 @@ import type { AccountView, BusinessProfileRow } from "@/types/database";
 
 type Tab = "profile" | "business" | "billing" | "notifications" | "voice" | "danger";
 
+const TAB_IDS = new Set<Tab>([
+  "profile",
+  "business",
+  "voice",
+  "billing",
+  "notifications",
+  "danger",
+]);
+
 const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: "profile", label: "Profile", icon: User },
   { id: "business", label: "Business Profile", icon: Building2 },
@@ -45,14 +54,51 @@ const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: "danger", label: "Danger Zone", icon: Trash2 },
 ];
 
+function parseTab(value: string | null | undefined): Tab {
+  if (value && TAB_IDS.has(value as Tab)) return value as Tab;
+  return "profile";
+}
+
 export function SettingsView({
   account,
   profile,
+  initialTab,
+  paymentStatus,
 }: {
   account: AccountView | null;
   profile: BusinessProfileRow | null;
+  initialTab?: string | null;
+  paymentStatus?: string | null;
 }) {
-  const [tab, setTab] = useState<Tab>("profile");
+  const router = useRouter();
+  const pathname = usePathname();
+  const [tab, setTabState] = useState<Tab>(() => parseTab(initialTab));
+
+  useEffect(() => {
+    setTabState(parseTab(initialTab));
+  }, [initialTab]);
+
+  useEffect(() => {
+    if (paymentStatus === "failed" || paymentStatus === "error") {
+      toast.error(
+        paymentStatus === "failed"
+          ? "Payment could not be completed. Please try again."
+          : "Something went wrong verifying your payment. Please try again."
+      );
+      const params = new URLSearchParams();
+      if (tab !== "profile") params.set("tab", tab);
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    }
+  }, [paymentStatus, pathname, router, tab]);
+
+  function setTab(id: Tab) {
+    setTabState(id);
+    const params = new URLSearchParams();
+    if (id !== "profile") params.set("tab", id);
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }
 
   return (
     <div className="mx-auto min-w-0 max-w-4xl space-y-6 overflow-x-hidden">
@@ -574,7 +620,8 @@ function BusinessTab({ profile }: { profile: BusinessProfileRow | null }) {
             </div>
           )}
           <label className="cursor-pointer">
-            <span className="inline-flex h-9 items-center rounded-md border border-border px-3 text-sm text-foreground transition-colors hover:border-gold">
+            <span className="inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-sm text-foreground transition-colors hover:border-gold">
+              {uploadingLogo && <span className="zuri-spinner !size-3.5" />}
               {uploadingLogo ? "Uploading…" : f.logo_url ? "Replace" : "Upload"}
             </span>
             <input

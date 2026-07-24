@@ -18,6 +18,13 @@ const REQUIRED_SERVER_VARS = [
   "VAPID_SUBJECT",
 ];
 
+/** Non-fatal — onboarding photo upload degrades without these. */
+const CLOUDINARY_VARS = [
+  "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME",
+  "CLOUDINARY_API_KEY",
+  "CLOUDINARY_API_SECRET",
+] as const;
+
 export function validateRequiredEnvVars(): void {
   if (process.env.NODE_ENV !== "production") return; // Skip in dev
 
@@ -34,6 +41,14 @@ export function validateRequiredEnvVars(): void {
   if (Buffer.from(key, "hex").length !== 32) {
     throw new Error(
       "TOKEN_ENCRYPTION_KEY must be a 32-byte hex string (64 hex characters)."
+    );
+  }
+
+  const missingCloudinary = CLOUDINARY_VARS.filter((key) => !process.env[key]);
+  if (missingCloudinary.length > 0) {
+    console.warn(
+      `[env] Cloudinary not fully configured (missing: ${missingCloudinary.join(", ")}). ` +
+        `Onboarding image upload will be unavailable.`
     );
   }
 }

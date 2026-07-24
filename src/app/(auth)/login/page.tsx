@@ -9,11 +9,18 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { AuthShell } from "@/components/auth/auth-shell";
+import { ZuriSpinner } from "@/components/ui/skeleton";
 import { authCallbackUrl, safeNextPath } from "@/lib/auth/redirect";
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen" aria-hidden />}>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <ZuriSpinner size={32} label="Loading" />
+        </div>
+      }
+    >
       <LoginForm />
     </Suspense>
   );
@@ -153,7 +160,12 @@ function LoginForm() {
               autoComplete="current-password"
             />
           </div>
-          <button type="submit" className="btn-gold w-full" disabled={loading}>
+          <button
+            type="submit"
+            className="btn-gold inline-flex w-full items-center justify-center gap-2"
+            disabled={loading}
+          >
+            {loading && <span className="zuri-spinner !size-3.5" />}
             {loading ? "Signing in…" : "Sign in"}
           </button>
         </form>

@@ -16,7 +16,7 @@ export function GracePeriodBanner({ gracePeriodEnd }: Props) {
     <div className="flex items-center justify-between gap-4 border-b border-amber-500/20 bg-amber-500/10 px-4 py-2 text-sm text-amber-400">
       <span>{ERROR_MESSAGES.GRACE_PERIOD(gracePeriodEnd)}</span>
       <Link
-        href="/settings/billing"
+        href="/settings?tab=billing"
         className="ml-4 whitespace-nowrap text-amber-300 underline"
       >
         Update payment
