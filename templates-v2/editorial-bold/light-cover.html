@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{business_name}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<style>
+  :root{
+    --color-bg:#FFFFFF;
+    --color-surface:#F4F2EF;
+    --color-text:#111111;
+    --color-text-muted:#5A5A5A;
+    --color-accent:#E03A2F;
+    --color-accent-text:#FFFFFF;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{background:var(--color-bg);color:var(--color-text);font-family:'Poppins',sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+  h1{font-family:'Cinzel',serif;color:var(--color-text);line-height:1.05;font-weight:700;}
+  h2,h3,h4{font-family:'Poppins',sans-serif;color:var(--color-text);font-weight:700;line-height:1.2;}
+  a{color:inherit;text-decoration:none;}
+  img{max-width:100%;display:block;}
+  .container{width:100%;max-width:1240px;margin:0 auto;padding:0 20px;}
+  section{padding:60px 0;}
+  .eyebrow{text-transform:uppercase;letter-spacing:2.5px;font-size:.75rem;color:var(--color-accent);font-weight:700;margin-bottom:14px;}
+  .btn{display:inline-block;padding:16px 32px;background:var(--color-accent);color:var(--color-accent-text);font-weight:700;font-size:.9rem;letter-spacing:.4px;transition:transform .3s cubic-bezier(.34,1.56,.64,1);}
+  .btn:hover{transform:translateY(-3px) scale(1.02);}
+  .btn-outline{background:transparent;color:var(--color-text);border:2px solid var(--color-text);}
+  .btn-outline:hover{background:var(--color-text);color:var(--color-bg);}
+  :focus-visible{outline:2px solid var(--color-accent);outline-offset:3px;}
+
+  header#site-nav{position:fixed;top:0;left:0;right:0;z-index:1000;padding:20px 0;transition:background .3s ease, padding .3s ease, box-shadow .3s ease;background:transparent;}
+  header#site-nav.scrolled{background:rgba(255,255,255,.95);backdrop-filter:blur(8px);padding:12px 0;box-shadow:0 2px 16px rgba(0,0,0,.08);}
+  .nav-inner{display:flex;align-items:center;justify-content:space-between;}
+  .logo{font-family:'Cinzel',serif;font-size:1.4rem;font-weight:700;letter-spacing:.5px;}
+  nav.primary-nav ul{display:flex;gap:32px;list-style:none;}
+  nav.primary-nav a{font-size:.85rem;text-transform:uppercase;letter-spacing:1px;font-weight:600;position:relative;padding-bottom:4px;}
+  nav.primary-nav a::after{content:'';position:absolute;left:0;bottom:0;width:0;height:3px;background:var(--color-accent);transition:width .25s ease;}
+  nav.primary-nav a:hover::after{width:100%;}
+  .hamburger{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;z-index:1100;padding:8px;}
+  .hamburger span{width:24px;height:3px;background:var(--color-text);transition:all .3s ease;}
+  .hamburger.open span:nth-child(1){transform:translateY(8px) rotate(45deg);}
+  .hamburger.open span:nth-child(2){opacity:0;}
+  .hamburger.open span:nth-child(3){transform:translateY(-8px) rotate(-45deg);}
+  .mobile-drawer{position:fixed;top:0;right:-100%;width:80%;max-width:340px;height:100vh;background:var(--color-bg);box-shadow:-4px 0 24px rgba(0,0,0,.15);z-index:1050;transition:right .3s ease;padding:100px 32px 40px;}
+  .mobile-drawer.open{right:0;}
+  .mobile-drawer ul{list-style:none;display:flex;flex-direction:column;gap:24px;}
+  .mobile-drawer a{font-size:1.2rem;font-weight:700;text-transform:uppercase;}
+  .drawer-overlay{position:fixed;inset:0;background:rgba(17,17,17,.4);z-index:1040;opacity:0;pointer-events:none;transition:opacity .3s ease;}
+  .drawer-overlay.open{opacity:1;pointer-events:auto;}
+
+  /* COVER HERO — full-bleed image above copy */
+  .hero{padding-top:100px;padding-bottom:0;position:relative;background:var(--color-bg);}
+  .hero-cover-image{width:100%;aspect-ratio:16/9;max-height:52vh;overflow:hidden;background:var(--color-accent);}
+  .hero-cover-image img{width:100%;height:100%;object-fit:cover;}
+  .hero-copy-block{padding:48px 0 60px;text-align:center;}
+  .hero-copy-block .container{max-width:720px;}
+  .hero-copy-block h1{font-size:2.2rem;margin-bottom:20px;text-transform:uppercase;overflow:hidden;}
+  .hero-copy-block p{color:var(--color-text-muted);font-size:1.05rem;max-width:520px;margin:0 auto 32px;}
+  .hero-cta-group{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;}
+
+  /* MASONRY WORK */
+  .masonry-header{text-align:center;max-width:600px;margin:0 auto 44px;}
+  .masonry-header h2{font-size:2.2rem;text-transform:uppercase;}
+  .masonry-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+  .masonry-grid figure{overflow:hidden;background:var(--color-surface);}
+  .masonry-grid figure:nth-child(1){aspect-ratio:3/4;}
+  .masonry-grid figure:nth-child(2){aspect-ratio:1;margin-top:24px;}
+  .masonry-grid figure:nth-child(3){aspect-ratio:1;}
+  .masonry-grid figure:nth-child(4){aspect-ratio:3/4;margin-top:-24px;}
+  .masonry-grid img{width:100%;height:100%;object-fit:cover;transition:transform .4s ease;}
+  .masonry-grid figure:hover img{transform:scale(1.06);}
+
+  /* GALLERY */
+  .gallery-section{background:var(--color-surface);}
+  .gallery-header{text-align:center;max-width:600px;margin:0 auto 44px;}
+  .gallery-header h2{font-size:2.2rem;text-transform:uppercase;}
+  .gallery-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+  .gallery-grid figure{overflow:hidden;aspect-ratio:1;background:var(--color-bg);}
+  .gallery-grid img{width:100%;height:100%;object-fit:cover;transition:transform .4s ease;}
+  .gallery-grid figure:hover img{transform:scale(1.06);}
+
+  /* SERVICES */
+  .services-header{text-align:center;max-width:600px;margin:0 auto 44px;}
+  .services-header h2{font-size:2.2rem;text-transform:uppercase;}
+  .service-grid{display:grid;grid-template-columns:1fr;gap:20px;}
+  .service-card{background:var(--color-surface);padding:30px;transition:transform .3s ease;}
+  .service-card:hover{transform:translateY(-4px);}
+  .service-card h3{font-size:1.2rem;margin-bottom:8px;}
+  .service-card p{color:var(--color-text-muted);font-size:.92rem;}
+
+  /* TESTIMONIALS */
+  .testimonials-section{background:var(--color-surface);}
+  .testimonials-header{text-align:center;margin-bottom:44px;}
+  .testimonials-header h2{font-size:2.1rem;text-transform:uppercase;}
+  .testimonial-grid{display:grid;grid-template-columns:1fr;gap:22px;}
+  .testimonial-card{background:var(--color-bg);padding:30px;border-top:4px solid var(--color-accent);}
+  .testimonial-quote{font-size:1.05rem;font-weight:500;margin-bottom:18px;}
+  .testimonial-name{font-weight:700;font-size:.9rem;}
+  .testimonial-role{color:var(--color-text-muted);font-size:.82rem;}
+
+  /* CONTACT */
+  .contact-section .container{display:grid;grid-template-columns:1fr;gap:40px;}
+  .contact-info h2{font-size:2.1rem;margin-bottom:18px;text-transform:uppercase;}
+  .contact-info p{color:var(--color-text-muted);margin-bottom:24px;}
+  .contact-detail{margin-bottom:14px;font-size:.95rem;}
+  .contact-detail strong{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-accent);margin-bottom:2px;}
+  form#contact-form{background:var(--color-surface);padding:30px;display:flex;flex-direction:column;gap:16px;}
+  form#contact-form label{font-size:.78rem;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:6px;display:block;}
+  form#contact-form input,form#contact-form textarea{width:100%;padding:13px 14px;border:2px solid var(--color-text);background:var(--color-bg);font-family:'Poppins',sans-serif;font-size:.92rem;color:var(--color-text);}
+  form#contact-form textarea{resize:vertical;min-height:110px;}
+  form#contact-form input:focus,form#contact-form textarea:focus{outline:2px solid var(--color-accent);outline-offset:2px;}
+  .form-success{display:none;background:var(--color-accent);color:#fff;padding:15px;font-size:.9rem;text-align:center;font-weight:700;}
+  .form-success.show{display:block;}
+  form#contact-form.submitted .form-fields{display:none;}
+
+  footer{background:var(--color-text);color:#fff;padding:56px 0 30px;}
+  .footer-inner{text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px;}
+  footer .logo{color:#fff;}
+  footer p.tagline{color:rgba(255,255,255,.6);font-size:.9rem;max-width:400px;}
+  .footer-socials{display:flex;gap:18px;margin-top:6px;}
+  .footer-socials a{font-size:.8rem;text-transform:uppercase;letter-spacing:1px;color:var(--color-accent);font-weight:700;}
+  .powered-by{margin-top:28px;font-size:.75rem;color:rgba(255,255,255,.4);}
+
+  #whatsapp-float{position:fixed;bottom:1.25rem;right:1.25rem;z-index:9999;}
+  #whatsapp-float a{display:flex;align-items:center;justify-content:center;width:3.25rem;height:3.25rem;border-radius:9999px;background:#25D366;color:#fff;box-shadow:0 4px 14px rgba(37,211,102,.45);transition:transform .2s ease;}
+  #whatsapp-float a:hover{transform:scale(1.08);}
+  #whatsapp-float svg{width:1.75rem;height:1.75rem;fill:#fff;}
+
+  /* SMALL-MOBILE — ≤360px */
+  @media (max-width:360px){ .hero-copy-block h1{font-size:1.95rem;} .masonry-grid{grid-template-columns:1fr;} .masonry-grid figure{margin-top:0 !important;} .gallery-grid{grid-template-columns:1fr;} }
+
+  /* MOBILE — 361-480px */
+  @media (min-width:361px){
+    .hero-copy-block h1{font-size:2.6rem;}
+    .masonry-grid{grid-template-columns:repeat(2,1fr);}
+    .gallery-grid{grid-template-columns:repeat(2,1fr);}
+    .hero-cta-group{flex-wrap:nowrap;}
+  }
+
+  /* TABLET — 481-1024px */
+  @media (min-width:481px){
+    .hero-copy-block h1{font-size:3.4rem;}
+    .service-grid{grid-template-columns:repeat(2,1fr);}
+    .testimonial-grid{grid-template-columns:repeat(3,1fr);}
+    .gallery-grid{grid-template-columns:repeat(3,1fr);}
+  }
+
+  /* DESKTOP — ≥1025px */
+  @media (min-width:1025px){
+    .hamburger{display:none;}
+    .hero-copy-block h1{font-size:4.6rem;}
+    .contact-section .container{grid-template-columns:1fr 1fr;}
+    .gallery-grid{grid-template-columns:repeat(4,1fr);}
+    .hero-cover-image{max-height:58vh;}
+  }
+  @media (max-width:1024px){ nav.primary-nav{display:none;} .hamburger{display:flex;} }
+
+  @media (prefers-reduced-motion: reduce){ *{animation-duration:.01ms !important;transition-duration:.01ms !important;} .marquee{animation:none !important;} }
+</style>
+</head>
+<body>
+
+<header id="site-nav">
+  <div class="container nav-inner">
+    <a href="#top" class="logo">{{business_name}}</a>
+    <nav class="primary-nav" aria-label="Primary navigation">
+      <ul>
+        <li><a href="#work">Work</a></li>
+        <li><a href="#gallery">Gallery</a></li>
+        <li><a href="#services">Services</a></li>
+        <li><a href="#testimonials">Reviews</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+    <button class="hamburger" id="hamburger-btn" aria-label="Toggle menu" aria-expanded="false" aria-controls="mobile-drawer">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<div class="drawer-overlay" id="drawer-overlay"></div>
+<nav class="mobile-drawer" id="mobile-drawer" aria-label="Mobile navigation">
+  <ul>
+    <li><a href="#work">Work</a></li>
+    <li><a href="#gallery">Gallery</a></li>
+    <li><a href="#services">Services</a></li>
+    <li><a href="#testimonials">Reviews</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<main id="top">
+
+  <section class="hero" aria-label="Hero">
+    <div class="hero-cover-image">
+      <img src="https://res.cloudinary.com/dzuvmw4l/image/upload/c_fill,g_auto,w_1600,h_900,f_auto,q_auto:good/zuri-stock/editorial-bold/hero/clark-street-mercantile-qnKhZJPKFD8-unsplash" data-image-slot="hero" alt="{{business_name}}" loading="eager">
+    </div>
+    <div class="hero-copy-block">
+      <div class="container">
+        <p class="eyebrow">{{tagline}}</p>
+        <h1 id="hero-headline">{{business_name}}</h1>
+        <p>{{about_body_short}}</p>
+        <div class="hero-cta-group">
+          <a href="#work" class="btn">See The Work</a>
+          <a href="#contact" class="btn btn-outline">Get In Touch</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="work" aria-label="Work" data-module="masonry-work">
+    <div class="container">
+      <div class="masonry-header">
+        <p class="eyebrow">Selected Work</p>
+        <h2>What We've Made</h2>
+      </div>
+      <div class="masonry-grid">
+        <figure><img src="https://res.cloudinary.com/dzuvmw4l/image/upload/c_fill,g_auto,w_1200,h_1200,f_auto,q_auto:good/zuri-stock/editorial-bold/gallery/james-t-vdyEhYoLDDo-unsplash" data-image-slot="gallery_1" alt="{{business_name}} work"></figure>
+        <figure><img src="https://res.cloudinary.com/dzuvmw4l/image/upload/c_fill,g_auto,w_1200,h_1200,f_auto,q_auto:good/zuri-stock/editorial-bold/gallery/karina-s-XCq0N-vri_k-unsplash" data-image-slot="gallery_2" alt="{{business_name}} work"></figure>
+        <figure><img src="https://res.cloudinary.com/dzuvmw4l/image/upload/c_fill,g_auto,w_1200,h_1200,f_auto,q_auto:good/zuri-stock/editorial-bold/gallery/nagy-szabi-LdHehCq3hGI-unsplash" data-image-slot="gallery_3" alt="{{business_name}} work"></figure>
+        <figure><img src="https://res.cloudinary.com/dzuvmw4l/image/upload/c_fill,g_auto,w_1200,h_1200,f_auto,q_auto:good/zuri-stock/editorial-bold/gallery/pexels-fahmi-garna-249814583-13094233" data-image-slot="gallery_4" alt="{{business_name}} work"></figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="gallery" class="gallery-section" aria-label="Gallery" data-module="gallery">
+    <div class="container">
+      <div class="gallery-header">
+        <p class="eyebrow">The Lookbook</p>
+        <h2>In The Field</h2>
+      </div>
+      <div class="gallery-grid">
+        <figure><img src="https://res.cloudinary.com/dzuvmw4l/image/upload/c_fill,g_auto,w_1200,h_1200,f_auto,q_auto:good/zuri-stock/editorial-bold/gallery/pexels-jose-martin-segura-benites-1422456152-27008321" data-image-slot="gallery_1" alt="{{business_name}} gallery"></figure>
+        <figure><img src="https://res.cloudinary.com/dzuvmw4l/image/upload/c_fill,g_auto,w_1200,h_1200,f_auto,q_auto:good/zuri-stock/editorial-bold/gallery/pexels-sanusi-jabir-1478107489-34557762" data-image-slot="gallery_2" alt="{{business_name}} gallery"></figure>
+        <figure><img src="https://res.cloudinary.com/dzuvmw4l/image/upload/c_fill,g_auto,w_1200,h_1200,f_auto,q_auto:good/zuri-stock/editorial-bold/gallery/pexels-whittington-38561616" data-image-slot="gallery_3" alt="{{business_name}} gallery"></figure>
+        <figure><img src="https://res.cloudinary.com/dzuvmw4l/image/upload/c_fill,g_auto,w_1200,h_1200,f_auto,q_auto:good/zuri-stock/editorial-bold/gallery/wildan-ramdani-akbar-MoRzY-4GjPk-unsplash" data-image-slot="gallery_4" alt="{{business_name}} gallery"></figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="services" aria-label="Services">
+    <div class="container">
+      <div class="services-header">
+        <p class="eyebrow">What We Offer</p>
+        <h2>Our Services</h2>
+      </div>
+      <div class="service-grid">
+        <div class="service-card" data-optional-slot="1"><h3>{{service_1_name}}</h3><p>{{service_1_description}}</p></div>
+        <div class="service-card" data-optional-slot="2"><h3>{{service_2_name}}</h3><p>{{service_2_description}}</p></div>
+        <div class="service-card" data-optional-slot="3"><h3>{{service_3_name}}</h3><p>{{service_3_description}}</p></div>
+        <div class="service-card" data-optional="true" data-optional-slot="4" hidden><h3>{{service_4_name}}</h3><p>{{service_4_description}}</p></div>
+        <div class="service-card" data-optional="true" data-optional-slot="5" hidden><h3>{{service_5_name}}</h3><p>{{service_5_description}}</p></div>
+        <div class="service-card" data-optional="true" data-optional-slot="6" hidden><h3>{{service_6_name}}</h3><p>{{service_6_description}}</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="testimonials-section" id="testimonials" aria-label="Testimonials">
+    <div class="container">
+      <div class="testimonials-header">
+        <p class="eyebrow">Client Words</p>
+        <h2>What Clients Say</h2>
+      </div>
+      <div class="testimonial-grid">
+        <blockquote class="testimonial-card"><p class="testimonial-quote">"{{testimonial_1_quote}}"</p><p class="testimonial-name">{{testimonial_1_name}}</p><p class="testimonial-role">{{testimonial_1_role}}</p></blockquote>
+        <blockquote class="testimonial-card"><p class="testimonial-quote">"{{testimonial_2_quote}}"</p><p class="testimonial-name">{{testimonial_2_name}}</p><p class="testimonial-role">{{testimonial_2_role}}</p></blockquote>
+        <blockquote class="testimonial-card"><p class="testimonial-quote">"{{testimonial_3_quote}}"</p><p class="testimonial-name">{{testimonial_3_name}}</p><p class="testimonial-role">{{testimonial_3_role}}</p></blockquote>
+      </div>
+    </div>
+  </section>
+
+  <section class="contact-section" id="contact" aria-label="Contact">
+    <div class="container">
+      <div class="contact-info">
+        <p class="eyebrow">Get In Touch</p>
+        <h2>Let's Talk</h2>
+        <p>{{about_body_short}}</p>
+        <div class="contact-detail"><strong>Address</strong>{{address}}</div>
+        <div class="contact-detail"><strong>Phone</strong>{{phone_number}}</div>
+        <div class="contact-detail"><strong>Email</strong>{{email_address}}</div>
+      </div>
+      <form id="contact-form" novalidate>
+        <div class="form-fields">
+          <div><label for="cf-name">Name</label><input type="text" id="cf-name" name="name" required></div>
+          <div><label for="cf-email">Email</label><input type="email" id="cf-email" name="email" required></div>
+          <div><label for="cf-message">Message</label><textarea id="cf-message" name="message" required></textarea></div>
+          <button type="submit" class="btn">Send Message</button>
+        </div>
+        <div class="form-success">Message sent. We'll be in touch soon.</div>
+      </form>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="container footer-inner">
+    <a href="#top" class="logo">{{business_name}}</a>
+    <p class="tagline">{{tagline}}</p>
+    <div class="footer-socials" id="footer-instagram-wrap" data-instagram-url="{{instagram_url}}">
+      <a href="{{instagram_url}}" id="footer-instagram-link" target="_blank" rel="noopener">Instagram</a>
+    </div>
+    <p class="powered-by">Powered by <a href="#" style="color:#fff;border-bottom:1px solid rgba(255,255,255,.4);">Zuri</a></p>
+  </div>
+</footer>
+
+<div id="whatsapp-float" data-whatsapp-number="{{whatsapp_number}}">
+  <a href="#" aria-label="Chat on WhatsApp">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12.001 2C6.478 2 2 6.477 2 12c0 1.876.52 3.63 1.42 5.13L2 22l4.99-1.31A9.95 9.95 0 0 0 12.001 22C17.524 22 22 17.523 22 12S17.524 2 12.001 2zm0 18.05a8.03 8.03 0 0 1-4.1-1.13l-.294-.175-3.02.792.81-2.943-.192-.303A8.05 8.05 0 1 1 20.05 12a8.05 8.05 0 0 1-8.049 8.05z"/></svg>
+  </a>
+</div>
+
+<script>
+  var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var navEl = document.getElementById('site-nav');
+  window.addEventListener('scroll', function(){
+    if(window.scrollY > 40){ navEl.classList.add('scrolled'); } else { navEl.classList.remove('scrolled'); }
+  });
+
+  var hamburgerBtn = document.getElementById('hamburger-btn');
+  var drawer = document.getElementById('mobile-drawer');
+  var overlay = document.getElementById('drawer-overlay');
+  function closeDrawer(){
+    hamburgerBtn.classList.remove('open'); drawer.classList.remove('open');
+    overlay.classList.remove('open'); hamburgerBtn.setAttribute('aria-expanded','false');
+  }
+  hamburgerBtn.addEventListener('click', function(){
+    var isOpen = drawer.classList.toggle('open');
+    hamburgerBtn.classList.toggle('open', isOpen);
+    overlay.classList.toggle('open', isOpen);
+    hamburgerBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  });
+  overlay.addEventListener('click', closeDrawer);
+  drawer.querySelectorAll('a').forEach(function(a){ a.addEventListener('click', closeDrawer); });
+
+  var form = document.getElementById('contact-form');
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    form.classList.add('submitted');
+    form.querySelector('.form-success').classList.add('show');
+  });
+
+  (function(){
+    var wrap = document.getElementById('footer-instagram-wrap');
+    var url = wrap.getAttribute('data-instagram-url');
+    if(!url || url.trim() === '' || url.indexOf('{{') === 0){ wrap.remove(); }
+  })();
+
+  (function(){
+    var el = document.getElementById('whatsapp-float');
+    var num = el.getAttribute('data-whatsapp-number');
+    if (!num || num.trim() === '' || num.indexOf('{{') === 0) { el.remove(); }
+    else { el.querySelector('a').href = 'https://wa.me/' + num.replace(/[^0-9]/g,''); }
+  })();
+
+  if(!prefersReducedMotion && window.gsap){
+    gsap.registerPlugin(ScrollTrigger);
+
+    var heroTl = gsap.timeline({ delay: 0.1 });
+    heroTl.from('.hero-cover-image', { opacity: 0, scale: 1.06, duration: .7, ease: 'power2.out' })
+          .from('.hero-copy-block .eyebrow', { opacity: 0, y: 14, duration: .4, ease: 'power2.out' }, '-=.35')
+          .from('.hero-copy-block h1', { opacity: 0, scale: 0.92, duration: .55, ease: 'back.out(1.4)' }, '-=.25')
+          .from('.hero-copy-block p', { opacity: 0, y: 16, duration: .45, ease: 'power2.out' }, '-=.25')
+          .from('.hero-cta-group a', { opacity: 0, y: 12, duration: .4, stagger: .08, ease: 'power2.out' }, '-=.25');
+
+    document.querySelectorAll('section').forEach(function(sec){
+      var targets = sec.querySelectorAll('.masonry-grid figure, .gallery-grid figure, .service-card, .testimonial-card');
+      if(!targets.length) return;
+      gsap.from(targets, {
+        opacity: 0, scale: 0.9, y: 22, duration: .5, stagger: .08, ease: 'back.out(1.5)',
+        scrollTrigger: { trigger: sec, start: 'top 82%' }
+      });
+    });
+  }
+</script>
+
+</body>
+</html>

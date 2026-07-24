@@ -1,0 +1,238 @@
+SESSION 3A — CONTENT STRATEGY
+Model: claude-sonnet-4-5
+When: Week 3, Day 1
+Prereqs: Sessions 1A–2C complete
+Read @docs/03_CONTENT_STRATEGY.md in full before writing any code.
+
+Task: Build the complete AI content strategy system — pillars, calendar generation, cultural calendar, trending topics.
+
+Create these files:
+1. src/lib/content/pillars.ts — DEFAULT_PILLARS map (all 8 archetypes) and seedContentPillars() from Section 2.1 and 2.2.
+2. src/lib/content/cultural-calendar.ts — Full NIGERIAN_CULTURAL_CALENDAR array (all entries) and getNigerianCulturalMoments() from Section 4.
+3. src/lib/content/posting-times.ts — OPTIMAL_POSTING_TIMES and getSuggestedTime() from Section 6.
+4. src/lib/content/trending-topics.ts — getTrendingTopics(), fetchTrendingWithGemini() (uses Gemini Flash with Google Search tool), getFallbackTopics(), getCachedTrends(), cacheTrends() from Section 5. The Gemini call must include the tools: [{ googleSearch: {} }] parameter.
+5. src/lib/content/calendar-generator.ts — generateMonthlyCalendar(), distributePostsAcrossPlatforms(), buildCalendarPrompt(), rotatePillars(), distributeDatesAcrossMonth() from Sections 3.1–3.5. All user business data must pass through sanitizeForPrompt() before the Gemini call.
+6. src/lib/content/repurpose-engine.ts — repurposeSlot() from Section 7.
+7. src/lib/content/series-generator.ts — SERIES_TEMPLATES array and generateSeries() from Section 8.
+8. src/app/api/content/seed-calendar/route.ts — POST, internal endpoint from Section 10. Protected by x-internal-secret. Seeds pillars then generates first month's calendar.
+9. src/app/api/content/calendar/route.ts — GET with date range, returns calendar slots for dashboard.
+10. src/app/api/content/calendar/generate-month/route.ts — POST, generates next month's calendar.
+11. src/app/api/content/calendar/[id]/route.ts — PATCH (edit slot) and DELETE.
+12. src/app/api/content/calendar/[id]/approve/route.ts — POST, sets status = approved.
+13. src/app/api/content/calendar/[id]/regenerate/route.ts — POST, regenerates topic/hook/brief for a slot.
+14. src/app/api/content/calendar/[id]/repurpose/route.ts — POST, Growth+ gate, calls repurposeSlot().
+15. src/app/api/content/pillars/route.ts — GET + POST for pillar management.
+16. src/app/api/content/trending/route.ts — GET, Growth+ gate, returns trending topics.
+17. src/app/api/content/series/route.ts — POST, Growth+ gate, generates a content series.
+18. src/app/(app)/content/page.tsx — Dashboard content page with month-view calendar grid. Shows slot cards with platform icon, pillar color dot, topic, status badge. Filters by platform/pillar/status. Empty state with "Generate calendar" CTA.
+
+All calendar generation must: check calendar_posts_per_month limit, increment usage counter after successful generation, use sanitizeForPrompt() on all brand data before Gemini calls.
+
+Success criteria: After onboarding, /api/content/seed-calendar creates content_pillars + a full month of content_calendar slots. The dashboard shows the calendar correctly. TypeScript: zero errors.
+
+SESSION 3B — CONTENT GENERATION (IMAGEN 3)
+Model: claude-sonnet-4-5
+When: After 3A confirmed working
+Prereqs: Session 3A complete
+Read @docs/04_CONTENT_GENERATION.md in full before writing any code. This session implements the core GeminiXprize differentiator — Imagen 3 integration.
+
+Task: Build the complete content generation pipeline: images (Imagen 3), captions, blogs, newsletters, video scripts.
+
+Create these files:
+1. src/lib/content/image-dimensions.ts — getAspectRatio() and getPixelDimensions() from Section 3.1.
+2. src/lib/content/caption-rules.ts — CAPTION_RULES object for all 5 platforms from Section 4.1.
+3. src/lib/content/image-prompt-generator.ts — generateImagePrompt() Gemini Flash call from Section 3.2. MUST include sanitizeImagePrompt() that strips prompt injection patterns. Final prompt has hard 500-char cap.
+4. src/lib/content/imagen.ts — generateImage() from Section 3.3. Uses Imagen 3 model: `imagen-3.0-generate-001`. Handles ImageSafetyError separately from other errors.
+5. src/lib/content/image-storage.ts — uploadImageToStorage() from Section 3.4. Validates buffer size before upload.
+6. src/lib/content/caption-generator.ts — generateCaption(), buildStandardCaptionPrompt(), buildThreadPrompt(), buildPollPrompt(), buildLinkedInArticlePrompt(), sanitizeHashtag() from Section 4.2. All user data through sanitizeForPrompt().
+7. src/lib/content/blog-generator.ts — generateBlogPost() using Gemini Pro from Section 5.2. Validates no placeholder text in output.
+8. src/lib/content/newsletter-generator.ts — generateNewsletter() using Gemini Pro from Section 6.2.
+9. src/lib/content/video-script-generator.ts — generateVideoScript() from Section 7.1. Generates thumbnail via Imagen 3. Status always = "script_ready". Also create src/lib/content/higgsfield.ts stub that throws "not yet available".
+10. src/lib/content/generation-pipeline.ts — runGenerationPipeline() orchestrator from Section 2.1. Handles all content types. Increments usage counters after each successful generation.
+11. src/app/api/content/generate/route.ts — POST, main generation endpoint from Section 8. Full validation, plan gating per resource type, calls runGenerationPipeline().
+12. src/app/api/content/regenerate/route.ts — POST, regenerates a specific field.
+13. src/app/api/content/export/route.ts — GET, returns content in specified format (markdown, HTML, plain text).
+
+For Imagen 3: If safety filter blocks the image, automatically regenerate with a simplified abstract prompt. If second attempt also blocked, skip the image and return partial status with warning. Never fail the entire generation because of one image.
+
+For image storage: Create the Supabase Storage bucket "generated-images" (public, 10MB limit) if it doesn't exist. Path format: {userId}/generated/{formatType}-{timestamp}.jpg.
+
+Success criteria: POST to /api/content/generate with platform=instagram, formatType=static_image produces a generated_content row with a real Imagen 3 image URL and a platform-appropriate caption. TypeScript: zero errors.
+
+SESSION 4A — ANALYTICS
+Model: claude-sonnet-4-5
+When: Week 4, Day 1
+Prereqs: Sessions 1–3 complete
+Read @docs/05_ANALYTICS.md in full before writing any code.
+
+Task: Build the complete analytics system — website tracking, Meta API, Google Search Console, aggregation cron jobs.
+
+Create these files:
+1. src/lib/analytics/tracking-script.ts — getTrackingScript() from Section 2.1. Embeds into published websites.
+2. src/lib/analytics/token-encryption.ts — encryptToken() and decryptToken() using AES-256-GCM from Section 4.3.
+3. src/lib/analytics/meta-sync.ts — syncMetaInsights(), fetchFacebookPageInsights(), fetchInstagramInsights() from Section 4.2.
+4. src/lib/analytics/search-console-sync.ts — syncSearchConsoleData() from Section 5.2.
+5. src/lib/analytics/monthly-report-generator.ts — generateMonthlyReport() using Gemini Pro from Section 7.
+6. src/app/api/analytics/track/route.ts — Public POST endpoint from Section 2.2. Anonymizes IP immediately. Rate limits 30/min/IP/handle. Only tracks published sites. Returns 204 always (never errors).
+7. src/app/api/analytics/website/route.ts — GET from Section 6. Enforces retention limits per plan. Returns daily chart data, device breakdown, top referrers, form submission analytics.
+8. src/app/api/analytics/meta/connect/route.ts and callback/route.ts — OAuth flow from Section 4.1. Exchanges for long-lived token, encrypts before storing, triggers initial sync.
+9. src/app/api/analytics/meta/insights/route.ts — GET, returns Meta insights for dashboard.
+10. src/app/api/analytics/search-console/connect/route.ts and callback/route.ts — Google OAuth from Section 5.1.
+11. src/app/api/analytics/search-console/data/route.ts — GET, returns Search Console snapshot.
+12. src/app/api/cron/aggregate-analytics/route.ts — Daily aggregation cron from Section 3.
+13. src/app/api/cron/sync-meta-insights/route.ts — Syncs all active Meta connections.
+14. src/app/api/cron/sync-search-console/route.ts — Syncs all active Search Console connections.
+15. src/app/api/cron/purge-analytics/route.ts — Enforces retention limits per plan from Section 8.
+16. src/app/api/cron/generate-monthly-reports/route.ts — Runs on 1st of month for Premium users.
+17. src/app/(app)/analytics/page.tsx — Dashboard analytics page. Shows different content per plan. Pro: website stats + 30-day chart. Growth+: adds Meta overview and Search Console panel. Premium+: adds monthly report card. Shows "Connect" CTAs for Meta and Search Console when not connected.
+
+Also: Update BlockRenderer to inject getTrackingScript() into the <head> of all published websites (only when analytics_enabled = true on the website record).
+
+Success criteria: Visiting a published test website creates a row in website_pageviews. The analytics dashboard shows correct data. TypeScript: zero errors.
+
+SESSION 4B — AGENCY MARKETPLACE + NOTIFICATIONS
+Model: claude-sonnet-4-5
+When: After 4A confirmed working
+Prereqs: Session 4A complete
+Read @docs/07_AGENCY_MARKETPLACE.md in full and @docs/08_NOTIFICATIONS.md in full before writing any code. Build both systems in one session — they are both medium-complexity and share the email infrastructure.
+
+Task: Build the agency marketplace and the complete notification system.
+
+AGENCY MARKETPLACE:
+1. src/lib/agencies/types.ts — Agency, AgencyService, PortfolioItem types + AGENCY_SERVICE_LABELS, PRICE_RANGE_LABELS, RESPONSE_TIME_LABELS, TEAM_SIZE_LABELS from @docs/07_AGENCY_MARKETPLACE.md Section 2.
+2. src/app/api/agencies/route.ts — GET with filters from Section 3.
+3. src/app/api/agencies/[slug]/route.ts — GET single agency.
+4. src/app/api/agencies/inquire/route.ts — POST from Section 4.1. Growth+ gate. Rate limit 3/agency/30days. Sends emails to both agency and user.
+5. src/app/api/agencies/apply/route.ts — Public POST from Section 5.1.
+6. src/app/api/admin/agencies/route.ts — Admin-only POST + PATCH from Section 8.
+7. src/app/(marketing)/agencies/page.tsx — Public agency directory with filters.
+8. src/app/(marketing)/agencies/[slug]/page.tsx — Agency profile page with contact modal.
+9. src/app/(marketing)/agencies/apply/page.tsx — Application form.
+
+NOTIFICATIONS:
+10. src/lib/notifications/types.ts — NotificationType, Notification, NOTIFICATION_DISPLAY from @docs/08_NOTIFICATIONS.md Section 3.
+11. src/lib/notifications/create-notification.ts — createNotification() and createNotificationAsync() from Section 4.
+12. src/lib/email/resend.ts — sendEmail() with rate limiting from Sections 5.1 and 10.
+13. src/lib/email/templates/index.ts — renderEmailTemplate() and TEMPLATE_MAP.
+14. src/lib/email/templates/BaseEmailLayout.tsx — Base layout + EmailHeading, EmailBody, EmailButton, EmailDivider, EmailHighlight from Section 5.3.
+15. Create all 26 email template files from Section 6 (at minimum: WelcomeEmail, WebsiteGeneratedEmail, WebsitePublishedEmail, ContactFormReceivedEmail, PaymentSuccessfulEmail, PaymentFailedEmail, TrialEndingEmail, PlanDowngradedEmail, UsageLimitReachedEmail, WeeklyDigestEmail). Stub the others as "// TODO".
+16. src/hooks/use-notifications.ts — Supabase Realtime subscription hook from Section 7.1.
+17. src/app/api/notifications/route.ts — GET (list) + PATCH (mark all read).
+18. src/app/api/notifications/[id]/route.ts — PATCH (mark read) + DELETE.
+19. src/app/api/notifications/preferences/route.ts — GET + PATCH.
+20. src/app/api/cron/weekly-digest/route.ts — Weekly digest cron from Section 9.1.
+21. src/app/api/cron/content-reminders/route.ts — Monday content reminder cron.
+22. src/app/api/cron/cultural-reminders/route.ts — Daily cultural moment reminder cron.
+23. NotificationBell component in TopBar — uses use-notifications hook, shows unread count badge, opens drawer.
+
+Wire createNotification() calls into: website publish, contact form received, payment success/failure, generation complete/failed, usage limit reached.
+
+Success criteria: Submitting an agency inquiry sends an email to the agency. Publishing a website creates an in-app notification. TypeScript: zero errors.
+
+SESSION 4C — DEPLOYMENT INFRASTRUCTURE
+Model: claude-sonnet-4-5
+When: After 4B confirmed working
+Prereqs: All previous sessions complete
+Read @docs/09_DEPLOYMENT.md in full before writing any code.
+
+Task: Build the custom domain system and finalize all deployment infrastructure.
+
+Create/update these files:
+1. src/app/api/website/custom-domain/route.ts — POST (add domain), GET status check, DELETE (remove domain) from Sections 5.2, 5.4, 5.5.
+2. src/app/api/cron/verify-custom-domains/route.ts — Polls Vercel API every 15min for domain verification from Section 5.3.
+3. src/app/api/cron/detect-stuck-jobs/route.ts — Detects website generation jobs stuck in processing state from @docs/11_ERROR_HANDLING.md Section 7.2.
+4. src/app/api/cron/purge-rate-limits/route.ts — Purges old rate_limit_log entries hourly.
+5. src/app/api/handle/update/route.ts — PATCH, updates handle if not locked from @docs/09_DEPLOYMENT.md Section 4.3.
+6. public/manifest.json — Complete PWA manifest from Section 8.1.
+7. public/sw.js — Complete service worker from Section 8.2.
+8. src/app/offline/page.tsx — Offline fallback page from Section 8.3.
+9. public/.well-known/assetlinks.json — Android TWA verification (placeholder with correct structure from Section 9.4).
+10. src/app/maintenance/page.tsx — Maintenance mode page from @docs/11_ERROR_HANDLING.md Section 16.
+11. vercel.json — COMPLETE file from @docs/09_DEPLOYMENT.md Section 2.1 with ALL crons from all systems (13 total cron jobs).
+12. src/lib/config/validate-env.ts — Startup validation from @docs/10_SECURITY.md Section 14.
+
+Update middleware.ts to add MAINTENANCE_MODE check.
+
+Generate all 8 PWA icons at the correct sizes using sharp. The icons go in /public/icons/.
+
+Also run: npm install sonner and add <Toaster /> to root layout.tsx (dark theme, bottom-right position).
+
+Success criteria: The vercel.json has all 13 cron jobs. PWA manifest validates at https://manifest-validator.appspot.com. handle.zuri.com/testhandle (local: localhost:3000 with subdomain middleware) rewrites to /sites/testhandle. TypeScript: zero errors.
+
+SESSION 5A — ERROR HANDLING + UI POLISH
+Model: claude-sonnet-4-5
+When: Week 5, Day 1
+Prereqs: All previous sessions complete
+Read @docs/11_ERROR_HANDLING.md in full before writing any code.
+
+Task: Wire all error handling across the entire app. This session makes the app production-grade.
+
+Create these files:
+1. src/components/errors/ErrorBoundary.tsx — Class component from Section 5.1. Wrap all major dashboard sections.
+2. src/app/error.tsx — Route error page from Section 5.2.
+3. src/app/not-found.tsx — 404 page from Section 5.2.
+4. src/app/global-error.tsx — Root error from Section 5.2.
+5. src/components/ui/InlineError.tsx — Field-level error display from Section 5.4.
+6. src/components/ui/UpgradePrompt.tsx — Plan gate component (compact + full variants) from Section 10.1.
+7. src/components/ui/OfflineBanner.tsx — Network detection from Section 12.2.
+8. src/components/app/GracePeriodBanner.tsx — Payment failure banner from Section 9.2.
+9. src/hooks/use-api.ts — API call hook with error classification from Section 5.3.
+10. src/hooks/use-session-monitor.ts — Session expiry detection from Section 8.1.
+11. src/hooks/use-subscription-monitor.ts — Plan change detection from Section 9.1.
+
+Update ALL existing API routes to:
+- Use the standard error handling template from Section 4 (auth → rate limit → validate → gate → logic → catch)
+- Use ERROR_MESSAGES from messages.ts for all user-facing strings
+- Use classifySupabaseError() for DB errors
+- Include generateSupportRef() in all 500 responses
+- Never return raw Supabase error messages
+
+Add to root layout.tsx: <OfflineBanner />, <Toaster /> (already added in 4C).
+Add to dashboard layout.tsx: <GracePeriodBanner /> (conditional on subscription status = grace_period), <ErrorBoundary> wrapping each major section.
+
+Success criteria: Intentionally cause a 500 error — user sees "Something went wrong" with a support reference. Remove internet — offline banner appears. Trigger a rate limit — user sees friendly message. Visit a Growth-gated feature on Free plan — UpgradePrompt shows. TypeScript: zero errors.
+
+SESSION 5B — COMPETITION PREPARATION
+Model: claude-sonnet-4-5
+When: Week 6, Days 1–3
+Prereqs: All previous sessions complete and tested
+Read @docs/00_MASTER_PROMPT.md Sections 15 and 16 before writing any code.
+
+Task: Final competition preparation — performance, accessibility, privacy pages, admin tools, and demo readiness.
+
+Create these files:
+1. src/app/(marketing)/privacy/page.tsx — NDPA-compliant privacy policy. State: what data is collected (pageviews, device type, country), third parties (Supabase, Vercel, Resend, Flutterwave, Google, Meta), retention periods per plan, user rights (access, erasure, portability), contact: privacy@zuri.com.
+2. src/app/(marketing)/terms/page.tsx — Terms of service. Key sections: acceptable use, prohibited content, subscription terms, cancellation policy, limitation of liability.
+3. src/app/api/account/my-data/route.ts — Data export from @docs/10_SECURITY.md Section 10.3.
+4. src/app/api/account/delete/route.ts — Account deletion from Section 11.
+5. src/app/(app)/settings/page.tsx — Settings page with sections: Account (name, handle if not locked, email), Notifications (preferences toggles), Billing (current plan, payment history, upgrade/cancel), Privacy (data export button, account deletion with confirmation).
+6. src/app/admin/page.tsx — Simple admin dashboard (is_admin gate). Shows: recent payments, failed generation jobs, pending agency applications, expired OAuth connections.
+7. src/app/admin/agencies/page.tsx — Admin agency management: list all agencies, toggle featured/verified/active, view pending applications, approve/reject.
+
+Also:
+- Run Lighthouse audit and fix any issues bringing PWA score below 80 or Performance below 75.
+- Test all 16 Gemini integration points manually — log which ones work.
+- Switch Flutterwave to LIVE mode in environment variables.
+- Verify wildcard subdomain works in production (a test handle should render at handle.zuri.com).
+- Seed at least 8 real Nigerian agencies into the agencies table via the admin panel.
+- Run the complete user journey: signup → onboard → website generated → published → content calendar → generate an image → analytics shows pageview.
+
+Success criteria: Full user journey completes without errors. Flutterwave live payment processes successfully. At least one real published website accessible at handle.zuri.com. Lighthouse PWA score ≥ 80.
+
+CREDIT CONSERVATION CHEAT SHEET
+Expensive (use sparingly):
+  - Multiple back-and-forth messages = N requests, use ONE complete prompt
+  - @codebase = scans entire repo, expensive
+  - o3-mini / reasoning models = burn fast
+
+Free / cheap:
+  - cursor-small = free for inline autocomplete
+  - Reading files with @file = minimal cost
+  - Composer mode = same cost as chat but produces actual changes
+
+Rules:
+  1. Write the full prompt before hitting Enter — no "also do X" follow-ups
+  2. Paste the FULL error message into the same thread, not a new one
+  3. Use @docs/filename.md not @codebase
+  4. One session per domain — don't mix website builder and analytics in one session
+  5. When a session succeeds → commit → start fresh thread for the next session

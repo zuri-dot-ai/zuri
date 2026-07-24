@@ -1,0 +1,31 @@
+{
+  "template_id": "portfolio-dramatic-light-darkroom",
+  "archetype": "portfolio-dramatic",
+  "mode": "light",
+  "hero_type": "typography",
+  "supportedModules": ["case-study-spotlight", "masonry-work"],
+  "lean": "international",
+  "display_name": "Photography Light Darkroom",
+  "storage_path": "portfolio-dramatic/light-darkroom.html",
+  "color_themes": [
+    {"key":"theme-1","bg":"#FAFAF8","surface":"#F2F2F0","text":"#141312","text_muted":"#6E6B67","accent":"#C1272D","accent_text":"#FFFFFF"},
+    {"key":"theme-2","bg":"#FAFAF8","surface":"#F2F2F0","text":"#141312","text_muted":"#6E6B67","accent":"#141312","accent_text":"#FFFFFF"},
+    {"key":"theme-3","bg":"#F5F3F0","surface":"#F2F2F0","text":"#141312","text_muted":"#6E6B67","accent":"#8C1A1F","accent_text":"#FFFFFF"}
+  ],
+  "placeholder_fields": [
+    "business_name", "tagline", "about_body_short", "about_body_long",
+    "service_1_name", "service_1_description", "service_2_name", "service_2_description",
+    "service_3_name", "service_3_description", "service_4_name", "service_4_description",
+    "service_5_name", "service_5_description", "service_6_name", "service_6_description",
+    "testimonial_1_quote", "testimonial_1_name", "testimonial_1_role",
+    "testimonial_2_quote", "testimonial_2_name", "testimonial_2_role",
+    "testimonial_3_quote", "testimonial_3_name", "testimonial_3_role",
+    "phone_number", "email_address", "whatsapp_number", "instagram_url", "address",
+    "case_study_title", "case_study_description",
+    "work_1_public_id", "work_2_public_id", "work_3_public_id",
+    "work_4_public_id", "work_5_public_id", "work_6_public_id", "case_study_public_id"
+  ],
+  "image_slots": ["case_study", "work_1", "work_2", "work_3", "work_4", "work_5", "work_6"],
+  "has_unique_section": true,
+  "unique_section_name": "case-study-spotlight"
+}
