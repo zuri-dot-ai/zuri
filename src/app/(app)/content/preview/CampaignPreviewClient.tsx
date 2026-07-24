@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { ZuriSpinner } from "@/components/ui/skeleton";
 import {
   DeviceFrameCard,
   type PreviewFrameItem,
@@ -274,9 +275,8 @@ export function CampaignPreviewClient({
       </header>
 
       {loading ? (
-        <div className="text-card-body flex items-center gap-2">
-          <span className="zuri-spinner !size-4" />
-          Loading preview…
+        <div className="flex items-center gap-2 py-1">
+          <ZuriSpinner size={20} label="Loading preview" />
         </div>
       ) : frames.length === 0 ? (
         <p className="text-card-body">

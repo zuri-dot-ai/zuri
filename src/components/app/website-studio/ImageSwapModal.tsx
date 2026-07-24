@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { ImagePlus, Library, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { ZuriSpinner } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { safeFetchJSON } from "@/lib/utils/safe-fetch";
 import { getSlotAspectRatio } from "@/lib/website/slot-aspect";
@@ -498,7 +499,9 @@ export function ImageSwapModal({
                 className="w-full rounded-sm border border-border bg-surface px-3 py-2 text-sm"
               />
               {loadingLibrary ? (
-                <p className="text-sm text-muted-foreground">Loading library…</p>
+                <div className="flex items-center gap-2 py-2">
+                  <ZuriSpinner size={20} label="Loading library" />
+                </div>
               ) : filteredLibrary.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
                   No curated images for this slot. Upload your own instead.

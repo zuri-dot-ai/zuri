@@ -80,7 +80,7 @@ export function Step12Building({ businessName }: Step12BuildingProps) {
 
   return (
     <div className="flex flex-col items-center justify-center gap-8 py-6 text-center md:py-10">
-      <div className="w-full max-w-md space-y-3">
+      <div className="w-full max-w-lg space-y-3">
         <h1 className="onboarding-headline">Building your presence</h1>
         <div className="mx-auto h-1 w-full max-w-xs overflow-hidden rounded-full bg-[var(--text-tertiary)]/20">
           <div
@@ -88,10 +88,13 @@ export function Step12Building({ businessName }: Step12BuildingProps) {
             style={{ width: `${progressPct}%` }}
           />
         </div>
-        <p className="text-caption text-[var(--text-tertiary)]">{progressPct}% complete</p>
+        <p className="text-caption tabular-nums text-[var(--text-tertiary)]">
+          {progressPct}% complete
+        </p>
       </div>
 
-      <div className="w-full max-w-md rounded-lg border border-border bg-[var(--bg-secondary)] p-6 text-left sm:p-8">
+      {/* Fixed width so task-label length changes never reflow the card */}
+      <div className="w-full max-w-lg rounded-lg border border-border bg-[var(--bg-secondary)] p-6 text-left sm:w-[min(100%,28rem)] sm:p-8">
         <ul className="space-y-4">
           {BUILD_STEPS.map((item, i) => {
             const done = i < activeIndex;
@@ -105,7 +108,7 @@ export function Step12Building({ businessName }: Step12BuildingProps) {
                     initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
                     animate={{ opacity: done || active ? 1 : 0.35, y: 0 }}
                     transition={{ duration: 0.28, ease: "easeOut" }}
-                    className="flex items-start gap-3"
+                    className="flex min-h-[2.75rem] items-start gap-3"
                   >
                     <span
                       className={cn(
@@ -138,18 +141,21 @@ export function Step12Building({ businessName }: Step12BuildingProps) {
                       >
                         {item.label}
                       </p>
-                      {active && (
-                        <motion.p
-                          key={item.micro(cleanName)}
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ duration: 0.4 }}
-                          className="mt-1 text-caption text-[var(--text-tertiary)]"
-                        >
-                          {item.micro(cleanName)}
-                        </motion.p>
-                      )}
+                      {/* Reserved micro-line slot — avoids height jump when copy mounts */}
+                      <div className="mt-1 min-h-[1.125rem]">
+                        {active && (
+                          <motion.p
+                            key={item.micro(cleanName)}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.4 }}
+                            className="text-caption text-[var(--text-tertiary)]"
+                          >
+                            {item.micro(cleanName)}
+                          </motion.p>
+                        )}
+                      </div>
                     </div>
                   </motion.li>
                 )}

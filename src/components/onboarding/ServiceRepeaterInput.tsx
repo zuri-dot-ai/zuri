@@ -150,7 +150,7 @@ export function ServiceRepeaterInput({
               // Auto-commit on blur so a valid row is never lost if the user
               // taps "Continue" without pressing "Add another service".
               onBlur={commitCurrentRow}
-              placeholder="Birthday, wedding, and celebration cakes made to order"
+              placeholder="Describe this service — what does it include, what makes it different?"
               className="onboarding-input h-11"
               maxLength={MAX_DESCRIPTION_LENGTH}
             />

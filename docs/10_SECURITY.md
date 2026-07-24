@@ -884,6 +884,12 @@ $$;
 
 ### 6.1 Next.js Config Headers
 
+> **Current source of truth:** `next.config.ts` uses **two CSP profiles** —
+> `appSecurityHeaders` (dashboard/auth) and `previewSecurityHeaders`
+> (`/preview`, `/sites`). Both must include `https://res.cloudinary.com` in
+> `img-src`. `images.remotePatterns` must also list `res.cloudinary.com`.
+> The single-CSP example below is historical and should not be copied blindly.
+
 ```typescript
 // next.config.ts
 
@@ -929,8 +935,8 @@ const securityHeaders = [
       // Fonts: self + Google Fonts CDN
       "font-src 'self' https://fonts.gstatic.com",
 
-      // Images: self + data URIs + stock photo CDNs + Supabase storage + Google AI (Imagen)
-      "img-src 'self' data: blob: https://images.unsplash.com https://images.pexels.com https://*.supabase.co https://*.supabase.in https://generativelanguage.googleapis.com",
+      // Images: self + data URIs + stock photo CDNs + Supabase storage + Google AI (Imagen) + Cloudinary
+      "img-src 'self' data: blob: https://images.unsplash.com https://images.pexels.com https://*.supabase.co https://*.supabase.in https://generativelanguage.googleapis.com https://res.cloudinary.com",
 
       // Connections: self + all external APIs
       "connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://api.flutterwave.com https://checkout.flutterwave.com https://api.unsplash.com https://api.pexels.com https://generativelanguage.googleapis.com https://api.resend.com https://graph.facebook.com https://searchconsole.googleapis.com https://api.vercel.com",

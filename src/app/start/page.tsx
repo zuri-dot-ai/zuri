@@ -16,6 +16,7 @@ import { Step8Handle } from "@/components/onboarding/steps/Step8Handle";
 import { Step9Platforms } from "@/components/onboarding/steps/Step9Platforms";
 import { Step10YourName } from "@/components/onboarding/steps/Step10YourName";
 import { Step11Signup } from "@/components/onboarding/steps/Step11Signup";
+import { ZuriSpinner } from "@/components/ui/skeleton";
 import {
   DEFAULT_ONBOARDING_STATE,
   ONBOARDING_TOTAL_STEPS,
@@ -23,6 +24,16 @@ import {
 } from "@/lib/onboarding/types";
 import { resolveArchetypeFromCategory } from "@/lib/website/archetypes";
 import { safeFetchJSON, FetchError } from "@/lib/utils/safe-fetch";
+
+/** Full-screen branded loader — matches Step12 / generation visual language */
+function OnboardingPremiumLoader({ label }: { label: string }) {
+  return (
+    <div className="onboarding-shell flex min-h-dvh w-full flex-col items-center justify-center gap-5 px-5">
+      <ZuriSpinner size={40} label={label} />
+      <p className="text-sm text-[var(--text-tertiary)]">{label}…</p>
+    </div>
+  );
+}
 
 const SIGNUP_STEP = ONBOARDING_TOTAL_STEPS; // 11
 const LAST_QUESTION_STEP = 10;
@@ -223,21 +234,18 @@ export default function StartPage() {
   }
 
   if (!ready) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-[var(--text-tertiary)]">
-        Loading…
-      </div>
-    );
+    return <OnboardingPremiumLoader label="Loading" />;
+  }
+
+  if (finishing) {
+    return <OnboardingPremiumLoader label="Building your presence" />;
   }
 
   const step = state.step;
-  const hideControls =
-    (!authResume && step === SIGNUP_STEP) || finishing;
+  const hideControls = !authResume && step === SIGNUP_STEP;
   const continueLabel =
     authResume && step === LAST_QUESTION_STEP
-      ? finishing
-        ? "Finishing…"
-        : "Finish & build my site"
+      ? "Finish & build my site"
       : undefined;
 
   return (

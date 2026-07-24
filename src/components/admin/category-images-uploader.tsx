@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import { ZuriSpinner } from "@/components/ui/skeleton";
 import {
   Card,
   CardContent,
@@ -305,9 +306,9 @@ export function CategoryImagesUploader() {
         </div>
 
         {loadingList ? (
-          <p className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span className="zuri-spinner" /> Loading…
-          </p>
+          <div className="flex items-center gap-2 py-1">
+            <ZuriSpinner size={20} label="Loading" />
+          </div>
         ) : images.length === 0 ? (
           <p className="flex items-center gap-2 text-sm text-muted-foreground">
             <ImageIcon className="size-4" /> No images yet — upload a batch

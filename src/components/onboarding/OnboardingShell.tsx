@@ -37,6 +37,10 @@ function StepProgress({ currentStep }: { currentStep: number }) {
  * Prefer looping muted video; JPG as poster / reduced-motion / error fallback;
  * dark gradient if neither asset loads.
  *
+ * Root cause note (2026-07): file is H.264 (avc1) and CSP media-src allows
+ * 'self'. Failures tracked to ~7MB payload on slower links — keep the asset
+ * compressed (~2–3MB target) and only fall back on genuine media errors.
+ *
  * Assets:
  *   public/onboarding/onboarding-hero.mp4
  *   public/onboarding/onboarding-hero.jpg
@@ -62,6 +66,7 @@ function DesktopHeroPanel() {
           muted
           loop
           playsInline
+          preload="auto"
           onError={() => setVideoFailed(true)}
         />
       ) : !imageFailed ? (
@@ -103,6 +108,7 @@ interface OnboardingShellProps {
 /**
  * Onboarding V2 shell — desktop ≥1025px (lg): 30% static hero + 70% content.
  * Tablet/mobile: content only, no image in the DOM.
+ * Back / Continue live in the sticky top-right header (no scroll required).
  */
 export function OnboardingShell({
   step,
@@ -150,8 +156,49 @@ export function OnboardingShell({
 
       <div className="flex min-h-dvh w-full flex-1 flex-col px-5 sm:px-6 lg:w-[70%] lg:px-10 xl:px-16">
         <header className="onboarding-safe-top sticky top-0 z-20 -mx-5 border-b border-transparent bg-[var(--bg-primary)]/80 px-5 pb-4 backdrop-blur-md sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
-          <div className="mx-auto flex w-full max-w-[640px] flex-col items-center gap-4 lg:items-start">
-            <Logo variant="image" size="navbar" href={marketingUrl()} />
+          <div className="mx-auto flex w-full max-w-[640px] flex-col gap-4">
+            <div className="flex items-center justify-between gap-3">
+              <Logo variant="image" size="navbar" href={marketingUrl()} />
+
+              {!hideControls && (
+                <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+                  {step > 1 && (
+                    <button
+                      type="button"
+                      onClick={onBack}
+                      disabled={launching}
+                      className={cn(
+                        "inline-flex h-10 min-w-[72px] items-center justify-center rounded-sm border border-border bg-transparent px-3 text-sm text-[var(--text-secondary)] transition-colors duration-150",
+                        "hover:border-foreground/30 hover:text-foreground",
+                        "disabled:cursor-not-allowed disabled:opacity-40"
+                      )}
+                    >
+                      Back
+                    </button>
+                  )}
+                  <Button
+                    type="button"
+                    onClick={handleContinue}
+                    disabled={!canContinue || launching}
+                    className={cn(
+                      "h-10 min-w-[108px] px-4 sm:min-w-[128px]",
+                      (!canContinue || launching) &&
+                        "cursor-not-allowed opacity-40 hover:brightness-100"
+                    )}
+                  >
+                    {launching ? (
+                      <span className="inline-flex items-center gap-2">
+                        <span className="zuri-spinner" />
+                        Starting…
+                      </span>
+                    ) : (
+                      continueLabel ?? "Continue"
+                    )}
+                  </Button>
+                </div>
+              )}
+            </div>
+
             <StepProgress currentStep={step} />
             {showWelcomeBack && (
               <p className="text-center text-sm text-gold/90 lg:text-left">
@@ -177,42 +224,6 @@ export function OnboardingShell({
               </motion.div>
             </AnimatePresence>
           </div>
-
-          {!hideControls && (
-            <div className="onboarding-safe-bottom mt-8 flex flex-col-reverse gap-3 sm:mt-10 sm:flex-row sm:items-center sm:justify-between">
-              {step > 1 ? (
-                <button
-                  type="button"
-                  onClick={onBack}
-                  disabled={launching}
-                  className="text-center text-sm text-[var(--text-tertiary)] transition-colors duration-150 hover:text-foreground sm:text-left"
-                >
-                  ← Back
-                </button>
-              ) : (
-                <span className="hidden sm:block" />
-              )}
-              <Button
-                type="button"
-                onClick={handleContinue}
-                disabled={!canContinue || launching}
-                className={cn(
-                  "w-full min-w-[140px] sm:w-auto",
-                  (!canContinue || launching) &&
-                    "cursor-not-allowed opacity-40 hover:brightness-100"
-                )}
-              >
-                {launching ? (
-                  <span className="inline-flex items-center gap-2">
-                    <span className="zuri-spinner" />
-                    Starting…
-                  </span>
-                ) : (
-                  continueLabel ?? "Continue"
-                )}
-              </Button>
-            </div>
-          )}
         </div>
       </div>
     </div>

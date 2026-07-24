@@ -27,6 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import { Banner } from "@/components/ui/Banner";
 import { SaveStatus } from "@/components/ui/SaveStatus";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { ZuriSpinner } from "@/components/ui/skeleton";
 import { useSaveStatus } from "@/hooks/use-save-status";
 import { PRICING } from "@/lib/constants";
 import { formatNGN as fmtNGN } from "@/lib/utils";
@@ -284,9 +285,9 @@ function BrandVoiceTab() {
       </div>
 
       {loading ? (
-        <p className="text-card-body flex items-center gap-2">
-          <span className="zuri-spinner" /> Loading…
-        </p>
+        <div className="flex items-center gap-2 py-1">
+          <ZuriSpinner size={20} label="Loading" />
+        </div>
       ) : loadError ? (
         <Banner
           variant="error"
