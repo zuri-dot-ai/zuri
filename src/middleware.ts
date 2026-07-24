@@ -116,17 +116,13 @@ export async function middleware(req: NextRequest) {
       .eq("id", user.id)
       .maybeSingle();
 
-    const dest = profile?.onboarding_completed ? "/dashboard" : "/onboarding";
+    const dest = profile?.onboarding_completed ? "/dashboard" : "/start";
     return NextResponse.redirect(new URL(dest, req.url));
   }
 
-  // Incomplete onboarding should not land on app pages (except /onboarding)
-  if (
-    user &&
-    isProtected &&
-    !pathname.startsWith("/onboarding") &&
-    !pathname.startsWith("/admin")
-  ) {
+  // Incomplete onboarding: send to /start (Q&A), never the Building screen.
+  // /onboarding is only for post-complete celebration (onboarding_completed=true).
+  if (user && isProtected && !pathname.startsWith("/admin")) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("onboarding_completed")
@@ -134,7 +130,7 @@ export async function middleware(req: NextRequest) {
       .maybeSingle();
 
     if (profile && !profile.onboarding_completed) {
-      return NextResponse.redirect(new URL("/onboarding", req.url));
+      return NextResponse.redirect(new URL("/start", req.url));
     }
   }
 

@@ -60,7 +60,7 @@ function LoginForm() {
         .eq("id", userId)
         .maybeSingle();
 
-      dest = profile?.onboarding_completed ? redirectTo : "/onboarding";
+      dest = profile?.onboarding_completed ? redirectTo : "/start";
     }
 
     setLoading(false);
@@ -160,7 +160,7 @@ function LoginForm() {
 
         <p className="mt-7 text-center text-sm text-[var(--chrome-mid)]">
           New to Zuri?{" "}
-          <Link href="/signup" className="font-medium text-gold hover:underline">
+          <Link href="/start" className="font-medium text-gold hover:underline">
             Create an account
           </Link>
         </p>

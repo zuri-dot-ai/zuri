@@ -433,7 +433,7 @@ function BusinessTab({ profile }: { profile: BusinessProfileRow | null }) {
       <div className="py-8 text-center text-muted-foreground">
         <p>No business profile yet.</p>
         <Button asChild className="mt-4" size="sm">
-          <a href="/onboarding">Complete onboarding</a>
+          <a href="/start">Complete onboarding</a>
         </Button>
       </div>
     );

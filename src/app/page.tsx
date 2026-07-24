@@ -8,5 +8,15 @@ export default async function RootPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  redirect(user ? "/dashboard" : "/login");
+  if (!user) {
+    redirect("/start");
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("onboarding_completed")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  redirect(profile?.onboarding_completed ? "/dashboard" : "/start");
 }

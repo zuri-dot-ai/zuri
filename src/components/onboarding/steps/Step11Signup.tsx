@@ -44,16 +44,16 @@ export function Step11Signup({ sessionToken, firstName }: Step11SignupProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionToken }),
       });
+      router.push("/onboarding");
+      router.refresh();
     } catch (err) {
-      // Non-fatal here — /onboarding's Building step doesn't retry the
-      // submission itself, so surface the error but still advance; the
-      // user has a real account regardless.
       toast.error(
-        err instanceof FetchError ? err.message : "Some details may not have saved — check your dashboard."
+        err instanceof FetchError
+          ? err.message
+          : "Could not finish setup. Please try again."
       );
+      setLoading(false);
     }
-    router.push("/onboarding");
-    router.refresh();
   }
 
   async function handleSignup(e: React.FormEvent) {
@@ -75,7 +75,7 @@ export function Step11Signup({ sessionToken, firstName }: Step11SignupProps) {
       password,
       options: {
         data: { full_name: firstName, terms_accepted: true },
-        emailRedirectTo: authCallbackUrl(window.location.origin, "/onboarding"),
+        emailRedirectTo: authCallbackUrl(window.location.origin, "/start"),
       },
     });
 
@@ -112,7 +112,7 @@ export function Step11Signup({ sessionToken, firstName }: Step11SignupProps) {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: authCallbackUrl(window.location.origin, "/onboarding"),
+        redirectTo: authCallbackUrl(window.location.origin, "/start"),
         queryParams: { prompt: "select_account" },
       },
     });

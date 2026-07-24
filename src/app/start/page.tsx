@@ -1,6 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { createClient } from "@/lib/supabase/client";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { Step1Category } from "@/components/onboarding/steps/Step1Category";
 import { Step2Services } from "@/components/onboarding/steps/Step2Services";
@@ -19,24 +22,48 @@ import {
   type OnboardingState,
 } from "@/lib/onboarding/types";
 import { resolveArchetypeFromCategory } from "@/lib/website/archetypes";
-import { safeFetchJSON } from "@/lib/utils/safe-fetch";
+import { safeFetchJSON, FetchError } from "@/lib/utils/safe-fetch";
 
-const SIGNUP_STEP = ONBOARDING_TOTAL_STEPS; // 11 — last step is the signup gateway
+const SIGNUP_STEP = ONBOARDING_TOTAL_STEPS; // 11
+const LAST_QUESTION_STEP = 10;
 const PATCH_DEBOUNCE_MS = 500;
 
 export default function StartPage() {
+  const router = useRouter();
   const [ready, setReady] = useState(false);
   const [state, setState] = useState<OnboardingState>(DEFAULT_ONBOARDING_STATE);
   const [canContinue, setCanContinue] = useState(false);
   const [direction, setDirection] = useState<1 | -1>(1);
   const [welcomeBack, setWelcomeBack] = useState(false);
+  /** Logged in but onboarding_completed=false — skip Step11, call complete after Q10. */
+  const [authResume, setAuthResume] = useState(false);
+  const [finishing, setFinishing] = useState(false);
   const patchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // ── Bootstrap: get or create the anonymous session, restore progress ────
+  // ── Bootstrap: auth check + anonymous session ───────────────────────────
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (user) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("onboarding_completed")
+            .eq("id", user.id)
+            .maybeSingle();
+
+          if (profile?.onboarding_completed) {
+            router.replace("/dashboard");
+            return;
+          }
+          if (!cancelled) setAuthResume(true);
+        }
+
         const { sessionToken } = await safeFetchJSON<{ sessionToken: string }>(
           "/api/onboarding/start",
           { method: "POST" }
@@ -47,27 +74,32 @@ export default function StartPage() {
           const existing = await safeFetchJSON<{
             data: Partial<OnboardingState>;
             currentStep: number;
-          }>(`/api/onboarding/session?sessionToken=${encodeURIComponent(sessionToken)}`);
+          }>(
+            `/api/onboarding/session?sessionToken=${encodeURIComponent(sessionToken)}`
+          );
 
           if (cancelled) return;
 
+          // Authenticated resume never lands on the signup step
+          const maxStep = user ? LAST_QUESTION_STEP : SIGNUP_STEP;
           const step = Math.min(
-            SIGNUP_STEP,
+            maxStep,
             Math.max(1, Number(existing.currentStep) || 1)
           );
+          const clamped =
+            user && step >= SIGNUP_STEP ? LAST_QUESTION_STEP : step;
+
           setState({
             ...DEFAULT_ONBOARDING_STATE,
             ...existing.data,
             sessionToken,
-            step,
+            step: clamped,
           });
-          setWelcomeBack(step > 1);
+          setWelcomeBack(clamped > 1);
         } catch {
           setState({ ...DEFAULT_ONBOARDING_STATE, sessionToken });
         }
       } catch {
-        // Session bootstrap failed (rate limited or network issue) — allow
-        // the user to still fill the form locally; PATCH calls will retry.
         setState({ ...DEFAULT_ONBOARDING_STATE, sessionToken: "" });
       } finally {
         if (!cancelled) setReady(true);
@@ -76,9 +108,10 @@ export default function StartPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bootstrap once
+  }, [router]);
 
-  // ── Debounced server-side persistence on every state change ─────────────
+  // ── Debounced server-side persistence ───────────────────────────────────
   useEffect(() => {
     if (!ready || !state.sessionToken) return;
     if (patchTimerRef.current) clearTimeout(patchTimerRef.current);
@@ -90,7 +123,7 @@ export default function StartPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionToken, step, data }),
       }).catch(() => {
-        /* best-effort — next change will retry */
+        /* best-effort */
       });
     }, PATCH_DEBOUNCE_MS);
 
@@ -103,28 +136,84 @@ export default function StartPage() {
     setState((prev) => ({ ...prev, ...patch }));
   }, []);
 
+  const finishAuthenticated = useCallback(
+    async (snapshot: OnboardingState) => {
+      if (!snapshot.sessionToken) {
+        toast.error("Session expired. Please refresh and try again.");
+        return;
+      }
+      setFinishing(true);
+      try {
+        const { sessionToken, step, startedAt, ...data } = snapshot;
+        await safeFetchJSON("/api/onboarding/session", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionToken,
+            step: LAST_QUESTION_STEP,
+            data,
+          }),
+        });
+        await safeFetchJSON("/api/onboarding/complete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionToken }),
+        });
+        router.push("/onboarding");
+        router.refresh();
+      } catch (err) {
+        toast.error(
+          err instanceof FetchError
+            ? err.message
+            : "Could not finish setup. Please try again."
+        );
+        setFinishing(false);
+      }
+    },
+    [router]
+  );
+
   const goNext = useCallback(() => {
     setDirection(1);
     setCanContinue(false);
     setWelcomeBack(false);
-    setState((prev) => ({ ...prev, step: Math.min(SIGNUP_STEP, prev.step + 1) }));
-  }, []);
+
+    setState((prev) => {
+      if (authResume && prev.step === LAST_QUESTION_STEP) {
+        void finishAuthenticated(prev);
+        return prev;
+      }
+      return {
+        ...prev,
+        step: Math.min(SIGNUP_STEP, prev.step + 1),
+      };
+    });
+  }, [authResume, finishAuthenticated]);
 
   const goBack = useCallback(() => {
     setDirection(-1);
     setCanContinue(true);
     setWelcomeBack(false);
-    setState((prev) => ({ ...prev, step: Math.max(1, prev.step - 1) }));
+    setState((prev) => ({
+      ...prev,
+      step: Math.max(1, prev.step - 1),
+    }));
   }, []);
 
   const skipPlatforms = useCallback(() => {
     setDirection(1);
-    setState((prev) => ({
-      ...prev,
-      platforms: ["instagram", "facebook"],
-      step: SIGNUP_STEP,
-    }));
-  }, []);
+    setState((prev) => {
+      const next = {
+        ...prev,
+        platforms: ["instagram", "facebook"] as string[],
+      };
+      if (authResume) {
+        // Skip to name step still required, or if already past — finish
+        return { ...next, step: LAST_QUESTION_STEP };
+      }
+      return { ...next, step: SIGNUP_STEP };
+    });
+  }, [authResume]);
 
   function selectCategory(businessType: string) {
     update({
@@ -142,16 +231,25 @@ export default function StartPage() {
   }
 
   const step = state.step;
+  const hideControls =
+    (!authResume && step === SIGNUP_STEP) || finishing;
+  const continueLabel =
+    authResume && step === LAST_QUESTION_STEP
+      ? finishing
+        ? "Finishing…"
+        : "Finish & build my site"
+      : undefined;
 
   return (
     <OnboardingShell
       step={step}
       direction={direction}
-      canContinue={canContinue}
+      canContinue={canContinue && !finishing}
       showWelcomeBack={welcomeBack}
       onBack={goBack}
       onContinue={goNext}
-      hideControls={step === SIGNUP_STEP}
+      hideControls={hideControls}
+      continueLabel={continueLabel}
     >
       {step === 1 && (
         <Step1Category
@@ -232,8 +330,11 @@ export default function StartPage() {
           onValidityChange={setCanContinue}
         />
       )}
-      {step === SIGNUP_STEP && (
-        <Step11Signup sessionToken={state.sessionToken} firstName={state.firstName} />
+      {!authResume && step === SIGNUP_STEP && (
+        <Step11Signup
+          sessionToken={state.sessionToken}
+          firstName={state.firstName}
+        />
       )}
     </OnboardingShell>
   );

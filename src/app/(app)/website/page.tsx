@@ -31,7 +31,7 @@ export default async function WebsitePage() {
           title="No website yet"
           description="Complete onboarding and Zuri will compose a premium website for your business."
           actionLabel="Go to onboarding"
-          actionHref="/onboarding"
+          actionHref="/start"
           actionVariant="primary"
         />
       </div>

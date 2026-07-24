@@ -93,15 +93,11 @@ export async function GET(request: Request) {
         await supabase.from("profiles").update(profilePatch).eq("id", user.id);
       }
 
-      dest = profile?.onboarding_completed ? next : "/onboarding";
+      dest = profile?.onboarding_completed ? next : "/start";
 
-      // Onboarding V2 (docs/01_ONBOARDING_V2.md §2.4/§11 item 15) — a
-      // pending anonymous onboarding session may exist from the pre-signup
-      // /start flow. Fire /api/onboarding/complete server-to-server, using
-      // the freshly-set auth cookies to authenticate the internal call,
-      // before routing onward. Never block the redirect on this — if it
-      // fails, the user still lands on /onboarding (or dashboard) and can
-      // retry rather than seeing a broken post-signup state.
+      // Onboarding V2 — if an anonymous session exists from /start, convert it.
+      // Only land on /onboarding (Building) after a successful complete.
+      // No anon cookie or failed complete → /start so the user can finish Q&A.
       if (!profile?.onboarding_completed) {
         const sessionToken = cookieStore.get(ANON_COOKIE_NAME)?.value;
         if (sessionToken) {
@@ -122,11 +118,16 @@ export async function GET(request: Request) {
               }
             );
             if (completeResponse.ok) {
-              dest = "/onboarding"; // Step 12 (Building your presence)
+              dest = "/onboarding";
+            } else {
+              dest = "/start?error=complete_failed";
             }
           } catch (err) {
             console.error("[auth/callback] onboarding complete failed:", err);
+            dest = "/start?error=complete_failed";
           }
+        } else {
+          dest = "/start";
         }
       }
     }
