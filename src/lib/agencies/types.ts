@@ -102,11 +102,15 @@ export interface AgencyApplication {
   contact_name: string;
   email: string;
   phone: string | null;
+  whatsapp: string | null;
+  website: string | null;
+  logo_url: string | null;
   location_city: string;
   services: AgencyService[];
   team_size: string | null;
   price_range: string | null;
   portfolio_urls: string[];
+  portfolio_image_urls: string[];
   description: string;
   referral_source: string | null;
   status: "pending" | "approved" | "rejected";

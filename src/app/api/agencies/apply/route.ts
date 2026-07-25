@@ -5,33 +5,51 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { sanitizeText, sanitizeUrl } from "@/lib/utils/sanitize";
 import { sendEmail } from "@/lib/email/resend";
 import { AGENCY_SERVICE_LABELS, type AgencyService } from "@/lib/agencies/types";
+import { errorResponse } from "@/lib/security/sanitize-response";
+import {
+  checkRateLimit,
+  rateLimitExceededResponse,
+} from "@/lib/security/rate-limit";
+import {
+  getClientIp,
+  hashForRateLimit,
+} from "@/lib/onboarding/anonymous-session";
+
+const SERVICE_KEYS = new Set(Object.keys(AGENCY_SERVICE_LABELS));
+const PRICE_RANGES = new Set(["budget", "mid", "premium"]);
+
+function isAgencyService(value: unknown): value is AgencyService {
+  return typeof value === "string" && SERVICE_KEYS.has(value);
+}
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
-
   const errors: string[] = [];
 
   const agencyName = sanitizeText(body.agency_name ?? "");
   if (!agencyName || agencyName.length < 2) errors.push("Agency name is required");
   if (agencyName.length > 100) errors.push("Agency name too long");
 
-  const contactName = sanitizeText(body.contact_name ?? "");
-  if (!contactName || contactName.length < 2) errors.push("Contact name is required");
-
-  const email = (body.email ?? "").trim().toLowerCase();
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    errors.push("Valid email address is required");
-  }
+  const website = sanitizeUrl(body.website ?? "");
+  if (!website) errors.push("Website or portfolio link is required");
 
   const locationCity = sanitizeText(body.location_city ?? "");
   if (!locationCity) errors.push("Location is required");
 
-  const services: string[] = Array.isArray(body.services)
-    ? body.services.filter((s: string) =>
-        Object.keys(AGENCY_SERVICE_LABELS).includes(s)
-      )
+  if (!isAgencyService(body.primary_service)) {
+    errors.push("Please select a primary specialty");
+  }
+
+  const secondaryRaw: unknown[] = Array.isArray(body.secondary_services)
+    ? body.secondary_services
     : [];
-  if (services.length === 0) errors.push("Please select at least one service you offer.");
+  const secondaryServices = secondaryRaw
+    .filter(isAgencyService)
+    .filter((s) => s !== body.primary_service);
+
+  const services: AgencyService[] = isAgencyService(body.primary_service)
+    ? [body.primary_service, ...secondaryServices]
+    : [];
 
   const description = sanitizeText(body.description ?? "");
   if (!description || description.length < 30) {
@@ -41,6 +59,35 @@ export async function POST(req: Request) {
     errors.push("Description must be 500 characters or fewer");
   }
 
+  const email = (body.email ?? "").trim().toLowerCase();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errors.push("Valid email address is required");
+  }
+
+  const whatsapp = body.whatsapp
+    ? sanitizeText(body.whatsapp).slice(0, 30)
+    : null;
+  const phone = body.phone ? sanitizeText(body.phone).slice(0, 20) : null;
+
+  let priceRange: string | null = null;
+  if (body.price_range != null && body.price_range !== "") {
+    if (!PRICE_RANGES.has(body.price_range)) {
+      errors.push("Invalid price range");
+    } else {
+      priceRange = body.price_range;
+    }
+  }
+
+  const logoUrl = body.logo_url ? sanitizeUrl(body.logo_url) : null;
+
+  const portfolioImageUrls: string[] = (
+    Array.isArray(body.portfolio_image_urls) ? body.portfolio_image_urls : []
+  )
+    .map((u: string) => sanitizeUrl(u))
+    .filter((u: string | null): u is string => Boolean(u))
+    .slice(0, 3);
+
+  // Legacy link field still accepted; website also stored in portfolio_urls[0] for older readers
   const portfolioUrls: string[] = (
     Array.isArray(body.portfolio_urls) ? body.portfolio_urls : []
   )
@@ -48,22 +95,30 @@ export async function POST(req: Request) {
     .filter((u: string | null): u is string => Boolean(u))
     .slice(0, 5);
 
-  if (!["budget", "mid", "premium"].includes(body.price_range)) {
-    errors.push("Price range is required");
+  if (website && !portfolioUrls.includes(website)) {
+    portfolioUrls.unshift(website);
   }
 
-  if (!["solo", "small", "medium", "large"].includes(body.team_size)) {
-    errors.push("Team size is required");
-  }
+  const contactName =
+    sanitizeText(body.contact_name ?? "").length >= 2
+      ? sanitizeText(body.contact_name)
+      : agencyName;
 
   if (errors.length > 0) {
     return NextResponse.json(
-      { error: "Validation failed", details: errors },
+      { error: errors[0] ?? "Validation failed", details: errors },
       { status: 400 }
     );
   }
 
   const supabase = createServiceClient();
+
+  const ip = getClientIp(req.headers);
+  const rateKey = hashForRateLimit(ip ?? "unknown");
+  const rate = await checkRateLimit(supabase, rateKey, "agency:apply");
+  if (!rate.allowed) {
+    return rateLimitExceededResponse(rate.resetIn);
+  }
 
   const { count: existingApps } = await supabase
     .from("agency_applications")
@@ -75,12 +130,9 @@ export async function POST(req: Request) {
     );
 
   if ((existingApps ?? 0) > 0) {
-    return NextResponse.json(
-      {
-        error:
-          "An application from this email address was recently submitted. Please allow up to 7 business days for review.",
-      },
-      { status: 429 }
+    return errorResponse(
+      429,
+      "An application from this email address was recently submitted. Please allow up to 7 business days for review."
     );
   }
 
@@ -91,31 +143,42 @@ export async function POST(req: Request) {
     .maybeSingle();
 
   if (existingAgency) {
-    return NextResponse.json(
-      {
-        error:
-          "An agency with this name is already listed on Zuri. If this is your agency, contact support.",
-      },
-      { status: 409 }
+    return errorResponse(
+      409,
+      "An agency with this name is already listed on Zuri. If this is your agency, contact support."
     );
   }
 
-  await supabase.from("agency_applications").insert({
-    agency_name: agencyName,
-    contact_name: contactName,
-    email,
-    phone: body.phone ? sanitizeText(body.phone).slice(0, 20) : null,
-    location_city: locationCity,
-    services,
-    team_size: body.team_size,
-    price_range: body.price_range,
-    portfolio_urls: portfolioUrls,
-    description,
-    referral_source: body.referral_source
-      ? sanitizeText(body.referral_source).slice(0, 100)
-      : null,
-    status: "pending",
-  });
+  const { error: insertError } = await supabase
+    .from("agency_applications")
+    .insert({
+      agency_name: agencyName,
+      contact_name: contactName,
+      email,
+      phone,
+      whatsapp,
+      website,
+      logo_url: logoUrl,
+      location_city: locationCity,
+      services,
+      team_size: null,
+      price_range: priceRange,
+      portfolio_urls: portfolioUrls.slice(0, 5),
+      portfolio_image_urls: portfolioImageUrls,
+      description,
+      referral_source: body.referral_source
+        ? sanitizeText(body.referral_source).slice(0, 100)
+        : null,
+      status: "pending",
+    });
+
+  if (insertError) {
+    return errorResponse(
+      500,
+      "Could not submit your application. Please try again.",
+      insertError.message
+    );
+  }
 
   const zuriTeamEmail = process.env.ZURI_TEAM_EMAIL || "team@buildzuri.com";
   await sendEmail({
@@ -127,7 +190,7 @@ export async function POST(req: Request) {
       contactName,
       email,
       services: services
-        .map((s) => AGENCY_SERVICE_LABELS[s as AgencyService])
+        .map((s) => AGENCY_SERVICE_LABELS[s])
         .join(", "),
     },
   });

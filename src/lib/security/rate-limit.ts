@@ -40,6 +40,8 @@ export const RATE_LIMITS: Record<string, RateLimitConfig> = {
   "contact_form:submit": { limit: 10, windowSeconds: 3600 },
   "agency:inquire": { limit: 10, windowSeconds: 86400 },
   "agency:apply": { limit: 1, windowSeconds: 86400 },
+  // Public apply asset uploads — logo + up to 3 portfolio images
+  "agency:apply_upload": { limit: 10, windowSeconds: 3600 },
 
   // General API
   "api:general": { limit: 120, windowSeconds: 60 },

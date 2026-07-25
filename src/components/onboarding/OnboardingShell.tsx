@@ -10,19 +10,22 @@ import { cn } from "@/lib/utils";
 import { ONBOARDING_TOTAL_STEPS } from "@/lib/onboarding/types";
 
 /** Thin single-bar progress — docs/01_ONBOARDING_V2.md §3 */
-function StepProgress({ currentStep }: { currentStep: number }) {
-  const pct = Math.min(
-    100,
-    Math.round((currentStep / ONBOARDING_TOTAL_STEPS) * 100)
-  );
+function StepProgress({
+  currentStep,
+  totalSteps,
+}: {
+  currentStep: number;
+  totalSteps: number;
+}) {
+  const pct = Math.min(100, Math.round((currentStep / totalSteps) * 100));
   return (
     <div
       className="h-1 w-full overflow-hidden rounded-full bg-[var(--text-tertiary)]/20"
       role="progressbar"
       aria-valuenow={currentStep}
       aria-valuemin={1}
-      aria-valuemax={ONBOARDING_TOTAL_STEPS}
-      aria-label={`Step ${currentStep} of ${ONBOARDING_TOTAL_STEPS}`}
+      aria-valuemax={totalSteps}
+      aria-label={`Step ${currentStep} of ${totalSteps}`}
     >
       <div
         className="h-full rounded-full bg-gold transition-all duration-300 ease-out"
@@ -103,6 +106,8 @@ interface OnboardingShellProps {
   launchOnContinue?: boolean;
   /** Override Continue button label (e.g. auth-resume finish CTA) */
   continueLabel?: string;
+  /** Defaults to onboarding total so /start is unchanged */
+  totalSteps?: number;
 }
 
 /**
@@ -121,6 +126,7 @@ export function OnboardingShell({
   hideControls = false,
   launchOnContinue = false,
   continueLabel,
+  totalSteps = ONBOARDING_TOTAL_STEPS,
 }: OnboardingShellProps) {
   const reducedMotion = useReducedMotion();
   const [launching, setLaunching] = useState(false);
@@ -199,7 +205,7 @@ export function OnboardingShell({
               )}
             </div>
 
-            <StepProgress currentStep={step} />
+            <StepProgress currentStep={step} totalSteps={totalSteps} />
             {showWelcomeBack && (
               <p className="text-center text-sm text-gold/90 lg:text-left">
                 Welcome back! Continue where you left off.
