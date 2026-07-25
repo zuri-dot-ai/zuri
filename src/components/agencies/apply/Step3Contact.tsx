@@ -32,15 +32,17 @@ export function Step3Contact({
   }, [email, onValidityChange]);
 
   return (
-    <div className="space-y-8">
+    <div className="flex flex-col gap-4 lg:gap-5">
       <div>
-        <h1 className="onboarding-headline">Contact & pricing</h1>
-        <p className="onboarding-subtext">
+        <h1 className="onboarding-headline text-[1.5rem] sm:text-[1.75rem] lg:text-[1.75rem]">
+          Contact & pricing
+        </h1>
+        <p className="onboarding-subtext mt-1 text-sm">
           How we reach you — and optional pricing for your listing.
         </p>
       </div>
 
-      <div className="space-y-6">
+      <div className="flex flex-col gap-4">
         <div className="space-y-1.5">
           <label className="onboarding-label" htmlFor="agency-email">
             Contact email
@@ -51,7 +53,7 @@ export function Step3Contact({
             value={email}
             onChange={(e) => onEmailChange(e.target.value)}
             placeholder="hello@youragency.com"
-            className="onboarding-input h-11"
+            className="onboarding-input h-10 sm:h-11"
             autoFocus
           />
           <p className="onboarding-helper">
@@ -70,30 +72,29 @@ export function Step3Contact({
             value={whatsapp}
             onChange={(e) => onWhatsappChange(e.target.value)}
             placeholder="+234…"
-            className="onboarding-input h-11"
+            className="onboarding-input h-10 sm:h-11"
           />
         </div>
 
-        <div className="space-y-3">
-          <div>
-            <p className="onboarding-label">
-              Price range{" "}
-              <span className="text-[var(--text-tertiary)]">(optional)</span>
-            </p>
-            <p className="onboarding-helper mt-0.5">
-              Leave blank if you&apos;d rather discuss pricing directly
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-1.5 sm:gap-2">
+        <div className="space-y-2">
+          <p className="onboarding-label">
+            Price range{" "}
+            <span className="text-[var(--text-tertiary)]">(optional)</span>
+            <span className="onboarding-helper ml-2 font-normal">
+              Leave blank to discuss later
+            </span>
+          </p>
+          <div className="flex flex-wrap gap-1.5">
             {PRICE_KEYS.map((key) => (
               <button
                 key={key}
                 type="button"
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() =>
                   onPriceRangeChange(priceRange === key ? null : key)
                 }
                 className={cn(
-                  "min-h-[44px] rounded-sm border px-3.5 py-2 text-sm transition-all duration-150",
+                  "min-h-9 rounded-sm border px-2.5 py-1.5 text-xs transition-all duration-150 sm:min-h-10 sm:px-3 sm:text-sm",
                   priceRange === key
                     ? "border-gold bg-gold/10 text-foreground"
                     : "border-border bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:border-[var(--border-hover)]"

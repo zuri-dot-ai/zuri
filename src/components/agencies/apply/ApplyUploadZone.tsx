@@ -119,11 +119,11 @@ export function ApplyUploadZone({
   return (
     <div className="space-y-2">
       {label && <p className="onboarding-label">{label}</p>}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+      <div className="grid w-fit grid-cols-3 gap-2">
         {images.map((img) => (
           <div
             key={img.publicId}
-            className="group relative aspect-square overflow-hidden rounded-sm border border-border bg-[var(--bg-secondary)]"
+            className="group relative size-24 overflow-hidden rounded-sm border border-border bg-[var(--bg-secondary)] sm:size-28"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -144,7 +144,7 @@ export function ApplyUploadZone({
         ))}
 
         {localPreview && uploading && (
-          <div className="relative aspect-square overflow-hidden rounded-sm border border-border bg-[var(--bg-secondary)]">
+          <div className="relative size-24 overflow-hidden rounded-sm border border-border bg-[var(--bg-secondary)] sm:size-28">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={localPreview}
@@ -162,7 +162,7 @@ export function ApplyUploadZone({
             type="button"
             onClick={() => inputRef.current?.click()}
             className={cn(
-              "flex aspect-square flex-col items-center justify-center gap-1.5 rounded-sm border border-dashed border-border text-[var(--text-tertiary)] transition-colors duration-150",
+              "flex size-24 flex-col items-center justify-center gap-1 rounded-sm border border-dashed border-border text-[var(--text-tertiary)] transition-colors duration-150 sm:size-28",
               "hover:border-gold hover:text-gold"
             )}
           >
@@ -172,7 +172,7 @@ export function ApplyUploadZone({
         )}
 
         {images.length < maxImages && uploading && !localPreview && (
-          <div className="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-sm border border-dashed border-border">
+          <div className="flex size-24 flex-col items-center justify-center gap-1.5 rounded-sm border border-dashed border-border sm:size-28">
             <ZuriSpinner size={20} label="Uploading" />
           </div>
         )}

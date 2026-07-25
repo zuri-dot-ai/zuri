@@ -13,6 +13,14 @@ const DESC_MIN = 30;
 const DESC_SOFT_MAX = 200;
 const DESC_HARD_MAX = 500;
 
+const chipClass = (selected: boolean) =>
+  cn(
+    "min-h-9 rounded-sm border px-2.5 py-1.5 text-xs transition-all duration-150 sm:min-h-10 sm:px-3 sm:text-sm",
+    selected
+      ? "border-gold bg-gold/10 text-foreground"
+      : "border-border bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:border-[var(--border-hover)]"
+  );
+
 interface Step2WhatYouDoProps {
   primaryService: AgencyService | null;
   secondaryServices: AgencyService[];
@@ -66,29 +74,28 @@ export function Step2WhatYouDo({
   const counterOverSoft = descLen > DESC_SOFT_MAX;
 
   return (
-    <div className="space-y-8">
+    <div className="flex flex-col gap-4 lg:gap-5">
       <div>
-        <h1 className="onboarding-headline">What do you do?</h1>
-        <p className="onboarding-subtext">
-          Your primary specialty powers marketplace filters — pick carefully.
+        <h1 className="onboarding-headline text-[1.5rem] sm:text-[1.75rem] lg:text-[1.75rem]">
+          What do you do?
+        </h1>
+        <p className="onboarding-subtext mt-1 text-sm">
+          Primary specialty powers marketplace filters — pick carefully.
         </p>
       </div>
 
-      <div className="relative space-y-6">
-        <div className="relative space-y-3">
+      <div className="flex flex-col gap-4 lg:gap-4">
+        <div className="space-y-2">
           <p className="onboarding-label">Primary specialty</p>
-          <div className="flex flex-wrap gap-1.5 sm:gap-2">
+          <div className="flex flex-wrap gap-1.5">
             {SERVICE_KEYS.map((s) => (
               <button
                 key={s}
                 type="button"
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => selectPrimary(s)}
-                className={cn(
-                  "min-h-[44px] rounded-sm border px-3.5 py-2 text-sm transition-all duration-150",
-                  primaryService === s
-                    ? "border-gold bg-gold/10 text-foreground"
-                    : "border-border bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:border-[var(--border-hover)]"
-                )}
+                aria-pressed={primaryService === s}
+                className={chipClass(primaryService === s)}
               >
                 {AGENCY_SERVICE_LABELS[s]}
               </button>
@@ -96,23 +103,20 @@ export function Step2WhatYouDo({
           </div>
         </div>
 
-        <div className="relative space-y-3">
-          <div>
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
             <p className="onboarding-label">Secondary services</p>
-            <p className="onboarding-helper mt-0.5">Optional — select any extras</p>
+            <p className="onboarding-helper">Optional</p>
           </div>
-          <div className="flex flex-wrap gap-1.5 sm:gap-2">
+          <div className="flex flex-wrap gap-1.5">
             {secondaryOptions.map((s) => (
               <button
-                key={s}
+                key={`secondary-${s}`}
                 type="button"
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => toggleSecondary(s)}
-                className={cn(
-                  "min-h-[44px] rounded-sm border px-3.5 py-2 text-sm transition-all duration-150",
-                  secondaryServices.includes(s)
-                    ? "border-gold bg-gold/10 text-foreground"
-                    : "border-border bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:border-[var(--border-hover)]"
-                )}
+                aria-pressed={secondaryServices.includes(s)}
+                className={chipClass(secondaryServices.includes(s))}
               >
                 {AGENCY_SERVICE_LABELS[s]}
               </button>
@@ -121,36 +125,35 @@ export function Step2WhatYouDo({
         </div>
 
         <div className="space-y-1.5">
-          <label className="onboarding-label" htmlFor="agency-description">
-            Short description
-          </label>
-          <p className="onboarding-helper">
-            1–2 sentences for your public card blurb
-          </p>
+          <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+            <label className="onboarding-label" htmlFor="agency-description">
+              Short description
+            </label>
+            <p
+              className={cn(
+                "text-xs",
+                counterOverSoft
+                  ? "text-error"
+                  : "text-[var(--text-tertiary)]"
+              )}
+            >
+              {descLen} / {DESC_SOFT_MAX}
+              {descLen < DESC_MIN && (
+                <span className="ml-1.5">
+                  ({DESC_MIN - descLen} more)
+                </span>
+              )}
+            </p>
+          </div>
           <textarea
             id="agency-description"
-            rows={4}
+            rows={2}
             maxLength={DESC_HARD_MAX}
             value={description}
             onChange={(e) => onDescriptionChange(e.target.value)}
             placeholder="We help Nigerian brands grow with social-first creative and paid media."
-            className="onboarding-input w-full resize-none px-3 py-2.5 text-sm"
+            className="onboarding-input w-full resize-none px-3 py-2 text-sm"
           />
-          <p
-            className={cn(
-              "text-right text-xs",
-              counterOverSoft
-                ? "text-error"
-                : "text-[var(--text-tertiary)]"
-            )}
-          >
-            {descLen} / {DESC_SOFT_MAX}
-            {descLen < DESC_MIN && (
-              <span className="ml-2">
-                ({DESC_MIN - descLen} more needed)
-              </span>
-            )}
-          </p>
         </div>
       </div>
     </div>

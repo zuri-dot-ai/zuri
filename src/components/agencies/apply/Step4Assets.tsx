@@ -36,15 +36,17 @@ export function Step4Assets({
     : [];
 
   return (
-    <div className="space-y-8">
+    <div className="flex flex-col gap-4 lg:gap-5">
       <div>
-        <h1 className="onboarding-headline">Add visuals</h1>
-        <p className="onboarding-subtext">
-          Optional — you can skip and add these later if approved.
+        <h1 className="onboarding-headline text-[1.5rem] sm:text-[1.75rem] lg:text-[1.75rem]">
+          Add visuals
+        </h1>
+        <p className="onboarding-subtext mt-1 text-sm">
+          Optional — skip and add these later if approved.
         </p>
       </div>
 
-      <div className="space-y-8">
+      <div className="flex flex-col gap-4 lg:gap-5">
         <ApplyUploadZone
           label="Logo (optional)"
           images={logoImages}

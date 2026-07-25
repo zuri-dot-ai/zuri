@@ -110,8 +110,7 @@ interface OnboardingShellProps {
   totalSteps?: number;
   /**
    * Vertical alignment of step content. Default "center" matches /start.
-   * Use "start" for tall multi-field steps (e.g. agency apply) so content
-   * never slides under the sticky header/progress bar.
+   * Use "start" for denser multi-field steps (e.g. agency apply).
    */
   contentAlign?: "start" | "center";
 }
@@ -119,7 +118,10 @@ interface OnboardingShellProps {
 /**
  * Onboarding V2 shell — desktop ≥1025px (lg): 30% static hero + 70% content.
  * Tablet/mobile: content only, no image in the DOM.
- * Back / Continue live in the sticky top-right header (no scroll required).
+ * Back / Continue live in the top-right header.
+ *
+ * PC (lg+): locked to the viewport — no page scroll. Steps must fit.
+ * Below lg: content may scroll (keyboard / small phones).
  */
 export function OnboardingShell({
   step,
@@ -164,12 +166,12 @@ export function OnboardingShell({
   }
 
   return (
-    <div className="onboarding-shell flex min-h-dvh w-full">
+    <div className="onboarding-shell flex h-dvh max-h-dvh w-full overflow-hidden">
       <DesktopHeroPanel />
 
-      <div className="flex min-h-dvh w-full flex-1 flex-col px-5 sm:px-6 lg:w-[70%] lg:px-10 xl:px-16">
-        <header className="onboarding-safe-top sticky top-0 z-20 -mx-5 border-b border-transparent bg-[var(--bg-primary)]/80 px-5 pb-4 backdrop-blur-md sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
-          <div className="mx-auto flex w-full max-w-[640px] flex-col gap-4">
+      <div className="flex h-dvh max-h-dvh w-full flex-1 flex-col overflow-hidden px-5 sm:px-6 lg:w-[70%] lg:px-10 xl:px-16">
+        <header className="onboarding-safe-top z-20 shrink-0 -mx-5 bg-[var(--bg-primary)] px-5 pb-3 pt-1 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
+          <div className="mx-auto flex w-full max-w-[640px] flex-col gap-3">
             <div className="flex items-center justify-between gap-3">
               <Logo variant="image" size="navbar" href={marketingUrl()} />
 
@@ -221,11 +223,23 @@ export function OnboardingShell({
           </div>
         </header>
 
-        <div className="mx-auto flex w-full max-w-[640px] flex-1 flex-col scroll-pt-28 pb-8 pt-6 md:pt-10">
+        {/*
+          lg+: overflow-hidden — no scroll; steps must fit the viewport.
+          max-lg: overflow-y-auto for small phones / keyboard.
+        */}
+        <div
+          className={cn(
+            "mx-auto flex min-h-0 w-full max-w-[640px] flex-1 flex-col pb-5 pt-4",
+            "max-lg:overflow-y-auto max-lg:overscroll-contain",
+            "lg:overflow-hidden"
+          )}
+        >
           <div
             className={cn(
-              "flex flex-1 flex-col justify-start",
-              contentAlign === "center" && "md:justify-center md:pb-[8vh]"
+              "flex min-h-0 flex-1 flex-col",
+              contentAlign === "center"
+                ? "justify-start lg:justify-center"
+                : "justify-start"
             )}
           >
             <AnimatePresence mode="wait" custom={direction}>
@@ -237,6 +251,7 @@ export function OnboardingShell({
                 animate="center"
                 exit="exit"
                 transition={{ duration: 0.22, ease: "easeInOut" }}
+                className="min-h-0 w-full lg:overflow-hidden"
               >
                 {children}
               </motion.div>

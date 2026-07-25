@@ -27,13 +27,13 @@ function Row({
   breakAll?: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-0.5 border-b border-border/60 py-3 last:border-0 sm:flex-row sm:justify-between sm:gap-4">
-      <dt className="text-xs text-[var(--text-tertiary)]">{label}</dt>
+    <div className="flex flex-col gap-0.5 border-b border-border/60 py-1.5 last:border-0 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4 lg:py-2">
+      <dt className="shrink-0 text-xs text-[var(--text-tertiary)]">{label}</dt>
       <dd
         className={
           breakAll
-            ? "break-all text-sm text-foreground sm:text-right"
-            : "text-sm text-foreground sm:text-right"
+            ? "line-clamp-2 break-all text-sm text-foreground sm:text-right"
+            : "line-clamp-2 text-sm text-foreground sm:text-right"
         }
       >
         {value}
@@ -56,15 +56,17 @@ export function Step5Review({
     .join(", ");
 
   return (
-    <div className="space-y-8">
+    <div className="flex flex-col gap-4 lg:gap-5">
       <div>
-        <h1 className="onboarding-headline">Review & submit</h1>
-        <p className="onboarding-subtext">
+        <h1 className="onboarding-headline text-[1.5rem] sm:text-[1.75rem] lg:text-[1.75rem]">
+          Review & submit
+        </h1>
+        <p className="onboarding-subtext mt-1 text-sm">
           Check your details — then send your application for review.
         </p>
       </div>
 
-      <dl className="onboarding-panel space-y-0 px-4 py-1 sm:px-5">
+      <dl className="onboarding-panel space-y-0 px-4 py-0.5 sm:px-5">
         <Row label="Agency" value={form.agencyName} />
         <Row label="Location" value={resolveLocationCity(form)} />
         <Row label="Website" value={form.website} breakAll />
