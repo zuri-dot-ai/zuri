@@ -1,15 +1,14 @@
 "use client";
 
 import { useEffect } from "react";
-import {
-  AGENCY_SERVICE_LABELS,
-  PRICE_RANGE_LABELS,
-} from "@/lib/agencies/types";
+import { AGENCY_SERVICE_LABELS } from "@/lib/agencies/types";
+import { PriceRangeLabel } from "@/lib/agencies/price-range-label";
 import {
   resolveLocationCity,
   type AgencyApplyFormState,
 } from "./types";
 import { InlineError } from "@/components/ui/InlineError";
+import type { ReactNode } from "react";
 
 interface Step5ReviewProps {
   form: AgencyApplyFormState;
@@ -18,11 +17,27 @@ interface Step5ReviewProps {
   onRetry?: () => void;
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Row({
+  label,
+  value,
+  breakAll,
+}: {
+  label: string;
+  value: ReactNode;
+  breakAll?: boolean;
+}) {
   return (
     <div className="flex flex-col gap-0.5 border-b border-border/60 py-3 last:border-0 sm:flex-row sm:justify-between sm:gap-4">
       <dt className="text-xs text-[var(--text-tertiary)]">{label}</dt>
-      <dd className="text-sm text-foreground sm:text-right">{value}</dd>
+      <dd
+        className={
+          breakAll
+            ? "break-all text-sm text-foreground sm:text-right"
+            : "text-sm text-foreground sm:text-right"
+        }
+      >
+        {value}
+      </dd>
     </div>
   );
 }
@@ -52,7 +67,7 @@ export function Step5Review({
       <dl className="onboarding-panel space-y-0 px-4 py-1 sm:px-5">
         <Row label="Agency" value={form.agencyName} />
         <Row label="Location" value={resolveLocationCity(form)} />
-        <Row label="Website" value={form.website} />
+        <Row label="Website" value={form.website} breakAll />
         <Row
           label="Primary specialty"
           value={
@@ -70,7 +85,7 @@ export function Step5Review({
         {form.priceRange && (
           <Row
             label="Price range"
-            value={PRICE_RANGE_LABELS[form.priceRange]}
+            value={<PriceRangeLabel priceRange={form.priceRange} />}
           />
         )}
         <Row

@@ -151,6 +151,7 @@ export default function AgencyApplyPage() {
       onBack={goBack}
       onContinue={goNext}
       totalSteps={AGENCY_APPLY_TOTAL_STEPS}
+      contentAlign="start"
       continueLabel={
         step === AGENCY_APPLY_TOTAL_STEPS ? "Submit application" : undefined
       }

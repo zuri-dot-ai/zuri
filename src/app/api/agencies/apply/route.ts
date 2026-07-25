@@ -14,6 +14,7 @@ import {
   getClientIp,
   hashForRateLimit,
 } from "@/lib/onboarding/anonymous-session";
+import { createNotificationAsync } from "@/lib/notifications/create-notification";
 
 const SERVICE_KEYS = new Set(Object.keys(AGENCY_SERVICE_LABELS));
 const PRICE_RANGES = new Set(["budget", "mid", "premium"]);
@@ -180,27 +181,79 @@ export async function POST(req: Request) {
     );
   }
 
-  const zuriTeamEmail = process.env.ZURI_TEAM_EMAIL || "team@buildzuri.com";
-  await sendEmail({
-    to: zuriTeamEmail,
-    subject: `New agency application: ${agencyName}`,
-    template: "new_agency_application_alert",
-    templateProps: {
-      agencyName,
-      contactName,
-      email,
-      services: services
-        .map((s) => AGENCY_SERVICE_LABELS[s])
-        .join(", "),
-    },
-  });
+  // Best-effort side effects — never fail the applicant's success response.
+  const primarySpecialty = isAgencyService(body.primary_service)
+    ? AGENCY_SERVICE_LABELS[body.primary_service]
+    : services[0]
+      ? AGENCY_SERVICE_LABELS[services[0]]
+      : "";
+  const servicesLabel = services
+    .map((s) => AGENCY_SERVICE_LABELS[s])
+    .join(", ");
+  const appUrl = (
+    process.env.NEXT_PUBLIC_APP_URL || "https://app.buildzuri.com"
+  ).replace(/\/$/, "");
+  const adminUrl = `${appUrl}/admin`;
 
-  await sendEmail({
-    to: email,
-    subject: "We received your Zuri agency application",
-    template: "agency_application_confirmation",
-    templateProps: { contactName, agencyName },
-  });
+  void (async () => {
+    try {
+      const zuriTeamEmail =
+        process.env.ZURI_TEAM_EMAIL || "team@buildzuri.com";
+      await sendEmail({
+        to: zuriTeamEmail,
+        subject: `New agency application: ${agencyName}`,
+        template: "new_agency_application_alert",
+        templateProps: {
+          agencyName,
+          contactName,
+          email,
+          services: servicesLabel,
+          location: locationCity,
+          primarySpecialty,
+          adminUrl,
+        },
+      });
+    } catch (err) {
+      console.error("[agency-apply] admin email failed:", err);
+    }
+
+    try {
+      await sendEmail({
+        to: email,
+        subject: "We received your Zuri agency application",
+        template: "agency_application_confirmation",
+        templateProps: { contactName, agencyName },
+      });
+    } catch (err) {
+      console.error("[agency-apply] applicant email failed:", err);
+    }
+
+    try {
+      const { data: admins } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("is_admin", true);
+
+      for (const admin of admins ?? []) {
+        createNotificationAsync({
+          userId: admin.id,
+          type: "agency_application_received",
+          title: "New agency application",
+          body: `${agencyName} applied (${primarySpecialty || "services TBD"} · ${locationCity}).`,
+          actionUrl: "/admin",
+          actionLabel: "Open admin",
+          metadata: {
+            agency_name: agencyName,
+            email,
+            location_city: locationCity,
+            primary_specialty: primarySpecialty,
+          },
+        });
+      }
+    } catch (err) {
+      console.error("[agency-apply] admin notifications failed:", err);
+    }
+  })();
 
   return NextResponse.json({
     success: true,

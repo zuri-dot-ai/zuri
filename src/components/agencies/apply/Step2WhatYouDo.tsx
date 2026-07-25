@@ -38,6 +38,13 @@ export function Step2WhatYouDo({
     onValidityChange(Boolean(primaryService) && descOk);
   }, [primaryService, description, onValidityChange]);
 
+  // Keep secondary list free of the current primary (stale picks after re-select).
+  useEffect(() => {
+    if (!primaryService) return;
+    if (!secondaryServices.includes(primaryService)) return;
+    onSecondaryChange(secondaryServices.filter((s) => s !== primaryService));
+  }, [primaryService, secondaryServices, onSecondaryChange]);
+
   function toggleSecondary(service: AgencyService) {
     if (service === primaryService) return;
     onSecondaryChange(
@@ -54,6 +61,7 @@ export function Step2WhatYouDo({
     }
   }
 
+  const secondaryOptions = SERVICE_KEYS.filter((s) => s !== primaryService);
   const descLen = description.length;
   const counterOverSoft = descLen > DESC_SOFT_MAX;
 
@@ -66,10 +74,10 @@ export function Step2WhatYouDo({
         </p>
       </div>
 
-      <div className="space-y-6">
-        <div className="space-y-3">
+      <div className="relative space-y-6">
+        <div className="relative space-y-3">
           <p className="onboarding-label">Primary specialty</p>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {SERVICE_KEYS.map((s) => (
               <button
                 key={s}
@@ -88,13 +96,13 @@ export function Step2WhatYouDo({
           </div>
         </div>
 
-        <div className="space-y-3">
+        <div className="relative space-y-3">
           <div>
             <p className="onboarding-label">Secondary services</p>
             <p className="onboarding-helper mt-0.5">Optional — select any extras</p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {SERVICE_KEYS.filter((s) => s !== primaryService).map((s) => (
+          <div className="flex flex-wrap gap-1.5 sm:gap-2">
+            {secondaryOptions.map((s) => (
               <button
                 key={s}
                 type="button"

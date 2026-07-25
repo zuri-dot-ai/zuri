@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { PRICE_RANGE_LABELS } from "@/lib/agencies/types";
+import { PriceRangeLabel } from "@/lib/agencies/price-range-label";
 
 const PRICE_KEYS = ["budget", "mid", "premium"] as const;
 
@@ -84,7 +84,7 @@ export function Step3Contact({
               Leave blank if you&apos;d rather discuss pricing directly
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {PRICE_KEYS.map((key) => (
               <button
                 key={key}
@@ -99,7 +99,7 @@ export function Step3Contact({
                     : "border-border bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:border-[var(--border-hover)]"
                 )}
               >
-                {PRICE_RANGE_LABELS[key]}
+                <PriceRangeLabel priceRange={key} />
               </button>
             ))}
           </div>

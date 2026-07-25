@@ -108,6 +108,12 @@ interface OnboardingShellProps {
   continueLabel?: string;
   /** Defaults to onboarding total so /start is unchanged */
   totalSteps?: number;
+  /**
+   * Vertical alignment of step content. Default "center" matches /start.
+   * Use "start" for tall multi-field steps (e.g. agency apply) so content
+   * never slides under the sticky header/progress bar.
+   */
+  contentAlign?: "start" | "center";
 }
 
 /**
@@ -127,6 +133,7 @@ export function OnboardingShell({
   launchOnContinue = false,
   continueLabel,
   totalSteps = ONBOARDING_TOTAL_STEPS,
+  contentAlign = "center",
 }: OnboardingShellProps) {
   const reducedMotion = useReducedMotion();
   const [launching, setLaunching] = useState(false);
@@ -214,8 +221,13 @@ export function OnboardingShell({
           </div>
         </header>
 
-        <div className="mx-auto flex w-full max-w-[640px] flex-1 flex-col pb-8 pt-6 md:pt-10">
-          <div className="flex flex-1 flex-col justify-start md:justify-center md:pb-[8vh]">
+        <div className="mx-auto flex w-full max-w-[640px] flex-1 flex-col scroll-pt-28 pb-8 pt-6 md:pt-10">
+          <div
+            className={cn(
+              "flex flex-1 flex-col justify-start",
+              contentAlign === "center" && "md:justify-center md:pb-[8vh]"
+            )}
+          >
             <AnimatePresence mode="wait" custom={direction}>
               <motion.div
                 key={step}

@@ -25,10 +25,15 @@ export function Step4Assets({
     onValidityChange(true);
   }, [onValidityChange]);
 
-  const logoImages: ApplyUploadedImage[] =
-    logoUrl && logoPublicId
-      ? [{ publicId: logoPublicId, url: logoUrl }]
-      : [];
+  // Preview from URL alone — publicId is optional (used as React key when present).
+  const logoImages: ApplyUploadedImage[] = logoUrl
+    ? [
+        {
+          publicId: logoPublicId || logoUrl,
+          url: logoUrl,
+        },
+      ]
+    : [];
 
   return (
     <div className="space-y-8">

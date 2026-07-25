@@ -4,13 +4,13 @@ import { MapPin, Clock, Star, BadgeCheck, ExternalLink } from "lucide-react";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
   AGENCY_SERVICE_LABELS,
-  PRICE_RANGE_LABELS,
   RESPONSE_TIME_LABELS,
   TEAM_SIZE_LABELS,
   type Agency,
   type AgencyService,
   type PortfolioItem,
 } from "@/lib/agencies/types";
+import { PriceRangeLabel } from "@/lib/agencies/price-range-label";
 import { ContactAgencyModal } from "@/components/marketing/contact-agency-modal";
 
 export async function generateMetadata({
@@ -115,7 +115,9 @@ export default async function AgencyProfilePage({
       <section className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-md border border-border p-4">
           <p className="text-xs text-muted-foreground">Price range</p>
-          <p className="mt-1 font-medium text-gold">{PRICE_RANGE_LABELS[agency.price_range]}</p>
+          <p className="mt-1 font-medium text-gold">
+            <PriceRangeLabel priceRange={agency.price_range} />
+          </p>
         </div>
         <div className="rounded-md border border-border p-4">
           <p className="text-xs text-muted-foreground">Team size</p>

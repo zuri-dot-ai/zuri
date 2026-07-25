@@ -8,6 +8,7 @@ import {
   type Agency,
   type AgencyService,
 } from "@/lib/agencies/types";
+import { PriceRangeLabel } from "@/lib/agencies/price-range-label";
 import { cn } from "@/lib/utils";
 import { Select } from "@/components/ui/select";
 
@@ -218,8 +219,8 @@ function AgencyCard({ agency }: { agency: Agency }) {
       </div>
 
       <div className="mt-4 flex items-center justify-between border-t border-border pt-3 text-xs">
-        <span className="rounded-sm border border-gold/30 bg-gold/10 px-2 py-0.5 font-mono font-semibold text-gold">
-          {PRICE_RANGE_LABELS[agency.price_range]}
+        <span className="rounded-sm border border-gold/30 bg-gold/10 px-2 py-0.5 font-semibold text-gold">
+          <PriceRangeLabel priceRange={agency.price_range} />
         </span>
         <span className="flex items-center gap-1 text-muted-foreground">
           <Clock className="size-3" /> {RESPONSE_TIME_LABELS[agency.response_time]}
