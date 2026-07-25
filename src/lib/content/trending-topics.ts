@@ -1,11 +1,12 @@
 // ════════════════════════════════════════════════════════
 //  ZURI — Trending Topics Engine
 //  docs/03_CONTENT_STRATEGY.md §5
+//  Uses NVIDIA for Content AI (no Gemini / Google Search).
 // ════════════════════════════════════════════════════════
 
 import { createServiceClient } from "@/lib/supabase/service";
 import { sanitizeForPrompt } from "@/lib/utils/sanitize";
-import { FLASH } from "@/lib/gemini";
+import { nvidiaJSON } from "@/lib/content/nvidia-llm";
 
 export interface TrendingTopic {
   topic: string;
@@ -22,7 +23,7 @@ export async function getTrendingTopics(
   if (cached) return cached;
 
   try {
-    const topics = await fetchTrendingWithGemini(industry, location);
+    const topics = await fetchTrendingWithNvidia(industry, location);
     await cacheTrends(industry, topics);
     return topics;
   } catch (err) {
@@ -34,75 +35,41 @@ export async function getTrendingTopics(
   }
 }
 
-export async function fetchTrendingWithGemini(
+export async function fetchTrendingWithNvidia(
   industry: string,
   location: string
 ): Promise<TrendingTopic[]> {
   const safeIndustry = sanitizeForPrompt(industry).slice(0, 100);
   const safeLocation = sanitizeForPrompt(location).slice(0, 100);
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error("GEMINI_API_KEY missing");
 
-  const model = FLASH || "gemini-flash-latest";
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": apiKey,
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              {
-                text: `Search the web for what is trending right now in ${safeIndustry} in Nigeria (${safeLocation}).
-Find 5 specific trending topics, news items, conversations, or moments that a
-${safeIndustry} business in Nigeria should be talking about on social media this week.
+  const parsed = await nvidiaJSON<{
+    topics?: Array<{ topic: string; angle: string; relevance?: string }>;
+  }>(
+    `Suggest 5 timely social media topics for a ${safeIndustry} business in Nigeria (${safeLocation}) this week.
+
+Base ideas on common Nigerian market conversations, seasonal moments, and industry angles — be specific, not generic.
 
 For each topic, provide:
-- topic: the trend or moment (specific, not generic)
-- angle: how a ${safeIndustry} business should address this topic on social media (1 sentence)
+- topic: the trend or moment (specific)
+- angle: how a ${safeIndustry} business should address this on social media (1 sentence)
 - relevance: "high" or "medium"
 
 Output ONLY valid JSON: { "topics": [ { "topic": "...", "angle": "...", "relevance": "high" } ] }
 No markdown, no explanation.`,
-              },
-            ],
-          },
-        ],
-        tools: [{ googleSearch: {} }],
-      }),
-    }
+    "flash"
   );
-
-  if (!response.ok) {
-    const errBody = await response.text();
-    throw new Error(
-      `Gemini trending fetch failed: ${response.status} ${errBody.slice(0, 500)}`
-    );
-  }
-
-  const data = await response.json();
-  const text =
-    data.candidates?.[0]?.content?.parts
-      ?.filter((p: { text?: string }) => p.text)
-      .map((p: { text: string }) => p.text)
-      .join("") ?? "";
-
-  const cleaned = text.replace(/```json|```/g, "").trim();
-  const parsed = JSON.parse(cleaned) as {
-    topics?: Array<{ topic: string; angle: string; relevance?: string }>;
-  };
 
   return (parsed.topics ?? []).map((t) => ({
     topic: t.topic,
     angle: t.angle,
-    relevance: t.relevance === "medium" ? "medium" : "high",
+    relevance: t.relevance === "medium" ? ("medium" as const) : ("high" as const),
+    // Kept for schema compatibility; source is LLM-suggested, not live web search.
     source: "web_search" as const,
   }));
 }
+
+/** @deprecated Use fetchTrendingWithNvidia — kept as alias for any external callers. */
+export const fetchTrendingWithGemini = fetchTrendingWithNvidia;
 
 export function getFallbackTopics(industry: string): TrendingTopic[] {
   const FALLBACKS: Record<string, TrendingTopic[]> = {

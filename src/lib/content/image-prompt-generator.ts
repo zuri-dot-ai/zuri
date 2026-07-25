@@ -1,4 +1,4 @@
-import { geminiGenerate, geminiJSON, FLASH } from "@/lib/gemini";
+import { nvidiaGenerate, nvidiaJSON } from "@/lib/content/nvidia-llm";
 import { sanitizeForPrompt } from "@/lib/utils/sanitize";
 import type { DesignArchetype } from "@/lib/website/archetypes";
 import { getAspectRatio } from "./image-dimensions";
@@ -179,7 +179,7 @@ STRICT RULES for the prompt you write:
 - Keep the prompt under 150 words
 `;
 
-  const rawPrompt = await geminiGenerate(prompt, FLASH);
+  const rawPrompt = await nvidiaGenerate(prompt, "flash");
   return sanitizeImagePrompt(rawPrompt.trim());
 }
 
@@ -191,7 +191,7 @@ export async function generateCarouselSlidePrompts(
   const industry = sanitizeForPrompt(input.brand.industry);
   const topic = sanitizeForPrompt(input.topic);
 
-  const themePrompt = await geminiGenerate(
+  const themePrompt = await nvidiaGenerate(
     `
 Create a short visual style guide (2 sentences max) for a ${slideCount}-slide carousel post.
 Business: ${businessName} (${industry})
@@ -200,7 +200,7 @@ The style must be consistent across all ${slideCount} slides.
 Describe: colour palette, lighting style, and compositional approach.
 Output ONLY the style guide text.
 `,
-    FLASH
+    "flash"
   );
 
   const slidesPrompt = `
@@ -213,7 +213,7 @@ NEVER include faces, people, logos, or text in any prompt.
 Output ONLY valid JSON: { "slides": ["prompt1", "prompt2", "prompt3", "prompt4"] }
 `;
 
-  const { slides } = await geminiJSON<{ slides: string[] }>(
+  const { slides } = await nvidiaJSON<{ slides: string[] }>(
     slidesPrompt,
     "flash"
   );

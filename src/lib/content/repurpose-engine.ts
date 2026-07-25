@@ -4,7 +4,7 @@
 // ════════════════════════════════════════════════════════
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { geminiJSON } from "@/lib/gemini";
+import { nvidiaJSON } from "@/lib/content/nvidia-llm";
 import { sanitizeForPrompt } from "@/lib/utils/sanitize";
 import type { ContentCalendarRow } from "@/types/database";
 import { getSuggestedTime } from "./posting-times";
@@ -72,7 +72,7 @@ Output ONLY valid JSON:
 `;
 
   try {
-    const { adaptations } = await geminiJSON<{
+    const { adaptations } = await nvidiaJSON<{
       adaptations: Array<{
         platform: string;
         topic: string;

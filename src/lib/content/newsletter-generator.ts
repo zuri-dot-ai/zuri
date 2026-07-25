@@ -1,4 +1,4 @@
-import { geminiJSON } from "@/lib/gemini";
+import { nvidiaJSON } from "@/lib/content/nvidia-llm";
 import { createServiceClient } from "@/lib/supabase/service";
 import { sanitizeForPrompt } from "@/lib/utils/sanitize";
 import type { BusinessProfile } from "@/types/brand";
@@ -77,10 +77,10 @@ Output ONLY valid JSON:
 
   let newsletter: NewsletterContent;
   try {
-    newsletter = await geminiJSON<NewsletterContent>(prompt, "pro");
+    newsletter = await nvidiaJSON<NewsletterContent>(prompt, "pro");
   } catch (err) {
     console.warn("Newsletter Pro generation failed, falling back to Flash:", err);
-    newsletter = await geminiJSON<NewsletterContent>(prompt, "flash");
+    newsletter = await nvidiaJSON<NewsletterContent>(prompt, "flash");
   }
 
   if (newsletter.subject?.length > 50) {

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { geminiJSON } from "@/lib/gemini";
+import { nvidiaJSON } from "@/lib/content/nvidia-llm";
 import {
   requireContentUser,
   requireProCalendar,
@@ -73,7 +73,7 @@ Output ONLY valid JSON:
 `;
 
   try {
-    const regenerated = await geminiJSON<{
+    const regenerated = await nvidiaJSON<{
       topic: string;
       hook: string;
       brief: string;
@@ -111,11 +111,10 @@ Output ONLY valid JSON:
 
     return NextResponse.json({ slot: { ...data, generation_source: "ai" } });
   } catch (err) {
-    // err.message from geminiJSON carries the real status code + a
-    // truncated response body (see src/lib/gemini.ts) — that goes to the
-    // server logs in full for diagnostics, but never back to the client:
-    // a raw Gemini error body (e.g. a 429's `{"error":{"code":429,...}}`)
-    // must not be dumped to the user as-is.
+    // err.message from nvidiaJSON carries the real status code + a
+    // truncated response body — that goes to the server logs in full for
+    // diagnostics, but never back to the client: a raw 429 body must not
+    // be dumped to the user as-is.
     console.error(
       `[calendar regenerate] slotId=${id} userId=${auth.user.id}:`,
       err

@@ -22,7 +22,13 @@ export const RATE_LIMIT_MESSAGE =
  */
 export function isRateLimitError(err: unknown): boolean {
   const msg = String(err instanceof Error ? err.message : err);
-  return msg.includes("RESOURCE_EXHAUSTED") || msg.includes("429") || /status=429/.test(msg);
+  // Gemini RESOURCE_EXHAUSTED + NVIDIA / OpenAI-style status=429
+  return (
+    msg.includes("RESOURCE_EXHAUSTED") ||
+    msg.includes("429") ||
+    /status=429/.test(msg) ||
+    /rate.?limit/i.test(msg)
+  );
 }
 
 export async function handleGeminiError(

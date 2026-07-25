@@ -25,6 +25,9 @@ const CLOUDINARY_VARS = [
   "CLOUDINARY_API_SECRET",
 ] as const;
 
+/** Non-fatal — Content calendar / captions / images use NVIDIA NIM. */
+const NVIDIA_CONTENT_VARS = ["NVIDIA_API_KEY"] as const;
+
 export function validateRequiredEnvVars(): void {
   if (process.env.NODE_ENV !== "production") return; // Skip in dev
 
@@ -49,6 +52,14 @@ export function validateRequiredEnvVars(): void {
     console.warn(
       `[env] Cloudinary not fully configured (missing: ${missingCloudinary.join(", ")}). ` +
         `Onboarding image upload will be unavailable.`
+    );
+  }
+
+  const missingNvidia = NVIDIA_CONTENT_VARS.filter((key) => !process.env[key]);
+  if (missingNvidia.length > 0) {
+    console.warn(
+      `[env] NVIDIA Content AI not configured (missing: ${missingNvidia.join(", ")}). ` +
+        `Content calendar / image generation will fall back or fail until set.`
     );
   }
 }

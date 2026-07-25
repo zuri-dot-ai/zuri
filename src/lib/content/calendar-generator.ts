@@ -3,7 +3,7 @@
 //  docs/03_CONTENT_STRATEGY.md §3
 // ════════════════════════════════════════════════════════
 
-import { geminiJSON } from "@/lib/gemini";
+import { nvidiaJSON } from "@/lib/content/nvidia-llm";
 import { sanitizeForPrompt } from "@/lib/utils/sanitize";
 import type { BusinessProfile } from "@/types/brand";
 import { serviceLines } from "@/types/brand";
@@ -583,16 +583,16 @@ export async function generateMonthlyCalendar(
   let generated: { slots: GeneratedSlot[] };
   try {
     try {
-      generated = await geminiJSON<{ slots: GeneratedSlot[] }>(
+      generated = await nvidiaJSON<{ slots: GeneratedSlot[] }>(
         calendarPrompt,
         "flash"
       );
     } catch (initialErr) {
       console.warn(
-        "[generateMonthlyCalendar] initial Gemini call failed, retrying with stricter JSON instruction:",
+        "[generateMonthlyCalendar] initial NVIDIA call failed, retrying with stricter JSON instruction:",
         initialErr
       );
-      generated = await geminiJSON<{ slots: GeneratedSlot[] }>(
+      generated = await nvidiaJSON<{ slots: GeneratedSlot[] }>(
         calendarPrompt +
           "\n\nIMPORTANT: Output ONLY valid JSON. No markdown fences. Start with { end with }.",
         "flash"
@@ -604,7 +604,7 @@ export async function generateMonthlyCalendar(
     // content — now logged with full diagnostic detail and flagged via
     // usedFallback so callers/UI can surface it instead of hiding it.
     console.error(
-      "[generateMonthlyCalendar] both Gemini attempts failed — falling back to template slots. " +
+      "[generateMonthlyCalendar] both NVIDIA attempts failed — falling back to template slots. " +
         `userId=${input.userId} month=${month} year=${year}. Error:`,
       err
     );

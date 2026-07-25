@@ -1,4 +1,4 @@
-import { geminiJSON } from "@/lib/gemini";
+import { nvidiaJSON } from "@/lib/content/nvidia-llm";
 import { createServiceClient } from "@/lib/supabase/service";
 import { sanitizeForPrompt, sanitizeText } from "@/lib/utils/sanitize";
 import { CAPTION_RULES, type CaptionRule } from "./caption-rules";
@@ -204,7 +204,7 @@ export async function generateCaption(
     );
   }
 
-  const result = await geminiJSON<{
+  const result = await nvidiaJSON<{
     caption: string;
     hashtags: string[];
     thread_posts?: string[];
@@ -227,7 +227,7 @@ export async function generateCaption(
   }
 
   if (/\[.*?\]|lorem ipsum|placeholder/i.test(finalCaption)) {
-    const retry = await geminiJSON<{ caption: string; hashtags: string[] }>(
+    const retry = await nvidiaJSON<{ caption: string; hashtags: string[] }>(
       captionPrompt +
         "\n\nCRITICAL: Do NOT use placeholder text, brackets, or lorem ipsum.",
       "flash"
