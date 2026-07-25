@@ -56,10 +56,12 @@ export function Step5Review({
     .join(", ");
 
   return (
-    <div className="flex flex-col gap-6 lg:gap-8">
+    <div className="flex flex-col gap-4 lg:-mt-4 lg:gap-5">
       <div>
-        <h1 className="onboarding-headline">Review & submit</h1>
-        <p className="onboarding-subtext">
+        <h1 className="text-[1.5rem] font-semibold tracking-[-0.02em] text-[var(--text-primary)] leading-[1.15] sm:text-[1.625rem]">
+          Review & submit
+        </h1>
+        <p className="mt-1.5 text-[0.9375rem] leading-normal text-[var(--text-secondary)]">
           Check your details — then send your application for review.
         </p>
       </div>
