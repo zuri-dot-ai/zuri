@@ -102,9 +102,11 @@ export function Step1Identity({
           </label>
           <Input
             id="agency-name"
+            name="organization"
             value={agencyName}
             onChange={(e) => onAgencyNameChange(e.target.value)}
-            placeholder="e.g. Brightside Creative"
+            placeholder="Your agency name"
+            autoComplete="organization"
             className="onboarding-input h-11"
             autoFocus
           />
