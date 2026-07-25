@@ -32,7 +32,17 @@ import { useSaveStatus } from "@/hooks/use-save-status";
 import { PRICING } from "@/lib/constants";
 import { formatNGN as fmtNGN } from "@/lib/utils";
 import { safeFetchJSON } from "@/lib/utils/safe-fetch";
+import { serviceNames } from "@/types/brand";
 import type { AccountView, BusinessProfileRow } from "@/types/database";
+
+function errorMessage(e: unknown, fallback: string): string {
+  if (e instanceof Error && e.message) return e.message;
+  if (e && typeof e === "object" && "message" in e) {
+    const msg = (e as { message?: unknown }).message;
+    if (typeof msg === "string" && msg.trim()) return msg;
+  }
+  return fallback;
+}
 
 type Tab = "profile" | "business" | "billing" | "notifications" | "voice" | "danger";
 
@@ -389,7 +399,7 @@ function BusinessTab({ profile }: { profile: BusinessProfileRow | null }) {
   const [f, setF] = useState({
     business_name: profile?.business_name ?? "",
     industry: profile?.industry ?? "",
-    services: (profile?.services ?? []).join(", "),
+    services: serviceNames(profile?.services).join(", "),
     target_audience: profile?.target_audience ?? "",
     tone: profile?.brand_tone ?? "professional",
     tagline: profile?.tagline ?? "",
@@ -416,12 +426,18 @@ function BusinessTab({ profile }: { profile: BusinessProfileRow | null }) {
     if (!profile) return;
     try {
       await runSave(async () => {
+        const servicesPayload = next.services
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+          .map((name) => ({ name, description: "" }));
+
         const { error } = await supabase
           .from("business_profiles")
           .update({
             business_name: next.business_name,
             industry: next.industry,
-            services: next.services.split(",").map((s) => s.trim()).filter(Boolean),
+            services: servicesPayload,
             target_audience: next.target_audience,
             brand_tone: next.tone,
             tagline: next.tagline,
@@ -436,11 +452,7 @@ function BusinessTab({ profile }: { profile: BusinessProfileRow | null }) {
         if (error) throw error;
       });
     } catch (e) {
-      toast.error(
-        e instanceof Error && e.message
-          ? `Could not save: ${e.message}`
-          : "Could not save."
-      );
+      toast.error(`Could not save: ${errorMessage(e, "Unknown error")}`);
     }
   }
 
@@ -457,7 +469,7 @@ function BusinessTab({ profile }: { profile: BusinessProfileRow | null }) {
       if (!res.ok) throw new Error(data.error ?? "Upload failed");
       updateFieldNow({ ...f, logo_url: data.logoUrl });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Logo upload failed.");
+      toast.error(errorMessage(e, "Logo upload failed."));
     } finally {
       setUploadingLogo(false);
     }

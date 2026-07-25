@@ -7,8 +7,11 @@ import {
   validateUploadedFile,
 } from "@/lib/security/file-validation";
 import { createClient } from "@/lib/supabase/server";
+import {
+  ensureLogosBucket,
+  LOGOS_BUCKET,
+} from "@/lib/website/ensure-logos-bucket";
 
-const LOGOS_BUCKET = "logos";
 const MAX_LOGO_BYTES = 2 * 1024 * 1024; // 2MB
 
 export async function POST(req: Request) {
@@ -58,6 +61,18 @@ export async function POST(req: Request) {
     const buffer = Buffer.from(await file.arrayBuffer());
     const service = createServiceClient();
 
+    const ensured = await ensureLogosBucket(service);
+    if (ensured.error) {
+      console.error("[logo-upload] ensureLogosBucket failed:", ensured.error);
+      return NextResponse.json(
+        {
+          error:
+            "Logo storage is not available yet. Please try again in a moment.",
+        },
+        { status: 503 }
+      );
+    }
+
     const { error: uploadErr } = await service.storage
       .from(LOGOS_BUCKET)
       .upload(storagePath, buffer, {
@@ -67,7 +82,10 @@ export async function POST(req: Request) {
       });
 
     if (uploadErr) {
-      return NextResponse.json({ error: uploadErr.message }, { status: 500 });
+      const msg = /bucket not found/i.test(uploadErr.message)
+        ? "Logo storage is not available yet. Please try again in a moment."
+        : uploadErr.message;
+      return NextResponse.json({ error: msg }, { status: 500 });
     }
 
     const { data: pub } = service.storage

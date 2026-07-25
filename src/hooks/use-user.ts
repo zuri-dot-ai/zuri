@@ -19,38 +19,56 @@ export function useUser() {
 
   useEffect(() => {
     let active = true;
+    let seq = 0;
 
     async function load() {
+      const requestId = ++seq;
       const { data: auth } = await supabase.auth.getUser();
+      if (!active || requestId !== seq) return;
+
       if (!auth.user) {
-        if (active) {
-          setUser(null);
-          setAvatarUrl(null);
-          setLoading(false);
-        }
+        setUser(null);
+        setAvatarUrl(null);
+        setLoading(false);
         return;
       }
+
       const { data } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", auth.user.id)
         .maybeSingle();
-      if (active) {
-        const profile = (data as ProfileRow | null) ?? null;
-        const fromMeta = metaAvatarUrl(
-          auth.user.user_metadata as Record<string, unknown> | undefined
-        );
-        setUser(profile);
-        setAvatarUrl(profile?.avatar_url || fromMeta || null);
-        setLoading(false);
-      }
+
+      if (!active || requestId !== seq) return;
+
+      const profile = (data as ProfileRow | null) ?? null;
+      const fromMeta = metaAvatarUrl(
+        auth.user.user_metadata as Record<string, unknown> | undefined
+      );
+      setUser(profile);
+      setAvatarUrl(profile?.avatar_url || fromMeta || null);
+      setLoading(false);
     }
 
-    load();
-    const { data: sub } = supabase.auth.onAuthStateChange(() => load());
+    void load();
+    const { data: sub } = supabase.auth.onAuthStateChange(() => {
+      void load();
+    });
+
+    function onVisible() {
+      if (document.visibilityState === "visible") void load();
+    }
+    function onFocus() {
+      void load();
+    }
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onFocus);
+
     return () => {
       active = false;
       sub.subscription.unsubscribe();
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onFocus);
     };
   }, [supabase]);
 

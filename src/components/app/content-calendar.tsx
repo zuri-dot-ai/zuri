@@ -25,6 +25,7 @@ import { Banner, type BannerVariant } from "@/components/ui/Banner";
 import { EmptyState } from "@/components/app/empty-state";
 import { RatingsSummaryCard } from "@/components/content/RatingsSummaryCard";
 import { GeneratedContentView } from "@/components/content/GeneratedContentView";
+import { ZuriSpinner } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { safeFetchJSON, FetchError } from "@/lib/utils/safe-fetch";
 import { getNigerianCulturalMoments } from "@/lib/content/cultural-calendar";
@@ -775,26 +776,32 @@ export function ContentCalendar({
 
       {filtered.length === 0 && (
         <div className="space-y-4">
-          <EmptyState
-            variant="content"
-            title={`No posts scheduled for ${monthName.split(" ")[0]}. Generate your content calendar.`}
-            description="Zuri will plan topics, hooks, and briefs across your platforms."
-          />
-          <div className="flex justify-center pb-8">
-            <Button onClick={generateMonth} disabled={generating}>
-              {generating ? (
-                <>
-                  <span className="zuri-spinner mr-2 !size-4" />
-                  Generating…
-                </>
-              ) : (
-                <>
+          {generating ? (
+            <div className="flex flex-col items-center justify-center gap-4 py-16">
+              <ZuriSpinner size={40} label="Planning your calendar" />
+              <p className="text-sm text-[var(--text-tertiary)]">
+                Planning your calendar…
+              </p>
+              <Button disabled>
+                <span className="zuri-spinner zuri-spinner--on-gold mr-2 !size-4" />
+                Generating…
+              </Button>
+            </div>
+          ) : (
+            <>
+              <EmptyState
+                variant="content"
+                title={`No posts scheduled for ${monthName.split(" ")[0]}. Generate your content calendar.`}
+                description="Zuri will plan topics, hooks, and briefs across your platforms."
+              />
+              <div className="flex justify-center pb-8">
+                <Button onClick={generateMonth}>
                   <Sparkles className="mr-2 h-4 w-4" />
                   Generate {monthName.split(" ")[0]} Calendar
-                </>
-              )}
-            </Button>
-          </div>
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       )}
 
@@ -1077,7 +1084,7 @@ export function ContentCalendar({
                   disabled={approvingIds.has(active.id)}
                 >
                   {approvingIds.has(active.id) ? (
-                    <span className="zuri-spinner mr-1 !size-3.5" />
+                    <span className="zuri-spinner zuri-spinner--on-gold mr-1 !size-3.5" />
                   ) : (
                     <Check className="mr-1 h-3.5 w-3.5" />
                   )}
@@ -1091,7 +1098,7 @@ export function ContentCalendar({
                   disabled={generatingContent}
                 >
                   {generatingContent ? (
-                    <span className="zuri-spinner mr-1 !size-3.5" />
+                    <span className="zuri-spinner zuri-spinner--on-gold mr-1 !size-3.5" />
                   ) : (
                     <Sparkles className="mr-1 h-3.5 w-3.5" />
                   )}
@@ -1217,7 +1224,7 @@ export function ContentCalendar({
                 </Button>
                 <Button size="sm" onClick={() => void createSeries()} disabled={busy}>
                   {busy ? (
-                    <span className="zuri-spinner mr-1 !size-3.5" />
+                    <span className="zuri-spinner zuri-spinner--on-gold mr-1 !size-3.5" />
                   ) : null}
                   Generate series
                 </Button>

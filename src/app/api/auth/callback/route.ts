@@ -90,7 +90,16 @@ export async function GET(request: Request) {
         profilePatch.avatar_url = metaAvatar;
       }
       if (Object.keys(profilePatch).length > 0) {
-        await supabase.from("profiles").update(profilePatch).eq("id", user.id);
+        const { error: profileUpdateError } = await supabase
+          .from("profiles")
+          .update(profilePatch)
+          .eq("id", user.id);
+        if (profileUpdateError) {
+          console.error(
+            "[auth/callback] profile patch failed:",
+            profileUpdateError.message
+          );
+        }
       }
 
       dest = profile?.onboarding_completed ? next : "/start";

@@ -476,6 +476,11 @@
     height: 2rem;
     border-width: 2px;
   }
+  /* High-contrast ring for gold / accent button surfaces */
+  .zuri-spinner--on-gold {
+    border-color: rgba(12, 12, 14, 0.22);
+    border-top-color: rgba(12, 12, 14, 0.85);
+  }
 
   .page-enter {
     animation: pageIn 0.4s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;

@@ -38,12 +38,26 @@ export function classifySupabaseError(error: {
         message:
           "Database permission error. Apply the latest Supabase migrations.",
       };
-    default:
+    default: {
+      const msg = error.message ?? "";
+      // Missing column / stale PostgREST schema cache after undeployed migrations
+      if (
+        /schema cache/i.test(msg) ||
+        /could not find the .+ column/i.test(msg) ||
+        /column .+ does not exist/i.test(msg)
+      ) {
+        return {
+          status: 500,
+          message:
+            "Database is out of date. Please apply the latest migrations, then try again.",
+        };
+      }
       return {
         status: 500,
-        message: error.message
-          ? `A database error occurred: ${error.message}`
+        message: msg
+          ? `A database error occurred: ${msg}`
           : "A database error occurred.",
       };
+    }
   }
 }

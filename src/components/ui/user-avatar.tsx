@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 
@@ -15,41 +16,16 @@ function initialFrom(name?: string | null, email?: string | null) {
   return (name || email || "Z").charAt(0).toUpperCase();
 }
 
-/**
- * Circular avatar with subtle gold ring.
- * Renders profile image when available; falls back to letter mark.
- */
-export function UserAvatar({
-  name,
-  email,
-  src,
-  size = 32,
+function LetterMark({
+  initial,
+  size,
   className,
-}: UserAvatarProps) {
-  const initial = initialFrom(name, email);
+}: {
+  initial: string;
+  size: number;
+  className?: string;
+}) {
   const dim = `${size}px`;
-
-  if (src) {
-    return (
-      <span
-        className={cn(
-          "relative inline-flex shrink-0 overflow-hidden rounded-full ring-1 ring-[rgba(201,162,39,0.45)]",
-          className
-        )}
-        style={{ width: dim, height: dim }}
-      >
-        <Image
-          src={src}
-          alt={name || email || "Profile"}
-          width={size}
-          height={size}
-          className="size-full object-cover"
-          unoptimized={src.includes("googleusercontent.com")}
-        />
-      </span>
-    );
-  }
-
   return (
     <span
       className={cn(
@@ -64,6 +40,51 @@ export function UserAvatar({
       aria-hidden
     >
       {initial}
+    </span>
+  );
+}
+
+/**
+ * Circular avatar with subtle gold ring.
+ * Renders profile image when available; falls back to letter mark.
+ */
+export function UserAvatar({
+  name,
+  email,
+  src,
+  size = 32,
+  className,
+}: UserAvatarProps) {
+  const initial = initialFrom(name, email);
+  const dim = `${size}px`;
+  const [broken, setBroken] = useState(false);
+
+  useEffect(() => {
+    setBroken(false);
+  }, [src]);
+
+  if (!src || broken) {
+    return <LetterMark initial={initial} size={size} className={className} />;
+  }
+
+  return (
+    <span
+      className={cn(
+        "relative inline-flex shrink-0 overflow-hidden rounded-full ring-1 ring-[rgba(201,162,39,0.45)]",
+        className
+      )}
+      style={{ width: dim, height: dim }}
+    >
+      <Image
+        src={src}
+        alt={name || email || "Profile"}
+        width={size}
+        height={size}
+        className="size-full object-cover"
+        unoptimized={src.includes("googleusercontent.com")}
+        referrerPolicy="no-referrer"
+        onError={() => setBroken(true)}
+      />
     </span>
   );
 }
