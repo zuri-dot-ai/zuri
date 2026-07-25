@@ -269,6 +269,7 @@ export default function StartPage() {
       {step === 2 && (
         <Step2Services
           businessType={state.businessType}
+          sessionToken={state.sessionToken}
           value={state.services}
           onChange={(services) => update({ services })}
           onValidityChange={setCanContinue}

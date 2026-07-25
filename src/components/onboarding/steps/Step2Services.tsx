@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
 import { ServiceRepeaterInput } from "@/components/onboarding/ServiceRepeaterInput";
 import { SERVICE_SUGGESTIONS, type ServiceEntry } from "@/lib/onboarding/types";
 
 interface Step2ServicesProps {
   businessType: string;
+  sessionToken: string;
   value: ServiceEntry[];
   onChange: (services: ServiceEntry[]) => void;
   onValidityChange: (valid: boolean) => void;
@@ -13,15 +13,12 @@ interface Step2ServicesProps {
 
 export function Step2Services({
   businessType,
+  sessionToken,
   value,
   onChange,
   onValidityChange,
 }: Step2ServicesProps) {
   const suggestions = SERVICE_SUGGESTIONS[businessType] ?? [];
-
-  useEffect(() => {
-    onValidityChange(value.length >= 1);
-  }, [value, onValidityChange]);
 
   return (
     <div className="space-y-8">
@@ -32,7 +29,14 @@ export function Step2Services({
           your services section.
         </p>
       </div>
-      <ServiceRepeaterInput value={value} onChange={onChange} suggestions={suggestions} />
+      <ServiceRepeaterInput
+        value={value}
+        onChange={onChange}
+        suggestions={suggestions}
+        sessionToken={sessionToken}
+        businessType={businessType}
+        onValidityChange={onValidityChange}
+      />
     </div>
   );
 }

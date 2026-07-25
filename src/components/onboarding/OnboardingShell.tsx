@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/ui/logo";
@@ -139,6 +139,19 @@ export function OnboardingShell({
 }: OnboardingShellProps) {
   const reducedMotion = useReducedMotion();
   const [launching, setLaunching] = useState(false);
+  const [continueGleam, setContinueGleam] = useState(false);
+  const prevCanContinueRef = useRef(canContinue);
+
+  useEffect(() => {
+    const wasEnabled = prevCanContinueRef.current;
+    prevCanContinueRef.current = canContinue;
+
+    if (reducedMotion || wasEnabled || !canContinue) return;
+
+    setContinueGleam(true);
+    const t = window.setTimeout(() => setContinueGleam(false), 900);
+    return () => window.clearTimeout(t);
+  }, [canContinue, reducedMotion]);
 
   const variants = reducedMotion
     ? {
@@ -197,6 +210,7 @@ export function OnboardingShell({
                     disabled={!canContinue || launching}
                     className={cn(
                       "h-10 min-w-[108px] px-4 sm:min-w-[128px]",
+                      continueGleam && "onboarding-continue-gleam",
                       (!canContinue || launching) &&
                         "cursor-not-allowed opacity-40 hover:brightness-100"
                     )}

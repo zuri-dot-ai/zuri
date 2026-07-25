@@ -22,6 +22,8 @@ export const RATE_LIMITS: Record<string, RateLimitConfig> = {
   "onboarding:start": { limit: 5, windowSeconds: 86400 },
   // Keyed by anonymous session token.
   "onboarding:session_patch": { limit: 30, windowSeconds: 3600 },
+  // AI service-description helper on Step 2 (keyed by session token).
+  "onboarding:generate_service_description": { limit: 10, windowSeconds: 3600 },
 
   // AI Generation (expensive — rate limit tightly)
   "generation:website": { limit: 3, windowSeconds: 3600 },

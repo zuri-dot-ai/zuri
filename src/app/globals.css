@@ -794,6 +794,62 @@
     box-shadow: var(--elevation-3);
   }
 
+  /* Signup CTAs — fit single-line labels at 375px without changing global buttons. */
+  @media (max-width: 399px) {
+    .onboarding-signup-ctas .btn-gold,
+    .onboarding-signup-ctas .btn-ghost {
+      padding: 0.85rem 0.85rem;
+      font-size: 0.7rem;
+      letter-spacing: 0.03em;
+      gap: 0.35rem;
+    }
+    .onboarding-signup-ctas .btn-ghost svg {
+      width: 0.875rem;
+      height: 0.875rem;
+    }
+  }
+
+  /* One-shot Continue gleam when a step becomes valid. */
+  @keyframes continue-gleam {
+    0% {
+      transform: translateX(-120%) skewX(-18deg);
+      opacity: 0;
+    }
+    20% {
+      opacity: 0.55;
+    }
+    100% {
+      transform: translateX(220%) skewX(-18deg);
+      opacity: 0;
+    }
+  }
+  .onboarding-continue-gleam {
+    position: relative;
+    overflow: hidden;
+  }
+  .onboarding-continue-gleam::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    width: 45%;
+    background: linear-gradient(
+      105deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.08) 35%,
+      rgba(255, 248, 220, 0.45) 50%,
+      rgba(255, 255, 255, 0.08) 65%,
+      transparent 100%
+    );
+    animation: continue-gleam 0.85s ease-out 1;
+    pointer-events: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .onboarding-continue-gleam::after {
+      animation: none;
+      display: none;
+    }
+  }
+
   .onboarding-input {
     background: var(--bg-secondary) !important;
     border: 1px solid var(--border-solid) !important;

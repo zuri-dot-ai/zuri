@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Sparkles, X } from "lucide-react";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { sanitizeText } from "@/lib/utils/sanitize";
+import { safeFetchJSON, FetchError } from "@/lib/utils/safe-fetch";
 import type { ServiceEntry } from "@/lib/onboarding/types";
 
 const MAX_SERVICES = 6;
@@ -15,6 +17,10 @@ interface ServiceRepeaterInputProps {
   value: ServiceEntry[];
   onChange: (services: ServiceEntry[]) => void;
   suggestions?: string[];
+  sessionToken?: string;
+  businessType?: string;
+  /** Combined chip + draft validity for Continue. */
+  onValidityChange?: (valid: boolean) => void;
 }
 
 /**
@@ -27,40 +33,90 @@ export function ServiceRepeaterInput({
   value,
   onChange,
   suggestions = [],
+  sessionToken = "",
+  businessType = "",
+  onValidityChange,
 }: ServiceRepeaterInputProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [maxReachedNotice, setMaxReachedNotice] = useState(false);
+  const [generating, setGenerating] = useState(false);
 
   const canCommitCurrent =
     sanitizeText(name).length >= 2 && sanitizeText(description).length >= 10;
+  const canGenerate =
+    sanitizeText(name).length >= 2 && Boolean(sessionToken) && !generating;
+
+  const valueRef = useRef(value);
+  const nameRef = useRef(name);
+  const descriptionRef = useRef(description);
+  const editingIndexRef = useRef(editingIndex);
+  valueRef.current = value;
+  nameRef.current = name;
+  descriptionRef.current = description;
+  editingIndexRef.current = editingIndex;
+
+  useEffect(() => {
+    onValidityChange?.(value.length >= 1 || canCommitCurrent);
+  }, [value.length, canCommitCurrent, onValidityChange]);
 
   function commitCurrentRow() {
-    if (!canCommitCurrent) return;
+    const cleanName = sanitizeText(nameRef.current);
+    const cleanDesc = sanitizeText(descriptionRef.current);
+    if (cleanName.length < 2 || cleanDesc.length < 10) return;
 
     const entry: ServiceEntry = {
-      name: sanitizeText(name).slice(0, MAX_NAME_LENGTH),
-      description: sanitizeText(description).slice(0, MAX_DESCRIPTION_LENGTH),
+      name: cleanName.slice(0, MAX_NAME_LENGTH),
+      description: cleanDesc.slice(0, MAX_DESCRIPTION_LENGTH),
     };
 
-    if (editingIndex !== null) {
-      const next = [...value];
-      next[editingIndex] = entry;
+    const current = valueRef.current;
+    const editIdx = editingIndexRef.current;
+
+    if (editIdx !== null) {
+      const next = [...current];
+      next[editIdx] = entry;
       onChange(next);
       setEditingIndex(null);
     } else {
-      if (value.length >= MAX_SERVICES) {
+      if (current.length >= MAX_SERVICES) {
         setMaxReachedNotice(true);
         return;
       }
-      onChange([...value, entry]);
+      onChange([...current, entry]);
     }
 
     setName("");
     setDescription("");
     setMaxReachedNotice(false);
   }
+
+  // Flush a valid draft when leaving the step (e.g. Continue) so it isn't lost.
+  useEffect(() => {
+    return () => {
+      const cleanName = sanitizeText(nameRef.current);
+      const cleanDesc = sanitizeText(descriptionRef.current);
+      if (cleanName.length < 2 || cleanDesc.length < 10) return;
+
+      const entry: ServiceEntry = {
+        name: cleanName.slice(0, MAX_NAME_LENGTH),
+        description: cleanDesc.slice(0, MAX_DESCRIPTION_LENGTH),
+      };
+      const current = valueRef.current;
+      const editIdx = editingIndexRef.current;
+
+      if (editIdx !== null) {
+        const next = [...current];
+        next[editIdx] = entry;
+        onChange(next);
+        return;
+      }
+      if (current.length >= MAX_SERVICES) return;
+      onChange([...current, entry]);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- flush once on unmount with latest refs
+  }, []);
 
   function editChip(index: number) {
     const entry = value[index];
@@ -78,7 +134,44 @@ export function ServiceRepeaterInput({
     }
   }
 
+  async function generateDescription() {
+    if (!canGenerate) return;
+    setGenerating(true);
+    try {
+      const result = await safeFetchJSON<{ description: string }>(
+        "/api/onboarding/generate-service-description",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionToken,
+            serviceName: sanitizeText(name),
+            businessType,
+          }),
+        }
+      );
+      const next = (result.description ?? "")
+        .trim()
+        .slice(0, MAX_DESCRIPTION_LENGTH);
+      if (next) setDescription(next);
+    } catch (err) {
+      toast.error(
+        err instanceof FetchError
+          ? err.message
+          : "Couldn't generate — try again or type your own."
+      );
+    } finally {
+      setGenerating(false);
+    }
+  }
+
   const atMax = value.length >= MAX_SERVICES && editingIndex === null;
+  const addLabel =
+    editingIndex !== null
+      ? "Save changes"
+      : value.length >= 1
+        ? "Add another service +"
+        : "Add service +";
 
   return (
     <div className="space-y-4">
@@ -121,6 +214,7 @@ export function ServiceRepeaterInput({
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
+              onBlur={commitCurrentRow}
               placeholder="e.g. Custom Cakes"
               className="onboarding-input h-11"
               maxLength={MAX_NAME_LENGTH}
@@ -142,13 +236,36 @@ export function ServiceRepeaterInput({
           </div>
 
           <div className="space-y-1">
+            <div className="flex items-center justify-between gap-2">
+              <label className="onboarding-label" htmlFor="service-description">
+                Description
+              </label>
+              {sanitizeText(name).length >= 2 && (
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={generateDescription}
+                  disabled={!canGenerate}
+                  className={cn(
+                    "inline-flex items-center gap-1 text-xs text-gold transition-opacity",
+                    !canGenerate && "cursor-not-allowed opacity-40"
+                  )}
+                >
+                  {generating ? (
+                    <span className="zuri-spinner !size-3" />
+                  ) : (
+                    <Sparkles className="size-3" />
+                  )}
+                  {generating ? "Generating…" : "Generate with AI"}
+                </button>
+              )}
+            </div>
             <Input
+              id="service-description"
               value={description}
               onChange={(e) =>
                 setDescription(e.target.value.slice(0, MAX_DESCRIPTION_LENGTH))
               }
-              // Auto-commit on blur so a valid row is never lost if the user
-              // taps "Continue" without pressing "Add another service".
               onBlur={commitCurrentRow}
               placeholder="Describe this service — what does it include, what makes it different?"
               className="onboarding-input h-11"
@@ -177,7 +294,7 @@ export function ServiceRepeaterInput({
                 : "cursor-not-allowed opacity-40"
             )}
           >
-            {editingIndex !== null ? "Save changes" : "Add another service +"}
+            {addLabel}
           </button>
         </div>
       )}
