@@ -1,12 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type KeyboardEvent,
+} from "react";
 import { toast } from "sonner";
-import { ChevronDown, Plus, Sparkles } from "lucide-react";
+import { Check, ChevronDown, Plus, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { SaveStatus } from "@/components/ui/SaveStatus";
 import { useSaveStatus } from "@/hooks/use-save-status";
 import {
   fieldInputType,
@@ -16,6 +20,80 @@ import {
 } from "@/lib/website/field-groups";
 import { cn } from "@/lib/utils";
 import { safeFetchJSON } from "@/lib/utils/safe-fetch";
+
+function SaveCheckButton({
+  dirty,
+  status,
+  disabled,
+  onSave,
+}: {
+  dirty: boolean;
+  status: "idle" | "saving" | "saved" | "error";
+  disabled?: boolean;
+  onSave: () => void;
+}) {
+  const saving = status === "saving";
+  const saved = status === "saved";
+  const error = status === "error";
+  const canSave = dirty && !saving && !disabled;
+
+  return (
+    <button
+      type="button"
+      title={
+        saving
+          ? "Saving…"
+          : saved
+            ? "Saved"
+            : error
+              ? "Couldn't save — try again"
+              : dirty
+                ? "Save"
+                : "No changes"
+      }
+      aria-label={
+        saving
+          ? "Saving"
+          : saved
+            ? "Saved"
+            : error
+              ? "Save failed"
+              : dirty
+                ? "Save field"
+                : "No changes to save"
+      }
+      disabled={!canSave && !error}
+      onMouseDown={(e) => {
+        // Prevent input blur before click so we don't double-save
+        if (canSave || error) e.preventDefault();
+      }}
+      onClick={() => {
+        if (canSave || error) onSave();
+      }}
+      className={cn(
+        "inline-flex size-9 shrink-0 items-center justify-center rounded-sm border [transition-duration:var(--transition-fast)] transition-colors",
+        saved && "border-success/40 bg-success/10 text-success",
+        error && "border-error/40 bg-error/10 text-error",
+        !saved &&
+          !error &&
+          canSave &&
+          "border-gold/50 bg-gold/10 text-gold hover:bg-gold/20",
+        !saved &&
+          !error &&
+          !canSave &&
+          "border-[var(--border-solid)] bg-[var(--bg-secondary)] text-muted-foreground opacity-50",
+        canSave && "cursor-pointer",
+        !canSave && !error && "cursor-default"
+      )}
+    >
+      {saving ? (
+        <span className="zuri-spinner !size-3.5" />
+      ) : (
+        <Check className="size-4" strokeWidth={2.5} />
+      )}
+    </button>
+  );
+}
 
 function FieldEditor({
   field,
@@ -33,9 +111,10 @@ function FieldEditor({
   const [local, setLocal] = useState(value);
   const [regenerating, setRegenerating] = useState(false);
   const { status: saveStatus, run: runSave } = useSaveStatus();
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputType = fieldInputType(field);
   const isTextarea = inputType === "textarea";
+  const dirty = local !== value;
+  const saving = saveStatus === "saving";
 
   useEffect(() => {
     setLocal(value);
@@ -43,6 +122,7 @@ function FieldEditor({
 
   const save = useCallback(
     async (next: string, action: "edit" | "regenerate" = "edit") => {
+      if (action === "edit" && next === value) return;
       if (action === "regenerate") setRegenerating(true);
       try {
         const data = await (action === "edit"
@@ -76,28 +156,43 @@ function FieldEditor({
         setRegenerating(false);
       }
     },
-    [field, onSaved, onNeedsReview, runSave]
+    [field, onSaved, onNeedsReview, runSave, value]
   );
 
-  function scheduleSave(next: string) {
-    setLocal(next);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => save(next), 400);
+  function handleBlur() {
+    if (dirty && !saving) void save(local);
   }
+
+  function handleKeyDown(e: KeyboardEvent) {
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      if (dirty && !saving) void save(local);
+    }
+  }
+
+  const checkButton = (
+    <SaveCheckButton
+      dirty={dirty}
+      status={saveStatus}
+      disabled={regenerating}
+      onSave={() => void save(local)}
+    />
+  );
 
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
         <Label htmlFor={field}>{formatFieldLabel(field)}</Label>
         <div className="flex items-center gap-2">
-          <SaveStatus status={saveStatus} />
+          {isTextarea && checkButton}
           {isTextarea && (
             <Button
               type="button"
               variant="ghost"
               size="sm"
               className="h-7 px-2 text-xs text-gold"
-              disabled={regenerating || saveStatus === "saving"}
+              disabled={regenerating || saving}
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => save(local, "regenerate")}
             >
               {regenerating ? (
@@ -116,20 +211,28 @@ function FieldEditor({
           value={local}
           rows={4}
           onFocus={() => onFocusField?.(field)}
-          onChange={(e) => scheduleSave(e.target.value)}
+          onChange={(e) => setLocal(e.target.value)}
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
           className={cn(
             "flex w-full rounded-sm border border-[var(--border-solid)] bg-[var(--bg-secondary)] px-3.5 py-2 text-sm [transition-duration:var(--transition-fast)] transition-colors",
             "focus-visible:outline-none focus-visible:border-[var(--accent)] focus-visible:ring-2 focus-visible:ring-[var(--accent)]/20"
           )}
         />
       ) : (
-        <Input
-          id={field}
-          type={inputType}
-          value={local}
-          onFocus={() => onFocusField?.(field)}
-          onChange={(e) => scheduleSave(e.target.value)}
-        />
+        <div className="flex items-center gap-2">
+          <Input
+            id={field}
+            type={inputType}
+            value={local}
+            onFocus={() => onFocusField?.(field)}
+            onChange={(e) => setLocal(e.target.value)}
+            onBlur={handleBlur}
+            onKeyDown={handleKeyDown}
+            className="min-w-0 flex-1"
+          />
+          {checkButton}
+        </div>
       )}
     </div>
   );

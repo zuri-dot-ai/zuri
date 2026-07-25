@@ -7,6 +7,7 @@ import { WebsitePreviewSkeleton } from "@/components/ui/skeleton";
 import {
   computePreviewScale,
   defaultPreviewDevice,
+  DEVICE_PANE_FRACTIONS,
   DEVICE_STAGE_HEIGHT,
   DEVICE_WIDTHS,
   type PreviewDevice,
@@ -46,6 +47,7 @@ export function PreviewFrame({
 
   const intrinsicWidth = DEVICE_WIDTHS[device];
   const intrinsicHeight = DEVICE_STAGE_HEIGHT;
+  const paneFraction = DEVICE_PANE_FRACTIONS[device];
   const compactChrome = device !== "desktop";
   const showDeviceFrame = device === "mobile" || device === "tablet";
 
@@ -63,15 +65,13 @@ export function PreviewFrame({
 
     const update = () => {
       const availW = el.clientWidth;
-      const availH = el.clientHeight;
       // Leave a little padding so the frame isn't flush against edges
       const pad = showDeviceFrame ? 24 : 16;
       setScale(
         computePreviewScale(
           Math.max(0, availW - pad),
-          Math.max(0, availH - pad),
           intrinsicWidth,
-          intrinsicHeight
+          paneFraction
         )
       );
     };
@@ -80,7 +80,7 @@ export function PreviewFrame({
     const ro = new ResizeObserver(update);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [intrinsicWidth, intrinsicHeight, showDeviceFrame]);
+  }, [intrinsicWidth, paneFraction, showDeviceFrame]);
 
   useEffect(() => {
     function onMessage(event: MessageEvent) {
