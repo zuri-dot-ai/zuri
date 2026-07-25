@@ -87,18 +87,16 @@ export function Step1Identity({
   ]);
 
   return (
-    <div className="flex flex-col gap-4 lg:gap-5">
+    <div className="flex flex-col gap-6 lg:gap-8">
       <div>
-        <h1 className="onboarding-headline text-[1.5rem] sm:text-[1.75rem] lg:text-[1.75rem]">
-          Tell us about your agency
-        </h1>
-        <p className="onboarding-subtext mt-1 text-sm">
+        <h1 className="onboarding-headline">Tell us about your agency</h1>
+        <p className="onboarding-subtext">
           Basic details so we can list you in the right place.
         </p>
       </div>
 
-      <div className="flex flex-col gap-4">
-        <div className="space-y-1.5">
+      <div className="flex flex-col gap-6">
+        <div className="space-y-2">
           <label className="onboarding-label" htmlFor="agency-name">
             Agency name
           </label>
@@ -109,14 +107,14 @@ export function Step1Identity({
             onChange={(e) => onAgencyNameChange(e.target.value)}
             placeholder="Your agency name"
             autoComplete="organization"
-            className="onboarding-input h-10 sm:h-11"
+            className="onboarding-input h-11"
             autoFocus
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-3">
           <p className="onboarding-label">Primary location</p>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-2">
             {LOCATION_OPTIONS.map((opt) => (
               <button
                 key={opt.id}
@@ -124,7 +122,7 @@ export function Step1Identity({
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => onLocationIdChange(opt.id)}
                 className={cn(
-                  "min-h-9 rounded-sm border px-2.5 py-1.5 text-xs transition-all duration-150 sm:min-h-10 sm:px-3 sm:text-sm",
+                  "min-h-10 rounded-sm border px-3.5 py-2 text-sm transition-all duration-150",
                   locationId === opt.id
                     ? "border-gold bg-gold/10 text-foreground"
                     : "border-border bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:border-[var(--border-hover)]"
@@ -140,14 +138,14 @@ export function Step1Identity({
                 value={locationCityOther}
                 onChange={(e) => onLocationCityOtherChange(e.target.value)}
                 placeholder="Which city?"
-                className="onboarding-input h-10 max-w-sm sm:h-11"
+                className="onboarding-input h-11 max-w-sm"
               />
               {cityError && <p className="text-sm text-error">{cityError}</p>}
             </div>
           )}
         </div>
 
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <label className="onboarding-label" htmlFor="agency-website">
             Website or portfolio link
           </label>
@@ -157,7 +155,7 @@ export function Step1Identity({
             value={website}
             onChange={(e) => onWebsiteChange(e.target.value)}
             placeholder="https://youragency.com"
-            className="onboarding-input h-10 sm:h-11"
+            className="onboarding-input h-11"
           />
         </div>
       </div>

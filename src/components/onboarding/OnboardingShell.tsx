@@ -46,7 +46,7 @@ function StepProgress({
  *
  * Assets:
  *   public/onboarding/onboarding-hero.mp4
- *   public/onboarding/onboarding-hero.jpg
+ *   public/onboarding/onboarding-hero.png
  */
 function DesktopHeroPanel() {
   const reducedMotion = useReducedMotion();
@@ -64,7 +64,7 @@ function DesktopHeroPanel() {
         <video
           className="absolute inset-0 size-full object-cover"
           src="/onboarding/onboarding-hero.mp4"
-          poster="/onboarding/onboarding-hero.jpg"
+          poster="/onboarding/onboarding-hero.png"
           autoPlay
           muted
           loop
@@ -75,7 +75,7 @@ function DesktopHeroPanel() {
       ) : !imageFailed ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src="/onboarding/onboarding-hero.jpg"
+          src="/onboarding/onboarding-hero.png"
           alt=""
           className="absolute inset-0 size-full object-cover"
           onError={() => setImageFailed(true)}
@@ -169,9 +169,9 @@ export function OnboardingShell({
     <div className="onboarding-shell flex h-dvh max-h-dvh w-full overflow-hidden">
       <DesktopHeroPanel />
 
-      <div className="flex h-dvh max-h-dvh w-full flex-1 flex-col overflow-hidden px-5 sm:px-6 lg:w-[70%] lg:px-10 xl:px-16">
-        <header className="onboarding-safe-top z-20 shrink-0 -mx-5 bg-[var(--bg-primary)] px-5 pb-3 pt-1 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
-          <div className="mx-auto flex w-full max-w-[640px] flex-col gap-3">
+      <div className="flex h-dvh max-h-dvh w-full flex-1 flex-col overflow-hidden px-5 sm:px-6 lg:w-[70%] lg:px-10 xl:px-14">
+        <header className="onboarding-safe-top z-20 shrink-0 -mx-5 bg-[var(--bg-primary)] px-5 pb-4 pt-3 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
+          <div className="mx-auto flex w-full max-w-[840px] flex-col gap-4">
             <div className="flex items-center justify-between gap-3">
               <Logo variant="image" size="navbar" href={marketingUrl()} />
 
@@ -229,7 +229,7 @@ export function OnboardingShell({
         */}
         <div
           className={cn(
-            "mx-auto flex min-h-0 w-full max-w-[640px] flex-1 flex-col pb-5 pt-4",
+            "mx-auto flex min-h-0 w-full max-w-[840px] flex-1 flex-col pb-6 pt-6 lg:pt-8",
             "max-lg:overflow-y-auto max-lg:overscroll-contain",
             "lg:overflow-hidden"
           )}
