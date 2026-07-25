@@ -182,11 +182,10 @@ export async function POST(req: Request) {
   }
 
   // Best-effort side effects — never fail the applicant's success response.
-  const primarySpecialty = isAgencyService(body.primary_service)
-    ? AGENCY_SERVICE_LABELS[body.primary_service]
-    : services[0]
-      ? AGENCY_SERVICE_LABELS[services[0]]
-      : "";
+  // services[0] is always the validated primary specialty after insert.
+  const primarySpecialty = services[0]
+    ? AGENCY_SERVICE_LABELS[services[0]]
+    : "";
   const servicesLabel = services
     .map((s) => AGENCY_SERVICE_LABELS[s])
     .join(", ");
