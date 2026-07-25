@@ -20,10 +20,11 @@ const PRIMARY_OPTIONS: AgencyService[] = [
   "influencer_marketing",
 ];
 
-/** Secondary never offers Digital PR or Copywriting. */
+/** Secondary never offers Digital PR, Copywriting, or Branding & Identity. */
 const SECONDARY_EXCLUDED = new Set<AgencyService>([
   "digital_pr",
   "copywriting",
+  "branding",
 ]);
 
 const SECONDARY_OPTIONS = (
