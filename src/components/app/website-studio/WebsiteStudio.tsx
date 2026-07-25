@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -121,6 +122,7 @@ export function WebsiteStudio({
   const [published, setPublished] = useState(isPublished);
   const [liveSlug, setLiveSlug] = useState(slug);
   const [previewKey, setPreviewKey] = useState(0);
+  const [portalReady, setPortalReady] = useState(false);
   const [busy, setBusy] = useState(false);
   const [busyAction, setBusyAction] = useState<"publish" | "unpublish" | null>(
     null
@@ -151,6 +153,10 @@ export function WebsiteStudio({
   );
 
   const effectiveNeedsReview = needsReview || reviewIssues.length > 0;
+
+  useEffect(() => {
+    setPortalReady(true);
+  }, []);
 
   useEffect(() => {
     const hasBrokenImages = Object.values(initialImages).some((img) =>
@@ -391,7 +397,7 @@ export function WebsiteStudio({
     ];
 
   return (
-    <div className="flex min-h-[calc(100vh-6rem)] flex-col gap-4 page-enter">
+    <div className="flex min-h-[calc(100vh-6rem)] flex-col gap-4">
       {/* Top bar */}
       <header className="page-head flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-2">
@@ -604,22 +610,24 @@ export function WebsiteStudio({
         )}
       </div>
 
-      {/* Floating Preview pill — fixed above BottomTabs (z-50), mobile only.
-          This is the ONLY floating action; Publish/Unpublish lives inline
-          at the bottom of the scrollable section list (and edit screen)
-          instead of floating. */}
-      {previewUrl && (
-        <button
-          type="button"
-          onClick={openFullScreenPreview}
-          aria-label="Preview site"
-          title="Preview site"
-          className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 z-40 flex items-center gap-2 rounded-full border border-[var(--border-solid)] bg-[var(--bg-elevated)] px-4 py-3 text-sm font-medium text-foreground shadow-[0_8px_24px_rgba(0,0,0,0.35)] transition-colors hover:text-gold lg:hidden"
-        >
-          <Eye className="size-[18px]" />
-          Preview
-        </button>
-      )}
+      {/* Floating Preview pill — portaled to body so `fixed` is viewport-
+          relative (avoids transformed/overflow ancestors). Above BottomTabs
+          (z-50), mobile only. */}
+      {portalReady &&
+        previewUrl &&
+        createPortal(
+          <button
+            type="button"
+            onClick={openFullScreenPreview}
+            aria-label="Preview site"
+            title="Preview site"
+            className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 z-40 flex items-center gap-2 rounded-full border border-[var(--border-solid)] bg-[var(--bg-elevated)] px-4 py-3 text-sm font-medium text-foreground shadow-[0_8px_24px_rgba(0,0,0,0.35)] transition-colors hover:text-gold lg:hidden"
+          >
+            <Eye className="size-[18px]" />
+            Preview
+          </button>,
+          document.body
+        )}
 
       {imageModalSlot && (
         <ImageSwapModal

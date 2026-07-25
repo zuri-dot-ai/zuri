@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 
 /**
  * Subtle fade/slide between app routes (~180ms).
+ * Skipped on /website — the studio should paint statically with no enter motion.
  */
 export default function AppTemplate({
   children,
@@ -12,6 +13,10 @@ export default function AppTemplate({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+
+  if (pathname === "/website") {
+    return <div className="min-h-0">{children}</div>;
+  }
 
   return (
     <motion.div
