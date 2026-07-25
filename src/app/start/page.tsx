@@ -25,10 +25,10 @@ import {
 import { resolveArchetypeFromCategory } from "@/lib/website/archetypes";
 import { safeFetchJSON, FetchError } from "@/lib/utils/safe-fetch";
 
-/** Full-screen branded loader — matches Step12 / generation visual language */
-function OnboardingPremiumLoader({ label }: { label: string }) {
+/** In-shell branded loader — keeps OnboardingHeroPanel mounted (same as apply). */
+function OnboardingInlineLoader({ label }: { label: string }) {
   return (
-    <div className="onboarding-shell flex min-h-dvh w-full flex-col items-center justify-center gap-5 px-5">
+    <div className="flex min-h-[40vh] w-full flex-col items-center justify-center gap-5">
       <ZuriSpinner size={40} label={label} />
       <p className="text-sm text-[var(--text-tertiary)]">{label}…</p>
     </div>
@@ -233,16 +233,9 @@ export default function StartPage() {
     });
   }
 
-  if (!ready) {
-    return <OnboardingPremiumLoader label="Loading" />;
-  }
-
-  if (finishing) {
-    return <OnboardingPremiumLoader label="Building your presence" />;
-  }
-
   const step = state.step;
-  const hideControls = !authResume && step === SIGNUP_STEP;
+  const hideControls =
+    !ready || finishing || (!authResume && step === SIGNUP_STEP);
   const continueLabel =
     authResume && step === LAST_QUESTION_STEP
       ? "Finish & build my site"
@@ -250,100 +243,108 @@ export default function StartPage() {
 
   return (
     <OnboardingShell
-      step={step}
+      step={ready ? step : 1}
       direction={direction}
-      canContinue={canContinue && !finishing}
-      showWelcomeBack={welcomeBack}
+      canContinue={ready && canContinue && !finishing}
+      showWelcomeBack={ready && welcomeBack}
       onBack={goBack}
       onContinue={goNext}
       hideControls={hideControls}
       continueLabel={continueLabel}
     >
-      {step === 1 && (
-        <Step1Category
-          value={state.businessType}
-          onChange={selectCategory}
-          onValidityChange={setCanContinue}
-        />
-      )}
-      {step === 2 && (
-        <Step2Services
-          businessType={state.businessType}
-          sessionToken={state.sessionToken}
-          value={state.services}
-          onChange={(services) => update({ services })}
-          onValidityChange={setCanContinue}
-        />
-      )}
-      {step === 3 && (
-        <Step3PhotoUpload
-          sessionToken={state.sessionToken}
-          archetype={state.resolvedArchetype}
-          images={state.uploadedImages}
-          onChange={(uploadedImages) => update({ uploadedImages })}
-          skipped={state.photoStepSkipped}
-          onSkip={(photoStepSkipped) => update({ photoStepSkipped })}
-          onValidityChange={setCanContinue}
-        />
-      )}
-      {step === 4 && (
-        <Step4Audience
-          value={state.audienceTypes}
-          onChange={(audienceTypes) => update({ audienceTypes })}
-          onValidityChange={setCanContinue}
-        />
-      )}
-      {step === 5 && (
-        <Step5Location
-          location={state.location}
-          locationCity={state.locationCity}
-          onLocationChange={(location) => update({ location })}
-          onLocationCityChange={(locationCity) => update({ locationCity })}
-          onValidityChange={setCanContinue}
-        />
-      )}
-      {step === 6 && (
-        <Step6BrandVibe
-          value={state.brandVibe}
-          onChange={(brandVibe) => update({ brandVibe })}
-          onValidityChange={setCanContinue}
-        />
-      )}
-      {step === 7 && (
-        <Step7BusinessName
-          value={state.businessName}
-          onChange={(businessName) => update({ businessName })}
-          onValidityChange={setCanContinue}
-        />
-      )}
-      {step === 8 && (
-        <Step8Handle
-          businessName={state.businessName}
-          value={state.handle}
-          onChange={(handle) => update({ handle })}
-          onValidityChange={setCanContinue}
-        />
-      )}
-      {step === 9 && (
-        <Step9Platforms
-          value={state.platforms}
-          onChange={(platforms) => update({ platforms })}
-          onValidityChange={setCanContinue}
-          onSkip={skipPlatforms}
-        />
-      )}
-      {step === 10 && (
-        <Step10YourName
-          value={state.firstName}
-          onChange={(firstName) => update({ firstName })}
-          onValidityChange={setCanContinue}
-        />
-      )}
-      {!authResume && step === SIGNUP_STEP && (
-        <Step11Signup
-          sessionToken={state.sessionToken}
-          firstName={state.firstName}
-        />
+      {!ready ? (
+        <OnboardingInlineLoader label="Loading" />
+      ) : finishing ? (
+        <OnboardingInlineLoader label="Building your presence" />
+      ) : (
+        <>
+          {step === 1 && (
+            <Step1Category
+              value={state.businessType}
+              onChange={selectCategory}
+              onValidityChange={setCanContinue}
+            />
+          )}
+          {step === 2 && (
+            <Step2Services
+              businessType={state.businessType}
+              sessionToken={state.sessionToken}
+              value={state.services}
+              onChange={(services) => update({ services })}
+              onValidityChange={setCanContinue}
+            />
+          )}
+          {step === 3 && (
+            <Step3PhotoUpload
+              sessionToken={state.sessionToken}
+              archetype={state.resolvedArchetype}
+              images={state.uploadedImages}
+              onChange={(uploadedImages) => update({ uploadedImages })}
+              skipped={state.photoStepSkipped}
+              onSkip={(photoStepSkipped) => update({ photoStepSkipped })}
+              onValidityChange={setCanContinue}
+            />
+          )}
+          {step === 4 && (
+            <Step4Audience
+              value={state.audienceTypes}
+              onChange={(audienceTypes) => update({ audienceTypes })}
+              onValidityChange={setCanContinue}
+            />
+          )}
+          {step === 5 && (
+            <Step5Location
+              location={state.location}
+              locationCity={state.locationCity}
+              onLocationChange={(location) => update({ location })}
+              onLocationCityChange={(locationCity) => update({ locationCity })}
+              onValidityChange={setCanContinue}
+            />
+          )}
+          {step === 6 && (
+            <Step6BrandVibe
+              value={state.brandVibe}
+              onChange={(brandVibe) => update({ brandVibe })}
+              onValidityChange={setCanContinue}
+            />
+          )}
+          {step === 7 && (
+            <Step7BusinessName
+              value={state.businessName}
+              onChange={(businessName) => update({ businessName })}
+              onValidityChange={setCanContinue}
+            />
+          )}
+          {step === 8 && (
+            <Step8Handle
+              businessName={state.businessName}
+              value={state.handle}
+              onChange={(handle) => update({ handle })}
+              onValidityChange={setCanContinue}
+            />
+          )}
+          {step === 9 && (
+            <Step9Platforms
+              value={state.platforms}
+              onChange={(platforms) => update({ platforms })}
+              onValidityChange={setCanContinue}
+              onSkip={skipPlatforms}
+            />
+          )}
+          {step === 10 && (
+            <Step10YourName
+              value={state.firstName}
+              onChange={(firstName) => update({ firstName })}
+              onValidityChange={setCanContinue}
+            />
+          )}
+          {!authResume && step === SIGNUP_STEP && (
+            <Step11Signup
+              sessionToken={state.sessionToken}
+              firstName={state.firstName}
+            />
+          )}
+        </>
       )}
     </OnboardingShell>
   );

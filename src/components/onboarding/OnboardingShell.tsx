@@ -8,6 +8,7 @@ import { marketingUrl } from "@/lib/marketing-url";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { cn } from "@/lib/utils";
 import { ONBOARDING_TOTAL_STEPS } from "@/lib/onboarding/types";
+import { OnboardingHeroPanel } from "@/components/onboarding/OnboardingHeroPanel";
 
 /** Thin single-bar progress — docs/01_ONBOARDING_V2.md §3 */
 function StepProgress({
@@ -32,65 +33,6 @@ function StepProgress({
         style={{ width: `${pct}%` }}
       />
     </div>
-  );
-}
-
-/**
- * Desktop split hero — docs/01_ONBOARDING_V2.md §4.
- * Prefer looping muted video; JPG as poster / reduced-motion / error fallback;
- * dark gradient if neither asset loads.
- *
- * Root cause note (2026-07): file is H.264 (avc1) and CSP media-src allows
- * 'self'. Failures tracked to ~7MB payload on slower links — keep the asset
- * compressed (~2–3MB target) and only fall back on genuine media errors.
- *
- * Assets:
- *   public/onboarding/onboarding-hero.mp4
- *   public/onboarding/onboarding-hero.png
- */
-function DesktopHeroPanel() {
-  const reducedMotion = useReducedMotion();
-  const [videoFailed, setVideoFailed] = useState(false);
-  const [imageFailed, setImageFailed] = useState(false);
-
-  const showVideo = !reducedMotion && !videoFailed;
-
-  return (
-    <aside
-      className="relative hidden h-dvh w-[30%] shrink-0 overflow-hidden lg:block"
-      aria-hidden
-    >
-      {showVideo ? (
-        <video
-          className="absolute inset-0 size-full object-cover"
-          src="/onboarding/onboarding-hero.mp4"
-          poster="/onboarding/onboarding-hero.png"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          onError={() => setVideoFailed(true)}
-        />
-      ) : !imageFailed ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src="/onboarding/onboarding-hero.png"
-          alt=""
-          className="absolute inset-0 size-full object-cover"
-          onError={() => setImageFailed(true)}
-        />
-      ) : (
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(165deg, #1a1814 0%, #0C0C0E 45%, #1f1a12 100%)",
-          }}
-        />
-      )}
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/20" />
-    </aside>
   );
 }
 
@@ -180,7 +122,7 @@ export function OnboardingShell({
 
   return (
     <div className="onboarding-shell flex h-dvh max-h-dvh w-full overflow-hidden">
-      <DesktopHeroPanel />
+      <OnboardingHeroPanel />
 
       <div className="flex h-dvh max-h-dvh w-full flex-1 flex-col overflow-hidden px-5 sm:px-6 lg:w-[70%] lg:px-10 xl:px-14">
         <header className="onboarding-safe-top z-20 shrink-0 -mx-5 bg-[var(--bg-primary)] px-5 pb-4 pt-3 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
