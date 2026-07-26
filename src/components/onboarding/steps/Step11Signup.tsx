@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
@@ -11,6 +11,7 @@ import { PasswordChecklist } from "@/components/auth/password-checklist";
 import { marketingUrl } from "@/lib/marketing-url";
 import { authCallbackUrl } from "@/lib/auth/redirect";
 import { safeFetchJSON, FetchError } from "@/lib/utils/safe-fetch";
+import { cn } from "@/lib/utils";
 
 function isStrongPassword(password: string): boolean {
   return password.length >= 8 && /[A-Z]/.test(password) && /[0-9]/.test(password);
@@ -22,13 +23,9 @@ interface Step11SignupProps {
 }
 
 /**
- * Onboarding V2 Step 11 (docs/01_ONBOARDING_V2.md §6 "Signup Gateway") — the
- * only forced-auth moment in the entire flow. Everything already answered
- * (Steps 1-10) lives in the anonymous session row; signing up here just
- * attaches a real account to it. Google OAuth round-trips through
- * /api/auth/callback (which fires /api/onboarding/complete itself); direct
- * email+password signup fires it right here when a session comes back
- * immediately (email confirmation disabled).
+ * Onboarding V2 Step 11 — signup gateway.
+ * Method chooser first (Google / Email) so the step fits the viewport;
+ * email fields only appear after "Continue with Email".
  */
 export function Step11Signup({ sessionToken, firstName }: Step11SignupProps) {
   const router = useRouter();
@@ -36,6 +33,28 @@ export function Step11Signup({ sessionToken, firstName }: Step11SignupProps) {
   const [password, setPassword] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showEmailForm, setShowEmailForm] = useState(false);
+  const [termsFlash, setTermsFlash] = useState(false);
+  const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+    };
+  }, []);
+
+  function promptTerms() {
+    toast.error("Please agree to the Terms of Service and Privacy Policy.");
+    setTermsFlash(true);
+    if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+    flashTimerRef.current = setTimeout(() => setTermsFlash(false), 1400);
+  }
+
+  function requireTerms(): boolean {
+    if (termsAccepted) return true;
+    promptTerms();
+    return false;
+  }
 
   async function completeAndAdvance() {
     try {
@@ -59,9 +78,7 @@ export function Step11Signup({ sessionToken, firstName }: Step11SignupProps) {
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
 
-    if (!termsAccepted) {
-      return toast.error("Please agree to the Terms of Service and Privacy Policy.");
-    }
+    if (!requireTerms()) return;
     if (!isStrongPassword(password)) {
       return toast.error(
         "Password must be at least 8 characters, with one uppercase letter and one number."
@@ -105,9 +122,7 @@ export function Step11Signup({ sessionToken, firstName }: Step11SignupProps) {
   }
 
   async function handleGoogle() {
-    if (!termsAccepted) {
-      return toast.error("Please agree to the Terms of Service and Privacy Policy.");
-    }
+    if (!requireTerms()) return;
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -119,7 +134,10 @@ export function Step11Signup({ sessionToken, firstName }: Step11SignupProps) {
     if (error) toast.error(error.message);
   }
 
-  const ctasDisabled = !termsAccepted || loading;
+  function handleContinueWithEmail() {
+    if (!requireTerms()) return;
+    setShowEmailForm(true);
+  }
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -135,7 +153,11 @@ export function Step11Signup({ sessionToken, firstName }: Step11SignupProps) {
       <div className="onboarding-panel onboarding-signup-ctas space-y-4 sm:space-y-5">
         <label
           htmlFor="signup_terms"
-          className="flex items-start gap-3 rounded-sm p-2 -mx-1 transition-colors hover:bg-[var(--bg-elevated)] cursor-pointer sm:p-3 sm:-mx-3"
+          className={cn(
+            "flex cursor-pointer items-start gap-3 rounded-sm p-2 -mx-1 transition-colors sm:p-3 sm:-mx-3",
+            "hover:bg-[var(--bg-elevated)]",
+            termsFlash && "signup-terms-flash"
+          )}
         >
           <input
             type="checkbox"
@@ -170,58 +192,79 @@ export function Step11Signup({ sessionToken, firstName }: Step11SignupProps) {
           </span>
         </label>
 
-        <button
-          type="button"
-          className="btn-ghost w-full whitespace-nowrap"
-          onClick={handleGoogle}
-          disabled={ctasDisabled}
-        >
-          <GoogleIcon /> Continue with Google
-        </button>
-
-        <div className="flex items-center gap-3 text-xs text-[var(--chrome-dark)]">
-          <span className="h-px flex-1 bg-[#222]" /> or{" "}
-          <span className="h-px flex-1 bg-[#222]" />
-        </div>
-
-        <form onSubmit={handleSignup} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="signup_email" className="field-label">Email</Label>
-            <Input
-              id="signup_email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="you@business.com"
-              autoComplete="email"
-              className="onboarding-input h-11"
-            />
+        {!showEmailForm ? (
+          <div className="space-y-3">
+            <button
+              type="button"
+              className="btn-ghost w-full whitespace-nowrap"
+              onClick={handleGoogle}
+              disabled={loading}
+            >
+              <GoogleIcon /> Continue with Google
+            </button>
+            <button
+              type="button"
+              className="btn-gold w-full whitespace-nowrap"
+              onClick={handleContinueWithEmail}
+              disabled={loading}
+            >
+              Continue with Email
+            </button>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="signup_password" className="field-label">Password</Label>
-            <PasswordInput
-              id="signup_password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={8}
-              placeholder="At least 8 characters"
-              autoComplete="new-password"
-              className="onboarding-input h-11"
-            />
-            <PasswordChecklist password={password} />
-          </div>
+        ) : (
+          <form onSubmit={handleSignup} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="signup_email" className="field-label">
+                Email
+              </Label>
+              <Input
+                id="signup_email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="you@business.com"
+                autoComplete="email"
+                autoFocus
+                className="onboarding-input h-11"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="signup_password" className="field-label">
+                Password
+              </Label>
+              <PasswordInput
+                id="signup_password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={8}
+                placeholder="At least 8 characters"
+                autoComplete="new-password"
+                className="onboarding-input h-11"
+              />
+              <PasswordChecklist password={password} />
+            </div>
 
-          <button
-            type="submit"
-            className="btn-gold inline-flex w-full items-center justify-center gap-2 whitespace-nowrap"
-            disabled={ctasDisabled}
-          >
-            {loading && <span className="zuri-spinner !size-3.5" />}
-            {loading ? "Creating account…" : "Create account & build my site"}
-          </button>
-        </form>
+            <button
+              type="submit"
+              className="btn-gold inline-flex w-full items-center justify-center gap-2 whitespace-nowrap"
+              disabled={loading}
+            >
+              {loading && <span className="zuri-spinner !size-3.5" />}
+              {loading ? "Creating account…" : "Create account & build my site"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowEmailForm(false)}
+              disabled={loading}
+              className="w-full text-center text-sm text-[var(--chrome-mid)] transition-colors hover:text-gold"
+            >
+              Back to sign-up options
+            </button>
+          </form>
+        )}
       </div>
 
       <p className="text-center text-sm text-[var(--chrome-mid)]">

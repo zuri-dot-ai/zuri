@@ -809,6 +809,31 @@
     }
   }
 
+  /* Flash terms row when user taps a CTA without agreeing. */
+  @keyframes signup-terms-flash {
+    0%,
+    100% {
+      background-color: transparent;
+    }
+    20%,
+    60% {
+      background-color: var(--bg-elevated);
+    }
+    40%,
+    80% {
+      background-color: rgba(201, 162, 39, 0.12);
+    }
+  }
+  .signup-terms-flash {
+    animation: signup-terms-flash 1.2s ease-in-out 1;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .signup-terms-flash {
+      animation: none;
+      background-color: rgba(201, 162, 39, 0.12);
+    }
+  }
+
   /* One-shot Continue "came alive" — shimmer + scale/pop together. */
   @keyframes continue-gleam {
     0% {
