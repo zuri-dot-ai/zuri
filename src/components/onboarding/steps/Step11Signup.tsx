@@ -151,46 +151,50 @@ export function Step11Signup({ sessionToken, firstName }: Step11SignupProps) {
       </div>
 
       <div className="onboarding-panel onboarding-signup-ctas space-y-4 sm:space-y-5">
-        <label
-          htmlFor="signup_terms"
-          className={cn(
-            "flex cursor-pointer items-start gap-3 rounded-sm p-2 -mx-1 transition-colors sm:p-3 sm:-mx-3",
-            "hover:bg-[var(--bg-elevated)]",
-            termsFlash && "signup-terms-flash"
-          )}
-        >
-          <input
-            type="checkbox"
-            id="signup_terms"
-            required
-            checked={termsAccepted}
-            onChange={(e) => setTermsAccepted(e.target.checked)}
-            className="mt-0.5 h-6 w-6 shrink-0 accent-[#d4a656]"
-          />
-          <span className="text-sm text-[var(--chrome-mid)]">
-            I agree to Zuri&apos;s{" "}
-            <a
-              href={marketingUrl("/terms.html")}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="text-gold underline"
-            >
-              Terms of Service
-            </a>{" "}
-            and{" "}
-            <a
-              href={marketingUrl("/privacy.html")}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="text-gold underline"
-            >
-              Privacy Policy
-            </a>
-            .
-          </span>
-        </label>
+        {/* Terms stay visible on the method chooser; hidden on email form
+            (already accepted to get there) so the step fits the viewport. */}
+        {!showEmailForm && (
+          <label
+            htmlFor="signup_terms"
+            className={cn(
+              "flex cursor-pointer items-start gap-3 rounded-sm p-2 -mx-1 transition-colors sm:p-3 sm:-mx-3",
+              "hover:bg-[var(--bg-elevated)]",
+              termsFlash && "signup-terms-flash"
+            )}
+          >
+            <input
+              type="checkbox"
+              id="signup_terms"
+              required
+              checked={termsAccepted}
+              onChange={(e) => setTermsAccepted(e.target.checked)}
+              className="mt-0.5 h-6 w-6 shrink-0 accent-[#d4a656]"
+            />
+            <span className="text-sm text-[var(--chrome-mid)]">
+              I agree to Zuri&apos;s{" "}
+              <a
+                href={marketingUrl("/terms.html")}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="text-gold underline"
+              >
+                Terms of Service
+              </a>{" "}
+              and{" "}
+              <a
+                href={marketingUrl("/privacy.html")}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="text-gold underline"
+              >
+                Privacy Policy
+              </a>
+              .
+            </span>
+          </label>
+        )}
 
         {!showEmailForm ? (
           <div className="space-y-3">
