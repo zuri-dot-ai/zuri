@@ -1,4 +1,5 @@
 import { StarfieldCanvas } from "@/components/ui/starfield-canvas";
+import { AuthBtnGhostPulse } from "@/components/ui/auth-btn-ghost-pulse";
 
 /**
  * Public agency application flow — mirrors /start chrome (no marketing
@@ -12,6 +13,7 @@ export default function AgencyApplyLayout({
   return (
     <div className="auth-canvas relative min-h-screen">
       <StarfieldCanvas />
+      <AuthBtnGhostPulse />
       <div className="relative z-10">{children}</div>
     </div>
   );

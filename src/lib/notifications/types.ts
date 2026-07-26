@@ -27,7 +27,8 @@ export type NotificationType =
   | "plan_downgraded"
   | "subscription_cancelled"
   | "agency_inquiry_sent"
-  | "agency_application_received";
+  | "agency_application_received"
+  | "custom_site_request_received";
 
 export interface Notification {
   id: string;
@@ -75,6 +76,7 @@ export const NOTIFICATION_DISPLAY: Record<
   subscription_cancelled: { icon: "XCircle", color: "text-white/50" },
   agency_inquiry_sent: { icon: "Send", color: "text-gold" },
   agency_application_received: { icon: "Mail", color: "text-gold" },
+  custom_site_request_received: { icon: "Mail", color: "text-gold" },
 };
 
 /** Templates that must always send regardless of user notification preferences. */

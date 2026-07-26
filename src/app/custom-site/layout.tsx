@@ -1,10 +1,9 @@
 import { StarfieldCanvas } from "@/components/ui/starfield-canvas";
-import { AuthBtnGhostPulse } from "@/components/ui/auth-btn-ghost-pulse";
 
 /**
- * Auth route group — marketing black + single starfield (no favicon particles).
+ * Custom site premium funnel — mirrors /start and /agencies/apply chrome.
  */
-export default function AuthLayout({
+export default function CustomSiteLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -12,7 +11,6 @@ export default function AuthLayout({
   return (
     <div className="auth-canvas relative min-h-screen">
       <StarfieldCanvas />
-      <AuthBtnGhostPulse />
       <div className="relative z-10">{children}</div>
     </div>
   );

@@ -20,8 +20,10 @@ import { ZuriSpinner } from "@/components/ui/skeleton";
 import {
   DEFAULT_ONBOARDING_STATE,
   ONBOARDING_TOTAL_STEPS,
+  isUnsupportedBusinessType,
   type OnboardingState,
 } from "@/lib/onboarding/types";
+import { ONBOARDING_TO_PROJECT_TYPE } from "@/lib/custom-site/types";
 import { resolveArchetypeFromCategory } from "@/lib/website/archetypes";
 import { safeFetchJSON, FetchError } from "@/lib/utils/safe-fetch";
 
@@ -190,6 +192,16 @@ export default function StartPage() {
     setWelcomeBack(false);
 
     setState((prev) => {
+      // Unsupported categories leave standard AI onboarding for the custom funnel.
+      if (prev.step === 1 && isUnsupportedBusinessType(prev.businessType)) {
+        const projectType =
+          ONBOARDING_TO_PROJECT_TYPE[prev.businessType] ?? prev.businessType;
+        router.push(
+          `/custom-site?from=onboarding&type=${encodeURIComponent(projectType)}`
+        );
+        return prev;
+      }
+
       if (authResume && prev.step === LAST_QUESTION_STEP) {
         void finishAuthenticated(prev);
         return prev;
@@ -199,7 +211,7 @@ export default function StartPage() {
         step: Math.min(SIGNUP_STEP, prev.step + 1),
       };
     });
-  }, [authResume, finishAuthenticated]);
+  }, [authResume, finishAuthenticated, router]);
 
   const goBack = useCallback(() => {
     setDirection(-1);

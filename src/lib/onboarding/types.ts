@@ -100,13 +100,13 @@ export const VALID_BUSINESS_TYPES = [
   "health-medical",
   "events-booking",
   "other",
-  // Unsupported branches (§1) — show CustomSiteCTA, do not generate
+  // Unsupported branches (§1) — branch into /custom-site funnel, do not AI-generate
   "ecommerce",
   "blog-publication",
   "nonprofit-community",
 ] as const;
 
-/** Branch 2 / 4 / 7 — redirect to custom build team, never AI-generate. */
+/** Branch 2 / 4 / 7 — custom-site funnel, never AI-generate. */
 export const UNSUPPORTED_BUSINESS_TYPES = [
   "ecommerce",
   "blog-publication",

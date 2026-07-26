@@ -5,6 +5,8 @@ import { safeNextPath } from "@/lib/auth/redirect";
 import { generateSupportRef } from "@/lib/errors/support-ref";
 import { captureError } from "@/lib/monitoring/sentry";
 import { ANON_COOKIE_NAME } from "@/lib/onboarding/anonymous-session";
+import { CUSTOM_SITE_COOKIE_NAME } from "@/lib/custom-site/anonymous-session";
+import { createServiceClient } from "@/lib/supabase/service";
 
 /**
  * Public: Supabase OAuth / email-confirm callback.
@@ -104,10 +106,27 @@ export async function GET(request: Request) {
 
       dest = profile?.onboarding_completed ? next : "/start";
 
-      // Onboarding V2 — if an anonymous session exists from /start, convert it.
-      // Only land on /onboarding (Building) after a successful complete.
-      // No anon cookie or failed complete → /start so the user can finish Q&A.
-      if (!profile?.onboarding_completed) {
+      // Custom site funnel — Google OAuth returns to /custom-site with answers intact.
+      const customSiteToken = cookieStore.get(CUSTOM_SITE_COOKIE_NAME)?.value;
+      const isCustomSiteNext =
+        next === "/custom-site" || next.startsWith("/custom-site?");
+      if (isCustomSiteNext && customSiteToken) {
+        try {
+          const service = createServiceClient();
+          await service
+            .from("anonymous_custom_site_sessions")
+            .update({ converted_user_id: user.id })
+            .eq("session_token", customSiteToken)
+            .is("converted_user_id", null);
+          dest = next;
+        } catch (err) {
+          console.error("[auth/callback] custom-site convert failed:", err);
+          dest = "/custom-site";
+        }
+      } else if (!profile?.onboarding_completed) {
+        // Onboarding V2 — if an anonymous session exists from /start, convert it.
+        // Only land on /onboarding (Building) after a successful complete.
+        // No anon cookie or failed complete → /start so the user can finish Q&A.
         const sessionToken = cookieStore.get(ANON_COOKIE_NAME)?.value;
         if (sessionToken) {
           try {

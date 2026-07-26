@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Mail } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -208,10 +209,11 @@ export function Step11Signup({ sessionToken, firstName }: Step11SignupProps) {
             </button>
             <button
               type="button"
-              className="btn-gold w-full whitespace-nowrap"
+              className="btn-gold inline-flex w-full items-center justify-center gap-2 whitespace-nowrap"
               onClick={handleContinueWithEmail}
               disabled={loading}
             >
+              <Mail className="size-4 shrink-0" aria-hidden />
               Continue with Email
             </button>
           </div>

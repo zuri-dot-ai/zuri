@@ -34,6 +34,9 @@ import { AgencyApplicationConfirmationEmail } from "./AgencyApplicationConfirmat
 import { NewAgencyApplicationAlertEmail } from "./NewAgencyApplicationAlertEmail";
 import { AgencyApprovalEmail } from "./AgencyApprovalEmail";
 import { AgencyRejectionEmail } from "./AgencyRejectionEmail";
+import { CustomSiteRequestConfirmationEmail } from "./CustomSiteRequestConfirmationEmail";
+import { NewCustomSiteRequestAlertEmail } from "./NewCustomSiteRequestAlertEmail";
+import { CustomSiteRequestStatusEmail } from "./CustomSiteRequestStatusEmail";
 import { WeeklyDigestEmail } from "./WeeklyDigestEmail";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -69,6 +72,9 @@ const TEMPLATE_MAP: Record<string, ComponentType<any>> = {
   new_agency_application_alert: NewAgencyApplicationAlertEmail,
   agency_approval: AgencyApprovalEmail,
   agency_rejection: AgencyRejectionEmail,
+  custom_site_request_confirmation: CustomSiteRequestConfirmationEmail,
+  new_custom_site_request_alert: NewCustomSiteRequestAlertEmail,
+  custom_site_request_status: CustomSiteRequestStatusEmail,
   weekly_digest: WeeklyDigestEmail,
 };
 

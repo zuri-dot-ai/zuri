@@ -34,12 +34,18 @@ export default async function AdminLayout({
               <p className="font-heading text-lg font-medium">Zuri Admin</p>
             </div>
           </div>
-          <nav className="flex gap-6 text-sm text-muted-foreground">
+          <nav className="flex flex-wrap gap-4 text-sm text-muted-foreground md:gap-6">
             <Link href="/admin/category-images" className="hover:text-gold">
               Category images
             </Link>
             <Link href="/admin/templates" className="hover:text-gold">
               Templates
+            </Link>
+            <Link
+              href="/admin/custom-site-requests"
+              className="hover:text-gold"
+            >
+              Custom sites
             </Link>
             <Link href="/dashboard" className="hover:text-gold">
               Dashboard

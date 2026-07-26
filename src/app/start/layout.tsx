@@ -1,4 +1,5 @@
 import { StarfieldCanvas } from "@/components/ui/starfield-canvas";
+import { AuthBtnGhostPulse } from "@/components/ui/auth-btn-ghost-pulse";
 
 /**
  * Public pre-signup onboarding entry point (docs/01_ONBOARDING_V2.md).
@@ -14,6 +15,7 @@ export default function StartLayout({
   return (
     <div className="auth-canvas relative min-h-screen">
       <StarfieldCanvas />
+      <AuthBtnGhostPulse />
       <div className="relative z-10">{children}</div>
     </div>
   );

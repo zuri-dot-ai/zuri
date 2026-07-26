@@ -53,8 +53,6 @@ const BUSINESS_TYPES: Array<{ id: string; label: string }> = [
   { id: "other", label: "Other" },
 ];
 
-const PRIMARY_COUNT = 9;
-
 interface Step1CategoryProps {
   value: string;
   onChange: (businessType: string) => void;
@@ -62,10 +60,8 @@ interface Step1CategoryProps {
 }
 
 /**
- * Onboarding V2 Step 1 (docs/01_ONBOARDING_V2.md §4 Step 1) — the very
- * first question, before any account exists. Category alone deterministically
- * resolves the design archetype (Decision 3) — the caller re-derives it via
- * resolveArchetypeFromCategory() on selection.
+ * Onboarding V2 Step 1 — category alone resolves the design archetype.
+ * Unsupported types enable Continue and branch into the custom-site funnel.
  */
 export function Step1Category({
   value,
@@ -75,14 +71,8 @@ export function Step1Category({
   const unsupported = isUnsupportedBusinessType(value);
 
   useEffect(() => {
-    onValidityChange(Boolean(value) && !unsupported);
-  }, [value, unsupported, onValidityChange]);
-
-  const primary = BUSINESS_TYPES.slice(0, PRIMARY_COUNT);
-  const more = BUSINESS_TYPES.slice(PRIMARY_COUNT);
-  const visible = more.some((t) => t.id === value)
-    ? BUSINESS_TYPES
-    : primary;
+    onValidityChange(Boolean(value));
+  }, [value, onValidityChange]);
 
   return (
     <div className="space-y-8">
@@ -94,7 +84,7 @@ export function Step1Category({
       </div>
 
       <div className="grid grid-cols-2 gap-2.5">
-        {visible.map((type) => (
+        {BUSINESS_TYPES.map((type) => (
           <SelectionCard
             key={type.id}
             icon={ICONS[type.id]}
@@ -110,7 +100,8 @@ export function Step1Category({
       {unsupported && (
         <CustomSiteCTA
           context="onboarding"
-          requestedFeature={UNSUPPORTED_FEATURE_LABELS[value as never]}
+          businessType={value}
+          requestedFeature={UNSUPPORTED_FEATURE_LABELS[value]}
         />
       )}
     </div>

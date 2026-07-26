@@ -45,6 +45,11 @@ export const RATE_LIMITS: Record<string, RateLimitConfig> = {
   // Public apply asset uploads — logo + up to 3 portfolio images
   "agency:apply_upload": { limit: 10, windowSeconds: 3600 },
 
+  // Custom site premium funnel
+  "custom_site:start": { limit: 5, windowSeconds: 86400 },
+  "custom_site:session_patch": { limit: 30, windowSeconds: 3600 },
+  "custom_site:submit": { limit: 1, windowSeconds: 86400 },
+
   // General API
   "api:general": { limit: 120, windowSeconds: 60 },
   "api:ai": { limit: 20, windowSeconds: 60 },

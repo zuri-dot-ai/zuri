@@ -51,6 +51,7 @@ import { PublishPanel } from "./PublishPanel";
 import { PreviewFrame } from "./PreviewFrame";
 import { ImageSwapModal } from "./ImageSwapModal";
 import { ReviewChecklist } from "./ReviewChecklist";
+import { CustomSiteCTA } from "@/components/website/CustomSiteCTA";
 import type {
   ActiveTheme,
   DesignArchetype,
@@ -99,6 +100,7 @@ export function WebsiteStudio({
   handle,
   plan,
   needsReview: initialNeedsReview,
+  hasOpenCustomRequest = false,
 }: {
   websiteId: string;
   filledPlaceholders: Record<string, string>;
@@ -111,6 +113,7 @@ export function WebsiteStudio({
   handle: string | null;
   plan: string;
   needsReview: boolean;
+  hasOpenCustomRequest?: boolean;
 }) {
   const router = useRouter();
   const [expanded, setExpanded] = useState<PanelId | "">("hero");
@@ -527,6 +530,13 @@ export function WebsiteStudio({
               );
             })}
           </div>
+          <div className="border-t border-[var(--border-solid)] p-4">
+            <CustomSiteCTA
+              context="editor"
+              compact
+              hasOpenRequest={hasOpenCustomRequest}
+            />
+          </div>
         </aside>
 
         <div className="min-h-[70vh]">
@@ -558,6 +568,13 @@ export function WebsiteStudio({
                 </button>
               );
             })}
+            <div className="pt-3">
+              <CustomSiteCTA
+                context="editor"
+                compact
+                hasOpenRequest={hasOpenCustomRequest}
+              />
+            </div>
 
             {/* Publish stays in the normal scroll flow — last item in the
                 section list, not floating. Preview is the only floating

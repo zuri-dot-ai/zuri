@@ -16,6 +16,7 @@ import { QuickLinksRow } from "@/components/app/quick-links-row";
 import { RecentActivityFeed } from "@/components/app/recent-activity-feed";
 import type { ActivityItem } from "@/components/app/recent-activity-feed";
 import { GenerationStatusCard } from "@/components/app/generation-status-card";
+import { CustomProjectStatusCard } from "@/components/app/custom-project-status-card";
 import {
   getActivePlanId,
   isGrowthPlus,
@@ -28,6 +29,10 @@ import {
   websiteStatusLabel,
 } from "@/lib/dashboard/home-helpers";
 import { getMonthPageviewCount } from "@/lib/analytics/website-stats";
+import {
+  isActiveCustomSiteStatus,
+  type CustomSiteRequestStatus,
+} from "@/lib/custom-site/types";
 import type { ActionPlanTaskRow } from "@/types/database";
 
 function last7Days(): ConsistencyDay[] {
@@ -71,6 +76,7 @@ export default async function DashboardPage() {
     { data: postedThisWeek },
     { data: notifications },
     { data: latestJob },
+    { data: customRequest },
   ] = await Promise.all([
     supabase
       .from("profiles")
@@ -84,7 +90,7 @@ export default async function DashboardPage() {
       .maybeSingle(),
     supabase
       .from("websites")
-      .select("status, handle")
+      .select("status, handle, template_html")
       .eq("user_id", user!.id)
       .maybeSingle(),
     getActivePlanId(supabase, user!.id),
@@ -129,6 +135,13 @@ export default async function DashboardPage() {
     supabase
       .from("website_generation_jobs")
       .select("id, status, error_message")
+      .eq("user_id", user!.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("custom_site_requests")
+      .select("id, status, project_type, reviewer_notes")
       .eq("user_id", user!.id)
       .order("created_at", { ascending: false })
       .limit(1)
@@ -179,6 +192,16 @@ export default async function DashboardPage() {
       | "completed"
       | null) ?? null;
 
+  const customStatus = customRequest?.status as
+    | CustomSiteRequestStatus
+    | undefined;
+  const hasUsableWebsite = Boolean(website?.template_html);
+  const showCustomStatus =
+    customStatus != null &&
+    (isActiveCustomSiteStatus(customStatus) || customStatus === "declined") &&
+    !hasUsableWebsite;
+  const showGenerationCard = !showCustomStatus;
+
   return (
     <div className="relative mx-auto max-w-5xl space-y-7 pb-8 page-enter">
       <header className="page-head">
@@ -187,19 +210,23 @@ export default async function DashboardPage() {
         </h1>
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <Badge variant="default">{planDisplayName(planId)}</Badge>
-          <Badge
-            variant={
-              statusLabel === "Published"
-                ? "success"
-                : statusLabel === "Suspended"
-                  ? "outline"
-                  : "muted"
-            }
-          >
-            {statusLabel}
-            {website?.handle ? ` · ${website.handle}` : ""}
-          </Badge>
-          {!published && (
+          {showCustomStatus ? (
+            <Badge variant="muted">Custom project</Badge>
+          ) : (
+            <Badge
+              variant={
+                statusLabel === "Published"
+                  ? "success"
+                  : statusLabel === "Suspended"
+                    ? "outline"
+                    : "muted"
+              }
+            >
+              {statusLabel}
+              {website?.handle ? ` · ${website.handle}` : ""}
+            </Badge>
+          )}
+          {!published && !showCustomStatus && (
             <Link href="/website" className="text-xs text-gold hover:underline">
               Finish setup →
             </Link>
@@ -207,13 +234,25 @@ export default async function DashboardPage() {
         </div>
       </header>
 
-      <GenerationStatusCard
-        status={jobStatus}
-        errorMessage={latestJob?.error_message}
-        jobId={latestJob?.id}
-      />
+      {showCustomStatus && customRequest && (
+        <CustomProjectStatusCard
+          status={customStatus!}
+          projectType={customRequest.project_type}
+          reviewerNotes={customRequest.reviewer_notes}
+        />
+      )}
 
-      <TodaysActionCard task={todayTask} websitePublished={published} />
+      {showGenerationCard && (
+        <GenerationStatusCard
+          status={jobStatus}
+          errorMessage={latestJob?.error_message}
+          jobId={latestJob?.id}
+        />
+      )}
+
+      {!showCustomStatus && (
+        <TodaysActionCard task={todayTask} websitePublished={published} />
+      )}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
