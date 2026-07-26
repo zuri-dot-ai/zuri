@@ -59,6 +59,39 @@ export async function clearAnonymousSessionCookie(): Promise<void> {
   cookieStore.delete(ANON_COOKIE_NAME);
 }
 
+/**
+ * Re-attaches the anonymous session cookie for an existing, still-valid token
+ * (e.g. after OAuth when the httpOnly cookie was missing but sessionStorage
+ * still had the backup). Does not create a new session row.
+ */
+export async function restoreAnonymousSessionCookie(
+  sessionToken: string
+): Promise<boolean> {
+  const supabase = createServiceClient();
+  const { data: existing } = await supabase
+    .from("anonymous_onboarding_sessions")
+    .select("session_token, expires_at")
+    .eq("session_token", sessionToken)
+    .maybeSingle();
+
+  // Allow restore even if converted_user_id is set — complete may have
+  // partially run; answers in `data` are still needed for a retry.
+  if (!existing || new Date(existing.expires_at).getTime() <= Date.now()) {
+    return false;
+  }
+
+  const cookieStore = await cookies();
+  cookieStore.set(ANON_COOKIE_NAME, sessionToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: ANON_SESSION_TTL_HOURS * 3600,
+    path: "/",
+  });
+
+  return true;
+}
+
 /** One-way hash for rate-limiting keys — never store raw IP/UA. */
 export function hashForRateLimit(value: string): string {
   return crypto.createHash("sha256").update(value).digest("hex");

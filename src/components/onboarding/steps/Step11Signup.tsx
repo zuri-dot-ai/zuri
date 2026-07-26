@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { PasswordChecklist } from "@/components/auth/password-checklist";
 import { marketingUrl } from "@/lib/marketing-url";
 import { authCallbackUrl } from "@/lib/auth/redirect";
+import { clearOnboardingSessionBackup } from "@/lib/onboarding/session-backup";
 import { safeFetchJSON, FetchError } from "@/lib/utils/safe-fetch";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +22,8 @@ function isStrongPassword(password: string): boolean {
 interface Step11SignupProps {
   sessionToken: string;
   firstName: string;
+  /** Persist latest answers before Auth so /complete never sees stale data. */
+  onFlushSession: () => Promise<void>;
 }
 
 /**
@@ -28,7 +31,11 @@ interface Step11SignupProps {
  * Method chooser first (Google / Email) so the step fits the viewport;
  * email fields only appear after "Continue with Email".
  */
-export function Step11Signup({ sessionToken, firstName }: Step11SignupProps) {
+export function Step11Signup({
+  sessionToken,
+  firstName,
+  onFlushSession,
+}: Step11SignupProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -57,13 +64,25 @@ export function Step11Signup({ sessionToken, firstName }: Step11SignupProps) {
     return false;
   }
 
+  async function flushBeforeAuth(): Promise<boolean> {
+    try {
+      await onFlushSession();
+      return true;
+    } catch {
+      toast.error("Could not save your progress. Please try again.");
+      return false;
+    }
+  }
+
   async function completeAndAdvance() {
     try {
+      await onFlushSession();
       await safeFetchJSON("/api/onboarding/complete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionToken }),
       });
+      clearOnboardingSessionBackup();
       router.push("/onboarding");
       router.refresh();
     } catch (err) {
@@ -87,6 +106,11 @@ export function Step11Signup({ sessionToken, firstName }: Step11SignupProps) {
     }
 
     setLoading(true);
+    if (!(await flushBeforeAuth())) {
+      setLoading(false);
+      return;
+    }
+
     const supabase = createClient();
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -124,6 +148,11 @@ export function Step11Signup({ sessionToken, firstName }: Step11SignupProps) {
 
   async function handleGoogle() {
     if (!requireTerms()) return;
+    setLoading(true);
+    if (!(await flushBeforeAuth())) {
+      setLoading(false);
+      return;
+    }
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -132,7 +161,10 @@ export function Step11Signup({ sessionToken, firstName }: Step11SignupProps) {
         queryParams: { prompt: "select_account" },
       },
     });
-    if (error) toast.error(error.message);
+    if (error) {
+      setLoading(false);
+      toast.error(error.message);
+    }
   }
 
   function handleContinueWithEmail() {

@@ -15,33 +15,39 @@ create index if not exists idx_subscriptions_trial_ends_at
   where status = 'trialing' and trial_ends_at is not null;
 
 -- New users: 14-day Pro trial (no payment method required).
+-- EXCEPTION wrapper: subscription insert must never fail auth.users INSERT
+-- (otherwise Supabase Auth returns 500 on signup).
 create or replace function create_default_subscription()
 returns trigger
 language plpgsql
 security definer
 as $$
 begin
-  insert into subscriptions (
-    user_id,
-    plan_id,
-    status,
-    trial_tier,
-    trial_ends_at,
-    trials_used,
-    current_period_start,
-    current_period_end
-  )
-  values (
-    new.id,
-    'pro',
-    'trialing',
-    'pro',
-    now() + interval '14 days',
-    array['pro']::text[],
-    now(),
-    now() + interval '14 days'
-  )
-  on conflict (user_id) do nothing;
+  begin
+    insert into subscriptions (
+      user_id,
+      plan_id,
+      status,
+      trial_tier,
+      trial_ends_at,
+      trials_used,
+      current_period_start,
+      current_period_end
+    )
+    values (
+      new.id,
+      'pro',
+      'trialing',
+      'pro',
+      now() + interval '14 days',
+      array['pro']::text[],
+      now(),
+      now() + interval '14 days'
+    )
+    on conflict (user_id) do nothing;
+  exception when others then
+    raise warning 'create_default_subscription failed for %: %', new.id, sqlerrm;
+  end;
   return new;
 end;
 $$;

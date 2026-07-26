@@ -23,6 +23,11 @@ import {
   isUnsupportedBusinessType,
   type OnboardingState,
 } from "@/lib/onboarding/types";
+import {
+  clearOnboardingSessionBackup,
+  readOnboardingSessionBackup,
+  saveOnboardingSessionBackup,
+} from "@/lib/onboarding/session-backup";
 import { ONBOARDING_TO_PROJECT_TYPE } from "@/lib/custom-site/types";
 import { resolveArchetypeFromCategory } from "@/lib/website/archetypes";
 import { safeFetchJSON, FetchError } from "@/lib/utils/safe-fetch";
@@ -52,6 +57,18 @@ export default function StartPage() {
   const [authResume, setAuthResume] = useState(false);
   const [finishing, setFinishing] = useState(false);
   const patchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const stateRef = useRef(state);
+  stateRef.current = state;
+
+  // Surface auth-callback complete failures without looking like a cold start.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("error") !== "complete_failed") return;
+    toast.error(
+      "Almost there — we couldn't finish setting up your site. Continue from where you left off."
+    );
+    router.replace("/start", { scroll: false });
+  }, [router]);
 
   // ── Bootstrap: auth check + anonymous session ───────────────────────────
   useEffect(() => {
@@ -71,17 +88,27 @@ export default function StartPage() {
             .maybeSingle();
 
           if (profile?.onboarding_completed) {
+            clearOnboardingSessionBackup();
             router.replace("/dashboard");
             return;
           }
           if (!cancelled) setAuthResume(true);
         }
 
+        const restoreToken = readOnboardingSessionBackup();
         const { sessionToken } = await safeFetchJSON<{ sessionToken: string }>(
           "/api/onboarding/start",
-          { method: "POST" }
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(
+              restoreToken ? { restoreToken } : {}
+            ),
+          }
         );
         if (cancelled) return;
+
+        saveOnboardingSessionBackup(sessionToken);
 
         try {
           const existing = await safeFetchJSON<{
@@ -149,6 +176,23 @@ export default function StartPage() {
     setState((prev) => ({ ...prev, ...patch }));
   }, []);
 
+  /** Immediate PATCH so signup/OAuth/complete never race the debounce. */
+  const flushSession = useCallback(async () => {
+    const snapshot = stateRef.current;
+    if (!snapshot.sessionToken) return;
+    if (patchTimerRef.current) {
+      clearTimeout(patchTimerRef.current);
+      patchTimerRef.current = null;
+    }
+    const { sessionToken, step, startedAt, ...data } = snapshot;
+    saveOnboardingSessionBackup(sessionToken);
+    await safeFetchJSON("/api/onboarding/session", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionToken, step, data }),
+    });
+  }, []);
+
   const finishAuthenticated = useCallback(
     async (snapshot: OnboardingState) => {
       if (!snapshot.sessionToken) {
@@ -158,6 +202,10 @@ export default function StartPage() {
       setFinishing(true);
       try {
         const { sessionToken, step, startedAt, ...data } = snapshot;
+        if (patchTimerRef.current) {
+          clearTimeout(patchTimerRef.current);
+          patchTimerRef.current = null;
+        }
         await safeFetchJSON("/api/onboarding/session", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -172,6 +220,7 @@ export default function StartPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ sessionToken }),
         });
+        clearOnboardingSessionBackup();
         router.push("/onboarding");
         router.refresh();
       } catch (err) {
@@ -354,6 +403,7 @@ export default function StartPage() {
             <Step11Signup
               sessionToken={state.sessionToken}
               firstName={state.firstName}
+              onFlushSession={flushSession}
             />
           )}
         </>

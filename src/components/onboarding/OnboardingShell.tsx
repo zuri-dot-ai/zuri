@@ -181,12 +181,12 @@ export function OnboardingShell({
 
         {/*
           lg+: overflow-hidden — no scroll; steps must fit the viewport.
-          max-lg: overflow-y-auto for small phones / keyboard.
+          max-lg: overflow-y-auto for phones / tablets / keyboard.
         */}
         <div
           className={cn(
-            "mx-auto flex min-h-0 w-full max-w-[840px] flex-1 flex-col pb-6 pt-6 lg:pt-8",
-            "max-lg:overflow-y-auto max-lg:overscroll-contain",
+            "onboarding-scroll mx-auto flex min-h-0 w-full max-w-[840px] flex-1 flex-col pb-6 pt-6 lg:pt-8",
+            "max-lg:overflow-y-auto max-lg:overscroll-contain max-lg:pr-3",
             "lg:overflow-hidden"
           )}
         >

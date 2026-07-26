@@ -85,7 +85,10 @@ export function SelectionCard({
         <div className="min-w-0 flex-1">
           <p
             className={cn(
-              "truncate text-sm font-medium tracking-[-0.01em]",
+              "text-sm font-medium tracking-[-0.01em]",
+              compact
+                ? "line-clamp-2 whitespace-normal break-words"
+                : "truncate",
               selected ? "text-foreground" : "text-foreground"
             )}
             title={label}
