@@ -4,7 +4,7 @@ import { processExpiredGracePeriods } from "@/lib/payments/handle-failed-payment
 import {
   processExpiredTrials,
   sendTrialEndingReminders,
-} from "@/lib/payments/trials";
+} from "@/lib/payments/process-trials";
 
 export async function GET(req: Request) {
   // Vercel Cron authentication
