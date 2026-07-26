@@ -1,9 +1,11 @@
 "use client";
 
 import { Lock, Zap, X } from "lucide-react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { recordGateAttempt } from "@/lib/billing/prompt-dismiss";
 
 /** Locked feature teaser — always visible, never hidden */
 export function LockedFeature({
@@ -36,7 +38,13 @@ export function LockedFeature({
       </div>
       <h3 className="mt-4 text-h2 font-semibold tracking-[-0.015em]">{title}</h3>
       <p className="mt-2 max-w-sm text-sm text-muted-foreground">{description}</p>
-      <Button className="mt-6" onClick={() => router.push(href)}>
+      <Button
+        className="mt-6"
+        onClick={() => {
+          recordGateAttempt();
+          router.push(href);
+        }}
+      >
         <Zap className="size-4" /> Upgrade to {requiredPlan}
       </Button>
     </div>
@@ -58,6 +66,11 @@ export function UpgradeSheet({
   requiredPlan?: string;
 }) {
   const router = useRouter();
+
+  useEffect(() => {
+    if (open) recordGateAttempt();
+  }, [open]);
+
   if (!open) return null;
 
   return (

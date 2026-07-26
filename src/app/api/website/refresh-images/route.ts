@@ -3,7 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth/require-auth";
 import { checkRateLimit, rateLimitExceededResponse } from "@/lib/security/rate-limit";
 import {
+  normalizeFilledEmbeds,
   normalizeFilledImages,
+  normalizeFilledLinks,
   persistRecomposedWebsite,
 } from "@/lib/website/recompose-html";
 import {
@@ -42,7 +44,7 @@ export async function POST() {
   const { data: website } = await supabase
     .from("websites")
     .select(
-      "id, template_id, archetype, template_html, filled_placeholders, filled_images, active_theme"
+      "id, template_id, archetype, template_html, filled_placeholders, filled_images, filled_links, filled_embeds, active_theme"
     )
     .eq("user_id", user.id)
     .maybeSingle();
@@ -83,6 +85,8 @@ export async function POST() {
 
     const placeholders =
       (website.filled_placeholders as Record<string, string>) ?? {};
+    const links = normalizeFilledLinks(website.filled_links);
+    const embeds = normalizeFilledEmbeds(website.filled_embeds);
     const activeTheme = (website.active_theme as ActiveTheme) ?? "theme-1";
 
     const result = await persistRecomposedWebsite(
@@ -93,6 +97,8 @@ export async function POST() {
         templateId: website.template_id,
         filledPlaceholders: placeholders,
         filledImages,
+        filledLinks: links,
+        filledEmbeds: embeds,
         activeTheme,
         archetype,
       }

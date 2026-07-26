@@ -550,11 +550,11 @@
 <nav id="main-nav">
   <div class="nav-brand">{{business_name}}</div>
   <ul class="nav-links">
-    <li><a href="#about">About</a></li>
-    <li><a href="#menu">Menu</a></li>
-    <li><a href="#gallery">Gallery</a></li>
-    <li><a href="#testimonials">Testimonials</a></li>
-    <li><a href="#contact" class="btn btn-solid">Reserve</a></li>
+    <li><a data-link-slot="nav_about" href="#about">About</a></li>
+    <li><a data-link-slot="nav_menu" href="#menu">Menu</a></li>
+    <li><a data-link-slot="nav_gallery" href="#gallery">Gallery</a></li>
+    <li><a data-link-slot="nav_testimonials" href="#testimonials">Testimonials</a></li>
+    <li><a data-link-slot="cta_primary" href="#contact" class="btn btn-solid">Reserve</a></li>
   </ul>
   <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">
     <span></span><span></span><span></span>
@@ -576,8 +576,8 @@
     <span class="eyebrow">{{tagline}}</span>
     <h1>{{business_name}}</h1>
     <div class="hero-ctas">
-      <a href="#contact" class="btn btn-solid">Reserve a Table</a>
-      <a href="#menu" class="btn btn-outline">View Menu</a>
+      <a data-link-slot="cta_secondary" href="#contact" class="btn btn-solid">Reserve a Table</a>
+      <a data-link-slot="cta_3" href="#menu" class="btn btn-outline">View Menu</a>
     </div>
   </div>
 </header>
@@ -585,7 +585,7 @@
 <section class="hours-strip">
   <div class="container">
     <p class="hours-text"><strong>Open Today</strong> — {{opening_hours}}</p>
-    <a href="#contact" class="btn btn-solid">Order / Reserve</a>
+    <a data-link-slot="cta_4" href="#contact" class="btn btn-solid">Order / Reserve</a>
   </div>
 </section>
 

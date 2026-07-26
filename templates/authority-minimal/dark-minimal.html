@@ -541,7 +541,7 @@
       <a href="#services">Services</a>
       <a href="#contact">Contact</a>
     </nav>
-    <a href="#contact" class="btn btn-outline-gold nav-cta">Book a Consultation</a>
+    <a data-link-slot="cta_primary" href="#contact" class="btn btn-outline-gold nav-cta">Book a Consultation</a>
     <button class="hamburger" id="hamburger-btn" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-drawer">
       <span></span><span></span><span></span>
     </button>
@@ -550,10 +550,10 @@
 
 <div class="drawer-overlay" id="drawer-overlay"></div>
 <nav class="drawer" id="mobile-drawer" aria-label="Mobile">
-  <a href="#about">About</a>
-  <a href="#services">Services</a>
-  <a href="#contact">Contact</a>
-  <a href="#contact" class="btn btn-primary">Book a Consultation</a>
+  <a data-link-slot="nav_about" href="#about">About</a>
+  <a data-link-slot="nav_services" href="#services">Services</a>
+  <a data-link-slot="nav_contact" href="#contact">Contact</a>
+  <a data-link-slot="nav_contact" href="#contact" class="btn btn-primary">Book a Consultation</a>
 </nav>
 
 <main>
@@ -564,8 +564,8 @@
     <h1 class="reveal reveal-delay-1">{{tagline}}</h1>
     <p class="hero-sub reveal reveal-delay-2">{{about_body}}</p>
     <div class="hero-ctas reveal reveal-delay-3">
-      <a href="#contact" class="btn btn-primary">Book a Consultation</a>
-      <a href="#about" class="btn btn-outline">Learn More</a>
+      <a data-link-slot="cta_secondary" href="#contact" class="btn btn-primary">Book a Consultation</a>
+      <a data-link-slot="cta_3" href="#about" class="btn btn-outline">Learn More</a>
     </div>
   </section>
 

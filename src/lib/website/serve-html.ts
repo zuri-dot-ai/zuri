@@ -209,3 +209,55 @@ export function injectConsentBanner(html: string): string {
   }
   return html + banner;
 }
+
+/**
+ * Owner-only studio bridge for /preview — wires image/link slot clicks and
+ * highlight-section messages via postMessage. Injected server-side so it works
+ * inside a sandboxed iframe without allow-same-origin (parent cannot access
+ * contentDocument).
+ */
+export function injectStudioBridge(html: string): string {
+  if (html.includes('data-zuri-studio-bridge="1"')) return html;
+
+  const script = `<script data-zuri-studio-bridge="1">
+(function(){
+  var SRC='zuri-preview';
+  window.addEventListener('message', function(e){
+    if(!e.data || e.data.source!==SRC) return;
+    if(e.data.type==='highlight-section' && e.data.sectionId){
+      var el=document.getElementById(e.data.sectionId);
+      if(!el) return;
+      el.scrollIntoView({behavior:'smooth',block:'start'});
+      el.style.outline='2px solid #C9A84C';
+      el.style.outlineOffset='4px';
+      setTimeout(function(){ el.style.outline=''; el.style.outlineOffset=''; },1200);
+    }
+  });
+  document.querySelectorAll('img[data-image-slot]').forEach(function(img){
+    img.style.cursor='pointer';
+    img.addEventListener('click', function(ev){
+      ev.preventDefault();
+      ev.stopPropagation();
+      var slot=img.getAttribute('data-image-slot');
+      if(slot) parent.postMessage({source:SRC,type:'image-click',slot:slot}, '*');
+    });
+  });
+  document.querySelectorAll('a[data-link-slot]').forEach(function(a){
+    a.style.cursor='pointer';
+    a.addEventListener('click', function(ev){
+      ev.preventDefault();
+      ev.stopPropagation();
+      var slot=a.getAttribute('data-link-slot');
+      var href=a.getAttribute('href')||'';
+      var label=(a.textContent||'').trim();
+      if(slot) parent.postMessage({source:SRC,type:'link-click',slot:slot,href:href,label:label}, '*');
+    });
+  });
+})();
+</script>`;
+
+  if (/<\/body>/i.test(html)) {
+    return html.replace(/<\/body>/i, `${script}</body>`);
+  }
+  return html + script;
+}

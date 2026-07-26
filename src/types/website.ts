@@ -49,6 +49,30 @@ export interface ResolvedImage {
   alt?: string;
 }
 
+/** Link override for a `data-link-slot` anchor (CTA or nav). */
+export interface ResolvedLink {
+  href: string;
+  /** Default `_blank` for external; `_self` for internal `#…` hashes. */
+  target?: "_blank" | "_self";
+  /** CTA label override only — nav labels stay template text. */
+  label?: string;
+}
+
+export type EmbedProvider =
+  | "youtube"
+  | "vimeo"
+  | "google_maps"
+  | "iframe";
+
+/** Sanitized third-party embed injected into published HTML. */
+export interface ResolvedEmbed {
+  id: string;
+  provider: EmbedProvider;
+  /** Final iframe `src` only (never raw pasted HTML). */
+  src: string;
+  title?: string;
+}
+
 /** `templates` table row (§3.2) */
 export interface TemplateRow {
   id: string;
@@ -90,6 +114,8 @@ export interface WebsiteRow {
   template_html: string | null;
   filled_placeholders: Record<string, string>;
   filled_images: Record<string, ResolvedImage>;
+  filled_links: Record<string, ResolvedLink>;
+  filled_embeds: ResolvedEmbed[];
   archetype: DesignArchetype | null;
   needs_review: boolean;
   published_at: string | null;

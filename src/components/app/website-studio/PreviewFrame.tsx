@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { WebsitePreviewSkeleton } from "@/components/ui/skeleton";
@@ -13,12 +13,14 @@ export function PreviewFrame({
   rootDomain,
   highlightSection,
   onImageSlotClick,
+  onLinkSlotClick,
 }: {
   handle: string | null;
   refreshKey: number;
   rootDomain: string;
   highlightSection?: string | null;
   onImageSlotClick?: (slot: string) => void;
+  onLinkSlotClick?: (slot: string, href: string, label: string) => void;
 }) {
   const [loaded, setLoaded] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -36,10 +38,17 @@ export function PreviewFrame({
       if (data.type === "image-click" && typeof data.slot === "string") {
         onImageSlotClick?.(data.slot);
       }
+      if (data.type === "link-click" && typeof data.slot === "string") {
+        onLinkSlotClick?.(
+          data.slot,
+          typeof data.href === "string" ? data.href : "",
+          typeof data.label === "string" ? data.label : ""
+        );
+      }
     }
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
-  }, [onImageSlotClick]);
+  }, [onImageSlotClick, onLinkSlotClick]);
 
   useEffect(() => {
     if (!loaded || !highlightSection || !iframeRef.current?.contentWindow)
@@ -53,38 +62,6 @@ export function PreviewFrame({
       window.location.origin
     );
   }, [highlightSection, loaded, refreshKey]);
-
-  const onLoad = useCallback(() => {
-    setLoaded(true);
-    const doc = iframeRef.current?.contentDocument;
-    if (!doc) return;
-
-    const script = doc.createElement("script");
-    script.textContent = `
-(function(){
-  var SRC='${PREVIEW_MSG}';
-  window.addEventListener('message', function(e){
-    if(!e.data || e.data.source!==SRC) return;
-    if(e.data.type==='highlight-section' && e.data.sectionId){
-      var el=document.getElementById(e.data.sectionId);
-      if(!el) return;
-      el.scrollIntoView({behavior:'smooth',block:'start'});
-      el.style.outline='2px solid #C9A84C';
-      el.style.outlineOffset='4px';
-      setTimeout(function(){ el.style.outline=''; el.style.outlineOffset=''; },1200);
-    }
-  });
-  document.querySelectorAll('img[data-image-slot]').forEach(function(img){
-    img.style.cursor='pointer';
-    img.addEventListener('click', function(ev){
-      ev.preventDefault();
-      var slot=img.getAttribute('data-image-slot');
-      if(slot) parent.postMessage({source:SRC,type:'image-click',slot:slot}, '*');
-    });
-  });
-})();`;
-    doc.documentElement.appendChild(script);
-  }, []);
 
   return (
     <div className="surface-hairline flex h-full min-h-[60vh] flex-col overflow-hidden border border-border md:min-h-0">
@@ -109,7 +86,7 @@ export function PreviewFrame({
             key={refreshKey}
             title="Website preview"
             src={previewSrc}
-            onLoad={onLoad}
+            onLoad={() => setLoaded(true)}
             className={cn(
               "block h-full w-full border-0 bg-[var(--bg-secondary)] transition-opacity duration-300",
               loaded ? "opacity-100" : "opacity-0"
@@ -119,7 +96,9 @@ export function PreviewFrame({
             // allow-scripts would let injected/AI-generated site
             // content script its way into this origin's storage/
             // cookies. Scripted communication back to the studio only
-            // needs postMessage, which works fine without it.
+            // needs postMessage, which works fine without it. Slot
+            // click handlers are injected server-side via
+            // injectStudioBridge in /preview.
             sandbox="allow-scripts allow-forms"
           />
         ) : (

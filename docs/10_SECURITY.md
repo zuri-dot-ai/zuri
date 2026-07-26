@@ -888,6 +888,10 @@ $$;
 > `appSecurityHeaders` (dashboard/auth) and `previewSecurityHeaders`
 > (`/preview`, `/sites`). Both must include `https://res.cloudinary.com` in
 > `img-src`. `images.remotePatterns` must also list `res.cloudinary.com`.
+> `previewSecurityHeaders` also sets an explicit `frame-src` allowlist for
+> studio embeds (YouTube, Vimeo, Google Maps, Calendly, Google Forms,
+> Eventbrite) — never `*`. Pasted embed HTML is sanitized to iframe-only
+> allowlisted hosts before render (see `src/lib/website/embed-sanitize.ts`).
 > The single-CSP example below is historical and should not be copied blindly.
 
 ```typescript

@@ -305,11 +305,11 @@
   <div class="container nav-inner">
     <a href="#hero" class="logo">{{business_name}}</a>
     <ul class="nav-links">
-      <li><a href="#about">About</a></li>
-      <li><a href="#services">Product</a></li>
-      <li><a href="#testimonials">Testimonials</a></li>
-      <li><a href="#faq">FAQ</a></li>
-      <li><a href="#contact">Contact</a></li>
+      <li><a data-link-slot="nav_about" href="#about">About</a></li>
+      <li><a data-link-slot="nav_services" href="#services">Product</a></li>
+      <li><a data-link-slot="nav_testimonials" href="#testimonials">Testimonials</a></li>
+      <li><a data-link-slot="nav_faq" href="#faq">FAQ</a></li>
+      <li><a data-link-slot="nav_contact" href="#contact">Contact</a></li>
     </ul>
     <button class="nav-cta" id="nav-cta-btn">Get Started</button>
     <button class="hamburger" id="hamburger-btn" aria-label="Open menu" aria-expanded="false">

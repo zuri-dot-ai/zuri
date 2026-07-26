@@ -475,10 +475,10 @@
 <div class="drawer-overlay" id="drawer-overlay"></div>
 <nav class="mobile-drawer" id="mobile-drawer" aria-label="Mobile">
   <ul>
-    <li><a href="#about">About</a></li>
-    <li><a href="#services">Services</a></li>
-    <li><a href="#testimonials">Testimonials</a></li>
-    <li><a href="#contact">Contact</a></li>
+    <li><a data-link-slot="nav_about" href="#about">About</a></li>
+    <li><a data-link-slot="nav_services" href="#services">Services</a></li>
+    <li><a data-link-slot="nav_testimonials" href="#testimonials">Testimonials</a></li>
+    <li><a data-link-slot="nav_contact" href="#contact">Contact</a></li>
   </ul>
 </nav>
 
@@ -491,8 +491,8 @@
       <h1>Counsel Built on <em>Trust</em>, Delivered with Precision</h1>
       <p class="tagline">{{business_name}} provides advisory grounded in discretion, rigor, and a deep understanding of the landscapes our clients operate in.</p>
       <div class="hero-ctas">
-        <a href="#contact" class="btn btn-primary">Book a Consultation</a>
-        <a href="#about" class="btn btn-secondary">Our Approach</a>
+        <a data-link-slot="cta_primary" href="#contact" class="btn btn-primary">Book a Consultation</a>
+        <a data-link-slot="cta_secondary" href="#about" class="btn btn-secondary">Our Approach</a>
       </div>
     </div>
   </section>

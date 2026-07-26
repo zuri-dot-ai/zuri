@@ -378,11 +378,11 @@
     <a href="#top" class="logo">{{business_name}}</a>
     <nav class="primary-nav" aria-label="Primary navigation">
       <ul>
-        <li><a href="#about">About</a></li>
-        <li><a href="#properties">Properties</a></li>
-        <li><a href="#services">Services</a></li>
-        <li><a href="#testimonials">Testimonials</a></li>
-        <li><a href="#contact">Contact</a></li>
+        <li><a data-link-slot="nav_about" href="#about">About</a></li>
+        <li><a data-link-slot="nav_properties" href="#properties">Properties</a></li>
+        <li><a data-link-slot="nav_services" href="#services">Services</a></li>
+        <li><a data-link-slot="nav_testimonials" href="#testimonials">Testimonials</a></li>
+        <li><a data-link-slot="nav_contact" href="#contact">Contact</a></li>
       </ul>
     </nav>
     <button class="hamburger" id="hamburger-btn" aria-label="Toggle menu" aria-expanded="false" aria-controls="mobile-drawer">
@@ -394,11 +394,11 @@
 <div class="drawer-overlay" id="drawer-overlay"></div>
 <nav class="mobile-drawer" id="mobile-drawer" aria-label="Mobile navigation">
   <ul>
-    <li><a href="#about">About</a></li>
-    <li><a href="#properties">Properties</a></li>
-    <li><a href="#services">Services</a></li>
-    <li><a href="#testimonials">Testimonials</a></li>
-    <li><a href="#contact">Contact</a></li>
+    <li><a data-link-slot="nav_about" href="#about">About</a></li>
+    <li><a data-link-slot="nav_properties" href="#properties">Properties</a></li>
+    <li><a data-link-slot="nav_services" href="#services">Services</a></li>
+    <li><a data-link-slot="nav_testimonials" href="#testimonials">Testimonials</a></li>
+    <li><a data-link-slot="nav_contact" href="#contact">Contact</a></li>
   </ul>
 </nav>
 
@@ -411,8 +411,8 @@
         <h1>{{business_name}}</h1>
         <p>{{about_body}}</p>
         <div class="hero-cta-group">
-          <a href="#properties" class="btn">View Properties</a>
-          <a href="#contact" class="btn btn-outline">Get In Touch</a>
+          <a data-link-slot="cta_primary" href="#properties" class="btn">View Properties</a>
+          <a data-link-slot="cta_secondary" href="#contact" class="btn btn-outline">Get In Touch</a>
         </div>
       </div>
       <div class="hero-image reveal">

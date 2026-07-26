@@ -183,9 +183,9 @@
     <a href="#top" class="logo">{{business_name}}</a>
     <nav class="primary-nav" aria-label="Primary navigation">
       <ul>
-        <li><a href="#services">Product</a></li>
-        <li><a href="#faq">FAQ</a></li>
-        <li><a href="#contact">Contact</a></li>
+        <li><a data-link-slot="nav_services" href="#services">Product</a></li>
+        <li><a data-link-slot="nav_faq" href="#faq">FAQ</a></li>
+        <li><a data-link-slot="nav_contact" href="#contact">Contact</a></li>
       </ul>
     </nav>
     <button class="hamburger" id="hamburger-btn" aria-label="Toggle menu" aria-expanded="false" aria-controls="mobile-drawer">
@@ -197,9 +197,9 @@
 <div class="drawer-overlay" id="drawer-overlay"></div>
 <nav class="mobile-drawer" id="mobile-drawer" aria-label="Mobile navigation">
   <ul>
-    <li><a href="#services">Product</a></li>
-        <li><a href="#faq">FAQ</a></li>
-        <li><a href="#contact">Contact</a></li>
+    <li><a data-link-slot="nav_services" href="#services">Product</a></li>
+        <li><a data-link-slot="nav_faq" href="#faq">FAQ</a></li>
+        <li><a data-link-slot="nav_contact" href="#contact">Contact</a></li>
   </ul>
 </nav>
 
@@ -218,8 +218,8 @@
         <h1 id="hero-headline">{{business_name}}</h1>
         <p>{{about_body_short}}</p>
         <div class="hero-cta-group">
-          <a href="#contact" class="btn">Get Started</a>
-          <a href="#services" class="btn btn-outline">See What We Do</a>
+          <a data-link-slot="cta_primary" href="#contact" class="btn">Get Started</a>
+          <a data-link-slot="cta_secondary" href="#services" class="btn btn-outline">See What We Do</a>
         </div>
       </div>
     </div>

@@ -248,10 +248,10 @@
 <nav id="main-nav" aria-label="Main navigation">
   <a href="#hero" class="nav-logo">{{business_name}}</a>
   <ul class="nav-links">
-    <li><a href="#menu">Menu</a></li>
-    <li><a href="#about">About</a></li>
-    <li><a href="#gallery">Gallery</a></li>
-    <li><a href="#contact">Contact</a></li>
+    <li><a data-link-slot="nav_menu" href="#menu">Menu</a></li>
+    <li><a data-link-slot="nav_about" href="#about">About</a></li>
+    <li><a data-link-slot="nav_gallery" href="#gallery">Gallery</a></li>
+    <li><a data-link-slot="nav_contact" href="#contact">Contact</a></li>
   </ul>
   <button class="hamburger" id="hamburger-btn" aria-label="Open menu" aria-expanded="false" aria-controls="drawer">
     <span></span><span></span><span></span>
@@ -273,8 +273,8 @@
     <h1>{{business_name}}</h1>
     <p>An intimate dining experience built on craft, seasonality, and quiet ceremony.</p>
     <div class="hero-ctas">
-      <a href="#contact" class="btn btn-filled">Reserve a Table</a>
-      <a href="#menu" class="btn btn-outline">View Menu</a>
+      <a data-link-slot="cta_primary" href="#contact" class="btn btn-filled">Reserve a Table</a>
+      <a data-link-slot="cta_secondary" href="#menu" class="btn btn-outline">View Menu</a>
     </div>
   </div>
 </header>
@@ -282,7 +282,7 @@
 <!-- HOURS + RESERVE STRIP -->
 <div id="hours-strip">
   <p class="hours-text"><strong>Hours:</strong> {{opening_hours}}</p>
-  <a href="#contact" class="btn btn-filled">Order / Reserve</a>
+  <a data-link-slot="cta_3" href="#contact" class="btn btn-filled">Order / Reserve</a>
 </div>
 
 <!-- ABOUT -->

@@ -171,7 +171,7 @@ export function Step11Signup({ sessionToken, firstName }: Step11SignupProps) {
               onChange={(e) => setTermsAccepted(e.target.checked)}
               className="mt-0.5 h-6 w-6 shrink-0 accent-[#d4a656]"
             />
-            <span className="text-sm text-[var(--chrome-mid)]">
+            <span className="text-xs text-[var(--chrome-mid)] sm:text-sm">
               I agree to Zuri&apos;s{" "}
               <a
                 href={marketingUrl("/terms.html")}
@@ -201,20 +201,20 @@ export function Step11Signup({ sessionToken, firstName }: Step11SignupProps) {
           <div className="space-y-3">
             <button
               type="button"
-              className="btn-ghost w-full whitespace-nowrap"
-              onClick={handleGoogle}
-              disabled={loading}
-            >
-              <GoogleIcon /> Continue with Google
-            </button>
-            <button
-              type="button"
               className="btn-gold inline-flex w-full items-center justify-center gap-2 whitespace-nowrap"
               onClick={handleContinueWithEmail}
               disabled={loading}
             >
               <Mail className="size-4 shrink-0" aria-hidden />
               Continue with Email
+            </button>
+            <button
+              type="button"
+              className="btn-ghost w-full whitespace-nowrap"
+              onClick={handleGoogle}
+              disabled={loading}
+            >
+              <GoogleIcon /> Continue with Google
             </button>
           </div>
         ) : (

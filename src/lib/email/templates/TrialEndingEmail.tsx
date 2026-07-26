@@ -4,16 +4,35 @@ export interface TrialEndingEmailProps {
   firstName: string;
   daysLeft: number;
   upgradeUrl: string;
+  planName?: string;
+  lossSummary?: string;
 }
 
-export function TrialEndingEmail({ firstName, daysLeft, upgradeUrl }: TrialEndingEmailProps) {
+export function TrialEndingEmail({
+  firstName,
+  daysLeft,
+  upgradeUrl,
+  planName = "your",
+  lossSummary,
+}: TrialEndingEmailProps) {
+  const dayLabel = daysLeft === 1 ? "1 day" : `${daysLeft} days`;
+  const loss =
+    lossSummary ??
+    "publishing your website, content calendar, AI images, and agency marketplace";
+
   return (
-    <BaseEmailLayout preview={`Your Zuri trial ends in ${daysLeft} days`}>
-      <EmailHeading>{`Your trial ends in ${daysLeft} day${daysLeft === 1 ? "" : "s"}.`}</EmailHeading>
+    <BaseEmailLayout preview={`Your Zuri trial ends in ${dayLabel}`}>
+      <EmailHeading>{`Your ${planName} trial ends in ${dayLabel}.`}</EmailHeading>
       <EmailBody>
-        {`Hi ${firstName}, we hope you've enjoyed building your presence on Zuri. Add a payment method now to keep everything running without interruption.`}
+        {`Hi ${firstName}, nothing will be charged — there is no card on file. When the trial ends, your account automatically moves to Free.`}
       </EmailBody>
-      <EmailButton href={upgradeUrl}>Choose a plan</EmailButton>
+      <EmailBody>
+        {`On Free you will lose access to: ${loss}.`}
+      </EmailBody>
+      <EmailBody>
+        Upgrade now to keep everything running without interruption.
+      </EmailBody>
+      <EmailButton href={upgradeUrl}>Upgrade your plan</EmailButton>
     </BaseEmailLayout>
   );
 }

@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
   htmlResponse,
+  injectStudioBridge,
   notFoundResponse,
   sanitizeServedImages,
 } from "@/lib/website/serve-html";
@@ -16,6 +17,9 @@ export const dynamic = "force-dynamic";
  * (back button + site name, Preview/Publish controls) already communicates
  * preview status, so an injected `<div id="zuri-preview-banner">` would
  * just duplicate it as a second bar inside the iframe content.
+ *
+ * Injects the studio bridge script so image/link slot clicks reach the
+ * parent editor via postMessage (sandbox without allow-same-origin).
  */
 export async function GET(
   _req: Request,
@@ -47,5 +51,5 @@ export async function GET(
     website.template_html,
     website.archetype as DesignArchetype | null
   );
-  return htmlResponse(sanitized);
+  return htmlResponse(injectStudioBridge(sanitized));
 }

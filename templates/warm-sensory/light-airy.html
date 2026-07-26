@@ -548,7 +548,7 @@
       </ul>
     </nav>
     <div class="nav-cta">
-      <a href="#contact" class="btn btn-filled">Reserve a Table</a>
+      <a data-link-slot="cta_primary" href="#contact" class="btn btn-filled">Reserve a Table</a>
       <button id="hamburger" aria-label="Toggle menu" aria-expanded="false" aria-controls="mobile-drawer">
         <span></span><span></span><span></span>
       </button>
@@ -559,11 +559,11 @@
 <div id="drawer-overlay"></div>
 <nav id="mobile-drawer" aria-label="Mobile navigation">
   <ul>
-    <li><a href="#about">About</a></li>
-    <li><a href="#menu">Menu</a></li>
-    <li><a href="#gallery">Gallery</a></li>
-    <li><a href="#testimonials">Testimonials</a></li>
-    <li><a href="#contact">Contact</a></li>
+    <li><a data-link-slot="nav_about" href="#about">About</a></li>
+    <li><a data-link-slot="nav_menu" href="#menu">Menu</a></li>
+    <li><a data-link-slot="nav_gallery" href="#gallery">Gallery</a></li>
+    <li><a data-link-slot="nav_testimonials" href="#testimonials">Testimonials</a></li>
+    <li><a data-link-slot="nav_contact" href="#contact">Contact</a></li>
   </ul>
 </nav>
 
@@ -575,8 +575,8 @@
     <h1>{{business_name}}</h1>
     <p>Sunlit dining, honest ingredients, and a table always waiting for you.</p>
     <div class="hero-actions">
-      <a href="#contact" class="btn btn-filled">Reserve a Table</a>
-      <a href="#menu" class="btn">View Menu</a>
+      <a data-link-slot="cta_secondary" href="#contact" class="btn btn-filled">Reserve a Table</a>
+      <a data-link-slot="cta_3" href="#menu" class="btn">View Menu</a>
     </div>
   </div>
   <div class="scroll-cue" aria-hidden="true"></div>
@@ -603,7 +603,7 @@
         <div class="strip-value">{{phone_number}}</div>
       </div>
     </div>
-    <a href="#contact" class="btn">Book Your Table</a>
+    <a data-link-slot="cta_4" href="#contact" class="btn">Book Your Table</a>
   </div>
 </div>
 

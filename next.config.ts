@@ -52,8 +52,10 @@ const appSecurityHeaders = [
  * app CSP (no Flutterwave/Resend/etc — sites don't call those), but still
  * needs to allow whatever origins template_html actually renders: Google
  * Fonts (link tags in every template), Supabase (image storage + any
- * client-side data fetches from injected scripts), and the stock image
- * providers used for fallback/slot images. Explicitly enumerated — never `*`.
+ * client-side data fetches from injected scripts), the stock image
+ * providers used for fallback/slot images, and allowlisted embed iframe
+ * hosts (YouTube/Vimeo/Maps/Calendly/Forms/Eventbrite). Explicitly
+ * enumerated — never `*`.
  */
 const previewSecurityHeaders = [
   ...baseSecurityHeaders,
@@ -67,6 +69,7 @@ const previewSecurityHeaders = [
       "img-src 'self' data: blob: https://images.unsplash.com https://images.pexels.com https://*.supabase.co https://*.supabase.in https://res.cloudinary.com",
       "connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com https://api.unsplash.com https://api.pexels.com",
       "media-src 'self' blob: https://*.supabase.co",
+      "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://www.google.com https://maps.google.com https://calendly.com https://www.calendly.com https://docs.google.com https://forms.gle https://www.eventbrite.com https://eventbrite.com",
       "frame-ancestors 'self'",
       "object-src 'none'",
       "base-uri 'self'",

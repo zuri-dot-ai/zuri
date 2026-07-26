@@ -14,7 +14,7 @@ export async function GET() {
   const { data: sub } = await supabase
     .from("subscriptions")
     .select(
-      "plan_id, status, billing_cycle, current_period_start, current_period_end, cancel_at_period_end, grace_period_end"
+      "plan_id, status, billing_cycle, current_period_start, current_period_end, cancel_at_period_end, grace_period_end, trial_ends_at, trial_tier, trials_used, trial_ended_at"
     )
     .eq("user_id", user.id)
     .maybeSingle();
@@ -25,6 +25,10 @@ export async function GET() {
   const planId: PlanId =
     active && isPlanId(sub?.plan_id) ? sub!.plan_id : "free";
   const plan = PLAN_CONFIG[planId];
+  const periodEnd =
+    status === "trialing" && sub?.trial_ends_at
+      ? sub.trial_ends_at
+      : (sub?.current_period_end ?? null);
 
   const periodStart = new Date();
   periodStart.setDate(1);
@@ -45,9 +49,13 @@ export async function GET() {
     status,
     billingCycle: sub?.billing_cycle ?? "monthly",
     periodStart: sub?.current_period_start ?? null,
-    periodEnd: sub?.current_period_end ?? null,
+    periodEnd,
     cancelAtPeriodEnd: sub?.cancel_at_period_end ?? false,
     gracePeriodEnd: sub?.grace_period_end ?? null,
+    trialEndsAt: sub?.trial_ends_at ?? null,
+    trialTier: sub?.trial_tier ?? null,
+    trialsUsed: sub?.trials_used ?? [],
+    trialEndedAt: sub?.trial_ended_at ?? null,
     limits: plan.limits,
     prices: {
       monthly: plan.price_monthly,

@@ -5,7 +5,12 @@ import { WebsiteStudio } from "@/components/app/website-studio";
 import { CustomSiteCTA } from "@/components/website/CustomSiteCTA";
 import { CustomProjectStatusCard } from "@/components/app/custom-project-status-card";
 import { getActivePlanId } from "@/lib/payments/get-plan";
-import { normalizeFilledImages } from "@/lib/website/recompose-html";
+import {
+  normalizeFilledEmbeds,
+  normalizeFilledImages,
+  normalizeFilledLinks,
+} from "@/lib/website/recompose-html";
+import { discoverLinkSlots } from "@/lib/website/link-slots";
 import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
 import {
   isActiveCustomSiteStatus,
@@ -89,6 +94,15 @@ export default async function WebsitePage() {
     customRequest?.status != null &&
     isActiveCustomSiteStatus(customRequest.status as CustomSiteRequestStatus);
 
+  const filledLinks = normalizeFilledLinks(website.filled_links);
+  const filledEmbeds = normalizeFilledEmbeds(website.filled_embeds);
+  const linkSlots = Array.from(
+    new Set([
+      ...discoverLinkSlots(website.template_html),
+      ...Object.keys(filledLinks),
+    ])
+  );
+
   return (
     <ErrorBoundary context="website-builder">
       <WebsiteStudio
@@ -97,7 +111,10 @@ export default async function WebsitePage() {
           (website.filled_placeholders as Record<string, string>) ?? {}
         }
         filledImages={normalizeFilledImages(website.filled_images)}
+        filledLinks={filledLinks}
+        filledEmbeds={filledEmbeds}
         imageSlots={imageSlots}
+        linkSlots={linkSlots}
         activeTheme={(website.active_theme as ActiveTheme) ?? "theme-1"}
         archetype={(website.archetype as DesignArchetype | null) ?? null}
         isPublished={isPublished}

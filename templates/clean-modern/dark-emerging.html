@@ -253,7 +253,7 @@
       <a href="#faq">FAQ</a>
       <a href="#contact">Contact</a>
     </nav>
-    <a href="#contact" class="btn btn-primary nav-cta">Get Started</a>
+    <a data-link-slot="cta_primary" href="#contact" class="btn btn-primary nav-cta">Get Started</a>
     <button class="hamburger" id="hamburger-btn" aria-label="Open menu" aria-expanded="false">
       <span></span><span></span><span></span>
     </button>
@@ -262,12 +262,12 @@
 
 <div class="backdrop" id="drawer-backdrop"></div>
 <nav class="drawer" id="mobile-drawer">
-  <a href="#about">About</a>
-  <a href="#services">Services</a>
-  <a href="#testimonials">Testimonials</a>
-  <a href="#faq">FAQ</a>
-  <a href="#contact">Contact</a>
-  <a href="#contact" class="btn btn-primary">Get Started</a>
+  <a data-link-slot="nav_about" href="#about">About</a>
+  <a data-link-slot="nav_services" href="#services">Services</a>
+  <a data-link-slot="nav_testimonials" href="#testimonials">Testimonials</a>
+  <a data-link-slot="nav_faq" href="#faq">FAQ</a>
+  <a data-link-slot="nav_contact" href="#contact">Contact</a>
+  <a data-link-slot="nav_contact" href="#contact" class="btn btn-primary">Get Started</a>
 </nav>
 
 <main>
@@ -279,8 +279,8 @@
         <h1>{{tagline}} <span class="accent">Powered by {{business_name}}.</span></h1>
         <p>{{about_body}}</p>
         <div class="hero-actions">
-          <a href="#contact" class="btn btn-primary">Get Started Free</a>
-          <a href="#services" class="btn btn-outline">Explore Platform</a>
+          <a data-link-slot="cta_secondary" href="#contact" class="btn btn-primary">Get Started Free</a>
+          <a data-link-slot="cta_3" href="#services" class="btn btn-outline">Explore Platform</a>
         </div>
       </div>
       <div class="hero-visual reveal">
@@ -295,7 +295,7 @@
         <span class="eyebrow">About Us</span>
         <h2>Building the infrastructure for Africa's next wave of tech</h2>
         <p>{{about_body}}</p>
-        <a href="#contact" class="btn btn-outline">Talk to Our Team</a>
+        <a data-link-slot="cta_4" href="#contact" class="btn btn-outline">Talk to Our Team</a>
       </div>
       <div class="stats-grid reveal reveal-stagger">
         <div class="stat-card" style="--i:0"><span class="num">120K+</span><span class="label">Businesses onboarded across Nigeria</span></div>

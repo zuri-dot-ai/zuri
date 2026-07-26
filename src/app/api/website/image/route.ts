@@ -5,7 +5,9 @@ import { requireAuth } from "@/lib/auth/require-auth";
 import { checkRateLimit, rateLimitExceededResponse } from "@/lib/security/rate-limit";
 import { normalizeSlotType } from "@/lib/website/category-images";
 import {
+  normalizeFilledEmbeds,
   normalizeFilledImages,
+  normalizeFilledLinks,
   persistRecomposedWebsite,
 } from "@/lib/website/recompose-html";
 import {
@@ -61,7 +63,7 @@ export async function POST(req: Request) {
     const { data: website } = await supabase
       .from("websites")
       .select(
-        "id, template_id, archetype, filled_placeholders, filled_images, active_theme"
+        "id, template_id, archetype, filled_placeholders, filled_images, filled_links, filled_embeds, active_theme"
       )
       .eq("user_id", user.id)
       .maybeSingle();
@@ -76,6 +78,8 @@ export async function POST(req: Request) {
     const placeholders =
       (website.filled_placeholders as Record<string, string>) ?? {};
     const images = normalizeFilledImages(website.filled_images);
+    const links = normalizeFilledLinks(website.filled_links);
+    const embeds = normalizeFilledEmbeds(website.filled_embeds);
     const activeTheme = (website.active_theme as ActiveTheme) ?? "theme-1";
     const archetype = (website.archetype as DesignArchetype) ?? "clean-modern";
 
@@ -266,6 +270,8 @@ export async function POST(req: Request) {
         templateId: website.template_id,
         filledPlaceholders: placeholders,
         filledImages: updatedImages,
+        filledLinks: links,
+        filledEmbeds: embeds,
         activeTheme,
         archetype,
       }

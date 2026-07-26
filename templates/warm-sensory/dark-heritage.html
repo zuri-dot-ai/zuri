@@ -294,7 +294,7 @@
       <a href="#gallery">Gallery</a>
       <a href="#testimonials">Testimonials</a>
       <a href="#contact">Contact</a>
-      <a href="#contact" class="btn btn-primary nav-cta">Reserve Your Table</a>
+      <a data-link-slot="cta_primary" href="#contact" class="btn btn-primary nav-cta">Reserve Your Table</a>
     </div>
     <button class="hamburger" id="hamburger-btn" aria-label="Open menu" aria-expanded="false">
       <span></span><span></span><span></span>
@@ -309,7 +309,7 @@
   <a href="#gallery">Gallery</a>
   <a href="#testimonials">Testimonials</a>
   <a href="#contact">Contact</a>
-  <a href="#contact" class="btn btn-primary" style="margin-top:20px;display:inline-block;">Reserve Your Table</a>
+  <a data-link-slot="cta_secondary" href="#contact" class="btn btn-primary" style="margin-top:20px;display:inline-block;">Reserve Your Table</a>
 </div>
 
 <header id="hero">
@@ -321,8 +321,8 @@
     <h1>A Taste of <em>Heritage</em>, Served with Warmth</h1>
     <p>{{tagline}}</p>
     <div class="hero-btns">
-      <a href="#contact" class="btn btn-primary">Reserve Your Table</a>
-      <a href="#menu" class="btn btn-outline">Explore Our Menu</a>
+      <a data-link-slot="cta_3" href="#contact" class="btn btn-primary">Reserve Your Table</a>
+      <a data-link-slot="cta_4" href="#menu" class="btn btn-outline">Explore Our Menu</a>
     </div>
   </div>
 </header>
@@ -337,7 +337,7 @@
       &#128222;
       <div><a href="tel:{{phone_number}}">{{phone_number}}</a><small>Call for reservations</small></div>
     </div>
-    <a href="#contact" class="btn">Reserve Your Table</a>
+    <a data-link-slot="cta_5" href="#contact" class="btn">Reserve Your Table</a>
   </div>
 </section>
 

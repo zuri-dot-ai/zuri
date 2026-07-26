@@ -545,11 +545,11 @@
     <a href="#hero" class="nav-brand">{{business_name}}</a>
     <nav>
       <ul class="nav-links">
-        <li><a href="#about">About</a></li>
-        <li><a href="#services">Services</a></li>
-        <li><a href="#testimonials">Testimonials</a></li>
-        <li><a href="#faq">FAQ</a></li>
-        <li><a href="#contact">Contact</a></li>
+        <li><a data-link-slot="nav_about" href="#about">About</a></li>
+        <li><a data-link-slot="nav_services" href="#services">Services</a></li>
+        <li><a data-link-slot="nav_testimonials" href="#testimonials">Testimonials</a></li>
+        <li><a data-link-slot="nav_faq" href="#faq">FAQ</a></li>
+        <li><a data-link-slot="nav_contact" href="#contact">Contact</a></li>
       </ul>
     </nav>
     <a href="#contact" class="nav-cta">Book an Appointment</a>
@@ -562,12 +562,12 @@
 <div class="drawer-overlay" id="drawer-overlay"></div>
 <nav class="nav-drawer" id="nav-drawer">
   <button class="drawer-close" id="drawer-close-btn" aria-label="Close menu">&times;</button>
-  <a href="#about">About</a>
-  <a href="#services">Services</a>
-  <a href="#testimonials">Testimonials</a>
-  <a href="#faq">FAQ</a>
-  <a href="#contact">Contact</a>
-  <a href="#contact" class="nav-cta">Book an Appointment</a>
+  <a data-link-slot="nav_about" href="#about">About</a>
+  <a data-link-slot="nav_services" href="#services">Services</a>
+  <a data-link-slot="nav_testimonials" href="#testimonials">Testimonials</a>
+  <a data-link-slot="nav_faq" href="#faq">FAQ</a>
+  <a data-link-slot="nav_contact" href="#contact">Contact</a>
+  <a data-link-slot="nav_contact" href="#contact" class="nav-cta">Book an Appointment</a>
 </nav>
 
 <!-- HERO -->
@@ -576,7 +576,7 @@
     <div class="hero-copy reveal">
       <h1>{{tagline}}</h1>
       <p>{{about_body}}</p>
-      <a href="#contact" class="btn-primary">Book an Appointment</a>
+      <a data-link-slot="cta_primary" href="#contact" class="btn-primary">Book an Appointment</a>
     </div>
     <div class="hero-image reveal">
       <img src="https://picsum.photos/720/540?random=101" data-image-slot="hero" alt="{{business_name}} clinic interior">

@@ -236,10 +236,10 @@
     <a href="#top" class="logo">{{business_name}}</a>
     <nav class="primary-nav" aria-label="Primary navigation">
       <ul>
-        <li><a href="#gallery">Gallery</a></li>
-        <li><a href="#services">Menu</a></li>
-        <li><a href="#testimonials">Reviews</a></li>
-        <li><a href="#contact">Contact</a></li>
+        <li><a data-link-slot="nav_gallery" href="#gallery">Gallery</a></li>
+        <li><a data-link-slot="nav_services" href="#services">Menu</a></li>
+        <li><a data-link-slot="nav_testimonials" href="#testimonials">Reviews</a></li>
+        <li><a data-link-slot="nav_contact" href="#contact">Contact</a></li>
       </ul>
     </nav>
     <button class="hamburger" id="hamburger-btn" aria-label="Toggle menu" aria-expanded="false" aria-controls="mobile-drawer">
@@ -251,10 +251,10 @@
 <div class="drawer-overlay" id="drawer-overlay"></div>
 <nav class="mobile-drawer" id="mobile-drawer" aria-label="Mobile navigation">
   <ul>
-    <li><a href="#gallery">Gallery</a></li>
-    <li><a href="#services">Menu</a></li>
-    <li><a href="#testimonials">Reviews</a></li>
-    <li><a href="#contact">Contact</a></li>
+    <li><a data-link-slot="nav_gallery" href="#gallery">Gallery</a></li>
+    <li><a data-link-slot="nav_services" href="#services">Menu</a></li>
+    <li><a data-link-slot="nav_testimonials" href="#testimonials">Reviews</a></li>
+    <li><a data-link-slot="nav_contact" href="#contact">Contact</a></li>
   </ul>
 </nav>
 
@@ -267,8 +267,8 @@
         <h1 id="hero-headline">{{business_name}}</h1>
         <p>{{about_body_short}}</p>
         <div class="hero-cta-group">
-          <a href="#services" class="btn">View Menu</a>
-          <a href="#contact" class="btn btn-outline">Reserve a Table</a>
+          <a data-link-slot="cta_primary" href="#services" class="btn">View Menu</a>
+          <a data-link-slot="cta_secondary" href="#contact" class="btn btn-outline">Reserve a Table</a>
         </div>
       </div>
       <div class="hero-image">
@@ -284,7 +284,7 @@
         <div class="hours-day"><strong>Saturday</strong>{{hours_saturday}}</div>
         <div class="hours-day"><strong>Sunday</strong>{{hours_sunday}}</div>
       </div>
-      <a href="#contact" class="btn">Book a Table</a>
+      <a data-link-slot="cta_3" href="#contact" class="btn">Book a Table</a>
     </div>
   </section>
 

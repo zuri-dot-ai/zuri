@@ -6,7 +6,9 @@ import { geminiJSON, FLASH } from "@/lib/gemini";
 import { checkUsageLimit } from "@/lib/payments/feature-gate";
 import { sanitizeText } from "@/lib/utils/sanitize";
 import {
+  normalizeFilledEmbeds,
   normalizeFilledImages,
+  normalizeFilledLinks,
   persistRecomposedWebsite,
 } from "@/lib/website/recompose-html";
 import { ERROR_MESSAGES } from "@/lib/errors/messages";
@@ -39,7 +41,7 @@ export async function PATCH(req: Request) {
   const { data: website } = await supabase
     .from("websites")
     .select(
-      "id, template_id, archetype, filled_placeholders, filled_images, active_theme"
+      "id, template_id, archetype, filled_placeholders, filled_images, filled_links, filled_embeds, active_theme"
     )
     .eq("user_id", user.id)
     .maybeSingle();
@@ -54,6 +56,8 @@ export async function PATCH(req: Request) {
   const placeholders =
     (website.filled_placeholders as Record<string, string>) ?? {};
   const images = normalizeFilledImages(website.filled_images);
+  const links = normalizeFilledLinks(website.filled_links);
+  const embeds = normalizeFilledEmbeds(website.filled_embeds);
   const activeTheme = (website.active_theme as ActiveTheme) ?? "theme-1";
   const archetype = website.archetype as import("@/types/website").DesignArchetype | undefined;
 
@@ -118,6 +122,8 @@ Same tone and similar length. No placeholders or brackets.`,
         templateId: website.template_id,
         filledPlaceholders: updatedPlaceholders,
         filledImages: images,
+        filledLinks: links,
+        filledEmbeds: embeds,
         activeTheme,
         archetype: archetype ?? "clean-modern",
       }

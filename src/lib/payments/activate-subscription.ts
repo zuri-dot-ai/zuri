@@ -1,5 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { PLAN_CONFIG, isPlanId } from "./plans";
+import { mergeTrialsUsed } from "./trials";
 import { createNotificationAsync } from "@/lib/notifications/create-notification";
 
 export async function activateSubscription(
@@ -26,7 +27,13 @@ export async function activateSubscription(
     periodEnd.setMonth(periodEnd.getMonth() + 1);
   }
 
-  // Upsert subscription
+  const { data: existing } = await supabase
+    .from("subscriptions")
+    .select("trials_used")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  // Upsert subscription — paid conversion clears trial state; mark plan as used
   await supabase.from("subscriptions").upsert(
     {
       user_id: userId,
@@ -37,6 +44,12 @@ export async function activateSubscription(
       current_period_end: periodEnd.toISOString(),
       cancel_at_period_end: false,
       grace_period_end: null,
+      trial_ends_at: null,
+      trial_tier: null,
+      trial_ended_at: null,
+      trial_reminder_3d_sent_at: null,
+      trial_reminder_1d_sent_at: null,
+      trials_used: mergeTrialsUsed(existing?.trials_used, planId),
       updated_at: now.toISOString(),
     },
     { onConflict: "user_id" }

@@ -8,12 +8,14 @@ import {
   Briefcase,
   Building2,
   ChevronLeft,
+  Code2,
   Eye,
   ExternalLink,
   FileText,
   HelpCircle,
   ImageIcon,
   Info,
+  Link2,
   Palette,
   Phone,
   Rocket,
@@ -46,16 +48,21 @@ import {
 import { FetchError, safeFetchJSON } from "@/lib/utils/safe-fetch";
 import { ContentPanel } from "./ContentPanel";
 import { ImagesPanel } from "./ImagesPanel";
+import { LinksPanel } from "./LinksPanel";
+import { EmbedsPanel } from "./EmbedsPanel";
 import { ThemePanel } from "./ThemePanel";
 import { PublishPanel } from "./PublishPanel";
 import { PreviewFrame } from "./PreviewFrame";
 import { ImageSwapModal } from "./ImageSwapModal";
+import { LinkEditorModal } from "./LinkEditorModal";
 import { ReviewChecklist } from "./ReviewChecklist";
 import { CustomSiteCTA } from "@/components/website/CustomSiteCTA";
 import type {
   ActiveTheme,
   DesignArchetype,
+  ResolvedEmbed,
   ResolvedImage,
+  ResolvedLink,
 } from "@/types/website";
 
 type PanelId =
@@ -69,9 +76,17 @@ type PanelId =
   | "business"
   | "other"
   | "images"
+  | "links"
+  | "embeds"
   | "theme"
   | "publish"
   | "settings";
+
+type LinkModalState = {
+  slot: string;
+  href?: string;
+  label?: string;
+};
 
 type MobileScreen = "list" | "edit";
 
@@ -92,7 +107,10 @@ export function WebsiteStudio({
   websiteId,
   filledPlaceholders: initialPlaceholders,
   filledImages: initialImages,
+  filledLinks: initialLinks,
+  filledEmbeds: initialEmbeds,
   imageSlots,
+  linkSlots,
   activeTheme: initialTheme,
   archetype,
   isPublished,
@@ -105,7 +123,10 @@ export function WebsiteStudio({
   websiteId: string;
   filledPlaceholders: Record<string, string>;
   filledImages: Record<string, ResolvedImage>;
+  filledLinks: Record<string, ResolvedLink>;
+  filledEmbeds: ResolvedEmbed[];
   imageSlots: string[];
+  linkSlots: string[];
   activeTheme: ActiveTheme;
   archetype: DesignArchetype | null;
   isPublished: boolean;
@@ -120,6 +141,8 @@ export function WebsiteStudio({
   const [mobileScreen, setMobileScreen] = useState<MobileScreen>("list");
   const [placeholders, setPlaceholders] = useState(initialPlaceholders);
   const [images, setImages] = useState(initialImages);
+  const [links, setLinks] = useState(initialLinks);
+  const [embeds, setEmbeds] = useState(initialEmbeds);
   const [activeTheme, setActiveTheme] = useState(initialTheme);
   const [needsReview, setNeedsReview] = useState(initialNeedsReview);
   const [published, setPublished] = useState(isPublished);
@@ -133,6 +156,7 @@ export function WebsiteStudio({
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [imageModalSlot, setImageModalSlot] = useState<string | null>(null);
+  const [linkModal, setLinkModal] = useState<LinkModalState | null>(null);
   const [highlightSection, setHighlightSection] = useState<string | null>(null);
   const [focusFieldId, setFocusFieldId] = useState<string | null>(null);
 
@@ -203,10 +227,35 @@ export function WebsiteStudio({
     bumpPreview();
   }
 
+  function onLinkUpdated(
+    slot: string,
+    link: ResolvedLink | null,
+    review?: boolean
+  ) {
+    setLinks((prev) => {
+      const next = { ...prev };
+      if (link) next[slot] = link;
+      else delete next[slot];
+      return next;
+    });
+    if (typeof review === "boolean") setNeedsReview(review);
+    bumpPreview();
+  }
+
+  function onEmbedsUpdated(next: ResolvedEmbed[], review?: boolean) {
+    setEmbeds(next);
+    if (typeof review === "boolean") setNeedsReview(review);
+    bumpPreview();
+  }
+
   function onThemeChange(theme: ActiveTheme, review?: boolean) {
     setActiveTheme(theme);
     if (typeof review === "boolean") setNeedsReview(review);
     bumpPreview();
+  }
+
+  function onLinkSlotClick(slot: string, href: string, label: string) {
+    setLinkModal({ slot, href, label });
   }
 
   function onFocusField(field: string) {
@@ -306,6 +355,8 @@ export function WebsiteStudio({
   const staticPanels: { id: PanelId; label: string; icon: React.ElementType }[] =
     [
       { id: "images", label: "Images", icon: ImageIcon },
+      { id: "links", label: "Links", icon: Link2 },
+      { id: "embeds", label: "Embeds", icon: Code2 },
       { id: "theme", label: "Theme", icon: Palette },
       { id: "publish", label: "Publish", icon: Rocket },
       { id: "settings", label: "Settings", icon: Settings },
@@ -337,6 +388,24 @@ export function WebsiteStudio({
           onOpenSlot={setImageModalSlot}
         />
       );
+    }
+    if (id === "links") {
+      return (
+        <LinksPanel
+          linkSlots={linkSlots}
+          filledLinks={links}
+          onOpenSlot={(slot) =>
+            setLinkModal({
+              slot,
+              href: links[slot]?.href,
+              label: links[slot]?.label,
+            })
+          }
+        />
+      );
+    }
+    if (id === "embeds") {
+      return <EmbedsPanel embeds={embeds} onChange={onEmbedsUpdated} />;
     }
     if (id === "theme") {
       return (
@@ -546,6 +615,7 @@ export function WebsiteStudio({
             rootDomain={rootDomain}
             highlightSection={highlightSection}
             onImageSlotClick={setImageModalSlot}
+            onLinkSlotClick={onLinkSlotClick}
           />
         </div>
       </div>
@@ -653,6 +723,18 @@ export function WebsiteStudio({
           open={Boolean(imageModalSlot)}
           onClose={() => setImageModalSlot(null)}
           onUpdated={onImageUpdated}
+        />
+      )}
+
+      {linkModal && (
+        <LinkEditorModal
+          slot={linkModal.slot}
+          initialHref={linkModal.href}
+          initialLabel={linkModal.label}
+          existing={links[linkModal.slot] ?? null}
+          open={Boolean(linkModal)}
+          onClose={() => setLinkModal(null)}
+          onUpdated={onLinkUpdated}
         />
       )}
 

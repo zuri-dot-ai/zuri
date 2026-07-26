@@ -612,10 +612,10 @@
   <div class="container nav-inner">
     <a href="#hero" class="nav-logo">{{business_name}}</a>
     <ul class="nav-links">
-      <li><a href="#services">Services</a></li>
-      <li><a href="#about">About</a></li>
-      <li><a href="#gallery">Gallery</a></li>
-      <li><a href="#contact">Contact</a></li>
+      <li><a data-link-slot="nav_services" href="#services">Services</a></li>
+      <li><a data-link-slot="nav_about" href="#about">About</a></li>
+      <li><a data-link-slot="nav_gallery" href="#gallery">Gallery</a></li>
+      <li><a data-link-slot="nav_contact" href="#contact">Contact</a></li>
     </ul>
     <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false" aria-controls="drawer">
       <span></span><span></span><span></span>
@@ -640,8 +640,8 @@
     <h1>{{tagline}}</h1>
     <p>{{about_body}}</p>
     <div class="cta-row">
-      <a href="#contact" class="btn btn-primary">Book Your Experience</a>
-      <a href="#services" class="btn btn-secondary">Explore Services</a>
+      <a data-link-slot="cta_primary" href="#contact" class="btn btn-primary">Book Your Experience</a>
+      <a data-link-slot="cta_secondary" href="#services" class="btn btn-secondary">Explore Services</a>
     </div>
   </div>
 </header>

@@ -562,11 +562,11 @@
   <div class="container nav-inner">
     <a href="#" class="nav-brand">{{business_name}}</a>
     <ul class="nav-links">
-      <li><a href="#about">About</a></li>
-      <li><a href="#transform">Transformations</a></li>
-      <li><a href="#services">Services</a></li>
-      <li><a href="#testimonials">Testimonials</a></li>
-      <li><a href="#contact">Contact</a></li>
+      <li><a data-link-slot="nav_about" href="#about">About</a></li>
+      <li><a data-link-slot="nav_transform" href="#transform">Transformations</a></li>
+      <li><a data-link-slot="nav_services" href="#services">Services</a></li>
+      <li><a data-link-slot="nav_testimonials" href="#testimonials">Testimonials</a></li>
+      <li><a data-link-slot="nav_contact" href="#contact">Contact</a></li>
     </ul>
     <button class="hamburger" id="hamburger" aria-label="Open menu" aria-expanded="false">
       <span></span><span></span><span></span>
@@ -589,8 +589,8 @@
     <span class="eyebrow">{{business_name}}</span>
     <h1>{{tagline}}</h1>
     <div class="hero-ctas">
-      <a href="#contact" class="btn btn-primary">Book Appointment</a>
-      <a href="#services" class="btn btn-outline">Explore Services</a>
+      <a data-link-slot="cta_primary" href="#contact" class="btn btn-primary">Book Appointment</a>
+      <a data-link-slot="cta_secondary" href="#services" class="btn btn-outline">Explore Services</a>
     </div>
   </div>
 </header>

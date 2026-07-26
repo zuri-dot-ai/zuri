@@ -1,6 +1,8 @@
 import { fetchTemplate } from "@/lib/website/template-registry";
 import {
+  applyEmbeds,
   applyImages,
+  applyLinks,
   applyPlaceholders,
   applyServiceCardVisibility,
   validateFilledHtml,
@@ -10,13 +12,23 @@ import {
   getArchetypeFallback,
   isBrokenImageUrl,
 } from "@/lib/website/image-url";
-import type { ActiveTheme, DesignArchetype, ResolvedImage } from "@/types/website";
+import { normalizeFilledEmbeds } from "@/lib/website/embed-sanitize";
+import { normalizeFilledLinks } from "@/lib/website/link-sanitize";
+import type {
+  ActiveTheme,
+  DesignArchetype,
+  ResolvedEmbed,
+  ResolvedImage,
+  ResolvedLink,
+} from "@/types/website";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export interface RecomposeInput {
   templateId: string;
   filledPlaceholders: Record<string, string>;
   filledImages: Record<string, ResolvedImage>;
+  filledLinks?: Record<string, ResolvedLink>;
+  filledEmbeds?: ResolvedEmbed[];
   activeTheme?: ActiveTheme;
   archetype?: DesignArchetype;
 }
@@ -57,9 +69,14 @@ export async function recomposeWebsiteHtml(
       : image;
   }
 
+  const filledLinks = normalizeFilledLinks(input.filledLinks ?? {});
+  const filledEmbeds = normalizeFilledEmbeds(input.filledEmbeds ?? []);
+
   let html = applyPlaceholders(rawHtml, input.filledPlaceholders);
   html = applyImages(html, filledImages, { archetype });
   html = applyServiceCardVisibility(html, input.filledPlaceholders);
+  html = applyLinks(html, filledLinks);
+  html = applyEmbeds(html, filledEmbeds);
 
   if (input.activeTheme) {
     html = applyActiveTheme(html, input.activeTheme);
@@ -93,13 +110,22 @@ export function normalizeFilledImages(
   return out;
 }
 
+export { normalizeFilledLinks } from "@/lib/website/link-sanitize";
+export { normalizeFilledEmbeds } from "@/lib/website/embed-sanitize";
+
 export async function persistRecomposedWebsite(
   supabase: SupabaseClient,
   websiteId: string,
   userId: string,
   input: RecomposeInput
 ): Promise<RecomposeResult & { needsReview: boolean }> {
-  const { html, validation } = await recomposeWebsiteHtml(input);
+  const filledLinks = normalizeFilledLinks(input.filledLinks ?? {});
+  const filledEmbeds = normalizeFilledEmbeds(input.filledEmbeds ?? []);
+  const { html, validation } = await recomposeWebsiteHtml({
+    ...input,
+    filledLinks,
+    filledEmbeds,
+  });
 
   const { error } = await supabase
     .from("websites")
@@ -107,6 +133,8 @@ export async function persistRecomposedWebsite(
       template_html: html,
       filled_placeholders: input.filledPlaceholders,
       filled_images: input.filledImages,
+      filled_links: filledLinks,
+      filled_embeds: filledEmbeds,
       active_theme: input.activeTheme ?? "theme-1",
       needs_review: !validation.valid,
       updated_at: new Date().toISOString(),

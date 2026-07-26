@@ -564,7 +564,7 @@
       <a href="#faq">FAQ</a>
       <a href="#contact">Contact</a>
     </div>
-    <a href="#contact" class="btn btn-primary nav-cta">Book an Appointment</a>
+    <a data-link-slot="cta_primary" href="#contact" class="btn btn-primary nav-cta">Book an Appointment</a>
     <button class="hamburger" id="hamburger" aria-label="Open menu" aria-expanded="false">
       <span></span><span></span><span></span>
     </button>
@@ -578,7 +578,7 @@
   <a href="#testimonials">Testimonials</a>
   <a href="#faq">FAQ</a>
   <a href="#contact">Contact</a>
-  <a href="#contact" class="btn btn-primary" style="margin-top:10px;">Book an Appointment</a>
+  <a data-link-slot="cta_secondary" href="#contact" class="btn btn-primary" style="margin-top:10px;">Book an Appointment</a>
 </div>
 
 <main>
@@ -590,8 +590,8 @@
         <h1>{{tagline}}</h1>
         <p class="sub">{{about_body}}</p>
         <div class="hero-actions">
-          <a href="#contact" class="btn btn-primary">Book an Appointment</a>
-          <a href="#services" class="btn btn-outline">Our Services</a>
+          <a data-link-slot="cta_3" href="#contact" class="btn btn-primary">Book an Appointment</a>
+          <a data-link-slot="cta_4" href="#services" class="btn btn-outline">Our Services</a>
         </div>
       </div>
       <div class="hero-image-wrap reveal">

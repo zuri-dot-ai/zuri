@@ -562,7 +562,7 @@
       <a href="#testimonials">Reviews</a>
       <a href="#contact">Contact</a>
     </nav>
-    <a href="#contact" class="btn nav-cta">Book a Class</a>
+    <a data-link-slot="cta_primary" href="#contact" class="btn nav-cta">Book a Class</a>
     <button class="hamburger" id="hamburger-btn" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-drawer">
       <span></span><span></span><span></span>
     </button>
@@ -571,13 +571,13 @@
 
 <div class="drawer-overlay" id="drawer-overlay"></div>
 <nav class="drawer" id="mobile-drawer" aria-label="Mobile">
-  <a href="#about">About</a>
-  <a href="#results">Results</a>
-  <a href="#schedule">Schedule</a>
-  <a href="#services">Services</a>
-  <a href="#testimonials">Reviews</a>
-  <a href="#contact">Contact</a>
-  <a href="#contact" class="btn">Book a Class</a>
+  <a data-link-slot="nav_about" href="#about">About</a>
+  <a data-link-slot="nav_results" href="#results">Results</a>
+  <a data-link-slot="nav_schedule" href="#schedule">Schedule</a>
+  <a data-link-slot="nav_services" href="#services">Services</a>
+  <a data-link-slot="nav_testimonials" href="#testimonials">Reviews</a>
+  <a data-link-slot="nav_contact" href="#contact">Contact</a>
+  <a data-link-slot="nav_contact" href="#contact" class="btn">Book a Class</a>
 </nav>
 
 <main>
@@ -590,8 +590,8 @@
         <h1>Find your <span>strength</span> in the room.</h1>
         <p>{{tagline}}</p>
         <div class="hero-actions">
-          <a href="#contact" class="btn">Book a Class</a>
-          <a href="#schedule" class="btn btn-outline">View Schedule</a>
+          <a data-link-slot="cta_secondary" href="#contact" class="btn">Book a Class</a>
+          <a data-link-slot="cta_3" href="#schedule" class="btn btn-outline">View Schedule</a>
         </div>
         <div class="hero-stats">
           <div class="hero-stat"><strong>{{stat_1_value}}</strong><span>{{stat_1_label}}</span></div>

@@ -405,7 +405,7 @@
       <a href="#testimonials">Testimonials</a>
       <a href="#contact">Contact</a>
     </nav>
-    <a href="#contact" class="nav-book-btn">Book Now</a>
+    <a data-link-slot="cta_primary" href="#contact" class="nav-book-btn">Book Now</a>
     <button class="hamburger" id="hamburger-btn" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-drawer">
       <span></span><span></span><span></span>
     </button>
@@ -414,11 +414,11 @@
 
 <div class="drawer-overlay" id="drawer-overlay"></div>
 <nav class="drawer" id="mobile-drawer" aria-label="Mobile">
-  <a href="#about">About</a>
-  <a href="#transform">Transformations</a>
-  <a href="#services">Services</a>
-  <a href="#testimonials">Testimonials</a>
-  <a href="#contact">Contact</a>
+  <a data-link-slot="nav_about" href="#about">About</a>
+  <a data-link-slot="nav_transform" href="#transform">Transformations</a>
+  <a data-link-slot="nav_services" href="#services">Services</a>
+  <a data-link-slot="nav_testimonials" href="#testimonials">Testimonials</a>
+  <a data-link-slot="nav_contact" href="#contact">Contact</a>
 </nav>
 
 <!-- ===== HERO ===== -->
@@ -428,7 +428,7 @@
     <span class="eyebrow">Welcome to</span>
     <h1>{{business_name}}</h1>
     <p class="tagline">{{tagline}}</p>
-    <a href="#contact" class="btn-primary">Book an Appointment</a>
+    <a data-link-slot="cta_secondary" href="#contact" class="btn-primary">Book an Appointment</a>
   </div>
 </section>
 

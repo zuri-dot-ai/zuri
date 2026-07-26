@@ -10,6 +10,9 @@ interface SubscriptionState {
   status: string;
   limits: PlanLimits;
   periodEnd: string | null;
+  trialEndsAt: string | null;
+  trialTier: string | null;
+  trialsUsed: string[];
   isLoading: boolean;
 }
 
@@ -20,6 +23,9 @@ export function useSubscription(): SubscriptionState {
     status: "active",
     limits: PLAN_CONFIG.free.limits,
     periodEnd: null,
+    trialEndsAt: null,
+    trialTier: null,
+    trialsUsed: [],
     isLoading: true,
   });
 
@@ -41,7 +47,9 @@ export function useSubscription(): SubscriptionState {
 
       const { data } = await supabase
         .from("subscriptions")
-        .select("plan_id, status, current_period_end")
+        .select(
+          "plan_id, status, current_period_end, trial_ends_at, trial_tier, trials_used"
+        )
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -56,12 +64,20 @@ export function useSubscription(): SubscriptionState {
             : "free"
           : "free";
 
+      const periodEnd =
+        data?.status === "trialing" && data?.trial_ends_at
+          ? data.trial_ends_at
+          : (data?.current_period_end ?? null);
+
       setState({
         planId,
         planName: PLAN_CONFIG[planId].name,
         status: data?.status ?? "active",
         limits: PLAN_CONFIG[planId].limits,
-        periodEnd: data?.current_period_end ?? null,
+        periodEnd,
+        trialEndsAt: data?.trial_ends_at ?? null,
+        trialTier: data?.trial_tier ?? null,
+        trialsUsed: data?.trials_used ?? [],
         isLoading: false,
       });
     }

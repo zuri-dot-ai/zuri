@@ -82,6 +82,10 @@ export interface AccountView {
   avatar_url: string | null;
   subscription_plan: SubscriptionPlan;
   subscription_status: SubscriptionStatus;
+  trial_ends_at?: string | null;
+  trial_tier?: SubscriptionPlan | null;
+  trials_used?: SubscriptionPlan[];
+  trial_ended_at?: string | null;
 }
 
 export interface BusinessProfileRow {

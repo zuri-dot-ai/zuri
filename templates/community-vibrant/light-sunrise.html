@@ -491,7 +491,7 @@
       <a href="#results">Results</a>
       <a href="#schedule">Schedule</a>
       <a href="#services">Services</a>
-      <a href="#contact" class="btn btn-primary nav-cta">Join Us Today</a>
+      <a data-link-slot="cta_primary" href="#contact" class="btn btn-primary nav-cta">Join Us Today</a>
     </nav>
     <button class="hamburger" id="hamburger" aria-label="Open menu">
       <span></span><span></span><span></span>
@@ -505,7 +505,7 @@
   <a href="#results">Results</a>
   <a href="#schedule">Schedule</a>
   <a href="#services">Services</a>
-  <a href="#contact" class="btn btn-primary">Join Us Today</a>
+  <a data-link-slot="cta_secondary" href="#contact" class="btn btn-primary">Join Us Today</a>
 </div>
 
 <main>
@@ -518,8 +518,8 @@
         <h1>{{tagline}}</h1>
         <p>{{about_body}}</p>
         <div class="hero-ctas">
-          <a href="#contact" class="btn btn-primary">Join Us Today</a>
-          <a href="#schedule" class="btn btn-secondary">View Schedule</a>
+          <a data-link-slot="cta_3" href="#contact" class="btn btn-primary">Join Us Today</a>
+          <a data-link-slot="cta_4" href="#schedule" class="btn btn-secondary">View Schedule</a>
         </div>
       </div>
       <div class="hero-image-wrap reveal">

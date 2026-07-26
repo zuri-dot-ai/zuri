@@ -33,6 +33,14 @@ import { PRICING } from "@/lib/constants";
 import { formatNGN as fmtNGN } from "@/lib/utils";
 import { safeFetchJSON } from "@/lib/utils/safe-fetch";
 import { serviceNames } from "@/types/brand";
+import {
+  canStartTrial,
+  daysUntil,
+  freeTierLossSummary,
+  isUnconverted,
+  trialDaysForPlan,
+} from "@/lib/payments/trials";
+import type { PlanId } from "@/lib/payments/plans";
 import type { AccountView, BusinessProfileRow } from "@/types/database";
 
 function errorMessage(e: unknown, fallback: string): string {
@@ -655,11 +663,19 @@ function BusinessTab({ profile }: { profile: BusinessProfileRow | null }) {
 
 // ── BILLING TAB ─────────────────────────────────────────
 function BillingTab({ account }: { account: AccountView | null }) {
+  const router = useRouter();
   const [loadingCheckout, setLoadingCheckout] = useState<string | null>(null);
+  const [loadingTrial, setLoadingTrial] = useState<string | null>(null);
   const [pendingPlan, setPendingPlan] = useState<string | null>(null);
 
   const plan = account?.subscription_plan ?? "free";
   const status = account?.subscription_status ?? "inactive";
+  const trialEndsAt = account?.trial_ends_at ?? null;
+  const trialsUsed = account?.trials_used ?? [];
+  const isTrialing = status === "trialing";
+  const trialDaysLeft = daysUntil(trialEndsAt);
+  const unconverted = isUnconverted({ plan_id: plan, status });
+  const lossBullets = freeTierLossSummary();
 
   useEffect(() => {
     try {
@@ -696,18 +712,59 @@ function BillingTab({ account }: { account: AccountView | null }) {
     }
   }
 
-  const canUpgrade = plan !== "premium";
+  async function startTrial(planId: "pro" | "growth" | "premium") {
+    setLoadingTrial(planId);
+    try {
+      await safeFetchJSON<{ planId: string; trialEndsAt: string }>(
+        "/api/billing/start-trial",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ planId }),
+        }
+      );
+      toast.success(`${planId === "pro" ? "Pro" : planId === "growth" ? "Growth" : "Premium"} trial started`);
+      router.refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not start trial.");
+    } finally {
+      setLoadingTrial(null);
+    }
+  }
+
+  const statusLabel = isTrialing
+    ? "Trial"
+    : status === "grace_period"
+      ? "Grace period"
+      : status === "active" && plan === "free"
+        ? "Free"
+        : status === "active"
+          ? "Active"
+          : status;
+
+  const badgeVariant =
+    isTrialing || status === "active" ? "success" : "muted";
+
+  const canUpgrade = plan !== "premium" || isTrialing;
   const upgradePlans = PRICING.filter((p) => {
     const rank = { free: 0, pro: 1, growth: 2, premium: 3 } as const;
+    // While trialing current tier, still show that tier for paid convert + higher trials
+    if (isTrialing && p.id === plan) return true;
     return rank[p.id] > rank[plan as keyof typeof rank];
   });
+
+  const subForTrialCheck = {
+    plan_id: plan,
+    status,
+    trials_used: trialsUsed,
+  };
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-page-title">Billing</h2>
         <p className="text-card-body mt-1">
-          Manage your subscription and payment details.
+          Manage your subscription, trials, and payment details.
         </p>
       </div>
 
@@ -718,20 +775,56 @@ function BillingTab({ account }: { account: AccountView | null }) {
             <p className="text-xs uppercase tracking-wider text-muted-foreground">
               Current plan
             </p>
-            <p className="mt-1 font-heading text-2xl font-semibold capitalize">{plan}</p>
+            <p className="mt-1 font-heading text-2xl font-semibold capitalize">
+              {plan}
+            </p>
           </div>
-          <Badge variant={status === "active" ? "success" : "muted"} className="capitalize">
-            {status}
+          <Badge variant={badgeVariant} className="capitalize">
+            {statusLabel}
           </Badge>
         </div>
-        {plan === "free" && (
+
+        {isTrialing && trialEndsAt && (
+          <div className="mt-3 space-y-2 text-sm text-muted-foreground">
+            <p>
+              {trialDaysLeft !== null && trialDaysLeft >= 0
+                ? `${trialDaysLeft === 0 ? "Less than a day" : trialDaysLeft === 1 ? "1 day" : `${trialDaysLeft} days`} remaining`
+                : "Trial ending soon"}{" "}
+              — ends{" "}
+              {new Date(trialEndsAt).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
+              .
+            </p>
+            <p>
+              At trial end you&apos;ll automatically move to Free. Nothing will be
+              charged — there is no card on file.
+            </p>
+            <ul className="list-inside list-disc space-y-0.5">
+              {lossBullets.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+            <div className="pt-2">
+              <Button size="sm" onClick={() => upgrade(plan as "pro" | "growth" | "premium", "monthly")}>
+                Subscribe to keep {plan}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {plan === "free" && !isTrialing && (
           <p className="mt-3 text-sm text-muted-foreground">
-            Upgrade to publish your website, access your full content calendar, and unlock the agency marketplace.
+            Upgrade to publish your website, access your full content calendar,
+            and unlock the agency marketplace.
           </p>
         )}
-        {pendingPlan && plan === "free" && (
+        {pendingPlan && plan === "free" && !isTrialing && (
           <p className="mt-3 text-sm text-gold">
-            You selected <span className="capitalize font-medium">{pendingPlan}</span> from
+            You selected{" "}
+            <span className="capitalize font-medium">{pendingPlan}</span> from
             pricing — pick monthly or annual below to finish checkout.
           </p>
         )}
@@ -740,64 +833,93 @@ function BillingTab({ account }: { account: AccountView | null }) {
       {/* Upgrade options */}
       {canUpgrade && upgradePlans.length > 0 && (
         <div className="space-y-4">
-          <p className="text-sm font-medium">Upgrade your plan</p>
-          {upgradePlans.map((p) => (
-            <div
-              key={p.id}
-              className={`surface rounded-sm border p-5 ${
-                p.highlight ? "border-gold bg-muted" : "border-border"
-              }`}
-            >
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-heading text-xl font-semibold" title={p.name}>
-                    {p.name}
-                  </p>
-                  <p className="mt-0.5 break-words text-sm text-muted-foreground">
-                    {p.description}
-                  </p>
+          <p className="text-sm font-medium">
+            {isTrialing ? "Upgrade or convert" : "Upgrade your plan"}
+          </p>
+          {upgradePlans.map((p) => {
+            const trialEligible =
+              unconverted &&
+              canStartTrial(subForTrialCheck, p.id as PlanId).ok &&
+              !(isTrialing && p.id === plan);
+
+            return (
+              <div
+                key={p.id}
+                className={`surface rounded-sm border p-5 ${
+                  p.highlight ? "border-gold bg-muted" : "border-border"
+                }`}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p
+                      className="truncate font-heading text-xl font-semibold"
+                      title={p.name}
+                    >
+                      {p.name}
+                    </p>
+                    <p className="mt-0.5 break-words text-sm text-muted-foreground">
+                      {p.description}
+                      {trialEligible
+                        ? ` — includes a ${trialDaysForPlan(p.id as PlanId)}-day free trial, no card required.`
+                        : null}
+                    </p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p className="truncate font-heading text-2xl font-semibold">
+                      {fmtNGN(p.ngnMonthly)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">/month</p>
+                  </div>
                 </div>
-                <div className="shrink-0 text-right">
-                  <p className="truncate font-heading text-2xl font-semibold">
-                    {fmtNGN(p.ngnMonthly)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">/month</p>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  {trialEligible && (
+                    <Button
+                      size="sm"
+                      variant={p.highlight ? "default" : "outline"}
+                      onClick={() => startTrial(p.id)}
+                      disabled={loadingTrial === p.id}
+                    >
+                      {loadingTrial === p.id ? (
+                        <span className="zuri-spinner" />
+                      ) : null}
+                      Start {trialDaysForPlan(p.id as PlanId)}-day trial
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    variant={trialEligible ? "outline" : p.highlight ? "default" : "outline"}
+                    onClick={() => upgrade(p.id, "monthly")}
+                    disabled={loadingCheckout === `${p.id}-monthly`}
+                  >
+                    {loadingCheckout === `${p.id}-monthly` ? (
+                      <span className="zuri-spinner" />
+                    ) : null}
+                    {isTrialing && p.id === plan ? "Subscribe monthly" : "Monthly"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => upgrade(p.id, "annual")}
+                    disabled={loadingCheckout === `${p.id}-annual`}
+                  >
+                    {loadingCheckout === `${p.id}-annual` ? (
+                      <span className="zuri-spinner" />
+                    ) : null}
+                    Annual (2 months free)
+                  </Button>
                 </div>
               </div>
-              <div className="mt-4 flex flex-wrap gap-3">
-                <Button
-                  size="sm"
-                  variant={p.highlight ? "default" : "outline"}
-                  onClick={() => upgrade(p.id, "monthly")}
-                  disabled={loadingCheckout === `${p.id}-monthly`}
-                >
-                  {loadingCheckout === `${p.id}-monthly` ? (
-                    <span className="zuri-spinner" />
-                  ) : null}
-                  Monthly
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => upgrade(p.id, "annual")}
-                  disabled={loadingCheckout === `${p.id}-annual`}
-                >
-                  {loadingCheckout === `${p.id}-annual` ? (
-                    <span className="zuri-spinner" />
-                  ) : null}
-                  Annual (2 months free)
-                </Button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
-      {/* Active plan management */}
-      {plan !== "free" && (
+      {/* Active paid plan management */}
+      {plan !== "free" && status === "active" && (
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            To cancel, change your plan, or update payment details, use the billing portal.
+            To cancel, change your plan, or update payment details, use the
+            billing portal.
           </p>
           <Button variant="outline" asChild>
             <a

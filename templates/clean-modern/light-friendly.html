@@ -534,7 +534,7 @@
   <a href="#services">Product</a>
   <a href="#testimonials">Customers</a>
   <a href="#faq">FAQ</a>
-  <a href="#contact" class="btn-primary" style="text-align:center;">Get Started</a>
+  <a data-link-slot="cta_primary" href="#contact" class="btn-primary" style="text-align:center;">Get Started</a>
 </div>
 
 <main>
@@ -546,8 +546,8 @@
       <h1>{{tagline}}</h1>
       <p class="hero-sub">{{about_body}}</p>
       <div class="hero-ctas">
-        <a href="#contact" class="btn-primary">Get Started</a>
-        <a href="#services" class="btn-secondary">See How It Works</a>
+        <a data-link-slot="cta_secondary" href="#contact" class="btn-primary">Get Started</a>
+        <a data-link-slot="cta_3" href="#services" class="btn-secondary">See How It Works</a>
       </div>
     </div>
   </section>

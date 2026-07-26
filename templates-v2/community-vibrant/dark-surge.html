@@ -183,10 +183,10 @@
     <a href="#top" class="logo">{{business_name}}</a>
     <nav class="primary-nav" aria-label="Primary navigation">
       <ul>
-        <li><a href="#schedule">Classes</a></li>
-        <li><a href="#results">Results</a></li>
-        <li><a href="#services">Programs</a></li>
-        <li><a href="#contact">Contact</a></li>
+        <li><a data-link-slot="nav_schedule" href="#schedule">Classes</a></li>
+        <li><a data-link-slot="nav_results" href="#results">Results</a></li>
+        <li><a data-link-slot="nav_services" href="#services">Programs</a></li>
+        <li><a data-link-slot="nav_contact" href="#contact">Contact</a></li>
       </ul>
     </nav>
     <button class="hamburger" id="hamburger-btn" aria-label="Toggle menu" aria-expanded="false" aria-controls="mobile-drawer">
@@ -198,10 +198,10 @@
 <div class="drawer-overlay" id="drawer-overlay"></div>
 <nav class="mobile-drawer" id="mobile-drawer" aria-label="Mobile navigation">
   <ul>
-    <li><a href="#schedule">Classes</a></li>
-    <li><a href="#results">Results</a></li>
-    <li><a href="#services">Programs</a></li>
-    <li><a href="#contact">Contact</a></li>
+    <li><a data-link-slot="nav_schedule" href="#schedule">Classes</a></li>
+    <li><a data-link-slot="nav_results" href="#results">Results</a></li>
+    <li><a data-link-slot="nav_services" href="#services">Programs</a></li>
+    <li><a data-link-slot="nav_contact" href="#contact">Contact</a></li>
   </ul>
 </nav>
 
@@ -214,8 +214,8 @@
         <h1 id="hero-headline">{{business_name}}</h1>
         <p>{{about_body_short}}</p>
         <div class="hero-cta-group">
-          <a href="#schedule" class="btn">See Class Schedule</a>
-          <a href="#contact" class="btn btn-outline">Book A Session</a>
+          <a data-link-slot="cta_primary" href="#schedule" class="btn">See Class Schedule</a>
+          <a data-link-slot="cta_secondary" href="#contact" class="btn btn-outline">Book A Session</a>
         </div>
       </div>
       <div class="hero-image">

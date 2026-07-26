@@ -155,10 +155,10 @@
     <a href="#top" class="logo">{{business_name}}</a>
     <nav class="primary-nav" aria-label="Primary navigation">
       <ul>
-        <li><a href="#about">About</a></li>
-        <li><a href="#case-study">Feature</a></li>
-        <li><a href="#services">Services</a></li>
-        <li><a href="#contact">Contact</a></li>
+        <li><a data-link-slot="nav_about" href="#about">About</a></li>
+        <li><a data-link-slot="nav_case_study" href="#case-study">Feature</a></li>
+        <li><a data-link-slot="nav_services" href="#services">Services</a></li>
+        <li><a data-link-slot="nav_contact" href="#contact">Contact</a></li>
       </ul>
     </nav>
     <button class="hamburger" id="hamburger-btn" aria-label="Toggle menu" aria-expanded="false" aria-controls="mobile-drawer">
@@ -170,10 +170,10 @@
 <div class="drawer-overlay" id="drawer-overlay"></div>
 <nav class="mobile-drawer" id="mobile-drawer" aria-label="Mobile navigation">
   <ul>
-    <li><a href="#about">About</a></li>
-    <li><a href="#case-study">Feature</a></li>
-    <li><a href="#services">Services</a></li>
-    <li><a href="#contact">Contact</a></li>
+    <li><a data-link-slot="nav_about" href="#about">About</a></li>
+    <li><a data-link-slot="nav_case_study" href="#case-study">Feature</a></li>
+    <li><a data-link-slot="nav_services" href="#services">Services</a></li>
+    <li><a data-link-slot="nav_contact" href="#contact">Contact</a></li>
   </ul>
 </nav>
 
@@ -189,8 +189,8 @@
         <h1 id="hero-headline">{{business_name}}</h1>
         <p>{{about_body_short}}</p>
         <div class="hero-cta-group">
-          <a href="#case-study" class="btn">See The Feature</a>
-          <a href="#contact" class="btn btn-outline">Book A Session</a>
+          <a data-link-slot="cta_primary" href="#case-study" class="btn">See The Feature</a>
+          <a data-link-slot="cta_secondary" href="#contact" class="btn btn-outline">Book A Session</a>
         </div>
       </div>
     </div>
@@ -205,7 +205,7 @@
         <p class="eyebrow">The Eye Behind The Lens</p>
         <h2>Hi, I'm {{first_name}}</h2>
         <p>{{about_body_long}}</p>
-        <a href="#contact" class="btn btn-outline">Work With Me</a>
+        <a data-link-slot="cta_3" href="#contact" class="btn btn-outline">Work With Me</a>
       </div>
     </div>
   </section>

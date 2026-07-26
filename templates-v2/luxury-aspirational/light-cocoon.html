@@ -183,10 +183,10 @@
     <a href="#top" class="logo">{{business_name}}</a>
     <nav class="primary-nav" aria-label="Primary navigation">
       <ul>
-        <li><a href="#founder">Our Story</a></li>
-        <li><a href="#services">Services</a></li>
-        <li><a href="#testimonials">Reviews</a></li>
-        <li><a href="#contact">Contact</a></li>
+        <li><a data-link-slot="nav_founder" href="#founder">Our Story</a></li>
+        <li><a data-link-slot="nav_services" href="#services">Services</a></li>
+        <li><a data-link-slot="nav_testimonials" href="#testimonials">Reviews</a></li>
+        <li><a data-link-slot="nav_contact" href="#contact">Contact</a></li>
       </ul>
     </nav>
     <button class="hamburger" id="hamburger-btn" aria-label="Toggle menu" aria-expanded="false" aria-controls="mobile-drawer">
@@ -198,10 +198,10 @@
 <div class="drawer-overlay" id="drawer-overlay"></div>
 <nav class="mobile-drawer" id="mobile-drawer" aria-label="Mobile navigation">
   <ul>
-    <li><a href="#founder">Our Story</a></li>
-    <li><a href="#services">Services</a></li>
-    <li><a href="#testimonials">Reviews</a></li>
-    <li><a href="#contact">Contact</a></li>
+    <li><a data-link-slot="nav_founder" href="#founder">Our Story</a></li>
+    <li><a data-link-slot="nav_services" href="#services">Services</a></li>
+    <li><a data-link-slot="nav_testimonials" href="#testimonials">Reviews</a></li>
+    <li><a data-link-slot="nav_contact" href="#contact">Contact</a></li>
   </ul>
 </nav>
 
@@ -214,8 +214,8 @@
       <h1 id="hero-headline" class="hero-type-headline">{{business_name}}</h1>
       <p class="hero-type-sub">{{about_body_short}}</p>
       <div class="hero-cta-group">
-        <a href="#contact" class="btn">Book An Appointment</a>
-        <a href="#services" class="btn btn-outline">Explore Services</a>
+        <a data-link-slot="cta_primary" href="#contact" class="btn">Book An Appointment</a>
+        <a data-link-slot="cta_secondary" href="#services" class="btn btn-outline">Explore Services</a>
       </div>
     </div>
   </section>

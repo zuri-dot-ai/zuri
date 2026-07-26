@@ -23,10 +23,14 @@ import type { BusinessProfile } from "@/types/brand";
 import { normalizeServices, serviceNames } from "@/types/brand";
 import type {
   CategoryImageRow,
+  ResolvedEmbed,
   ResolvedImage,
+  ResolvedLink,
   TemplateMetadata,
   TemplateRow,
 } from "@/types/website";
+import { buildEmbedSectionHtml } from "@/lib/website/embed-sanitize";
+import { escapeAttr, isInternalHref } from "@/lib/website/link-sanitize";
 
 export { getArchetypeFallback, isBrokenImageUrl } from "@/lib/website/image-url";
 export { normalizeSlotType } from "@/lib/website/category-images";
@@ -434,6 +438,86 @@ export function applyImages(
   // Assert every data-image-slot has a non-empty valid-looking src
   out = assertImageSlotsFilled(out, archetype);
   return out;
+}
+
+/**
+ * Overlay `filled_links` onto anchors marked with `data-link-slot`.
+ * Sets href, target/rel for external links, and CTA label text when provided.
+ */
+export function applyLinks(
+  html: string,
+  links: Record<string, ResolvedLink>
+): string {
+  if (!links || Object.keys(links).length === 0) return html;
+
+  let out = html;
+  const slotRegex = /<a\b([^>]*\bdata-link-slot="([^"]+)"[^>]*)>([\s\S]*?)<\/a>/gi;
+
+  out = out.replace(slotRegex, (full, attrs: string, slot: string, inner: string) => {
+    const link = links[slot];
+    if (!link) return full;
+
+    let nextAttrs = String(attrs);
+    const href = escapeAttr(link.href);
+    if (/\bhref\s*=\s*["'][^"']*["']/i.test(nextAttrs)) {
+      nextAttrs = nextAttrs.replace(/\bhref\s*=\s*["'][^"']*["']/i, `href="${href}"`);
+    } else {
+      nextAttrs = ` href="${href}"${nextAttrs}`;
+    }
+
+    // Strip existing target/rel then re-apply
+    nextAttrs = nextAttrs
+      .replace(/\s*\btarget\s*=\s*["'][^"']*["']/gi, "")
+      .replace(/\s*\brel\s*=\s*["'][^"']*["']/gi, "");
+
+    if (!isInternalHref(link.href) && (link.target ?? "_blank") === "_blank") {
+      nextAttrs += ` target="_blank" rel="noopener noreferrer"`;
+    }
+
+    let nextInner = inner;
+    // CTA slots may carry a label; nav slots keep template text
+    if (link.label && slot.startsWith("cta_")) {
+      nextInner = escapeHtml(link.label);
+    }
+
+    return `<a${nextAttrs}>${nextInner}</a>`;
+  });
+
+  return out;
+}
+
+/**
+ * Inject or remove the `#zuri-embeds` section before `#contact` (or `</body>`).
+ */
+export function applyEmbeds(html: string, embeds: ResolvedEmbed[]): string {
+  // Always strip any prior injected section first
+  let out = html.replace(
+    /<section\b[^>]*\bid=["']zuri-embeds["'][^>]*>[\s\S]*?<\/section>/i,
+    ""
+  );
+
+  if (!embeds.length) return out;
+
+  const section = buildEmbedSectionHtml(embeds);
+  if (!section) return out;
+
+  // Prefer immediately before the contact section
+  const contactMatch = out.match(/<section\b[^>]*\bid=["']contact["'][^>]*>/i);
+  if (contactMatch?.index != null) {
+    return (
+      out.slice(0, contactMatch.index) +
+      section +
+      "\n" +
+      out.slice(contactMatch.index)
+    );
+  }
+
+  // Fallback: before </body>
+  if (/<\/body>/i.test(out)) {
+    return out.replace(/<\/body>/i, `${section}\n</body>`);
+  }
+
+  return out + section;
 }
 
 /**
