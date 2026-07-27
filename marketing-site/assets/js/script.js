@@ -54,7 +54,7 @@ const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)
       const alpha = Math.min(0.85, depth*0.9)*tw;
       ctx.beginPath();
       ctx.arc(sx,sy,r,0,Math.PI*2);
-      ctx.fillStyle = s.gold ? `rgba(240,196,32,${alpha})` : `rgba(201,206,214,${alpha*0.85})`;
+      ctx.fillStyle = s.gold ? `rgba(240,200,120,${alpha})` : `rgba(201,206,214,${alpha*0.85})`;
       ctx.fill();
     }
     requestAnimationFrame(draw);

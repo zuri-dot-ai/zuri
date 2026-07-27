@@ -70,7 +70,7 @@ const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)
 
       ctx.beginPath();
       ctx.arc(sx, sy, r, 0, Math.PI*2);
-      ctx.fillStyle = s.gold ? `rgba(240,196,32,${alpha})` : `rgba(201,206,214,${alpha*0.85})`;
+      ctx.fillStyle = s.gold ? `rgba(201,168,76,${alpha})` : `rgba(201,206,214,${alpha*0.85})`;
       ctx.fill();
     }
     requestAnimationFrame(draw);
@@ -317,7 +317,7 @@ scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 const keyLight = new THREE.DirectionalLight(0xffffff, 1.9);
 keyLight.position.set(4, 5, 6);
 scene.add(keyLight);
-const goldRim = new THREE.PointLight(0xF0C420, 28, 22, 2);
+const goldRim = new THREE.PointLight(0xD4AF5C, 26, 22, 2);
 goldRim.position.set(-3.2, -1.6, 3.5);
 scene.add(goldRim);
 const fillLight = new THREE.PointLight(0xc9ced6, 2.2, 20, 2);
@@ -390,7 +390,7 @@ chip.position.set(0.03, 0.05, -0.28);
 mark.add(chip);
 
 const edgeGeo = new THREE.EdgesGeometry(markGeo, 20);
-const edgeMat = new THREE.LineBasicMaterial({color:0xF0C420, transparent:true, opacity:0.65});
+const edgeMat = new THREE.LineBasicMaterial({color:0xD4AF5C, transparent:true, opacity:0.6});
 const edges3d = new THREE.LineSegments(edgeGeo, edgeMat);
 mark.add(edges3d);
 
@@ -441,16 +441,16 @@ function animate(){
   if(elapsed < REVEAL_MS){
     const p = elapsed/REVEAL_MS;
     const ease = 1 - Math.pow(1-p, 3);
-    mark.scale.setScalar(THREE.MathUtils.lerp(0.001, 1.13, ease));
+    mark.scale.setScalar(THREE.MathUtils.lerp(0.001, 1, ease));
     mark.rotation.y = THREE.MathUtils.lerp(-2.4, 0.5, ease);
     mark.rotation.x = THREE.MathUtils.lerp(0.6, 0.12, ease);
     mark.rotation.z = THREE.MathUtils.lerp(0.3, 0, ease);
-    camera.position.z = THREE.MathUtils.lerp(15, 8.2, ease);
+    camera.position.z = THREE.MathUtils.lerp(15, 9, ease);
   } else {
     const idle = (elapsed-REVEAL_MS)/1000;
     mark.rotation.y = 0.5 + Math.sin(idle*0.19)*0.22 + mx*0.35;
     mark.rotation.x = 0.12 + Math.cos(idle*0.13)*0.08 - my*0.25;
-    camera.position.z = 8.2 - scrollT*1.5;
+    camera.position.z = 9 - scrollT*1.5;
 
     const lightAngle = idle*0.11;
     goldRim.position.x = Math.cos(lightAngle)*4.2 - 1 + mx*2;
