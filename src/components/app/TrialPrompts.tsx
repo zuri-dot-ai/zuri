@@ -1,11 +1,15 @@
 "use client";
 
-import { PLAN_CONFIG, isPlanId } from "@/lib/payments/plans";
-import { daysUntil } from "@/lib/payments/trials";
+import { PLAN_CONFIG, isPlanId, type PlanId } from "@/lib/payments/plans";
+import {
+  daysUntil,
+  nextAvailableTrialPlan,
+} from "@/lib/payments/trials";
 import { TrialEndingBanner } from "./TrialEndingBanner";
 import { TrialEndedNotice } from "./TrialEndedNotice";
 import { TrialWelcomeSummary } from "./TrialWelcomeSummary";
 import { LoginUpgradePrompt } from "./LoginUpgradePrompt";
+import { StartTrialPrompt } from "./StartTrialPrompt";
 
 export interface TrialPromptsProps {
   status: string;
@@ -13,6 +17,7 @@ export interface TrialPromptsProps {
   trialEndsAt: string | null;
   trialTier: string | null;
   trialEndedAt: string | null;
+  trialsUsed?: string[] | null;
   /** Where to render: shell banners vs in-main nudges */
   slot: "banners" | "inline";
 }
@@ -26,11 +31,12 @@ export function TrialPrompts({
   trialEndsAt,
   trialTier,
   trialEndedAt,
+  trialsUsed = [],
   slot,
 }: TrialPromptsProps) {
   const trialing = status === "trialing" && !!trialEndsAt;
   const daysLeft = daysUntil(trialEndsAt);
-  const tierId =
+  const tierId: PlanId =
     trialTier && isPlanId(trialTier)
       ? trialTier
       : isPlanId(planId)
@@ -42,6 +48,15 @@ export function TrialPrompts({
   const showWelcome = trialing && !endingSoon;
   const showEnded =
     !!trialEndedAt && planId === "free" && status === "active";
+
+  const startTrialPlan =
+    !trialing
+      ? nextAvailableTrialPlan({
+          plan_id: planId,
+          status,
+          trials_used: trialsUsed,
+        })
+      : null;
 
   if (slot === "banners") {
     return (
@@ -67,11 +82,14 @@ export function TrialPrompts({
           trialTierName={tierName}
         />
       )}
-      <LoginUpgradePrompt
-        trialEndingSoon={!!endingSoon}
-        daysLeft={daysLeft}
-        trialTierName={tierName}
-      />
+      {startTrialPlan && <StartTrialPrompt planId={startTrialPlan} />}
+      {trialing && (
+        <LoginUpgradePrompt
+          trialEndingSoon={!!endingSoon}
+          daysLeft={daysLeft}
+          trialTierName={tierName}
+        />
+      )}
     </>
   );
 }

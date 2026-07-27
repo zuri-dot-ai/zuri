@@ -25,7 +25,18 @@ export interface SubscriptionTrialRow {
 export function isUnconverted(sub: Pick<SubscriptionTrialRow, "plan_id" | "status">): boolean {
   if (sub.status === "trialing") return true;
   if (sub.status === "grace_period") return false;
-  if (sub.status === "active" && sub.plan_id === "free") return true;
+  // Still in a paid billing relationship — checkout, not a free trial.
+  if (sub.status === "past_due") return false;
+  if (sub.status === "active" && sub.plan_id !== "free") return false;
+  // Free (any status) or lapsed paid rows that display as Free.
+  if (sub.plan_id === "free") return true;
+  if (
+    sub.status === "inactive" ||
+    sub.status === "expired" ||
+    sub.status === "cancelled"
+  ) {
+    return true;
+  }
   return false;
 }
 
@@ -79,6 +90,16 @@ export function canStartTrial(
 
 export function trialDaysForPlan(planId: PlanId): number {
   return planId === "pro" ? PRO_TRIAL_DAYS : UPGRADE_TRIAL_DAYS;
+}
+
+/** Lowest unused paid tier the user can still trial, or null if none. */
+export function nextAvailableTrialPlan(
+  sub: Pick<SubscriptionTrialRow, "plan_id" | "status" | "trials_used">
+): PlanId | null {
+  for (const id of PAID_PLAN_IDS) {
+    if (canStartTrial(sub, id).ok) return id;
+  }
+  return null;
 }
 
 /** Concrete Free-tier losses for emails and banners. */

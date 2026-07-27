@@ -27,7 +27,7 @@ export default async function AppLayout({
   const { data: subscription } = await supabase
     .from("subscriptions")
     .select(
-      "status, plan_id, current_period_end, grace_period_end, trial_ends_at, trial_tier, trial_ended_at"
+      "status, plan_id, current_period_end, grace_period_end, trial_ends_at, trial_tier, trial_ended_at, trials_used"
     )
     .eq("user_id", user.id)
     .maybeSingle();
@@ -42,12 +42,22 @@ export default async function AppLayout({
       })
     : "your next billing date";
 
+  // Effective plan for gating: lapsed paid rows behave as Free for trial invites.
+  const rawStatus = subscription?.status ?? "active";
+  const rawPlanId = subscription?.plan_id ?? "free";
+  const planActive =
+    rawStatus === "active" ||
+    rawStatus === "grace_period" ||
+    rawStatus === "trialing";
+  const effectivePlanId = planActive ? rawPlanId : "free";
+
   const trialProps = {
-    status: subscription?.status ?? "active",
-    planId: subscription?.plan_id ?? "free",
+    status: rawStatus,
+    planId: effectivePlanId,
     trialEndsAt: subscription?.trial_ends_at ?? null,
     trialTier: subscription?.trial_tier ?? null,
     trialEndedAt: subscription?.trial_ended_at ?? null,
+    trialsUsed: subscription?.trials_used ?? [],
   };
 
   return (

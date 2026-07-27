@@ -690,7 +690,7 @@ function BillingTab({ account }: { account: AccountView | null }) {
   const [pendingPlan, setPendingPlan] = useState<string | null>(null);
 
   const plan = account?.subscription_plan ?? "free";
-  const status = account?.subscription_status ?? "inactive";
+  const status = account?.subscription_status ?? "active";
   const trialEndsAt = account?.trial_ends_at ?? null;
   const trialsUsed = account?.trials_used ?? [];
   const isTrialing = status === "trialing";

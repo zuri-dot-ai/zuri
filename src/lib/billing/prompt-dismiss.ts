@@ -21,6 +21,8 @@ export const PROMPT_KEYS = {
   loginUpgradePromptDay: "zuri_login_upgrade_prompt_day",
   loginUpgradeSessionDismissed: "zuri_login_upgrade_session_dismissed",
   trialEndingBannerDay: "zuri_trial_ending_banner_day",
+  startTrialPromptDay: "zuri_start_trial_prompt_day",
+  startTrialSessionDismissed: "zuri_start_trial_session_dismissed",
   lastGateAttempt: "zuri_last_gate_attempt",
   trialEndedAckPrefix: "zuri_trial_ended_ack_",
 } as const;

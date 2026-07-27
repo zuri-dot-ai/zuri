@@ -57,7 +57,8 @@ export default async function SettingsPage({
     full_name: profile?.full_name ?? null,
     avatar_url: profile?.avatar_url ?? metaAvatar ?? null,
     subscription_plan: planId,
-    subscription_status: (sub?.status as SubscriptionStatus) ?? "inactive",
+    // Match start-trial API: missing row is treated as free/active (eligible for trial).
+    subscription_status: (sub?.status as SubscriptionStatus) ?? "active",
     trial_ends_at: sub?.trial_ends_at ?? null,
     trial_tier: trialTier,
     trials_used: normalizeTrialsUsed(sub?.trials_used),
