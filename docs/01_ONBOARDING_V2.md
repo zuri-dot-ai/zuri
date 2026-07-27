@@ -959,6 +959,9 @@ will silently drop the description data.
 | Photo upload fails (network) | Keep the file in a local retry queue, show inline retry button, never block Continue/Skip | "Upload failed. [Retry] or skip for now." |
 | Photo upload exceeds 20-per-session rate limit | Block further uploads, allow skip | "You've uploaded the maximum number of photos for now." |
 | Signup: Google OAuth cancelled/fails | Return to Step 11 with all onboarding data intact, show retry | "Sign-in didn't complete. Please try again." |
+| After wiping `auth.users` in SQL, browser still has JWT → `/auth/v1/user` 403 | Middleware + `/start` clear local session (`signOut({ scope: "local" })`). Ops: clear site cookies/localStorage for the app origin, then retry. | — |
+| Google returns to Step 1 empty | Auth callback completes onboarding **in-process** (no Cookie self-fetch). `/start` restores `restoreToken` / answers before minting a new anon session. | `?error=complete_failed` toast |
+| Website stuck "Queued" after email signup | Ensure `NEXT_PUBLIC_APP_URL` + `INTERNAL_API_SECRET` on Vercel; client also POSTs `/api/ai/generate-website` when server trigger skipped. | — |
 | Signup: email already registered | Show inline error with a "Log in instead" link that, on success, still runs `convertAnonymousSession()` against the now-authenticated existing user | "This email is already registered. [Log in]" |
 | Signup succeeds but `convertAnonymousSession()` fails server-side | Log error, still redirect to dashboard, flag account for manual review; NEVER show the user a broken/error state right after they successfully created an account | "Welcome! We're finishing up your website — check your dashboard in a moment." |
 | Services: fewer than 1 fully completed when Continue tapped | Block, focus the incomplete field | "Add at least one service to continue." |
@@ -994,10 +997,11 @@ will silently drop the description data.
 13. `src/app/(auth)/onboarding/page.tsx` reduced to just Step 11 (signup)
     + Step 12 (generation) — the authenticated tail end of the flow
 14. Cron: `/api/cron/purge-expired-sessions`
-15. Update auth callback redirect logic: post-signup, check for a pending
-    anonymous session token (from a cookie or query param carried through
-    the OAuth redirect) and fire `convertAnonymousSession()` before
-    routing to dashboard
+15. Auth callback (`/api/auth/callback`): after OAuth
+    `exchangeCodeForSession`, call `completeOnboardingSession(user, token)`
+    **in-process** (do not HTTP self-fetch `/api/onboarding/complete` — that
+    can forward a stale/deleted JWT). Success → `/onboarding`; failure →
+    `/start?error=complete_failed` with answers restored from the anon session.
 
 ---
 

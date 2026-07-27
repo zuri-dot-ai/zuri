@@ -77,12 +77,29 @@ export function Step11Signup({
   async function completeAndAdvance() {
     try {
       await onFlushSession();
-      await safeFetchJSON("/api/onboarding/complete", {
+      const result = await safeFetchJSON<{
+        success: boolean;
+        jobId: string | null;
+        triggeredGeneration?: boolean;
+      }>("/api/onboarding/complete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionToken }),
       });
       clearOnboardingSessionBackup();
+
+      // Server env may lack INTERNAL_API_SECRET — kick generation with the
+      // live user session so the job does not sit queued forever.
+      if (result.jobId && result.triggeredGeneration === false) {
+        void safeFetchJSON("/api/ai/generate-website", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ jobId: result.jobId }),
+        }).catch(() => {
+          /* GenerationStatusCard will retry on dashboard */
+        });
+      }
+
       router.push("/onboarding");
       router.refresh();
     } catch (err) {

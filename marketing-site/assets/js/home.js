@@ -310,6 +310,7 @@ renderer.toneMappingExposure = 1.1;
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
 camera.position.set(0, 0, 9);
+const IDLE_Z = 10.5;
 
 const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
@@ -413,11 +414,15 @@ window.addEventListener('scroll', onScroll, {passive:true});
 
 function resize(){
   const w = canvas.clientWidth, h = canvas.clientHeight;
+  if(w < 2 || h < 2) return;
   renderer.setSize(w,h,false);
   camera.aspect = w/h;
   camera.updateProjectionMatrix();
 }
 window.addEventListener('resize', resize);
+if(typeof ResizeObserver !== 'undefined'){
+  new ResizeObserver(resize).observe(canvas);
+}
 resize();
 
 const heroStart = performance.now();
@@ -445,12 +450,12 @@ function animate(){
     mark.rotation.y = THREE.MathUtils.lerp(-2.4, 0.5, ease);
     mark.rotation.x = THREE.MathUtils.lerp(0.6, 0.12, ease);
     mark.rotation.z = THREE.MathUtils.lerp(0.3, 0, ease);
-    camera.position.z = THREE.MathUtils.lerp(15, 9, ease);
+    camera.position.z = THREE.MathUtils.lerp(15, IDLE_Z, ease);
   } else {
     const idle = (elapsed-REVEAL_MS)/1000;
     mark.rotation.y = 0.5 + Math.sin(idle*0.19)*0.22 + mx*0.35;
     mark.rotation.x = 0.12 + Math.cos(idle*0.13)*0.08 - my*0.25;
-    camera.position.z = 9 - scrollT*1.5;
+    camera.position.z = IDLE_Z - scrollT*1.5;
 
     const lightAngle = idle*0.11;
     goldRim.position.x = Math.cos(lightAngle)*4.2 - 1 + mx*2;

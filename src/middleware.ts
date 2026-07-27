@@ -1,5 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import {
+  clearInvalidLocalSession,
+  isInvalidAuthSessionError,
+} from "@/lib/auth/clear-invalid-session";
 
 const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "buildzuri.com";
 const APP_SUBDOMAINS = new Set(["app", "api", "www", "mail", "admin", "staging"]);
@@ -97,7 +101,14 @@ export async function middleware(req: NextRequest) {
 
   const {
     data: { user },
+    error: userError,
   } = await supabase.auth.getUser();
+
+  // Deleted/banned JWT left in the browser → clear local session so it cannot
+  // keep 403-spamming Auth or poisoning OAuth / onboarding complete.
+  if (!user && isInvalidAuthSessionError(userError)) {
+    await clearInvalidLocalSession(supabase);
+  }
 
   // ── 3. Route protection ──────────────────────────────────────────────────
   const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));

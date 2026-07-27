@@ -7,11 +7,15 @@ import { captureError } from "@/lib/monitoring/sentry";
 import { ANON_COOKIE_NAME } from "@/lib/onboarding/anonymous-session";
 import { CUSTOM_SITE_COOKIE_NAME } from "@/lib/custom-site/anonymous-session";
 import { createServiceClient } from "@/lib/supabase/service";
+import { completeOnboardingSession } from "@/lib/onboarding/complete-session";
 
 /**
  * Public: Supabase OAuth / email-confirm callback.
  * Exchanges the auth code for a session (cookies attached to the redirect),
  * then routes by onboarding status.
+ *
+ * Onboarding complete runs in-process with the exchanged user — never via an
+ * HTTP self-fetch that can forward a stale/deleted JWT.
  */
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -130,24 +134,26 @@ export async function GET(request: Request) {
         const sessionToken = cookieStore.get(ANON_COOKIE_NAME)?.value;
         if (sessionToken) {
           try {
-            const cookieHeader = cookieStore
-              .getAll()
-              .map((c) => `${c.name}=${c.value}`)
-              .join("; ");
-            const completeResponse = await fetch(
-              `${origin}/api/onboarding/complete`,
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  Cookie: cookieHeader,
-                },
-                body: JSON.stringify({ sessionToken }),
-              }
-            );
-            if (completeResponse.ok) {
+            const result = await completeOnboardingSession(user, sessionToken, {
+              // Cookie clear via cookies() may not reach the redirect response;
+              // strip the anon cookie on the redirect below instead.
+              clearAnonCookie: false,
+            });
+            if (result.ok) {
               dest = "/onboarding";
+              // Clear anon cookie on the redirect response (in-process complete
+              // intentionally skipped cookies() so Set-Cookie reaches the browser).
+              pendingCookies.push({
+                name: ANON_COOKIE_NAME,
+                value: "",
+                options: { path: "/", maxAge: 0 },
+              });
             } else {
+              console.error(
+                "[auth/callback] onboarding complete failed:",
+                result.error,
+                result.details
+              );
               dest = "/start?error=complete_failed";
             }
           } catch (err) {

@@ -31,6 +31,10 @@ import {
 import { ONBOARDING_TO_PROJECT_TYPE } from "@/lib/custom-site/types";
 import { resolveArchetypeFromCategory } from "@/lib/website/archetypes";
 import { safeFetchJSON, FetchError } from "@/lib/utils/safe-fetch";
+import {
+  clearInvalidLocalSession,
+  isInvalidAuthSessionError,
+} from "@/lib/auth/clear-invalid-session";
 
 /** In-shell branded loader — keeps OnboardingHeroPanel mounted (same as apply). */
 function OnboardingInlineLoader({ label }: { label: string }) {
@@ -45,6 +49,19 @@ function OnboardingInlineLoader({ label }: { label: string }) {
 const SIGNUP_STEP = ONBOARDING_TOTAL_STEPS; // 11
 const LAST_QUESTION_STEP = 10;
 const PATCH_DEBOUNCE_MS = 500;
+
+function hasMeaningfulOnboardingData(
+  data: Partial<OnboardingState> | null | undefined
+): boolean {
+  if (!data) return false;
+  return Boolean(
+    data.businessType ||
+      data.businessName ||
+      data.firstName ||
+      data.handle ||
+      (Array.isArray(data.services) && data.services.length > 0)
+  );
+}
 
 export default function StartPage() {
   const router = useRouter();
@@ -78,13 +95,19 @@ export default function StartPage() {
         const supabase = createClient();
         const {
           data: { user },
+          error: userError,
         } = await supabase.auth.getUser();
 
-        if (user) {
+        let activeUser = user;
+        if (!activeUser && isInvalidAuthSessionError(userError)) {
+          await clearInvalidLocalSession(supabase);
+        }
+
+        if (activeUser) {
           const { data: profile } = await supabase
             .from("profiles")
             .select("onboarding_completed")
-            .eq("id", user.id)
+            .eq("id", activeUser.id)
             .maybeSingle();
 
           if (profile?.onboarding_completed) {
@@ -121,13 +144,23 @@ export default function StartPage() {
           if (cancelled) return;
 
           // Authenticated resume never lands on the signup step
-          const maxStep = user ? LAST_QUESTION_STEP : SIGNUP_STEP;
-          const step = Math.min(
+          const maxStep = activeUser ? LAST_QUESTION_STEP : SIGNUP_STEP;
+          let step = Math.min(
             maxStep,
             Math.max(1, Number(existing.currentStep) || 1)
           );
+
+          // complete_failed / clamp must not dump a filled session to step 1.
+          // If answers exist but current_step was lost, resume near the end.
+          if (
+            step <= 1 &&
+            hasMeaningfulOnboardingData(existing.data)
+          ) {
+            step = activeUser ? LAST_QUESTION_STEP : SIGNUP_STEP;
+          }
+
           const clamped =
-            user && step >= SIGNUP_STEP ? LAST_QUESTION_STEP : step;
+            activeUser && step >= SIGNUP_STEP ? LAST_QUESTION_STEP : step;
 
           setState({
             ...DEFAULT_ONBOARDING_STATE,
@@ -135,8 +168,10 @@ export default function StartPage() {
             sessionToken,
             step: clamped,
           });
-          setWelcomeBack(clamped > 1);
+          setWelcomeBack(clamped > 1 || hasMeaningfulOnboardingData(existing.data));
         } catch {
+          // Prefer backup restore over blank step-1 if start returned a token
+          // but session GET failed (transient). Keep token so PATCH can retry.
           setState({ ...DEFAULT_ONBOARDING_STATE, sessionToken });
         }
       } catch {
@@ -215,12 +250,27 @@ export default function StartPage() {
             data,
           }),
         });
-        await safeFetchJSON("/api/onboarding/complete", {
+        const result = await safeFetchJSON<{
+          success: boolean;
+          jobId: string | null;
+          triggeredGeneration?: boolean;
+        }>("/api/onboarding/complete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ sessionToken }),
         });
         clearOnboardingSessionBackup();
+
+        if (result.jobId && result.triggeredGeneration === false) {
+          void safeFetchJSON("/api/ai/generate-website", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ jobId: result.jobId }),
+          }).catch(() => {
+            /* GenerationStatusCard will retry on dashboard */
+          });
+        }
+
         router.push("/onboarding");
         router.refresh();
       } catch (err) {

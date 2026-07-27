@@ -32,18 +32,43 @@ export async function POST(req: Request) {
     /* empty / non-JSON body is fine */
   }
 
+  const service = createServiceClient();
+
   // Reuse an existing, still-valid session if the cookie is already set —
   // avoids burning the per-IP rate limit budget on repeat visits/refreshes.
+  // Prefer a backup token that still has answers over minting a blank row
+  // when the cookie points at an empty/expired session after OAuth.
   const existingToken = await getAnonymousSessionIdFromCookie();
   if (existingToken) {
-    const service = createServiceClient();
     const { data: existing } = await service
       .from("anonymous_onboarding_sessions")
-      .select("session_token, expires_at")
+      .select("session_token, expires_at, data, current_step")
       .eq("session_token", existingToken)
       .maybeSingle();
 
     if (existing && new Date(existing.expires_at).getTime() > Date.now()) {
+      const data = (existing.data ?? {}) as Record<string, unknown>;
+      const hasAnswers = Boolean(
+        data.businessType ||
+          data.businessName ||
+          data.firstName ||
+          data.handle ||
+          (Array.isArray(data.services) && data.services.length > 0) ||
+          (existing.current_step ?? 1) > 1
+      );
+
+      // Cookie session is empty but client still has a richer backup — restore it.
+      if (
+        !hasAnswers &&
+        restoreToken &&
+        restoreToken !== existingToken
+      ) {
+        const restored = await restoreAnonymousSessionCookie(restoreToken);
+        if (restored) {
+          return NextResponse.json({ sessionToken: restoreToken });
+        }
+      }
+
       return NextResponse.json({ sessionToken: existing.session_token });
     }
   }
@@ -62,7 +87,6 @@ export async function POST(req: Request) {
   const userAgentHash = userAgent ? hashForRateLimit(userAgent) : null;
 
   if (ipHash) {
-    const service = createServiceClient();
     const rateLimit = await checkRateLimit(service, ipHash, "onboarding:start");
     if (!rateLimit.allowed) return rateLimitExceededResponse(rateLimit.resetIn);
   }
