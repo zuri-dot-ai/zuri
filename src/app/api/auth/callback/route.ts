@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { safeNextPath } from "@/lib/auth/redirect";
+import { getAppOrigin, safeNextPath } from "@/lib/auth/redirect";
 import { generateSupportRef } from "@/lib/errors/support-ref";
 import { captureError } from "@/lib/monitoring/sentry";
 import { ANON_COOKIE_NAME } from "@/lib/onboarding/anonymous-session";
@@ -16,16 +16,21 @@ import { completeOnboardingSession } from "@/lib/onboarding/complete-session";
  *
  * Onboarding complete runs in-process with the exchanged user — never via an
  * HTTP self-fetch that can forward a stale/deleted JWT.
+ *
+ * Post-auth redirects always use getAppOrigin() so users stay on
+ * app.buildzuri.com and are never bounced to *.vercel.app (which drops the
+ * host-scoped anon onboarding cookie and restarts /start at step 1).
  */
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
+  const appOrigin = getAppOrigin(request);
+  const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
   const next = safeNextPath(
     searchParams.get("next") ?? searchParams.get("redirect")
   );
 
   if (!code) {
-    return NextResponse.redirect(`${origin}/login?error=auth`);
+    return NextResponse.redirect(`${appOrigin}/login?error=auth`);
   }
 
   const cookieStore = await cookies();
@@ -66,7 +71,7 @@ export async function GET(request: Request) {
   try {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
-      return NextResponse.redirect(`${origin}/login?error=auth`);
+      return NextResponse.redirect(`${appOrigin}/login?error=auth`);
     }
 
     const {
@@ -166,14 +171,7 @@ export async function GET(request: Request) {
       }
     }
 
-    const forwardedHost = request.headers.get("x-forwarded-host");
-    const isLocalEnv = process.env.NODE_ENV === "development";
-    const redirectUrl =
-      !isLocalEnv && forwardedHost
-        ? `https://${forwardedHost}${dest}`
-        : `${origin}${dest}`;
-
-    const response = NextResponse.redirect(redirectUrl);
+    const response = NextResponse.redirect(`${appOrigin}${dest}`);
     pendingCookies.forEach(({ name, value, options }) => {
       response.cookies.set(name, value, options);
     });
@@ -181,6 +179,6 @@ export async function GET(request: Request) {
   } catch (err) {
     const ref = generateSupportRef();
     captureError(err, { supportRef: ref, route: "/api/auth/callback" });
-    return NextResponse.redirect(`${origin}/login?error=auth`);
+    return NextResponse.redirect(`${appOrigin}/login?error=auth`);
   }
 }

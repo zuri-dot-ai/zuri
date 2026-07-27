@@ -45,6 +45,31 @@ NEXT_PUBLIC_ROOT_DOMAIN=buildzuri.com
 
 After publish, the public URL is `https://your-project.vercel.app/sites/pixelnest-studio-test`. Owner preview stays at `/preview/{handle}` (auth required).
 
+**Set on Vercel once `app.buildzuri.com` is live:**
+
+```
+NEXT_PUBLIC_APP_URL=https://app.buildzuri.com
+NEXT_PUBLIC_SITE_URL_MODE=subdomain
+NEXT_PUBLIC_ROOT_DOMAIN=buildzuri.com
+```
+
+### 1.2 Supabase Auth URLs (required for custom domain)
+
+If Site URL stays on `*.vercel.app`, Google/email signup finishes on the Vercel host. The anonymous onboarding cookie was set on `app.buildzuri.com`, so it is missing → `/start` restarts at step 1.
+
+In **Supabase Dashboard → Authentication → URL Configuration**:
+
+| Setting | Value |
+|---|---|
+| **Site URL** | `https://app.buildzuri.com` |
+| **Redirect URLs** | `https://app.buildzuri.com/**` |
+| | `https://app.buildzuri.com/api/auth/callback` |
+| | (optional preview) `https://YOUR_PROJECT.vercel.app/**` |
+
+Also add the same callback URL under Google Cloud OAuth authorized redirect URIs if you use a custom Google client (Supabase-hosted Google usually only needs the Supabase callback).
+
+The app uses `getAppOrigin()` / `authCallbackUrl()` so post-auth redirects prefer `NEXT_PUBLIC_APP_URL` over `x-forwarded-host` / `*.vercel.app`.
+
 When you buy `buildzuri.com`: add `buildzuri.com` and `*.buildzuri.com` in Vercel Domains, configure wildcard CNAME, then set `NEXT_PUBLIC_SITE_URL_MODE=subdomain`.
 
 Helper: [`src/lib/website/public-site-url.ts`](../src/lib/website/public-site-url.ts) — `getPublicSiteUrl()` used by publish API and Website Studio.
