@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { requireAuth } from "@/lib/auth/require-auth";
 import { checkRateLimit, rateLimitExceededResponse } from "@/lib/security/rate-limit";
 import { isPlanId, PLAN_CONFIG, type PlanId } from "@/lib/payments/plans";
@@ -30,13 +31,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
   }
 
-  const { data: sub, error: subError } = await supabase
+  // Subscriptions are SELECT-only for authenticated clients (RLS + grants).
+  // Writes must use the service role — same pattern as payment activation.
+  const service = createServiceClient();
+
+  const { data: sub, error: subError } = await service
     .from("subscriptions")
     .select("plan_id, status, trials_used, trial_ends_at, trial_tier")
     .eq("user_id", user.id)
     .maybeSingle();
 
   if (subError) {
+    console.error("[start-trial] load subscription failed:", subError.message);
     return NextResponse.json({ error: "Could not load subscription" }, { status: 500 });
   }
 
@@ -55,17 +61,16 @@ export async function POST(request: Request) {
 
   const update = buildStartTrialUpdate(planId as PlanId, row.trials_used);
 
-  const { error: updateError } = await supabase
-    .from("subscriptions")
-    .upsert(
-      {
-        user_id: user.id,
-        ...update,
-      },
-      { onConflict: "user_id" }
-    );
+  const { error: updateError } = await service.from("subscriptions").upsert(
+    {
+      user_id: user.id,
+      ...update,
+    },
+    { onConflict: "user_id" }
+  );
 
   if (updateError) {
+    console.error("[start-trial] upsert failed:", updateError.message);
     return NextResponse.json(
       { error: "Could not start trial" },
       { status: 500 }
