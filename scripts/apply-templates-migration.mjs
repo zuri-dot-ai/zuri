@@ -38,6 +38,7 @@ function loadEnvFile() {
 const MIGRATIONS = [
   "20260716_website_builder_v2_templates.sql",
   "20260716_templates_library.sql",
+  "20260726_website_links_embeds.sql",
 ];
 
 async function main() {

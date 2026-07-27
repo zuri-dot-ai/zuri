@@ -26,32 +26,39 @@ function hashToSlot(href) {
   const m = href.match(/^#([a-zA-Z][\w:-]*)$/);
   if (!m) return null;
   const id = m[1].toLowerCase().replace(/[^a-z0-9]+/g, "_");
-  if (!id || id === "top") return null;
+  // Skip logo / brand top-of-page anchors
+  if (!id || id === "top" || id === "hero") return null;
   return `nav_${id}`;
 }
 
-function patchNavBlock(blockHtml) {
-  return blockHtml.replace(
-    /<a\b([^>]*?)>/gi,
-    (full, attrs) => {
-      if (/\bdata-link-slot\s*=/i.test(attrs)) return full;
-      if (/\bclass\s*=\s*["'][^"']*\blogo\b/i.test(attrs)) return full;
-
-      const hrefMatch = attrs.match(/\bhref\s*=\s*["']([^"']*)["']/i);
-      const href = hrefMatch?.[1] ?? "";
-      const slot = hashToSlot(href);
-      if (!slot) return full;
-
-      return `<a data-link-slot="${slot}"${attrs}>`;
-    }
-  );
+function isSkipNavAnchor(attrs) {
+  if (/\bdata-link-slot\s*=/i.test(attrs)) return true;
+  if (/\bclass\s*=\s*["'][^"']*\b(logo|nav-logo|nav-brand)\b/i.test(attrs))
+    return true;
+  if (/\baria-label\s*=\s*["']Chat on WhatsApp["']/i.test(attrs)) return true;
+  return false;
 }
 
-function patchFile(path) {
-  let html = readFileSync(path, "utf8");
+function patchNavBlock(blockHtml) {
+  return blockHtml.replace(/<a\b([^>]*?)>/gi, (full, attrs) => {
+    if (isSkipNavAnchor(attrs)) return full;
+
+    const hrefMatch = attrs.match(/\bhref\s*=\s*["']([^"']*)["']/i);
+    const href = hrefMatch?.[1] ?? "";
+    const slot = hashToSlot(href);
+    if (!slot) return full;
+
+    return `<a data-link-slot="${slot}"${attrs}>`;
+  });
+}
+
+function patchFile(filePath) {
+  let html = readFileSync(filePath, "utf8");
   const before = html;
 
-  // Primary nav (v2: nav.primary-nav; v1: ul.nav-links)
+  // Primary nav variants:
+  //   v2: <nav class="primary-nav">
+  //   v1: <ul class="nav-links">, <nav class="nav-links">, <div class="nav-links">
   html = html.replace(
     /(<nav\b[^>]*\bprimary-nav\b[^>]*>)([\s\S]*?)(<\/nav>)/gi,
     (_, open, inner, close) => open + patchNavBlock(inner) + close
@@ -60,21 +67,32 @@ function patchFile(path) {
     /(<ul\b[^>]*\bnav-links\b[^>]*>)([\s\S]*?)(<\/ul>)/gi,
     (_, open, inner, close) => open + patchNavBlock(inner) + close
   );
-
-  // Mobile drawer (v2: mobile-drawer; v1: nav-drawer)
   html = html.replace(
-    /(<nav\b[^>]*(?:mobile-drawer|nav-drawer|id=["']mobile-drawer["']|id=["']nav-drawer["'])[^>]*>)([\s\S]*?)(<\/nav>)/gi,
+    /(<nav\b[^>]*\bnav-links\b[^>]*>)([\s\S]*?)(<\/nav>)/gi,
+    (_, open, inner, close) => open + patchNavBlock(inner) + close
+  );
+  html = html.replace(
+    /(<div\b[^>]*\bnav-links\b[^>]*>)([\s\S]*?)(<\/div>)/gi,
     (_, open, inner, close) => open + patchNavBlock(inner) + close
   );
 
-  // CTA .btn anchors (not submit buttons) — sequential slots
+  // Mobile drawer variants:
+  //   v2: mobile-drawer; v1: nav-drawer / drawer / #drawer / #nav-drawer
+  html = html.replace(
+    /(<nav\b[^>]*(?:mobile-drawer|nav-drawer|\bdrawer\b|id=["']mobile-drawer["']|id=["']nav-drawer["']|id=["']drawer["'])[^>]*>)([\s\S]*?)(<\/nav>)/gi,
+    (_, open, inner, close) => open + patchNavBlock(inner) + close
+  );
+
+  // CTA anchors: .btn, .hero-cta, .nav-cta (link-style CTAs only)
   let ctaIndex = 0;
   html = html.replace(/<a\b([^>]*?)>/gi, (full, attrs) => {
     if (/\bdata-link-slot\s*=/i.test(attrs)) return full;
-    if (!/\bclass\s*=\s*["'][^"']*\bbtn\b/i.test(attrs)) return full;
-    // Skip powered-by / whatsapp / logo
+    const isCtaClass =
+      /\bclass\s*=\s*["'][^"']*\b(btn|hero-cta|nav-cta)\b/i.test(attrs);
+    if (!isCtaClass) return full;
     if (/\baria-label\s*=\s*["']Chat on WhatsApp["']/i.test(attrs)) return full;
-    if (/\bclass\s*=\s*["'][^"']*\blogo\b/i.test(attrs)) return full;
+    if (/\bclass\s*=\s*["'][^"']*\b(logo|nav-logo|nav-brand)\b/i.test(attrs))
+      return full;
 
     ctaIndex += 1;
     let slot;
@@ -86,7 +104,7 @@ function patchFile(path) {
   });
 
   if (html !== before) {
-    writeFileSync(path, html, "utf8");
+    writeFileSync(filePath, html, "utf8");
     return { changed: true, ctas: ctaIndex };
   }
   return { changed: false, ctas: ctaIndex };

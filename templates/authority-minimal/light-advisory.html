@@ -528,12 +528,12 @@
   <div class="nav-inner">
     <a href="#hero" class="nav-logo">{{business_name}}</a>
     <div class="nav-links">
-      <a href="#about">About</a>
-      <a href="#services">Services</a>
-      <a href="#testimonials">Testimonials</a>
-      <a href="#contact">Contact</a>
+      <a data-link-slot="nav_about" href="#about">About</a>
+      <a data-link-slot="nav_services" href="#services">Services</a>
+      <a data-link-slot="nav_testimonials" href="#testimonials">Testimonials</a>
+      <a data-link-slot="nav_contact" href="#contact">Contact</a>
     </div>
-    <a href="#contact" class="nav-cta">Book a Consultation</a>
+    <a data-link-slot="cta_primary" href="#contact" class="nav-cta">Book a Consultation</a>
     <button class="hamburger" id="hamburger" aria-label="Open menu" aria-expanded="false">
       <span></span><span></span><span></span>
     </button>
@@ -546,7 +546,7 @@
   <a href="#services">Services</a>
   <a href="#testimonials">Testimonials</a>
   <a href="#contact">Contact</a>
-  <a href="#contact" class="nav-cta">Book a Consultation</a>
+  <a data-link-slot="cta_secondary" href="#contact" class="nav-cta">Book a Consultation</a>
 </div>
 
 <!-- ================= HERO ================= -->

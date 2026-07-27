@@ -537,9 +537,9 @@
   <div class="container nav-inner">
     <a href="#" class="nav-logo">{{business_name}}</a>
     <nav class="nav-links" aria-label="Primary">
-      <a href="#about">About</a>
-      <a href="#services">Services</a>
-      <a href="#contact">Contact</a>
+      <a data-link-slot="nav_about" href="#about">About</a>
+      <a data-link-slot="nav_services" href="#services">Services</a>
+      <a data-link-slot="nav_contact" href="#contact">Contact</a>
     </nav>
     <a data-link-slot="cta_primary" href="#contact" class="btn btn-outline-gold nav-cta">Book a Consultation</a>
     <button class="hamburger" id="hamburger-btn" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-drawer">

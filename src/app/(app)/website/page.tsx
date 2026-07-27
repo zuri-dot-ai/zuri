@@ -10,7 +10,7 @@ import {
   normalizeFilledImages,
   normalizeFilledLinks,
 } from "@/lib/website/recompose-html";
-import { discoverLinkSlots } from "@/lib/website/link-slots";
+import { ensureLinkSlotsInWebsite } from "@/lib/website/ensure-link-slots";
 import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
 import {
   isActiveCustomSiteStatus,
@@ -94,14 +94,24 @@ export default async function WebsitePage() {
     customRequest?.status != null &&
     isActiveCustomSiteStatus(customRequest.status as CustomSiteRequestStatus);
 
+  // If Storage gained data-link-slot but this site's HTML is stale, recompose once.
+  const ensured = await ensureLinkSlotsInWebsite(supabase, {
+    id: website.id,
+    user_id: user.id,
+    template_id: website.template_id,
+    template_html: website.template_html,
+    filled_placeholders: website.filled_placeholders,
+    filled_images: website.filled_images,
+    filled_links: website.filled_links,
+    filled_embeds: website.filled_embeds,
+    active_theme: website.active_theme,
+    archetype: website.archetype,
+  });
+
   const filledLinks = normalizeFilledLinks(website.filled_links);
   const filledEmbeds = normalizeFilledEmbeds(website.filled_embeds);
-  const linkSlots = Array.from(
-    new Set([
-      ...discoverLinkSlots(website.template_html),
-      ...Object.keys(filledLinks),
-    ])
-  );
+  const htmlHasPicsumAfter =
+    htmlHasPicsum || /picsum\.photos/i.test(ensured.templateHtml);
 
   return (
     <ErrorBoundary context="website-builder">
@@ -114,14 +124,14 @@ export default async function WebsitePage() {
         filledLinks={filledLinks}
         filledEmbeds={filledEmbeds}
         imageSlots={imageSlots}
-        linkSlots={linkSlots}
+        linkSlots={ensured.linkSlots}
         activeTheme={(website.active_theme as ActiveTheme) ?? "theme-1"}
         archetype={(website.archetype as DesignArchetype | null) ?? null}
         isPublished={isPublished}
         slug={slug}
         handle={(website.handle as string | null) ?? slug}
         plan={planId}
-        needsReview={Boolean(website.needs_review) || htmlHasPicsum}
+        needsReview={Boolean(website.needs_review) || htmlHasPicsumAfter}
         hasOpenCustomRequest={openCustom}
       />
     </ErrorBoundary>

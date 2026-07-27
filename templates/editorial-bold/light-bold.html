@@ -483,11 +483,11 @@
   <div class="container nav-inner">
     <a href="#top" class="logo">{{business_name}}</a>
     <nav class="nav-links" aria-label="Primary">
-      <a href="#about">About</a>
-      <a href="#work">Work</a>
-      <a href="#gallery">Gallery</a>
-      <a href="#testimonials">Reviews</a>
-      <a href="#contact">Contact</a>
+      <a data-link-slot="nav_about" href="#about">About</a>
+      <a data-link-slot="nav_work" href="#work">Work</a>
+      <a data-link-slot="nav_gallery" href="#gallery">Gallery</a>
+      <a data-link-slot="nav_testimonials" href="#testimonials">Reviews</a>
+      <a data-link-slot="nav_contact" href="#contact">Contact</a>
     </nav>
     <button class="hamburger" id="hamburgerBtn" aria-label="Open menu" aria-expanded="false" aria-controls="drawer">
       <span></span><span></span><span></span>
@@ -497,11 +497,11 @@
 
 <div class="drawer-overlay" id="drawerOverlay"></div>
 <nav class="drawer" id="drawer" aria-label="Mobile">
-  <a href="#about">About</a>
-  <a href="#work">Work</a>
-  <a href="#gallery">Gallery</a>
-  <a href="#testimonials">Reviews</a>
-  <a href="#contact">Contact</a>
+  <a data-link-slot="nav_about" href="#about">About</a>
+  <a data-link-slot="nav_work" href="#work">Work</a>
+  <a data-link-slot="nav_gallery" href="#gallery">Gallery</a>
+  <a data-link-slot="nav_testimonials" href="#testimonials">Reviews</a>
+  <a data-link-slot="nav_contact" href="#contact">Contact</a>
 </nav>
 
 <main id="top">
@@ -511,7 +511,7 @@
       <p class="hero-eyebrow">{{tagline}}</p>
       <h1>{{business_name}}</h1>
       <p class="hero-tagline">{{about_body}}</p>
-      <a href="#contact" class="hero-cta">Get in touch →</a>
+      <a data-link-slot="cta_primary" href="#contact" class="hero-cta">Get in touch →</a>
     </div>
   </section>
 

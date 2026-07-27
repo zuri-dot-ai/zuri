@@ -318,7 +318,7 @@
       <li><a data-link-slot="nav_faq" href="#faq">FAQ</a></li>
       <li><a data-link-slot="nav_contact" href="#contact">Contact</a></li>
     </ul>
-    <a href="#contact" class="nav-cta">Get Started</a>
+    <a data-link-slot="cta_primary" href="#contact" class="nav-cta">Get Started</a>
     <button class="hamburger" id="hamburger-btn" aria-label="Open menu" aria-expanded="false">
       <span></span><span></span><span></span>
     </button>
@@ -327,12 +327,12 @@
 
 <div class="drawer-overlay" id="drawer-overlay"></div>
 <nav class="drawer" id="drawer" aria-label="Mobile navigation">
-  <a href="#about">About</a>
-  <a href="#services">Services</a>
-  <a href="#testimonials">Testimonials</a>
-  <a href="#faq">FAQ</a>
-  <a href="#contact">Contact</a>
-  <a href="#contact" class="nav-cta">Get Started</a>
+  <a data-link-slot="nav_about" href="#about">About</a>
+  <a data-link-slot="nav_services" href="#services">Services</a>
+  <a data-link-slot="nav_testimonials" href="#testimonials">Testimonials</a>
+  <a data-link-slot="nav_faq" href="#faq">FAQ</a>
+  <a data-link-slot="nav_contact" href="#contact">Contact</a>
+  <a data-link-slot="nav_contact" href="#contact" class="nav-cta">Get Started</a>
 </nav>
 
 <main>

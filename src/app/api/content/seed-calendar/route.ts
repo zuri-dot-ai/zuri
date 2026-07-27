@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { generateMonthlyCalendar } from "@/lib/content/calendar-generator";
+import {
+  calendarChunkCount,
+  generateCalendarChunk,
+} from "@/lib/content/calendar-generator";
 import {
   resolveArchetype,
   seedContentPillars,
@@ -13,6 +16,9 @@ import {
 import { PLAN_CONFIG, isPlanId } from "@/lib/payments/plans";
 
 export const maxDuration = 120;
+
+/** Stop starting new chunks once this much wall time has elapsed. */
+const SEED_CHUNK_BUDGET_MS = 90_000;
 
 function isInternalRequest(req: Request): boolean {
   const secret = process.env.INTERNAL_API_SECRET;
@@ -98,43 +104,91 @@ export async function POST(req: Request) {
     platformLimit === null ? allPlatforms : allPlatforms.slice(0, platformLimit);
 
   const now = new Date();
-  const { slots, usedFallback, reason } = await generateMonthlyCalendar({
-    userId,
-    month: now.getMonth() + 1,
-    year: now.getFullYear(),
-    brand: mapped,
-    pillars: pillars ?? [],
-    platforms: activePlatforms,
-    postsPerMonth: planLimits.calendar_posts_per_month,
-  });
+  const month = now.getMonth() + 1;
+  const year = now.getFullYear();
+  const postsPerMonth = planLimits.calendar_posts_per_month;
+  const requested = postsPerMonth === null ? 30 : postsPerMonth;
+  const chunkCount = calendarChunkCount(requested);
 
-  if (usedFallback) {
-    console.error(
-      `[seed-calendar] AI generation failed for userId=${userId} — starter/template content was created instead. reason=${reason}`
-    );
-  }
+  const startedAt = Date.now();
+  let slotsCreated = 0;
+  let usedFallback = false;
+  let reason: string | undefined;
+  let chunksCompleted = 0;
+  let stoppedEarly = false;
 
-  if (slots.length > 0) {
-    const { error } = await supabase.from("content_calendar").insert(
-      slots.map((slot) => ({
-        ...slot,
-        user_id: userId,
-      }))
+  for (let chunkIndex = 0; chunkIndex < chunkCount; chunkIndex++) {
+    if (chunkIndex > 0 && Date.now() - startedAt >= SEED_CHUNK_BUDGET_MS) {
+      stoppedEarly = true;
+      console.warn(
+        `[seed-calendar] stopping after ${chunksCompleted} chunk(s) — budget exhausted for userId=${userId}`
+      );
+      break;
+    }
+
+    const chunk = await generateCalendarChunk(
+      {
+        userId,
+        month,
+        year,
+        brand: mapped,
+        pillars: pillars ?? [],
+        platforms: activePlatforms,
+        postsPerMonth,
+      },
+      { chunkIndex, chunkCount }
     );
-    if (error) {
-      console.error("[seed-calendar] insert failed:", error);
-      return NextResponse.json(
-        { error: "Failed to save calendar slots" },
-        { status: 500 }
+
+    if (chunk.usedFallback) {
+      usedFallback = true;
+      reason = chunk.reason;
+      console.error(
+        `[seed-calendar] AI generation failed for userId=${userId} chunk=${chunkIndex} — starter/template content was created instead. reason=${reason}`
       );
     }
+
+    if (chunk.slots.length > 0) {
+      const { error } = await supabase.from("content_calendar").insert(
+        chunk.slots.map((slot) => ({
+          ...slot,
+          user_id: userId,
+        }))
+      );
+      if (error) {
+        console.error("[seed-calendar] insert failed:", error);
+        // Keep earlier chunks; surface partial success if any were saved.
+        if (slotsCreated > 0) {
+          await incrementCalendarUsage(supabase, userId, slotsCreated);
+          return NextResponse.json({
+            success: true,
+            slots_created: slotsCreated,
+            chunks_completed: chunksCompleted,
+            stopped_early: true,
+            usedFallback,
+            ...(usedFallback ? { reason } : {}),
+            warning: "Failed to save a later chunk; earlier posts were kept.",
+          });
+        }
+        return NextResponse.json(
+          { error: "Failed to save calendar slots" },
+          { status: 500 }
+        );
+      }
+      slotsCreated += chunk.slots.length;
+    }
+
+    chunksCompleted += 1;
   }
 
-  await incrementCalendarUsage(supabase, userId, slots.length);
+  if (slotsCreated > 0) {
+    await incrementCalendarUsage(supabase, userId, slotsCreated);
+  }
 
   return NextResponse.json({
     success: true,
-    slots_created: slots.length,
+    slots_created: slotsCreated,
+    chunks_completed: chunksCompleted,
+    stopped_early: stoppedEarly,
     usedFallback,
     ...(usedFallback ? { reason } : {}),
   });

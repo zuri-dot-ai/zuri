@@ -15,12 +15,42 @@ export interface TrendingTopic {
   source: "web_search" | "cached" | "fallback";
 }
 
+/**
+ * Warm the trends cache in the background. Never awaited on the calendar
+ * critical path — failures are logged and ignored.
+ */
+export function warmTrendingCache(industry: string, location: string): void {
+  void (async () => {
+    try {
+      const topics = await fetchTrendingWithNvidia(industry, location);
+      await cacheTrends(industry, topics);
+    } catch (err) {
+      console.error(
+        `[warmTrendingCache] failed for industry="${industry}":`,
+        err
+      );
+    }
+  })();
+}
+
+/**
+ * @param waitForFresh When false (calendar generation), return cache or
+ *   hardcoded fallback immediately and refresh NVIDIA trends in the background.
+ *   When true (default — trending API), await a fresh NVIDIA fetch on cache miss.
+ */
 export async function getTrendingTopics(
   industry: string,
-  location: string
+  location: string,
+  opts?: { waitForFresh?: boolean }
 ): Promise<TrendingTopic[]> {
+  const waitForFresh = opts?.waitForFresh ?? true;
   const cached = await getCachedTrends(industry);
   if (cached) return cached;
+
+  if (!waitForFresh) {
+    warmTrendingCache(industry, location);
+    return getFallbackTopics(industry);
+  }
 
   try {
     const topics = await fetchTrendingWithNvidia(industry, location);

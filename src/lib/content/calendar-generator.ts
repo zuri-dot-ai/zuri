@@ -40,6 +40,22 @@ export interface CalendarGenerationResult {
   reason?: string;
 }
 
+/** Max AI slots per request — keeps completions well under the 90s NVIDIA budget. */
+export const CALENDAR_CHUNK_SIZE = 8;
+
+export function calendarChunkCount(totalPosts: number): number {
+  if (totalPosts <= 0) return 0;
+  return Math.ceil(totalPosts / CALENDAR_CHUNK_SIZE);
+}
+
+export interface CalendarChunkResult extends CalendarGenerationResult {
+  chunkIndex: number;
+  chunkCount: number;
+  done: boolean;
+  /** Planned posts for the full month (after date availability trim). */
+  totalPosts: number;
+}
+
 interface PostFormat {
   type: string;
   weight: number;
@@ -71,6 +87,8 @@ interface CalendarPromptParams {
   distribution: Record<string, number>;
   month: number;
   year: number;
+  /** Optional range hint when generating a week-sized chunk of the month. */
+  dateRangeHint?: string;
 }
 
 export const PLATFORM_FORMATS: Record<string, PostFormat[]> = {
@@ -265,6 +283,7 @@ export function buildCalendarPrompt(params: CalendarPromptParams): string {
     distribution,
     month,
     year,
+    dateRangeHint,
   } = params;
 
   const monthName = new Date(year, month - 1, 1).toLocaleString("en-NG", {
@@ -305,9 +324,13 @@ export function buildCalendarPrompt(params: CalendarPromptParams): string {
         ` angle for each post instead.\n`
       : "";
 
+  const scopeLine = dateRangeHint
+    ? `Create exactly ${totalPosts} posts for ${monthName} ${year} covering ${dateRangeHint} (this is one chunk of the monthly calendar — output exactly ${totalPosts} slots).`
+    : `Create a ${totalPosts}-post content calendar for ${monthName} ${year} for the business below.`;
+
   return `
 You are a social media strategist specialising in Nigerian small businesses.
-Create a ${totalPosts}-post content calendar for ${monthName} ${year} for the business below.
+${scopeLine}
 
 BUSINESS:
 - Name: ${businessName}
@@ -323,12 +346,12 @@ ${inferenceNote}
 CONTENT PILLARS (rotate through these):
 ${pillars.map((p) => `- ${sanitizeForPrompt(p.name)}: ${sanitizeForPrompt(p.description ?? "")}`).join("\n")}
 
-PLATFORM DISTRIBUTION (total posts per platform this month):
+PLATFORM DISTRIBUTION (posts in this batch):
 ${Object.entries(distribution)
   .map(([p, n]) => `- ${p}: ${n} posts`)
   .join("\n")}
 
-NIGERIAN CULTURAL MOMENTS THIS MONTH (must include at least one post for each applicable moment):
+NIGERIAN CULTURAL MOMENTS THIS MONTH (include when a slot falls on/near the moment):
 ${
   culturalMoments.length > 0
     ? culturalMoments
@@ -347,15 +370,16 @@ ${trends
   .join("\n")}
 
 RULES:
-1. Every slot must have a unique, specific topic — no two slots can have the same topic
-2. Every post must be directly relevant to ${businessName} and its audience
-3. Topics must feel authentic to a Nigerian audience — reference local context, language, and culture where natural
-4. Do NOT schedule posts on Sundays unless specifically for a cultural moment
-5. Rotate through content pillars — no pillar should appear more than twice in a row
-6. Each slot must include a specific HOOK — the first line the audience will read or see
-7. Video format slots: mark as coming_soon: true — these appear in the calendar but cannot be generated yet
-8. At least 20% of posts should be engagement-driven (questions, polls, challenges, opinions)
-9. If a slot's topic is directly inspired by one of the TRENDING TOPICS listed above,
+1. Output exactly ${totalPosts} slots — no more, no fewer
+2. Every slot must have a unique, specific topic — no two slots can have the same topic
+3. Every post must be directly relevant to ${businessName} and its audience
+4. Topics must feel authentic to a Nigerian audience — reference local context, language, and culture where natural
+5. Do NOT schedule posts on Sundays unless specifically for a cultural moment
+6. Rotate through content pillars — no pillar should appear more than twice in a row
+7. Each slot must include a specific HOOK — the first line the audience will read or see
+8. Video format slots: mark as coming_soon: true — these appear in the calendar but cannot be generated yet
+9. At least 20% of posts should be engagement-driven (questions, polls, challenges, opinions)
+10. If a slot's topic is directly inspired by one of the TRENDING TOPICS listed above,
    set "trend_topic" to that trend's exact topic text. Otherwise set it to null.
    Do not force trends into slots where they don't fit naturally — most slots
    should have trend_topic: null.
@@ -379,6 +403,211 @@ Output ONLY valid JSON with no markdown:
   ]
 }
 `;
+}
+
+function isTimeoutError(err: unknown): boolean {
+  if (err instanceof Error && err.name === "AbortError") return true;
+  return /timeout|AbortError/i.test(String(err));
+}
+
+function isJsonParseError(err: unknown): boolean {
+  return /JSON|SyntaxError/i.test(String(err));
+}
+
+interface MonthPlan {
+  totalPosts: number;
+  culturalMoments: CulturalMoment[];
+  trends: TrendingTopic[];
+  pillarRotation: string[];
+  scheduledDates: Date[];
+  formatsDistribution: Array<{
+    format_type: string;
+    coming_soon: boolean;
+    platform: string;
+  }>;
+}
+
+async function buildMonthPlan(
+  input: CalendarGenerationInput
+): Promise<MonthPlan> {
+  const { month, year, brand, pillars, platforms, postsPerMonth } = input;
+
+  const culturalMoments = getNigerianCulturalMoments(month, year);
+  const industry = brandField(brand, "industry", "business");
+  const location =
+    brandField(brand, "location_city") ||
+    brandField(brand, "location", "Lagos");
+
+  // Never block calendar generation on a fresh NVIDIA trends call.
+  const trends = await getTrendingTopics(industry, location, {
+    waitForFresh: false,
+  });
+
+  const requested = postsPerMonth === null ? 30 : postsPerMonth;
+  const scheduledDates = distributeDatesAcrossMonth(month, year, requested);
+  const totalPosts = scheduledDates.length;
+  const pillarRotation = rotatePillars(pillars, totalPosts);
+  const formatsDistribution = distributeFormats(totalPosts, platforms);
+
+  return {
+    totalPosts,
+    culturalMoments,
+    trends,
+    pillarRotation,
+    scheduledDates,
+    formatsDistribution,
+  };
+}
+
+function formatDateRangeHint(dates: Date[]): string {
+  if (dates.length === 0) return "";
+  const fmt = (d: Date) =>
+    d.toLocaleString("en-NG", { month: "short", day: "numeric" });
+  if (dates.length === 1) return fmt(dates[0]);
+  return `${fmt(dates[0])} – ${fmt(dates[dates.length - 1])}`;
+}
+
+async function generateSlotsForSlice(
+  input: CalendarGenerationInput,
+  plan: MonthPlan,
+  sliceStart: number,
+  sliceDates: Date[],
+  slicePillars: string[],
+  sliceFormats: MonthPlan["formatsDistribution"]
+): Promise<CalendarGenerationResult> {
+  const { month, year, brand, pillars, platforms } = input;
+  const chunkCount = sliceDates.length;
+  if (chunkCount === 0) {
+    return { slots: [], usedFallback: false };
+  }
+
+  const chunkDistribution = distributePostsAcrossPlatforms(
+    chunkCount,
+    platforms
+  );
+
+  const calendarPrompt = buildCalendarPrompt({
+    brand,
+    pillars,
+    platforms,
+    culturalMoments: plan.culturalMoments,
+    trends: plan.trends,
+    totalPosts: chunkCount,
+    distribution: chunkDistribution,
+    month,
+    year,
+    dateRangeHint: formatDateRangeHint(sliceDates),
+  });
+
+  let generated: { slots: GeneratedSlot[] };
+  try {
+    try {
+      generated = await nvidiaJSON<{ slots: GeneratedSlot[] }>(
+        calendarPrompt,
+        "flash"
+      );
+    } catch (initialErr) {
+      // Only retry for JSON/parse shape issues — never after a timeout.
+      if (isTimeoutError(initialErr) || !isJsonParseError(initialErr)) {
+        throw initialErr;
+      }
+      console.warn(
+        "[generateCalendarChunk] JSON parse failed, retrying with stricter instruction:",
+        initialErr
+      );
+      generated = await nvidiaJSON<{ slots: GeneratedSlot[] }>(
+        calendarPrompt +
+          "\n\nIMPORTANT: Output ONLY valid JSON. No markdown fences. Start with { end with }.",
+        "flash"
+      );
+    }
+  } catch (err) {
+    console.error(
+      "[generateCalendarChunk] NVIDIA failed — falling back to template slots. " +
+        `userId=${input.userId} month=${month} year=${year} sliceStart=${sliceStart}. Error:`,
+      err
+    );
+    return {
+      slots: buildTemplateSlots(
+        input,
+        chunkCount,
+        slicePillars,
+        sliceDates,
+        sliceFormats,
+        plan.culturalMoments
+      ),
+      usedFallback: true,
+      reason:
+        "We couldn't reach the AI right now, so starter content was created instead.",
+    };
+  }
+
+  return {
+    slots: mergeCalendarOutput(
+      generated.slots ?? [],
+      slicePillars,
+      sliceDates,
+      sliceFormats,
+      plan.culturalMoments,
+      input.userId,
+      pillars,
+      plan.trends
+    ),
+    usedFallback: false,
+  };
+}
+
+/**
+ * Generate one deterministic chunk of the monthly calendar.
+ * Planning (dates/platforms/pillars) is identical for every chunk of a month.
+ */
+export async function generateCalendarChunk(
+  input: CalendarGenerationInput,
+  opts: { chunkIndex: number; chunkCount?: number }
+): Promise<CalendarChunkResult> {
+  const plan = await buildMonthPlan(input);
+  const { totalPosts, scheduledDates, pillarRotation, formatsDistribution } =
+    plan;
+
+  if (totalPosts === 0) {
+    return {
+      slots: [],
+      usedFallback: false,
+      chunkIndex: 0,
+      chunkCount: 0,
+      done: true,
+      totalPosts: 0,
+    };
+  }
+
+  const chunkCount = opts.chunkCount ?? calendarChunkCount(totalPosts);
+  const chunkIndex = Math.max(
+    0,
+    Math.min(opts.chunkIndex, Math.max(chunkCount - 1, 0))
+  );
+  const start = chunkIndex * CALENDAR_CHUNK_SIZE;
+  const end = Math.min(start + CALENDAR_CHUNK_SIZE, totalPosts);
+
+  const sliceDates = scheduledDates.slice(start, end);
+  const slicePillars = pillarRotation.slice(start, end);
+  const sliceFormats = formatsDistribution.slice(start, end);
+
+  const result = await generateSlotsForSlice(
+    input,
+    plan,
+    start,
+    sliceDates,
+    slicePillars,
+    sliceFormats
+  );
+
+  return {
+    ...result,
+    chunkIndex,
+    chunkCount,
+    done: chunkIndex >= chunkCount - 1,
+    totalPosts,
+  };
 }
 
 function hasPlaceholder(text: string): boolean {
@@ -545,95 +774,34 @@ export function mergeCalendarOutput(
   });
 }
 
+/**
+ * Full-month helper for seed / internal callers. Generates chunks sequentially
+ * and concatenates. Prefer `generateCalendarChunk` for user-facing requests.
+ */
 export async function generateMonthlyCalendar(
   input: CalendarGenerationInput
 ): Promise<CalendarGenerationResult> {
-  const { month, year, brand, pillars, platforms, postsPerMonth } = input;
-
-  const culturalMoments = getNigerianCulturalMoments(month, year);
-  const industry = brandField(brand, "industry", "business");
-  const location =
-    brandField(brand, "location_city") ||
-    brandField(brand, "location", "Lagos");
-
-  const trends = await getTrendingTopics(industry, location);
-
-  const totalPosts = postsPerMonth === null ? 30 : postsPerMonth;
-  const distribution = distributePostsAcrossPlatforms(totalPosts, platforms);
-  const pillarRotation = rotatePillars(pillars, totalPosts);
-  const scheduledDates = distributeDatesAcrossMonth(month, year, totalPosts);
-  const formatsDistribution = distributeFormats(totalPosts, platforms);
-
-  if (scheduledDates.length === 0) {
+  const plan = await buildMonthPlan(input);
+  if (plan.totalPosts === 0) {
     return { slots: [], usedFallback: false };
   }
 
-  const calendarPrompt = buildCalendarPrompt({
-    brand,
-    pillars,
-    platforms,
-    culturalMoments,
-    trends,
-    totalPosts: scheduledDates.length,
-    distribution,
-    month,
-    year,
-  });
+  const chunkCount = calendarChunkCount(plan.totalPosts);
+  const allSlots: CalendarSlot[] = [];
+  let usedFallback = false;
+  let reason: string | undefined;
 
-  let generated: { slots: GeneratedSlot[] };
-  try {
-    try {
-      generated = await nvidiaJSON<{ slots: GeneratedSlot[] }>(
-        calendarPrompt,
-        "flash"
-      );
-    } catch (initialErr) {
-      console.warn(
-        "[generateMonthlyCalendar] initial NVIDIA call failed, retrying with stricter JSON instruction:",
-        initialErr
-      );
-      generated = await nvidiaJSON<{ slots: GeneratedSlot[] }>(
-        calendarPrompt +
-          "\n\nIMPORTANT: Output ONLY valid JSON. No markdown fences. Start with { end with }.",
-        "flash"
-      );
+  for (let chunkIndex = 0; chunkIndex < chunkCount; chunkIndex++) {
+    const chunk = await generateCalendarChunk(input, {
+      chunkIndex,
+      chunkCount,
+    });
+    allSlots.push(...chunk.slots);
+    if (chunk.usedFallback) {
+      usedFallback = true;
+      reason = chunk.reason;
     }
-  } catch (err) {
-    // Both the initial call and the stricter-JSON retry failed. This is the
-    // failure mode that used to silently produce indistinguishable template
-    // content — now logged with full diagnostic detail and flagged via
-    // usedFallback so callers/UI can surface it instead of hiding it.
-    console.error(
-      "[generateMonthlyCalendar] both NVIDIA attempts failed — falling back to template slots. " +
-        `userId=${input.userId} month=${month} year=${year}. Error:`,
-      err
-    );
-    return {
-      slots: buildTemplateSlots(
-        input,
-        scheduledDates.length,
-        pillarRotation,
-        scheduledDates,
-        formatsDistribution,
-        culturalMoments
-      ),
-      usedFallback: true,
-      reason:
-        "We couldn't reach the AI right now, so starter content was created instead.",
-    };
   }
 
-  return {
-    slots: mergeCalendarOutput(
-      generated.slots ?? [],
-      pillarRotation,
-      scheduledDates,
-      formatsDistribution,
-      culturalMoments,
-      input.userId,
-      pillars,
-      trends
-    ),
-    usedFallback: false,
-  };
+  return { slots: allSlots, usedFallback, ...(reason ? { reason } : {}) };
 }

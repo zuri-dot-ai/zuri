@@ -66,10 +66,12 @@ type Notice = {
   message: string;
   /** When set, Banner shows a Retry action for this flow. */
   retryKind?: "month" | "content";
+  /** Resume month generation from this chunk index (not from scratch). */
+  resumeChunkIndex?: number;
 };
 
-/** AI content jobs regularly exceed the default 20s safeFetch timeout. */
-const AI_FETCH_TIMEOUT_MS = 120_000;
+/** Per-chunk AI jobs — headroom above NVIDIA 90s / Vercel 120s. */
+const AI_FETCH_TIMEOUT_MS = 130_000;
 
 /** True when a caught error is a Gemini quota/rate-limit failure surfaced
  * by the API as HTTP 429 — this must show the friendly Banner message,
@@ -145,6 +147,7 @@ export function ContentCalendar({
   const [lastSeriesIds, setLastSeriesIds] = useState<string[]>([]);
   const [lastRepurposeIds, setLastRepurposeIds] = useState<string[]>([]);
   const [notice, setNotice] = useState<Notice | null>(null);
+  const [generateProgress, setGenerateProgress] = useState<string | null>(null);
 
   const growth = plan === "growth" || plan === "premium";
   const monthName = formatMonthLabel(year, month);
@@ -261,45 +264,79 @@ export function ContentCalendar({
     void loadMonth(m, y);
   }
 
-  async function generateMonth() {
+  async function generateMonth(resumeFromChunk?: number) {
     setGenerating(true);
+    setNotice(null);
+    let chunkIndex =
+      typeof resumeFromChunk === "number" && resumeFromChunk > 0
+        ? resumeFromChunk
+        : 0;
+    let chunkCount = 0;
+    let totalCreated = 0;
+    let anyFallback = false;
+    let fallbackReason: string | undefined;
+    let lastMessage: string | undefined;
+
     try {
-      const data = await safeFetchJSON<{
-        slots: SlotWithPillar[];
-        slots_created: number;
-        message?: string;
-        usedFallback?: boolean;
-        reason?: string;
-      }>("/api/content/calendar/generate-month", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ month, year }),
-        timeoutMs: AI_FETCH_TIMEOUT_MS,
-      });
-      if (data.slots?.length) {
-        setSlots((prev) => {
-          const ids = new Set(prev.map((s) => s.id));
-          return [...prev, ...data.slots.filter((s) => !ids.has(s.id))];
+      // Loop week-sized chunks until the API reports done.
+      // chunkCount is unknown until the first response.
+      for (;;) {
+        const weekTotal = chunkCount > 0 ? String(chunkCount) : "?";
+        setGenerateProgress(
+          `Generating week ${chunkIndex + 1} of ${weekTotal}…`
+        );
+
+        const data = await safeFetchJSON<{
+          slots: SlotWithPillar[];
+          slots_created: number;
+          message?: string;
+          usedFallback?: boolean;
+          reason?: string;
+          chunkIndex: number;
+          chunkCount: number;
+          done: boolean;
+        }>("/api/content/calendar/generate-month", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ month, year, chunkIndex }),
+          timeoutMs: AI_FETCH_TIMEOUT_MS,
         });
+
+        chunkCount = data.chunkCount ?? chunkCount;
+        if (data.slots?.length) {
+          totalCreated += data.slots_created ?? data.slots.length;
+          setSlots((prev) => {
+            const ids = new Set(prev.map((s) => s.id));
+            return [...prev, ...data.slots.filter((s) => !ids.has(s.id))];
+          });
+        }
+        if (data.usedFallback) {
+          anyFallback = true;
+          fallbackReason = data.reason;
+        }
+        if (data.message) lastMessage = data.message;
+
+        if (data.done || chunkCount === 0) break;
+        chunkIndex = (data.chunkIndex ?? chunkIndex) + 1;
+        if (chunkIndex >= chunkCount) break;
       }
 
-      if (data.usedFallback) {
-        // Never let this look like a normal success — the slots that just
-        // landed are hardcoded starter content, not real AI output.
+      if (anyFallback) {
         setNotice({
           variant: "warning",
           message:
-            data.reason ??
+            fallbackReason ??
             "We couldn't reach the AI right now, so starter content was created instead.",
           retryKind: "month",
+          resumeChunkIndex: 0,
         });
         toast.error("AI generation unavailable — starter content created instead");
       } else {
         setNotice(null);
         toast.success(
-          data.slots_created
-            ? `Added ${data.slots_created} posts to ${monthName}`
-            : data.message ?? "Calendar ready"
+          totalCreated > 0
+            ? `Added ${totalCreated} posts to ${monthName}`
+            : lastMessage ?? "Calendar ready"
         );
       }
     } catch (e) {
@@ -311,11 +348,19 @@ export function ContentCalendar({
           message:
             e instanceof Error ? e.message : "Could not generate calendar",
           retryKind: "month",
+          // Keep earlier chunks; resume from the failed one.
+          resumeChunkIndex: chunkIndex,
         });
       }
     } finally {
       setGenerating(false);
+      setGenerateProgress(null);
     }
+  }
+
+  function retryMonthGeneration() {
+    const resume = notice?.resumeChunkIndex ?? 0;
+    void generateMonth(resume);
   }
 
   async function approveSlot(slot: SlotWithPillar) {
@@ -633,7 +678,7 @@ export function ContentCalendar({
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={generateMonth}
+                  onClick={retryMonthGeneration}
                   disabled={generating}
                 >
                   {generating ? (
@@ -780,7 +825,7 @@ export function ContentCalendar({
             <div className="flex flex-col items-center justify-center gap-4 py-16">
               <ZuriSpinner size={40} label="Planning your calendar" />
               <p className="text-sm text-[var(--text-tertiary)]">
-                Planning your calendar…
+                {generateProgress ?? "Planning your calendar…"}
               </p>
               <Button disabled>
                 <span className="zuri-spinner zuri-spinner--on-gold mr-2 !size-4" />
@@ -795,7 +840,7 @@ export function ContentCalendar({
                 description="Zuri will plan topics, hooks, and briefs across your platforms."
               />
               <div className="flex justify-center pb-8">
-                <Button onClick={generateMonth}>
+                <Button onClick={() => void generateMonth()}>
                   <Sparkles className="mr-2 h-4 w-4" />
                   Generate {monthName.split(" ")[0]} Calendar
                 </Button>
@@ -877,7 +922,7 @@ export function ContentCalendar({
           )}
           <Button
             variant="outline"
-            onClick={generateMonth}
+            onClick={() => void generateMonth()}
             disabled={generating}
           >
             {generating ? (
@@ -885,7 +930,9 @@ export function ContentCalendar({
             ) : (
               <Sparkles className="mr-2 h-4 w-4" />
             )}
-            Regenerate / add more
+            {generating
+              ? (generateProgress ?? "Generating…")
+              : "Regenerate / add more"}
           </Button>
         </div>
       )}

@@ -289,11 +289,11 @@
   <div class="container nav-inner">
     <a href="#hero" class="nav-logo">{{business_name}} <span>&#9670;</span></a>
     <div class="nav-links">
-      <a href="#about">About</a>
-      <a href="#menu">Menu</a>
-      <a href="#gallery">Gallery</a>
-      <a href="#testimonials">Testimonials</a>
-      <a href="#contact">Contact</a>
+      <a data-link-slot="nav_about" href="#about">About</a>
+      <a data-link-slot="nav_menu" href="#menu">Menu</a>
+      <a data-link-slot="nav_gallery" href="#gallery">Gallery</a>
+      <a data-link-slot="nav_testimonials" href="#testimonials">Testimonials</a>
+      <a data-link-slot="nav_contact" href="#contact">Contact</a>
       <a data-link-slot="cta_primary" href="#contact" class="btn btn-primary nav-cta">Reserve Your Table</a>
     </div>
     <button class="hamburger" id="hamburger-btn" aria-label="Open menu" aria-expanded="false">

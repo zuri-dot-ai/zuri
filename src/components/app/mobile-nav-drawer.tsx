@@ -182,6 +182,7 @@ export function HamburgerButton({
         <button
           type="button"
           onClick={onClick}
+          data-tour="menu"
           className="relative inline-flex size-11 items-center justify-center rounded-md text-gold transition-colors hover:bg-gold/10"
           aria-label={open ? "Close menu" : "Open menu"}
           aria-expanded={open}

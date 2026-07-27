@@ -3,10 +3,15 @@
  * Upload template HTML to Supabase Storage (website-templates) and upsert
  * rows into the `templates` table from sibling .json metadata files.
  *
+ * Source of truth: templates-v2/ (production archetype templates with
+ * data-link-slot markup). Falls back to templates/ only if v2 is missing.
+ *
  * Excludes: trust-professional/light-modern (broken extraction).
  *
  * Usage: node --env-file=.env.local scripts/upload-templates.mjs
  *    or: set env vars then node scripts/upload-templates.mjs
+ *
+ * Prerequisite for link editing: node scripts/patch-link-slots.mjs
  */
 
 import fs from "node:fs";
@@ -16,7 +21,9 @@ import { createClient } from "@supabase/supabase-js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
-const TEMPLATES_DIR = path.join(ROOT, "templates");
+const TEMPLATES_V2 = path.join(ROOT, "templates-v2");
+const TEMPLATES_V1 = path.join(ROOT, "templates");
+const TEMPLATES_DIR = fs.existsSync(TEMPLATES_V2) ? TEMPLATES_V2 : TEMPLATES_V1;
 const BUCKET = "website-templates";
 const EXCLUDE = new Set(["trust-professional/light-modern"]);
 
@@ -201,6 +208,7 @@ async function main() {
   await ensureTemplatesTable(url, key);
   await ensureBucket(supabase);
 
+  console.log(`Uploading from: ${TEMPLATES_DIR}`);
   const jsonFiles = listJsonFiles(TEMPLATES_DIR).sort();
   const uploaded = [];
   const skipped = [];

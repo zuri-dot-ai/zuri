@@ -24,7 +24,13 @@ function getApiKey(): string {
   return key;
 }
 
+function isTimeoutError(err: unknown): boolean {
+  if (err instanceof Error && err.name === "AbortError") return true;
+  return /timeout|AbortError/i.test(String(err));
+}
+
 function isNonRetryable(err: unknown): boolean {
+  if (isTimeoutError(err)) return true;
   const msg = String(err);
   return /status=401|status=403|UNAUTHORIZED|FORBIDDEN|API[_ ]?KEY/i.test(msg);
 }
@@ -66,7 +72,8 @@ export async function nvidiaGenerate(
       Accept: "application/json",
     },
     body: JSON.stringify(body),
-    signal: AbortSignal.timeout(120_000),
+    // 90s — leave headroom under Vercel maxDuration (120s) and client (130s).
+    signal: AbortSignal.timeout(90_000),
   });
 
   const errText = await res.text();
@@ -128,9 +135,10 @@ export async function nvidiaJSON<T>(
       lastError = err;
       if (isNonRetryable(err)) break;
 
+      // Never retry timeouts — they already burned most of the wall-clock budget.
       const msg = String(err);
       const retryable =
-        /status=429|status=503|status=500|timeout|AbortError|JSON/i.test(msg);
+        /status=429|status=503|status=500|JSON|SyntaxError/i.test(msg);
       if (!retryable || attempt === maxRetries) break;
 
       console.warn(
