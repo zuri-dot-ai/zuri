@@ -265,7 +265,28 @@ function ProfileTab({ account }: { account: AccountView | null }) {
         </button>
       </div>
 
-      <div className="border-t border-border pt-5">
+      <div className="border-t border-border pt-5 space-y-3">
+        <div>
+          <h3 className="text-sm font-medium text-foreground">App tour</h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Replay the quick walkthrough of Home, Website, Content, and more.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            className="mt-3 w-full"
+            onClick={() => {
+              try {
+                localStorage.removeItem("zuri_first_visit_tour_dismissed");
+              } catch {
+                /* ignore */
+              }
+              router.push("/dashboard?tour=1");
+            }}
+          >
+            Replay app tour
+          </Button>
+        </div>
         <Button variant="outline" onClick={signOut} className="w-full gap-2">
           <LogOut className="size-4" strokeWidth={1.75} />
           Sign out

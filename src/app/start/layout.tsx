@@ -6,6 +6,8 @@ import { AuthBtnGhostPulse } from "@/components/ui/auth-btn-ghost-pulse";
  * No auth required — mirrors (auth)/layout.tsx's minimal chrome (single
  * starfield, no marketing NavBar/footer) since this IS the primary signup
  * funnel, not a marketing page.
+ *
+ * Prefetch the hero MP4 so download starts before onboarding API bootstrap.
  */
 export default function StartLayout({
   children,
@@ -14,6 +16,12 @@ export default function StartLayout({
 }) {
   return (
     <div className="auth-canvas relative min-h-screen">
+      <link
+        rel="preload"
+        as="video"
+        href="/onboarding/onboarding-hero.mp4"
+        type="video/mp4"
+      />
       <StarfieldCanvas />
       <AuthBtnGhostPulse />
       <div className="relative z-10">{children}</div>

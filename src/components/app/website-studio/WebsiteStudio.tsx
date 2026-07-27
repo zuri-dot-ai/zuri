@@ -111,6 +111,7 @@ export function WebsiteStudio({
   filledEmbeds: initialEmbeds,
   imageSlots,
   linkSlots,
+  linksHealFailed = false,
   activeTheme: initialTheme,
   archetype,
   isPublished,
@@ -127,6 +128,7 @@ export function WebsiteStudio({
   filledEmbeds: ResolvedEmbed[];
   imageSlots: string[];
   linkSlots: string[];
+  linksHealFailed?: boolean;
   activeTheme: ActiveTheme;
   archetype: DesignArchetype | null;
   isPublished: boolean;
@@ -394,6 +396,7 @@ export function WebsiteStudio({
         <LinksPanel
           linkSlots={linkSlots}
           filledLinks={links}
+          healFailed={linksHealFailed}
           onOpenSlot={(slot) =>
             setLinkModal({
               slot,

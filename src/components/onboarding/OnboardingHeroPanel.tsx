@@ -6,27 +6,21 @@ import { cn } from "@/lib/utils";
 
 const HERO_VIDEO_SRC = "/onboarding/onboarding-hero.mp4";
 const HERO_POSTER_SRC = "/onboarding/onboarding-hero.png";
+const MAX_RETRIES = 2;
 
 /**
  * Desktop split hero for onboarding shells (`/start`, `/agencies/apply`).
  *
- * Root cause (2026-07): both routes already shared OnboardingShell's inline
- * video, but `/start` delayed mounting the shell until session bootstrap
- * finished (`ready === false` → full-page loader). Agency apply mounts the
- * shell immediately. The hero asset is large (~21MB); late mount + concurrent
- * onboarding API traffic made decode/abort `error` events more likely on
- * `/start`. The old panel treated any `onError` as permanent (`videoFailed`)
- * and swapped to the static poster — so `/start` looked broken while apply
- * looked fine, despite identical markup and shared CSP `media-src 'self'`.
- *
- * Fix: one shared panel, poster always underneath, video fades in when
- * playing, transient play/abort errors do not permanently kill the video.
+ * Large MP4 + concurrent `/start` bootstrap APIs can abort decode. Poster
+ * stays underneath; video fades in when playing. Transient errors retry
+ * load()/play() with backoff before giving up on visibility only.
  */
 export function OnboardingHeroPanel() {
   const reducedMotion = useReducedMotion();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoVisible, setVideoVisible] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
+  const retriesRef = useRef(0);
 
   useEffect(() => {
     if (reducedMotion) {
@@ -38,6 +32,8 @@ export function OnboardingHeroPanel() {
     if (!el) return;
 
     let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    retriesRef.current = 0;
 
     const tryPlay = () => {
       if (cancelled) return;
@@ -48,14 +44,29 @@ export function OnboardingHeroPanel() {
           if (!cancelled) setVideoVisible(true);
         })
         .catch((err: unknown) => {
-          // AbortError is common when React remounts or preload races — not fatal.
           const name =
             err && typeof err === "object" && "name" in err
               ? String((err as { name: unknown }).name)
               : "";
           if (name === "AbortError") return;
           console.warn("[OnboardingHeroPanel] play() failed:", err);
+          scheduleRetry();
         });
+    };
+
+    const scheduleRetry = () => {
+      if (cancelled || retriesRef.current >= MAX_RETRIES) return;
+      retriesRef.current += 1;
+      const delay = 400 * retriesRef.current;
+      retryTimer = setTimeout(() => {
+        if (cancelled) return;
+        try {
+          el.load();
+          tryPlay();
+        } catch {
+          /* ignore */
+        }
+      }, delay);
     };
 
     const onPlaying = () => {
@@ -63,8 +74,8 @@ export function OnboardingHeroPanel() {
     };
     const onCanPlay = () => tryPlay();
     const onError = () => {
-      // Keep the <video> mounted for a later retry; just show the poster.
       if (!cancelled) setVideoVisible(false);
+      scheduleRetry();
     };
 
     el.addEventListener("playing", onPlaying);
@@ -77,6 +88,7 @@ export function OnboardingHeroPanel() {
 
     return () => {
       cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
       el.removeEventListener("playing", onPlaying);
       el.removeEventListener("canplay", onCanPlay);
       el.removeEventListener("error", onError);

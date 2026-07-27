@@ -16,7 +16,7 @@
 | Storage | `websites.composition_json` (jsonb) | `websites.template_html` (text) |
 | Images | Unsplash/Pexels live API calls | Curated `category_images` library |
 | Block components | 23 React components to build/maintain | None — templates are static HTML |
-| Editor scope | Reorder/add/remove sections, edit any field | Edit text + swap 1-of-3 color theme + swap images. Cannot touch layout/CSS/fonts |
+| Editor scope | Reorder/add/remove sections, edit any field | Edit text + swap 1-of-3 color theme + swap images + edit CTA/nav links (`data-link-slot`) + add sanitized embeds. Cannot touch layout/CSS/fonts |
 
 Removed entirely: `BlockRenderer.tsx`, all block components, `ArchetypeSpec`'s
 block-registry fields (`required_blocks`/`optional_blocks`/`forbidden_blocks`/
@@ -543,10 +543,26 @@ export async function GET(req: Request, { params }: { params: { handle: string }
 
 ## 8. WEBSITE EDITOR (scope reduced from v1)
 
-Editor lives at `/dashboard/website/edit`. Per the agreed scope, users can
+Editor lives at `/website` (`WebsiteStudio`). Per the agreed scope, users can
 change: **text content of placeholders, color theme (1 of 3 presets), images
-(upload or curated-library search)**. They cannot change CSS, layout,
-structure, or fonts — those are locked to the chosen template.
+(upload or curated-library search), CTA/nav link destinations via
+`data-link-slot` + `filled_links`, and sanitized embeds via `filled_embeds`**.
+They cannot change CSS, layout, structure, or fonts — those are locked to the
+chosen template.
+
+### 8.0 Link + embed editing
+
+- Templates must mark editable anchors with `data-link-slot` (see
+  `TEMPLATE_PROMPTS_V2.md` §1.5b). Desktop and mobile nav copies share the
+  same slot id.
+- `PATCH /api/website/link` — body `{ slot, href, target?, label? }` — validates
+  `#section` or https URLs, updates `websites.filled_links`, recomposes HTML.
+- `POST|PATCH|DELETE /api/website/embed` — YouTube / Vimeo / Maps URL or
+  iframe paste (iframe-only, host allowlist; never execute `<script>`).
+- On studio load, `ensureLinkSlotsInWebsite` recomposes once when stored
+  `template_html` lacks slots but Storage HTML has them (requires
+  `filled_links` / `filled_embeds` columns from
+  `20260726_website_links_embeds.sql`).
 
 ### 8.1 Text Edit API
 

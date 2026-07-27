@@ -8,12 +8,12 @@ import {
   type CSSProperties,
 } from "react";
 import { createPortal } from "react-dom";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const KEY = "zuri_first_visit_tour_dismissed";
+export const TOUR_DISMISSED_KEY = "zuri_first_visit_tour_dismissed";
 const MD_QUERY = "(min-width: 768px)";
 const PAD = 8;
 const TOOLTIP_GAP = 12;
@@ -77,23 +77,18 @@ type Rect = { top: number; left: number; width: number; height: number };
 
 function isVisible(el: Element): boolean {
   const html = el as HTMLElement;
-  if (
-    html.offsetParent === null &&
-    getComputedStyle(html).position !== "fixed"
-  ) {
-    return false;
-  }
-  const rect = el.getBoundingClientRect();
-  if (rect.width < 1 || rect.height < 1) return false;
   const style = getComputedStyle(html);
   if (
     style.visibility === "hidden" ||
     style.display === "none" ||
-    style.opacity === "0"
+    Number(style.opacity) === 0
   ) {
     return false;
   }
-  return true;
+  const rects = html.getClientRects();
+  if (!rects.length) return false;
+  const rect = rects[0];
+  return rect.width >= 1 && rect.height >= 1;
 }
 
 function findTarget(id: string): HTMLElement | null {
@@ -101,7 +96,8 @@ function findTarget(id: string): HTMLElement | null {
   for (const node of nodes) {
     if (isVisible(node)) return node;
   }
-  return null;
+  // Fallback: first matching node even if visibility is flaky (fixed tabs)
+  return nodes[0] ?? null;
 }
 
 function clamp(n: number, min: number, max: number) {
@@ -116,6 +112,20 @@ function resolveStepMeta(step: TourStep, isDesktop: boolean) {
   const href =
     !isDesktop && step.hrefMobile !== undefined ? step.hrefMobile : step.href;
   return { targetId, title, body, href };
+}
+
+function centeredTooltipStyle(isDesktop: boolean): CSSProperties {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const tipW = Math.min(isDesktop ? 320 : 260, vw - 24);
+  const tipH = isDesktop ? 168 : 148;
+  return {
+    position: "fixed",
+    left: clamp((vw - tipW) / 2, 12, vw - tipW - 12),
+    top: clamp(vh * 0.35 - tipH / 2, 12, vh - tipH - 12),
+    width: tipW,
+    maxWidth: tipW,
+  };
 }
 
 function computeTooltipStyle(
@@ -161,17 +171,30 @@ function computeTooltipStyle(
   return { position: "fixed", left, top, width: tipW, maxWidth: tipW };
 }
 
+export function clearTourDismissed() {
+  try {
+    localStorage.removeItem(TOUR_DISMISSED_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 /** One-time guided spotlight tour on first app visit */
 export function FirstVisitTour() {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [step, setStep] = useState(0);
   const [visible, setVisible] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isDesktop, setIsDesktop] = useState(true);
   const [targetRect, setTargetRect] = useState<Rect | null>(null);
-  const [tooltipStyle, setTooltipStyle] = useState<CSSProperties>({});
+  const [tooltipStyle, setTooltipStyle] = useState<CSSProperties>({
+    position: "fixed",
+  });
+  const [missCount, setMissCount] = useState(0);
 
-  const current = STEPS[step];
+  const current = STEPS[step] ?? STEPS[0];
   const { targetId, title, body } = resolveStepMeta(current, isDesktop);
   const isMenuStep = targetId === "menu";
 
@@ -179,8 +202,11 @@ export function FirstVisitTour() {
     const el = findTarget(targetId);
     if (!el) {
       setTargetRect(null);
+      setTooltipStyle(centeredTooltipStyle(isDesktop));
+      setMissCount((c) => c + 1);
       return;
     }
+    setMissCount(0);
     el.scrollIntoView({ block: "nearest", inline: "nearest" });
     const r = el.getBoundingClientRect();
     const rect: Rect = {
@@ -196,12 +222,19 @@ export function FirstVisitTour() {
   useEffect(() => {
     setMounted(true);
     try {
-      if (localStorage.getItem(KEY)) return;
+      const force = searchParams.get("tour") === "1";
+      if (force) {
+        clearTourDismissed();
+        setStep(0);
+        setVisible(true);
+        return;
+      }
+      if (localStorage.getItem(TOUR_DISMISSED_KEY)) return;
       setVisible(true);
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     const mq = window.matchMedia(MD_QUERY);
@@ -214,14 +247,27 @@ export function FirstVisitTour() {
   useLayoutEffect(() => {
     if (!visible) return;
     measure();
-    // Remeasure after route paint / layout settle
     const t1 = window.setTimeout(measure, 80);
     const t2 = window.setTimeout(measure, 250);
     return () => {
       window.clearTimeout(t1);
       window.clearTimeout(t2);
     };
-  }, [visible, step, targetId, measure]);
+  }, [visible, step, targetId, measure, pathname]);
+
+  // Auto-skip steps whose targets never appear (don't permanently dismiss)
+  useEffect(() => {
+    if (!visible || missCount < 3) return;
+    const nextIndex = step + 1;
+    if (nextIndex >= STEPS.length) {
+      setMissCount(0);
+      return;
+    }
+    const { href } = resolveStepMeta(STEPS[nextIndex], isDesktop);
+    if (href) router.push(href);
+    setMissCount(0);
+    setStep(nextIndex);
+  }, [missCount, visible, step, isDesktop, router]);
 
   useEffect(() => {
     if (!visible) return;
@@ -236,7 +282,7 @@ export function FirstVisitTour() {
 
   function dismiss() {
     try {
-      localStorage.setItem(KEY, "1");
+      localStorage.setItem(TOUR_DISMISSED_KEY, "1");
     } catch {
       /* ignore */
     }
@@ -254,6 +300,11 @@ export function FirstVisitTour() {
     setStep(nextIndex);
   }
 
+  /** Empty backdrop: skip step — never write dismiss key. */
+  function onEmptyBackdrop() {
+    next();
+  }
+
   if (!visible || !mounted) return null;
 
   const hole = targetRect;
@@ -267,42 +318,41 @@ export function FirstVisitTour() {
     >
       {hole ? (
         <>
-          {/* Four-pane dimmer — leaves the target clickable */}
           <button
             type="button"
-            aria-label="Dismiss tour"
+            aria-label="Skip this tip"
             className="fixed left-0 right-0 top-0 bg-black/55"
             style={{ height: Math.max(0, hole.top) }}
-            onClick={dismiss}
+            onClick={next}
           />
           <button
             type="button"
-            aria-label="Dismiss tour"
+            aria-label="Skip this tip"
             className="fixed left-0 bg-black/55"
             style={{
               top: hole.top,
               width: Math.max(0, hole.left),
               height: hole.height,
             }}
-            onClick={dismiss}
+            onClick={next}
           />
           <button
             type="button"
-            aria-label="Dismiss tour"
+            aria-label="Skip this tip"
             className="fixed right-0 bg-black/55"
             style={{
               top: hole.top,
               left: hole.left + hole.width,
               height: hole.height,
             }}
-            onClick={dismiss}
+            onClick={next}
           />
           <button
             type="button"
-            aria-label="Dismiss tour"
+            aria-label="Skip this tip"
             className="fixed bottom-0 left-0 right-0 bg-black/55"
             style={{ top: hole.top + hole.height }}
-            onClick={dismiss}
+            onClick={next}
           />
           <div
             className="pointer-events-none fixed rounded-[10px] ring-2 ring-gold shadow-[0_0_0_4px_rgba(201,162,39,0.25)]"
@@ -317,15 +367,15 @@ export function FirstVisitTour() {
       ) : (
         <button
           type="button"
-          aria-label="Dismiss tour"
+          aria-label="Skip this tip"
           className="fixed inset-0 bg-black/55"
-          onClick={dismiss}
+          onClick={onEmptyBackdrop}
         />
       )}
 
       <div
         className={cn(
-          "z-[91] border border-gold/40 bg-background shadow-[var(--elevation-3)] page-enter",
+          "fixed z-[91] border border-gold/40 bg-background shadow-[var(--elevation-3)] page-enter",
           "p-3 max-w-[260px] md:p-5 md:max-w-sm"
         )}
         style={tooltipStyle}
@@ -339,14 +389,16 @@ export function FirstVisitTour() {
               {title}
             </h3>
             <p className="mt-1.5 text-xs text-muted-foreground md:mt-2 md:text-sm">
-              {body}
+              {hole
+                ? body
+                : "Looking for this control… Tap Next to continue."}
             </p>
           </div>
           <button
             type="button"
             onClick={dismiss}
             className="shrink-0 p-1 text-muted-foreground hover:text-foreground"
-            aria-label="Dismiss tour"
+            aria-label="End tour"
           >
             <X className="size-4" />
           </button>
@@ -354,6 +406,9 @@ export function FirstVisitTour() {
         <div className="mt-3 flex gap-2 md:mt-4">
           <Button size="sm" onClick={next}>
             {step >= STEPS.length - 1 ? "Done" : "Next"}
+          </Button>
+          <Button size="sm" variant="outline" onClick={dismiss}>
+            Skip tour
           </Button>
         </div>
       </div>

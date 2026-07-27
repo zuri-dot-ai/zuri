@@ -11,17 +11,28 @@ export function LinksPanel({
   linkSlots,
   filledLinks,
   onOpenSlot,
+  healFailed = false,
 }: {
   linkSlots: string[];
   filledLinks: Record<string, ResolvedLink>;
   onOpenSlot: (slot: string) => void;
+  /** True when ensureLinkSlots could not heal missing data-link-slot markup. */
+  healFailed?: boolean;
 }) {
   if (linkSlots.length === 0) {
     return (
-      <p className="text-card-body">
-        No editable links found for this template. Re-publish or regenerate
-        after templates are updated.
-      </p>
+      <div className="space-y-2">
+        <p className="text-card-body">
+          {healFailed
+            ? "Link editing isn’t available on this site yet. Open this page again after templates finish updating — or regenerate your website."
+            : "No editable links found for this template. Refresh this page once; if this persists, regenerate your website so it picks up the latest template."}
+        </p>
+        <p className="text-card-meta">
+          Templates need <code className="text-xs">data-link-slot</code> on
+          CTA and nav links. Storage templates were updated; stale site HTML
+          is recomposed automatically when you reload.
+        </p>
+      </div>
     );
   }
 

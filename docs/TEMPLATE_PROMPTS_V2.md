@@ -100,6 +100,31 @@ never a raw Unsplash/Pexels URL. Every `<img>` carries a
 `data-image-slot="hero|about|gallery_1|..."` attribute exactly as v1
 specified, for the editor to target later.
 
+### 1.5b Editable links (`data-link-slot`) — required
+
+Every primary/secondary CTA `<a class="btn">` and every primary + mobile
+nav section link must carry a stable `data-link-slot` so Website Studio
+can edit destinations (and CTA labels):
+
+```html
+<a data-link-slot="cta_primary" href="#contact" class="btn">Get Started</a>
+<a data-link-slot="cta_secondary" href="#services" class="btn btn-outline">See Work</a>
+<a data-link-slot="nav_services" href="#services">Services</a>
+<a data-link-slot="nav_contact" href="#contact">Contact</a>
+```
+
+| Rule | Detail |
+|---|---|
+| Attribute | On the `<a>` itself (not a wrapper) |
+| CTA ids | `cta_primary`, `cta_secondary`, then `cta_3`… |
+| Nav ids | `nav_{sectionId}` from the hash (`#faq` → `nav_faq`) |
+| Desktop + mobile | Same slot id on both nav copies |
+| Do not mark | Logo `#top` / `#hero`, WhatsApp float, footer Powered-by, submit buttons |
+
+Stored overrides live in `websites.filled_links` and are applied via
+`applyLinks()` at recompose time. Embeds do **not** need template slots —
+they are injected before `#contact` from `websites.filled_embeds`.
+
 **Source URL pattern** (built from the constants already defined in the
 Session Prompt §5):
 

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, PanelLeftClose, PanelLeft } from "lucide-react";
+import { LogOut, PanelLeftClose, PanelLeft, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/ui/logo";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -129,15 +129,13 @@ function SidebarAvatarMenu({ collapsed }: { collapsed: boolean }) {
     <div className="relative" ref={menuRef}>
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => router.push("/settings")}
         className={cn(
           "flex w-full items-center rounded-md text-left transition-all active:scale-[0.98] hover:bg-[var(--bg-elevated)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(201,162,39,0.35)]",
           collapsed ? "justify-center px-1 py-2" : "gap-3 px-2 py-2"
         )}
-        aria-expanded={open}
-        aria-haspopup="menu"
-        aria-label="Account menu"
-        title={collapsed ? name : undefined}
+        aria-label="Open settings"
+        title={collapsed ? "Settings" : undefined}
       >
         <UserAvatar
           name={user?.full_name}
@@ -151,11 +149,24 @@ function SidebarAvatarMenu({ collapsed }: { collapsed: boolean }) {
               {name}
             </span>
             <span className="block text-caption text-[var(--text-tertiary)]">
-              Account
+              Profile & settings
             </span>
           </span>
         )}
       </button>
+
+      {!collapsed && (
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="mt-1 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-[var(--bg-elevated)] hover:text-foreground"
+          aria-expanded={open}
+          aria-haspopup="menu"
+        >
+          <LogOut className="size-3.5" strokeWidth={1.75} />
+          Account actions
+        </button>
+      )}
 
       {open && (
         <div
@@ -167,6 +178,18 @@ function SidebarAvatarMenu({ collapsed }: { collapsed: boolean }) {
               : "bottom-full left-0 right-0"
           )}
         >
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              router.push("/settings");
+            }}
+            className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-[var(--bg-secondary)] hover:text-foreground"
+          >
+            <Settings className="size-4" strokeWidth={1.75} />
+            Settings
+          </button>
           <button
             type="button"
             role="menuitem"

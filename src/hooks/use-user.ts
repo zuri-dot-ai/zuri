@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { ProfileRow } from "@/types/database";
 
@@ -15,6 +16,7 @@ export function useUser() {
   const [user, setUser] = useState<ProfileRow | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const pathname = usePathname();
   const supabase = createClient();
 
   useEffect(() => {
@@ -70,7 +72,9 @@ export function useUser() {
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("focus", onFocus);
     };
-  }, [supabase]);
+    // Reload on soft route changes so avatar/profile stay fresh in the
+    // layout-stable sidebar (hard refresh was previously required).
+  }, [supabase, pathname]);
 
   return { user, avatarUrl, loading };
 }

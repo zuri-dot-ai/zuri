@@ -125,7 +125,7 @@ a premium product needs these sections to feel complete, not partial:
 | Section | Purpose | Plan gating |
 |---|---|---|
 | **Home** | Daily landing point, Today's Action | All plans |
-| **Website** | Editor (text/theme/image) + live preview + Publish button | Preview: Free+. Publish/edit: Pro+ |
+| **Website** | Editor (text / theme / images / CTA+nav links / embeds) + live preview + Publish button | Preview: Free+. Publish/edit: Pro+ |
 | **Content** | Full 90-day content calendar — calendar view + list view, mark-as-posted, regenerate individual pieces | Free: 5 ideas/mo view-only. Pro+: full calendar + regen limits per plan |
 | **Analytics** | Per `13_DASHBOARD_HOME_ANALYTICS.md` | Growth+ for full detail; Pro sees a lighter summary; Free sees a locked teaser |
 | **Agency Marketplace** | Browse vetted agencies, submit inquiries | Growth+ full access; Free/Pro see locked teaser, not hidden |

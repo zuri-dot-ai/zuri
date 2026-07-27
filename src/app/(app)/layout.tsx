@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/app/sidebar";
 import { BottomTabs } from "@/components/app/bottom-tabs";
 import { Topbar } from "@/components/app/topbar";
 import { PaymentToast } from "@/components/app/payment-toast";
+import { Suspense } from "react";
 import { FirstVisitTour } from "@/components/app/first-visit-tour";
 import { CommandPalette } from "@/components/app/command-palette";
 import { AppShellProviders } from "@/components/app/app-shell-providers";
@@ -70,7 +71,9 @@ export default async function AppLayout({
               )}
               <ErrorBoundary context="dashboard">{children}</ErrorBoundary>
               <PaymentToast />
-              <FirstVisitTour />
+              <Suspense fallback={null}>
+                <FirstVisitTour />
+              </Suspense>
             </main>
           </div>
           <BottomTabs />

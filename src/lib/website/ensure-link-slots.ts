@@ -6,6 +6,7 @@ import {
 } from "@/lib/website/recompose-html";
 import { discoverLinkSlots } from "@/lib/website/link-slots";
 import { fetchTemplate } from "@/lib/website/template-registry";
+import { captureError } from "@/lib/monitoring/sentry";
 import type {
   ActiveTheme,
   DesignArchetype,
@@ -28,10 +29,21 @@ export interface EnsureLinkSlotsInput {
   archetype: unknown;
 }
 
+export type LinkSlotsHealReason =
+  | "ok"
+  | "already_present"
+  | "no_template_id"
+  | "fetch_failed"
+  | "storage_missing_slots"
+  | "recompose_failed";
+
 export interface EnsureLinkSlotsResult {
   templateHtml: string;
   linkSlots: string[];
   recomposed: boolean;
+  /** True when we needed slots but could not heal (Storage/DB/recompose). */
+  healFailed: boolean;
+  healReason: LinkSlotsHealReason;
 }
 
 /**
@@ -50,8 +62,24 @@ export async function ensureLinkSlotsInWebsite(
     new Set([...existingSlots, ...Object.keys(filledLinks)])
   );
 
-  if (linkSlots.length > 0 || !website.template_id) {
-    return { templateHtml: currentHtml, linkSlots, recomposed: false };
+  if (linkSlots.length > 0) {
+    return {
+      templateHtml: currentHtml,
+      linkSlots,
+      recomposed: false,
+      healFailed: false,
+      healReason: "already_present",
+    };
+  }
+
+  if (!website.template_id) {
+    return {
+      templateHtml: currentHtml,
+      linkSlots,
+      recomposed: false,
+      healFailed: true,
+      healReason: "no_template_id",
+    };
   }
 
   let rawHtml: string;
@@ -59,16 +87,37 @@ export async function ensureLinkSlotsInWebsite(
     const fetched = await fetchTemplate(website.template_id);
     rawHtml = fetched.html;
   } catch (err) {
+    captureError(err, {
+      route: "ensureLinkSlots.fetchTemplate",
+      userId: website.user_id,
+      extra: { templateId: website.template_id },
+    });
     console.warn(
       "[ensureLinkSlots] fetchTemplate failed:",
       err instanceof Error ? err.message : err
     );
-    return { templateHtml: currentHtml, linkSlots, recomposed: false };
+    return {
+      templateHtml: currentHtml,
+      linkSlots,
+      recomposed: false,
+      healFailed: true,
+      healReason: "fetch_failed",
+    };
   }
 
   const rawSlots = discoverLinkSlots(rawHtml);
   if (rawSlots.length === 0) {
-    return { templateHtml: currentHtml, linkSlots, recomposed: false };
+    console.warn(
+      "[ensureLinkSlots] Storage template has no data-link-slot:",
+      website.template_id
+    );
+    return {
+      templateHtml: currentHtml,
+      linkSlots,
+      recomposed: false,
+      healFailed: true,
+      healReason: "storage_missing_slots",
+    };
   }
 
   const filledPlaceholders =
@@ -111,12 +160,25 @@ export async function ensureLinkSlotsInWebsite(
       templateHtml: result.html,
       linkSlots: nextSlots,
       recomposed: true,
+      healFailed: nextSlots.length === 0,
+      healReason: nextSlots.length === 0 ? "recompose_failed" : "ok",
     };
   } catch (err) {
+    captureError(err, {
+      route: "ensureLinkSlots.recompose",
+      userId: website.user_id,
+      extra: { templateId: website.template_id, websiteId: website.id },
+    });
     console.warn(
       "[ensureLinkSlots] recompose failed:",
       err instanceof Error ? err.message : err
     );
-    return { templateHtml: currentHtml, linkSlots, recomposed: false };
+    return {
+      templateHtml: currentHtml,
+      linkSlots,
+      recomposed: false,
+      healFailed: true,
+      healReason: "recompose_failed",
+    };
   }
 }

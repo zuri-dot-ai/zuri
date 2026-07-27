@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 type UserAvatarProps = {
@@ -44,9 +43,14 @@ function LetterMark({
   );
 }
 
+function isGoogleAvatar(src: string): boolean {
+  return /googleusercontent\.com|ggpht\.com/i.test(src);
+}
+
 /**
  * Circular avatar with subtle gold ring.
  * Renders profile image when available; falls back to letter mark.
+ * Google URLs use a plain <img> with one automatic retry (soft-nav safe).
  */
 export function UserAvatar({
   name,
@@ -58,14 +62,18 @@ export function UserAvatar({
   const initial = initialFrom(name, email);
   const dim = `${size}px`;
   const [broken, setBroken] = useState(false);
+  const [retries, setRetries] = useState(0);
 
   useEffect(() => {
     setBroken(false);
+    setRetries(0);
   }, [src]);
 
   if (!src || broken) {
     return <LetterMark initial={initial} size={size} className={className} />;
   }
+
+  const google = isGoogleAvatar(src);
 
   return (
     <span
@@ -75,15 +83,23 @@ export function UserAvatar({
       )}
       style={{ width: dim, height: dim }}
     >
-      <Image
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        key={`${src}:${retries}`}
         src={src}
         alt={name || email || "Profile"}
         width={size}
         height={size}
         className="size-full object-cover"
-        unoptimized={src.includes("googleusercontent.com")}
         referrerPolicy="no-referrer"
-        onError={() => setBroken(true)}
+        decoding="async"
+        onError={() => {
+          if (google && retries < 1) {
+            setRetries(1);
+            return;
+          }
+          setBroken(true);
+        }}
       />
     </span>
   );
