@@ -28,7 +28,7 @@ export function PublishPanel({
 }) {
   const urlMode = getSiteUrlMode();
   const publishLabel =
-    urlMode === "path" ? "Publish live" : "Publish to subdomain";
+    urlMode === "path" ? "Publish live" : "Publish to your subdomain";
 
   const checks = [
     {
@@ -66,11 +66,18 @@ export function PublishPanel({
         ))}
       </div>
 
-      {urlMode === "path" && (
+      {urlMode === "subdomain" ? (
+        <p className="text-card-meta">
+          After publish, your site is live at{" "}
+          <span className="font-mono">your-handle.buildzuri.com</span>. Draft
+          preview stays private until you publish.
+        </p>
+      ) : (
         <p className="text-card-meta">
           Live sites are public at{" "}
-          <span className="font-mono">/sites/your-handle</span> until your custom
-          domain wildcard is configured.
+          <span className="font-mono">/sites/your-handle</span> until wildcard
+          DNS is configured for{" "}
+          <span className="font-mono">*.buildzuri.com</span>.
         </p>
       )}
 

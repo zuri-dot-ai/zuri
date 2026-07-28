@@ -20,6 +20,14 @@ export function discoverLinkSlots(html: string | null | undefined): string[] {
   });
 }
 
+export type LinkSlotsHealReason =
+  | "ok"
+  | "already_present"
+  | "no_template_id"
+  | "fetch_failed"
+  | "storage_missing_slots"
+  | "recompose_failed";
+
 export function formatLinkSlotLabel(slot: string): string {
   if (slot === "cta_primary") return "Primary button";
   if (slot === "cta_secondary") return "Secondary button";

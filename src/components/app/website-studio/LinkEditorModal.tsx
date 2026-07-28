@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Link2, X } from "lucide-react";
+import { Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { safeFetchJSON } from "@/lib/utils/safe-fetch";
@@ -11,6 +11,7 @@ import {
   isCtaLinkSlot,
 } from "@/lib/website/link-slots";
 import type { ResolvedLink } from "@/types/website";
+import { StudioModal } from "./StudioModal";
 
 type LinkMode = "internal" | "external";
 
@@ -42,10 +43,10 @@ export function LinkEditorModal({
   const [mode, setMode] = useState<LinkMode>(
     seedIsInternal ? "internal" : "external"
   );
-  const [href, setHref] = useState(seedHref || (seedIsInternal ? "#contact" : "https://"));
-  const [label, setLabel] = useState(
-    existing?.label || initialLabel || ""
+  const [href, setHref] = useState(
+    seedHref || (seedIsInternal ? "#contact" : "https://")
   );
+  const [label, setLabel] = useState(existing?.label || initialLabel || "");
   const [openInNewTab, setOpenInNewTab] = useState(
     existing?.target ? existing.target === "_blank" : !seedIsInternal
   );
@@ -65,8 +66,6 @@ export function LinkEditorModal({
     setError(null);
   }, [open, slot, existing, initialHref, initialLabel]);
 
-  if (!open) return null;
-
   async function save() {
     setBusy(true);
     setError(null);
@@ -76,10 +75,7 @@ export function LinkEditorModal({
         if (!normalized.startsWith("#")) {
           normalized = `#${normalized.replace(/^#/, "")}`;
         }
-      } else if (
-        normalized &&
-        !/^https?:\/\//i.test(normalized)
-      ) {
+      } else if (normalized && !/^https?:\/\//i.test(normalized)) {
         normalized = `https://${normalized}`;
       }
 
@@ -92,7 +88,8 @@ export function LinkEditorModal({
         body: JSON.stringify({
           slot,
           href: normalized,
-          target: mode === "internal" ? "_self" : openInNewTab ? "_blank" : "_self",
+          target:
+            mode === "internal" ? "_self" : openInNewTab ? "_blank" : "_self",
           ...(isCta && label.trim() ? { label: label.trim() } : {}),
         }),
       });
@@ -110,36 +107,35 @@ export function LinkEditorModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center">
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="link-editor-title"
-        className="zuri-card w-full max-w-md space-y-4 p-5 shadow-xl"
-      >
-        <div className="flex items-start justify-between gap-3">
-          <div className="space-y-1">
-            <h2
-              id="link-editor-title"
-              className="flex items-center gap-2 font-heading text-lg"
-            >
-              <Link2 className="size-4 text-gold" />
-              Edit link
-            </h2>
-            <p className="text-card-meta capitalize">
-              {formatLinkSlotLabel(slot)}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-sm p-1 text-muted-foreground hover:text-foreground"
-            aria-label="Close"
+    <StudioModal
+      open={open}
+      onClose={onClose}
+      overlayClassName="z-[60]"
+      title={
+        <span className="flex items-center gap-2">
+          <Link2 className="size-4 text-gold" />
+          Edit link
+        </span>
+      }
+      description={
+        <span className="capitalize">{formatLinkSlotLabel(slot)}</span>
+      }
+      footer={
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" size="sm" onClick={onClose} disabled={busy}>
+            Cancel
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => void save()}
+            disabled={busy || !href.trim()}
           >
-            <X className="size-4" />
-          </button>
+            {busy ? "Saving…" : "Save link"}
+          </Button>
         </div>
-
+      }
+    >
+      <div className="space-y-4">
         <div className="flex gap-1 rounded-sm border border-[var(--border-solid)] p-1">
           {(
             [
@@ -180,7 +176,9 @@ export function LinkEditorModal({
             type={mode === "external" ? "url" : "text"}
             value={href}
             onChange={(e) => setHref(e.target.value)}
-            placeholder={mode === "internal" ? "#contact" : "https://example.com"}
+            placeholder={
+              mode === "internal" ? "#contact" : "https://example.com"
+            }
             className="w-full rounded-sm border border-[var(--border-solid)] bg-background px-3 py-2 text-sm outline-none focus:border-gold"
           />
           {mode === "internal" && (
@@ -216,16 +214,7 @@ export function LinkEditorModal({
         )}
 
         {error && <p className="text-sm text-destructive">{error}</p>}
-
-        <div className="flex justify-end gap-2 pt-1">
-          <Button variant="outline" size="sm" onClick={onClose} disabled={busy}>
-            Cancel
-          </Button>
-          <Button size="sm" onClick={() => void save()} disabled={busy || !href.trim()}>
-            {busy ? "Saving…" : "Save link"}
-          </Button>
-        </div>
       </div>
-    </div>
+    </StudioModal>
   );
 }

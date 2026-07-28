@@ -108,6 +108,9 @@ export interface WebsiteRow {
   user_id: string;
   handle: string;
   custom_domain: string | null;
+  /** pending_verification | verified | verification_failed | null */
+  custom_domain_status: string | null;
+  custom_domain_added_at: string | null;
   status: WebsiteStatus;
   template_id: string | null;
   active_theme: ActiveTheme;

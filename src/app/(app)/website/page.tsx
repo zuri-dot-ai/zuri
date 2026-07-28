@@ -126,6 +126,7 @@ export default async function WebsitePage() {
         imageSlots={imageSlots}
         linkSlots={ensured.linkSlots}
         linksHealFailed={ensured.healFailed}
+        linksHealReason={ensured.healReason}
         activeTheme={(website.active_theme as ActiveTheme) ?? "theme-1"}
         archetype={(website.archetype as DesignArchetype | null) ?? null}
         isPublished={isPublished}

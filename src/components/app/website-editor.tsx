@@ -9,6 +9,10 @@ import { cn } from "@/lib/utils";
 import { FetchError, safeFetchJSON } from "@/lib/utils/safe-fetch";
 import { UpgradeSheet } from "@/components/app/upgrade-sheet";
 import { celebrateFirstPublish } from "@/lib/ui/milestones";
+import {
+  formatPublicSiteUrlLabel,
+  getPublicSiteUrl,
+} from "@/lib/website/public-site-url";
 import type { ActiveTheme, DesignArchetype } from "@/types/website";
 
 export function WebsiteEditor({
@@ -37,8 +41,7 @@ export function WebsiteEditor({
   const [mobileTab, setMobileTab] = useState<"preview" | "edit">("preview");
   const [upgradeOpen, setUpgradeOpen] = useState(false);
 
-  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "localhost:3000";
-  const liveUrl = liveSlug ? `https://${liveSlug}.${rootDomain}` : null;
+  const liveUrl = liveSlug ? getPublicSiteUrl(liveSlug) : null;
   const previewUrl = liveSlug ? `/preview/${liveSlug}` : null;
   const placeholderEntries = Object.entries(filledPlaceholders).slice(0, 12);
   const canPublish = plan !== "free";
@@ -62,7 +65,7 @@ export function WebsiteEditor({
       setPublished(true);
       setLiveSlug(data.slug ?? null);
       celebrateFirstPublish(
-        data.slug ? `https://${data.slug}.${rootDomain}` : undefined
+        data.slug ? getPublicSiteUrl(data.slug) : undefined
       );
     } catch (e) {
       if (e instanceof FetchError && e.status === 403) {
@@ -188,7 +191,9 @@ export function WebsiteEditor({
           <div className="flex items-center gap-2 border-b border-border bg-background px-4 py-2.5">
             <Globe className="size-4 text-muted-foreground" />
             <span className="font-mono text-xs text-muted-foreground">
-              {liveSlug ? `${liveSlug}.${rootDomain}` : "preview"}
+              {liveSlug
+                ? formatPublicSiteUrlLabel(liveSlug)
+                : "preview"}
             </span>
           </div>
           <iframe

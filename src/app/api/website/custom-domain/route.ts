@@ -102,7 +102,12 @@ export async function POST(req: Request) {
     );
   }
 
-  if (domain.endsWith(".zuri.com") || domain === "zuri.com") {
+  if (
+    domain.endsWith(".buildzuri.com") ||
+    domain === "buildzuri.com" ||
+    domain.endsWith(".zuri.com") ||
+    domain === "zuri.com"
+  ) {
     return NextResponse.json(
       { error: ERROR_MESSAGES.CUSTOM_DOMAIN_ZURI },
       { status: 400 }
@@ -212,12 +217,19 @@ export async function GET() {
       return NextResponse.json({ has_custom_domain: false });
     }
 
+    const dns_instructions =
+      website.custom_domain_status === "pending_verification" ||
+      website.custom_domain_status === "verification_failed"
+        ? buildDnsInstructions(website.custom_domain)
+        : undefined;
+
     return NextResponse.json({
       has_custom_domain: true,
       domain: website.custom_domain,
       status: website.custom_domain_status,
       // status: pending_verification | verified | verification_failed
       added_at: website.custom_domain_added_at,
+      ...(dns_instructions ? { dns_instructions } : {}),
     });
   } catch (err) {
     const ref = generateSupportRef();

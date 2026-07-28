@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import {
   Briefcase,
   Building2,
-  ChevronLeft,
+  ChevronRight,
   Code2,
   Eye,
   ExternalLink,
@@ -45,6 +45,7 @@ import {
   groupPlaceholderFields,
   previewSectionId,
 } from "@/lib/website/field-groups";
+import type { LinkSlotsHealReason } from "@/lib/website/link-slots";
 import { FetchError, safeFetchJSON } from "@/lib/utils/safe-fetch";
 import { ContentPanel } from "./ContentPanel";
 import { ImagesPanel } from "./ImagesPanel";
@@ -56,6 +57,8 @@ import { PreviewFrame } from "./PreviewFrame";
 import { ImageSwapModal } from "./ImageSwapModal";
 import { LinkEditorModal } from "./LinkEditorModal";
 import { ReviewChecklist } from "./ReviewChecklist";
+import { StudioModal } from "./StudioModal";
+import { CustomDomainPanel } from "./CustomDomainPanel";
 import { CustomSiteCTA } from "@/components/website/CustomSiteCTA";
 import type {
   ActiveTheme,
@@ -88,9 +91,6 @@ type LinkModalState = {
   label?: string;
 };
 
-type MobileScreen = "list" | "edit";
-
-/** Semantic icon per content/section id — keeps every section visually distinct instead of a generic file icon. */
 const SECTION_ICONS: Record<string, React.ElementType> = {
   hero: Sparkles,
   about: Info,
@@ -103,6 +103,15 @@ const SECTION_ICONS: Record<string, React.ElementType> = {
   other: FileText,
 };
 
+const PANEL_SIZE: Partial<Record<PanelId, "md" | "lg" | "xl">> = {
+  images: "lg",
+  embeds: "lg",
+  publish: "lg",
+  settings: "lg",
+  services: "lg",
+  faq: "lg",
+};
+
 export function WebsiteStudio({
   websiteId,
   filledPlaceholders: initialPlaceholders,
@@ -112,6 +121,7 @@ export function WebsiteStudio({
   imageSlots,
   linkSlots,
   linksHealFailed = false,
+  linksHealReason,
   activeTheme: initialTheme,
   archetype,
   isPublished,
@@ -129,6 +139,7 @@ export function WebsiteStudio({
   imageSlots: string[];
   linkSlots: string[];
   linksHealFailed?: boolean;
+  linksHealReason?: LinkSlotsHealReason;
   activeTheme: ActiveTheme;
   archetype: DesignArchetype | null;
   isPublished: boolean;
@@ -139,8 +150,7 @@ export function WebsiteStudio({
   hasOpenCustomRequest?: boolean;
 }) {
   const router = useRouter();
-  const [expanded, setExpanded] = useState<PanelId | "">("hero");
-  const [mobileScreen, setMobileScreen] = useState<MobileScreen>("list");
+  const [activePanel, setActivePanel] = useState<PanelId | null>(null);
   const [placeholders, setPlaceholders] = useState(initialPlaceholders);
   const [images, setImages] = useState(initialImages);
   const [links, setLinks] = useState(initialLinks);
@@ -156,6 +166,16 @@ export function WebsiteStudio({
     null
   );
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [upgradeFeature, setUpgradeFeature] = useState<{
+    feature: string;
+    benefit: string;
+    requiredPlan: "Pro" | "Growth";
+  }>({
+    feature: "Publish website",
+    benefit:
+      "Pro unlocks a live subdomain — editing and preview stay free on all plans.",
+    requiredPlan: "Pro",
+  });
   const [reviewOpen, setReviewOpen] = useState(false);
   const [imageModalSlot, setImageModalSlot] = useState<string | null>(null);
   const [linkModal, setLinkModal] = useState<LinkModalState | null>(null);
@@ -191,8 +211,6 @@ export function WebsiteStudio({
     const hasBrokenImages = Object.values(initialImages).some((img) =>
       isBrokenImageUrl(img.url)
     );
-    // Also refresh when needs_review is set — often means picsum left in
-    // template_html even if filled_images already looks fine.
     if (!hasBrokenImages && !initialNeedsReview) return;
     safeFetchJSON<{
       filledImages?: Record<string, ResolvedImage>;
@@ -266,18 +284,26 @@ export function WebsiteStudio({
     if (sid) setHighlightSection(sid);
   }
 
+  function openUpgrade(opts?: {
+    feature?: string;
+    benefit?: string;
+    requiredPlan?: "Pro" | "Growth";
+  }) {
+    setUpgradeFeature({
+      feature: opts?.feature ?? "Publish website",
+      benefit:
+        opts?.benefit ??
+        "Pro unlocks a live subdomain — editing and preview stay free on all plans.",
+      requiredPlan: opts?.requiredPlan ?? "Pro",
+    });
+    setUpgradeOpen(true);
+  }
+
   function jumpToIssue(issue: ReviewIssue) {
     setReviewOpen(false);
-    setExpanded(issue.sectionId as PanelId);
-    setMobileScreen("edit");
+    setActivePanel(issue.sectionId as PanelId);
     if (issue.kind === "image") {
       setImageModalSlot(issue.target);
-      setTimeout(() => {
-        document.getElementById(`slot-${issue.target}`)?.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
-      }, 50);
     } else {
       setFocusFieldId(issue.target);
       const sid = previewSectionId(issue.sectionId);
@@ -287,7 +313,7 @@ export function WebsiteStudio({
 
   async function publish() {
     if (!canPublish) {
-      setUpgradeOpen(true);
+      openUpgrade();
       return;
     }
     setBusy(true);
@@ -310,7 +336,7 @@ export function WebsiteStudio({
       toast.success(`Live at ${formatPublicSiteUrlLabel(data.slug)}`);
     } catch (e) {
       if (e instanceof FetchError && e.status === 403) {
-        setUpgradeOpen(true);
+        openUpgrade();
         return;
       }
       toast.error(e instanceof Error ? e.message : "Publish failed");
@@ -322,7 +348,7 @@ export function WebsiteStudio({
 
   async function unpublish() {
     if (!canPublish) {
-      setUpgradeOpen(true);
+      openUpgrade();
       return;
     }
     if (
@@ -344,7 +370,7 @@ export function WebsiteStudio({
       toast.success("Site unpublished — back in preview mode");
     } catch (e) {
       if (e instanceof FetchError && e.status === 403) {
-        setUpgradeOpen(true);
+        openUpgrade();
         return;
       }
       toast.error(e instanceof Error ? e.message : "Unpublish failed");
@@ -361,11 +387,10 @@ export function WebsiteStudio({
       { id: "embeds", label: "Embeds", icon: Code2 },
       { id: "theme", label: "Theme", icon: Palette },
       { id: "publish", label: "Publish", icon: Rocket },
-      { id: "settings", label: "Settings", icon: Settings },
+      { id: "settings", label: "Domain", icon: Settings },
     ];
 
-  function renderPanelBody(id: PanelId | "") {
-    if (!id) return null;
+  function renderPanelBody(id: PanelId) {
     if (contentGroups.some((g) => g.id === id)) {
       const group = contentGroups.find((g) => g.id === id)!;
       return (
@@ -397,6 +422,7 @@ export function WebsiteStudio({
           linkSlots={linkSlots}
           filledLinks={links}
           healFailed={linksHealFailed}
+          healReason={linksHealReason}
           onOpenSlot={(slot) =>
             setLinkModal({
               slot,
@@ -429,29 +455,30 @@ export function WebsiteStudio({
           busy={busy}
           onPublish={publish}
           onUnpublish={unpublish}
-          onUpgrade={() => setUpgradeOpen(true)}
+          onUpgrade={() => openUpgrade()}
         />
       );
     }
     if (id === "settings") {
       return (
-        <div className="space-y-4">
-          <p className="text-card-body">
-            Custom domains are available on Growth plans. Connect your own
-            domain from billing when you upgrade.
-          </p>
-          <Button variant="outline" size="sm" asChild>
-            <a href="/settings?tab=billing">View plans</a>
-          </Button>
-        </div>
+        <CustomDomainPanel
+          plan={plan}
+          onUpgrade={() =>
+            openUpgrade({
+              feature: "Custom domain",
+              benefit:
+                "Growth unlocks your own domain so customers find you on your brand.",
+              requiredPlan: "Growth",
+            })
+          }
+        />
       );
     }
     return null;
   }
 
   function openPanel(id: PanelId) {
-    setExpanded(id);
-    setMobileScreen("edit");
+    setActivePanel(id);
   }
 
   function openFullScreenPreview() {
@@ -471,9 +498,37 @@ export function WebsiteStudio({
       ...staticPanels.map((p) => ({ id: p.id, label: p.label, icon: p.icon })),
     ];
 
+  const activeLabel =
+    sidebarItems.find((i) => i.id === activePanel)?.label ?? "Edit";
+
+  function renderSectionButton(item: {
+    id: PanelId;
+    label: string;
+    icon: React.ElementType;
+  }) {
+    const Icon = item.icon;
+    const selected = activePanel === item.id;
+    return (
+      <button
+        key={item.id}
+        type="button"
+        onClick={() => openPanel(item.id)}
+        className={cn(
+          "flex w-full items-center gap-3 px-4 py-3.5 text-left text-sm font-medium [transition-duration:var(--transition-fast)] transition-colors",
+          selected
+            ? "bg-surface text-gold"
+            : "text-foreground hover:bg-surface/50"
+        )}
+      >
+        <Icon className="size-4 shrink-0 text-muted-foreground" />
+        <span className="min-w-0 flex-1 truncate">{item.label}</span>
+        <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+      </button>
+    );
+  }
+
   return (
     <div className="flex min-h-[calc(100vh-6rem)] flex-col gap-4">
-      {/* Top bar */}
       <header className="page-head flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
@@ -518,6 +573,11 @@ export function WebsiteStudio({
             {archetype?.replace(/-/g, " ") ?? "Custom template"} ·{" "}
             {activeTheme.replace("-", " ")}
           </p>
+          {published && liveUrl ? (
+            <p className="text-card-meta font-mono text-xs">
+              {liveUrl.replace(/^https?:\/\//, "")}
+            </p>
+          ) : null}
         </div>
         <div className="hidden flex-wrap gap-2 lg:flex">
           {previewUrl && !published && (
@@ -566,41 +626,10 @@ export function WebsiteStudio({
         </div>
       </header>
 
-      {/* Desktop split-pane */}
       <div className="hidden min-h-0 flex-1 gap-4 lg:grid lg:grid-cols-[minmax(280px,380px)_1fr]">
         <aside className="zuri-card flex max-h-[calc(100vh-10rem)] flex-col overflow-hidden p-0">
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            {sidebarItems.map((item) => {
-              const open = expanded === item.id;
-              const Icon = item.icon;
-              return (
-                <div key={item.id} className="border-b border-[var(--border-solid)]">
-                  <button
-                    type="button"
-                    onClick={() => setExpanded(open ? "" : item.id)}
-                    className={cn(
-                      "flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium [transition-duration:var(--transition-fast)] transition-colors",
-                      open
-                        ? "bg-surface text-gold"
-                        : "text-foreground hover:bg-surface/50"
-                    )}
-                  >
-                    <span className="flex min-w-0 items-center gap-2.5">
-                      <Icon className="size-4 shrink-0 text-muted-foreground" />
-                      <span className="truncate">{item.label}</span>
-                    </span>
-                    <span className="text-label">
-                      {open ? "−" : "+"}
-                    </span>
-                  </button>
-                  {open && (
-                    <div className="border-t border-[var(--border-solid)] px-4 py-4">
-                      {renderPanelBody(item.id)}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+          <div className="min-h-0 flex-1 overflow-y-auto divide-y divide-[var(--border-solid)]">
+            {sidebarItems.map((item) => renderSectionButton(item))}
           </div>
           <div className="border-t border-[var(--border-solid)] p-4">
             <CustomSiteCTA
@@ -623,86 +652,58 @@ export function WebsiteStudio({
         </div>
       </div>
 
-      {/* Mobile: section list → editor → preview sheet */}
       <div className="flex flex-1 flex-col lg:hidden">
-        {mobileScreen === "list" && (
-          <div className="space-y-1">
-            {sidebarItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => openPanel(item.id)}
-                  className="content-card flex w-full items-center gap-3 px-4 py-3.5 text-left text-sm font-medium"
-                >
-                  <Icon className="size-4 shrink-0 text-muted-foreground" />
-                  <span className="truncate">{item.label}</span>
-                </button>
-              );
-            })}
-            <div className="pt-3">
-              <CustomSiteCTA
-                context="editor"
-                compact
-                hasOpenRequest={hasOpenCustomRequest}
-              />
-            </div>
-
-            {/* Publish stays in the normal scroll flow — last item in the
-                section list, not floating. Preview is the only floating
-                action (see the fixed pill below). */}
-            {published && canPublish ? (
-              <Button
-                variant="outline"
-                className="mt-4 w-full border-destructive/40 text-destructive"
-                onClick={unpublish}
-                disabled={busy}
+        <div className="space-y-1">
+          {sidebarItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => openPanel(item.id)}
+                className="content-card flex w-full items-center gap-3 px-4 py-3.5 text-left text-sm font-medium"
               >
-                {busyAction === "unpublish" ? (
-                  <span className="zuri-spinner !size-3.5" />
-                ) : (
-                  <Undo2 className="size-4" />
-                )}
-                Unpublish
-              </Button>
-            ) : (
-              <Button
-                className="mt-4 w-full"
-                onClick={publish}
-                disabled={busy}
-              >
-                {busyAction === "publish" ? (
-                  <span className="zuri-spinner !size-3.5" />
-                ) : (
-                  <Rocket className="size-4" />
-                )}
-                {canPublish ? "Publish" : "Upgrade"}
-              </Button>
-            )}
+                <Icon className="size-4 shrink-0 text-muted-foreground" />
+                <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+              </button>
+            );
+          })}
+          <div className="pt-3">
+            <CustomSiteCTA
+              context="editor"
+              compact
+              hasOpenRequest={hasOpenCustomRequest}
+            />
           </div>
-        )}
 
-        {mobileScreen === "edit" && expanded && (
-          <div className="flex flex-col gap-3">
-            <button
-              type="button"
-              onClick={() => setMobileScreen("list")}
-              className="flex items-center gap-1 text-sm text-muted-foreground"
+          {published && canPublish ? (
+            <Button
+              variant="outline"
+              className="mt-4 w-full border-destructive/40 text-destructive"
+              onClick={unpublish}
+              disabled={busy}
             >
-              <ChevronLeft className="size-4" /> Sections
-            </button>
-            <h2 className="font-heading text-xl capitalize">
-              {sidebarItems.find((i) => i.id === expanded)?.label}
-            </h2>
-            <div className="zuri-card">{renderPanelBody(expanded)}</div>
-          </div>
-        )}
+              {busyAction === "unpublish" ? (
+                <span className="zuri-spinner !size-3.5" />
+              ) : (
+                <Undo2 className="size-4" />
+              )}
+              Unpublish
+            </Button>
+          ) : (
+            <Button className="mt-4 w-full" onClick={publish} disabled={busy}>
+              {busyAction === "publish" ? (
+                <span className="zuri-spinner !size-3.5" />
+              ) : (
+                <Rocket className="size-4" />
+              )}
+              {canPublish ? "Publish" : "Upgrade"}
+            </Button>
+          )}
+        </div>
       </div>
 
-      {/* Floating Preview pill — portaled to body so `fixed` is viewport-
-          relative (avoids transformed/overflow ancestors). Above BottomTabs
-          (z-50), mobile only. */}
       {portalReady &&
         previewUrl &&
         createPortal(
@@ -719,34 +720,42 @@ export function WebsiteStudio({
           document.body
         )}
 
-      {imageModalSlot && (
-        <ImageSwapModal
-          slot={imageModalSlot}
-          archetype={archetype}
-          open={Boolean(imageModalSlot)}
-          onClose={() => setImageModalSlot(null)}
-          onUpdated={onImageUpdated}
-        />
-      )}
+      <StudioModal
+        open={activePanel !== null}
+        onClose={() => {
+          setActivePanel(null);
+          setFocusFieldId(null);
+        }}
+        title={activeLabel}
+        size={activePanel ? PANEL_SIZE[activePanel] ?? "md" : "md"}
+      >
+        {activePanel ? renderPanelBody(activePanel) : null}
+      </StudioModal>
 
-      {linkModal && (
-        <LinkEditorModal
-          slot={linkModal.slot}
-          initialHref={linkModal.href}
-          initialLabel={linkModal.label}
-          existing={links[linkModal.slot] ?? null}
-          open={Boolean(linkModal)}
-          onClose={() => setLinkModal(null)}
-          onUpdated={onLinkUpdated}
-        />
-      )}
+      <ImageSwapModal
+        slot={imageModalSlot ?? ""}
+        archetype={archetype}
+        open={Boolean(imageModalSlot)}
+        onClose={() => setImageModalSlot(null)}
+        onUpdated={onImageUpdated}
+      />
+
+      <LinkEditorModal
+        slot={linkModal?.slot ?? ""}
+        initialHref={linkModal?.href}
+        initialLabel={linkModal?.label}
+        existing={linkModal ? links[linkModal.slot] ?? null : null}
+        open={Boolean(linkModal)}
+        onClose={() => setLinkModal(null)}
+        onUpdated={onLinkUpdated}
+      />
 
       <UpgradeSheet
         open={upgradeOpen}
         onClose={() => setUpgradeOpen(false)}
-        feature="Publish website"
-        benefit="Pro unlocks a live subdomain — editing and preview stay free on all plans."
-        requiredPlan="Pro"
+        feature={upgradeFeature.feature}
+        benefit={upgradeFeature.benefit}
+        requiredPlan={upgradeFeature.requiredPlan}
       />
     </div>
   );

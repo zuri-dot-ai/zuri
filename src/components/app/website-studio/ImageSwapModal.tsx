@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Cropper, { type Area } from "react-easy-crop";
 import { toast } from "sonner";
-import { ImagePlus, Library, Upload, X } from "lucide-react";
+import { ImagePlus, Library, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ZuriSpinner } from "@/components/ui/skeleton";
@@ -20,6 +20,7 @@ import type {
   DesignArchetype,
   ResolvedImage,
 } from "@/types/website";
+import { StudioModal } from "./StudioModal";
 
 type Tab = "upload" | "library";
 
@@ -334,35 +335,20 @@ export function ImageSwapModal({
     return tags.includes(q) || (row.public_url ?? "").toLowerCase().includes(q);
   });
 
-  if (!open) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
-      <button
-        type="button"
-        aria-label="Close"
-        className="absolute inset-0 bg-black/70"
-        onClick={onClose}
-      />
-      <div className="relative z-10 flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-t-lg border border-border bg-background shadow-xl sm:rounded-lg">
-        <div className="flex items-center justify-between border-b border-border px-4 py-3">
-          <div>
-            <h2 className="font-heading text-lg text-foreground">
-              Replace image
-            </h2>
-            <p className="text-xs text-muted-foreground capitalize">
-              {slot.replace(/_/g, " ")} · {aspect.toFixed(2)}:1
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-sm p-1.5 text-muted-foreground hover:bg-surface hover:text-foreground"
-          >
-            <X className="size-4" />
-          </button>
-        </div>
-
+    <StudioModal
+      open={open}
+      onClose={onClose}
+      size="lg"
+      overlayClassName="z-[60]"
+      title="Replace image"
+      description={
+        <span className="capitalize">
+          {slot.replace(/_/g, " ")} · {aspect.toFixed(2)}:1
+        </span>
+      }
+    >
+      <div className="-mx-4 -mt-4 sm:-mx-5">
         <div className="flex border-b border-border">
           {(
             [
@@ -387,7 +373,7 @@ export function ImageSwapModal({
           ))}
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto p-4">
+        <div className="p-4 sm:p-5">
           {error && (
             <div className="mb-3 rounded-sm border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {error}
@@ -530,6 +516,6 @@ export function ImageSwapModal({
           )}
         </div>
       </div>
-    </div>
+    </StudioModal>
   );
 }

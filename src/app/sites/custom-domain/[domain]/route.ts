@@ -5,8 +5,10 @@ import {
   injectContactFormEndpoint,
   injectTrackingScript,
   notFoundResponse,
+  sanitizeServedImages,
   SUSPENDED_PAGE_HTML,
 } from "@/lib/website/serve-html";
+import type { DesignArchetype } from "@/types/website";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +27,9 @@ export async function GET(
 
   const { data: website } = await supabase
     .from("websites")
-    .select("template_html, status, user_id, handle, analytics_enabled")
+    .select(
+      "template_html, status, user_id, handle, analytics_enabled, archetype"
+    )
     .eq("custom_domain", domain)
     .maybeSingle();
 
@@ -47,7 +51,11 @@ export async function GET(
     ownerEmail = profile?.email ?? "";
   }
 
-  let html = injectContactFormEndpoint(website.template_html, {
+  const sanitized = sanitizeServedImages(
+    website.template_html,
+    website.archetype as DesignArchetype | null
+  );
+  let html = injectContactFormEndpoint(sanitized, {
     handle: website.handle,
     ownerEmail,
   });

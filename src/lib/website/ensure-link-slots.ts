@@ -16,6 +16,9 @@ import type {
 } from "@/types/website";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+export type { LinkSlotsHealReason } from "@/lib/website/link-slots";
+import type { LinkSlotsHealReason } from "@/lib/website/link-slots";
+
 export interface EnsureLinkSlotsInput {
   id: string;
   user_id: string;
@@ -28,14 +31,6 @@ export interface EnsureLinkSlotsInput {
   active_theme: unknown;
   archetype: unknown;
 }
-
-export type LinkSlotsHealReason =
-  | "ok"
-  | "already_present"
-  | "no_template_id"
-  | "fetch_failed"
-  | "storage_missing_slots"
-  | "recompose_failed";
 
 export interface EnsureLinkSlotsResult {
   templateHtml: string;
