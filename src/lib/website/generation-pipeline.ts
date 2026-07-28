@@ -670,6 +670,15 @@ export async function generateWebsite(
 
     await markJob(supabase, jobId, "completed");
 
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("email, full_name")
+      .eq("id", userId)
+      .maybeSingle();
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.buildzuri.com";
+    const firstName = profile?.full_name?.split(" ")[0] ?? "there";
+
     createNotificationAsync({
       userId,
       type: "website_generated",
@@ -677,11 +686,31 @@ export async function generateWebsite(
       body: `Your AI-generated website for ${brand.business_name} is ready. Review it and publish when you're happy.`,
       actionUrl: "/website",
       actionLabel: "Preview my website",
+      email: profile?.email
+        ? {
+            to: profile.email,
+            subject: `Your ${brand.business_name} website is ready to preview`,
+            template: "website_generated",
+            templateProps: {
+              firstName,
+              businessName: brand.business_name,
+              previewUrl: `${appUrl}/website`,
+            },
+          }
+        : undefined,
     });
 
     return { handle: website.handle, needsReview };
   } catch (err) {
     await markJob(supabase, jobId, "failed", String(err));
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("email, full_name")
+      .eq("id", userId)
+      .maybeSingle();
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.buildzuri.com";
 
     createNotificationAsync({
       userId,
@@ -690,6 +719,17 @@ export async function generateWebsite(
       body: "Something went wrong while generating your website. Please try again.",
       actionUrl: "/website",
       actionLabel: "Try again",
+      email: profile?.email
+        ? {
+            to: profile.email,
+            subject: "We couldn't generate your website",
+            template: "website_generation_failed",
+            templateProps: {
+              firstName: profile.full_name?.split(" ")[0] ?? "there",
+              retryUrl: `${appUrl}/website`,
+            },
+          }
+        : undefined,
     });
 
     throw err;

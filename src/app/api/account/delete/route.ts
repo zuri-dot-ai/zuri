@@ -1,15 +1,37 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { sendEmail } from "@/lib/email/resend";
 
 export async function DELETE() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const service = createServiceClient();
 
   try {
+    const { data: profile } = await service
+      .from("profiles")
+      .select("email, full_name")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const email = profile?.email ?? user.email;
+    if (email) {
+      await sendEmail({
+        to: email,
+        subject: "Your Zuri account has been deleted",
+        template: "account_deleted",
+        templateProps: {
+          firstName: profile?.full_name?.split(" ")[0] ?? "there",
+        },
+        userId: user.id,
+      });
+    }
+
     // Unpublish their website first (so the subdomain 404s cleanly)
     await service
       .from("websites")

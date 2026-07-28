@@ -21,6 +21,7 @@ import {
 } from "@/lib/utils/validate";
 import { classifySupabaseError } from "@/lib/errors/supabase-errors";
 import { checkRateLimit } from "@/lib/security/rate-limit";
+import { sendWelcomeEmailIfNewUser } from "@/lib/email/send-welcome";
 
 const FIRST_NAME_PATTERN = /^[\p{L}]+(?:[\s'-][\p{L}]+)*$/u;
 const BLOCKED_SERVICE_KEYWORDS = new Set(["drop", "select", "insert", "delete"]);
@@ -418,6 +419,8 @@ export async function completeOnboardingSession(
   if (clearCookie) {
     await clearAnonymousSessionCookie();
   }
+
+  sendWelcomeEmailIfNewUser(user);
 
   return {
     ok: true,

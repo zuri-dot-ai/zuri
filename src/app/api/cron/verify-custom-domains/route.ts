@@ -39,26 +39,60 @@ export async function GET(req: Request) {
 
   const supabase = createServiceClient();
 
-  // Stop checking after 48 hours (give up)
-  const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+  const fortyEightHoursMs = 48 * 60 * 60 * 1000;
 
   const { data: pendingDomains } = await supabase
     .from("websites")
     .select("id, user_id, custom_domain, custom_domain_added_at, handle")
     .eq("custom_domain_status", "pending_verification")
-    .not("custom_domain", "is", null)
-    .gte("custom_domain_added_at", fortyEightHoursAgo);
+    .not("custom_domain", "is", null);
 
   let verified = 0;
   let expired = 0;
 
   for (const website of pendingDomains ?? []) {
-    const addedAt = new Date(website.custom_domain_added_at as string);
-    if (Date.now() - addedAt.getTime() > 48 * 60 * 60 * 1000) {
+    const addedAt = website.custom_domain_added_at
+      ? new Date(website.custom_domain_added_at as string)
+      : null;
+    if (!addedAt || Date.now() - addedAt.getTime() > fortyEightHoursMs) {
       await supabase
         .from("websites")
         .update({ custom_domain_status: "verification_failed" })
         .eq("id", website.id);
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("email, full_name")
+        .eq("id", website.user_id)
+        .maybeSingle();
+
+      const appUrl =
+        process.env.NEXT_PUBLIC_APP_URL || "https://app.buildzuri.com";
+
+      await createNotification({
+        userId: website.user_id,
+        type: "domain_dns_delayed",
+        title: "Custom domain not connected yet",
+        body: `It's been over 48 hours and ${website.custom_domain} still hasn't propagated. Double-check your DNS records.`,
+        actionUrl: "/settings?tab=domain",
+        actionLabel: "View domain setup",
+        email: profile?.email
+          ? {
+              to: profile.email,
+              subject: `${website.custom_domain} isn't connected yet`,
+              template: "domain_dns_delayed",
+              templateProps: {
+                firstName:
+                  typeof profile.full_name === "string"
+                    ? profile.full_name.split(" ")[0]
+                    : "there",
+                domain: website.custom_domain,
+                setupGuideUrl: `${appUrl}/settings?tab=domain`,
+              },
+            }
+          : undefined,
+      });
+
       expired++;
       continue;
     }

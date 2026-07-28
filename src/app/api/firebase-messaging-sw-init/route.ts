@@ -2,12 +2,9 @@ import { getFirebasePublicConfig } from "@/lib/firebase/config";
 
 export const runtime = "nodejs";
 
-/** Firebase JS SDK major.minor.patch — keep in sync with package.json `firebase`. */
-const FIREBASE_COMPAT_VERSION = "12.16.0";
-
 /**
- * Serves Firebase Messaging init for service workers, with NEXT_PUBLIC_* config
- * injected at request time so public/sw.js does not hardcode project keys.
+ * Env-injected Firebase Messaging init only (no nested importScripts).
+ * Callers must importScripts the Firebase compat CDN scripts first, then this.
  */
 export async function GET() {
   const config = getFirebasePublicConfig();
@@ -25,11 +22,6 @@ export async function GET() {
   }
 
   const body = `
-importScripts(
-  "https://www.gstatic.com/firebasejs/${FIREBASE_COMPAT_VERSION}/firebase-app-compat.js",
-  "https://www.gstatic.com/firebasejs/${FIREBASE_COMPAT_VERSION}/firebase-messaging-compat.js"
-);
-
 firebase.initializeApp(${JSON.stringify(config)});
 
 const messaging = firebase.messaging();

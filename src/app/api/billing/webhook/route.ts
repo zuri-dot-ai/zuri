@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { verifyWebhookSignature, planTierFromFlwId } from "@/lib/flutterwave";
 import { activateSubscription } from "@/lib/payments/activate-subscription";
-import { getResend } from "@/lib/email/resend-client";
+import { handleFailedPayment } from "@/lib/payments/handle-failed-payment";
+import { createNotificationAsync } from "@/lib/notifications/create-notification";
 import { generateSupportRef } from "@/lib/errors/support-ref";
 import { captureError } from "@/lib/monitoring/sentry";
 
@@ -46,6 +47,7 @@ export async function POST(request: Request) {
             ? "annual"
             : "monthly";
 
+        // activateSubscription already sends templated payment_successful email
         await activateSubscription(
           service,
           profile.id,
@@ -55,28 +57,6 @@ export async function POST(request: Request) {
           amount,
           data?.tx_ref ? String(data.tx_ref) : undefined
         );
-
-        if (eventType === "subscription.activated") {
-          const resend = getResend();
-          if (resend) {
-            await resend.emails.send({
-              from:
-                process.env.RESEND_FROM_EMAIL ||
-                "Zuri <onboarding@resend.dev>",
-              to: customerEmail,
-              subject: "Welcome to Zuri — you're all set",
-              text: [
-                `Welcome to the ${tier.charAt(0).toUpperCase() + tier.slice(1)} plan!`,
-                "",
-                "Your website is ready to publish, your content calendar is unlocked, and your 90-day plan is running.",
-                "",
-                "Log in and pick up where you left off: https://app.buildzuri.com/dashboard",
-                "",
-                "— The Zuri Team",
-              ].join("\n"),
-            });
-          }
-        }
         break;
       }
 
@@ -86,40 +66,50 @@ export async function POST(request: Request) {
 
         const { data: profile } = await service
           .from("profiles")
-          .select("id")
+          .select("id, email, full_name")
           .eq("email", customerEmail)
           .maybeSingle();
 
-        if (profile?.id) {
-          await service
-            .from("subscriptions")
-            .update({
-              status: "cancelled",
-              cancel_at_period_end: true,
-              updated_at: new Date().toISOString(),
-            })
-            .eq("user_id", profile.id);
-        }
+        if (!profile?.id) break;
 
-        {
-          const resend = getResend();
-          if (resend) {
-            await resend.emails.send({
-              from:
-                process.env.RESEND_FROM_EMAIL || "Zuri <onboarding@resend.dev>",
-              to: customerEmail,
-              subject: "Your Zuri subscription has been cancelled",
-              text: [
-                "Your Zuri subscription has been cancelled.",
-                "",
-                "Your website will stay live until the end of your current billing period.",
-                "If this was a mistake, you can resubscribe any time at https://app.buildzuri.com/settings.",
-                "",
-                "— The Zuri Team",
-              ].join("\n"),
-            });
-          }
-        }
+        const { data: sub } = await service
+          .from("subscriptions")
+          .select("current_period_end")
+          .eq("user_id", profile.id)
+          .maybeSingle();
+
+        await service
+          .from("subscriptions")
+          .update({
+            status: "cancelled",
+            cancel_at_period_end: true,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("user_id", profile.id);
+
+        const periodEnd = sub?.current_period_end
+          ? new Date(sub.current_period_end).toLocaleDateString("en-NG")
+          : "the end of your billing period";
+        const resubscribeUrl = `${process.env.NEXT_PUBLIC_APP_URL}/settings?tab=billing`;
+
+        createNotificationAsync({
+          userId: profile.id,
+          type: "subscription_cancelled",
+          title: "Your subscription is cancelled",
+          body: `Your subscription will remain active until ${periodEnd}.`,
+          actionUrl: "/settings?tab=billing",
+          actionLabel: "Resubscribe",
+          email: {
+            to: customerEmail,
+            subject: "Your Zuri subscription has been cancelled",
+            template: "subscription_cancelled",
+            templateProps: {
+              firstName: profile.full_name?.split(" ")[0] ?? "there",
+              periodEnd,
+              resubscribeUrl,
+            },
+          },
+        });
         break;
       }
 
@@ -133,34 +123,9 @@ export async function POST(request: Request) {
           .eq("email", customerEmail)
           .maybeSingle();
 
+        // handleFailedPayment sets grace_period + sends templated payment_failed
         if (profile?.id) {
-          await service
-            .from("subscriptions")
-            .update({
-              status: "grace_period",
-              updated_at: new Date().toISOString(),
-            })
-            .eq("user_id", profile.id);
-        }
-
-        {
-          const resend = getResend();
-          if (resend) {
-            await resend.emails.send({
-              from:
-                process.env.RESEND_FROM_EMAIL || "Zuri <onboarding@resend.dev>",
-              to: customerEmail,
-              subject: "Action needed — Zuri payment failed",
-              text: [
-                "We couldn't process your Zuri subscription payment.",
-                "",
-                "Please update your payment details to keep your website live:",
-                "https://app.buildzuri.com/settings",
-                "",
-                "— The Zuri Team",
-              ].join("\n"),
-            });
-          }
+          await handleFailedPayment(service, profile.id);
         }
         break;
       }

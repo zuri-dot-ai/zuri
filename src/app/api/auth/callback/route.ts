@@ -8,6 +8,7 @@ import { ANON_COOKIE_NAME } from "@/lib/onboarding/anonymous-session";
 import { CUSTOM_SITE_COOKIE_NAME } from "@/lib/custom-site/anonymous-session";
 import { createServiceClient } from "@/lib/supabase/service";
 import { completeOnboardingSession } from "@/lib/onboarding/complete-session";
+import { sendWelcomeEmailIfNewUser } from "@/lib/email/send-welcome";
 
 /**
  * Public: Supabase OAuth / email-confirm callback.
@@ -80,6 +81,8 @@ export async function GET(request: Request) {
 
     let dest = next;
     if (user) {
+      sendWelcomeEmailIfNewUser(user);
+
       const meta = user.user_metadata as Record<string, unknown> | undefined;
       const metaAvatar =
         (typeof meta?.avatar_url === "string" && meta.avatar_url) ||

@@ -12,7 +12,10 @@ import { resolveArchetype } from "@/lib/content/pillars";
 import { createServiceClient } from "@/lib/supabase/service";
 import { checkUsageLimit } from "@/lib/payments/feature-gate";
 import { checkRateLimit, rateLimitExceededResponse } from "@/lib/security/rate-limit";
-import { createNotificationAsync } from "@/lib/notifications/create-notification";
+import {
+  maybeNotifyUsageWarning,
+  notifyUsageLimitReached,
+} from "@/lib/notifications/usage-email";
 import type { DesignArchetype } from "@/lib/website/archetypes";
 import type { GenerationInput } from "@/lib/content/types";
 import { generateSupportRef } from "@/lib/errors/support-ref";
@@ -76,19 +79,24 @@ export async function POST(req: Request) {
   if (regenerateField === "image" || regenerateField === "all") {
     const gate = await checkUsageLimit(supabase, user.id, "images_generated");
     if (!gate.allowed) {
-      createNotificationAsync({
-        userId: user.id,
-        type: "usage_limit_reached",
-        title: "You've reached your images limit",
-        body: `You've used all ${gate.limit ?? 0} images this month.`,
-        actionUrl: "/settings?tab=billing",
-        actionLabel: "Upgrade my plan",
-      });
+      void notifyUsageLimitReached(
+        supabase,
+        user.id,
+        "images_generated",
+        gate.limit ?? 0
+      );
       return NextResponse.json(
         { error: "Image generation limit reached" },
         { status: 403 }
       );
     }
+    void maybeNotifyUsageWarning(
+      supabase,
+      user.id,
+      "images_generated",
+      gate.used,
+      gate.limit
+    );
   }
 
   const { data: brandRow } = await supabase

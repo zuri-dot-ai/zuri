@@ -11,7 +11,10 @@ import {
 } from "@/lib/content/api-helpers";
 import { resolveArchetype } from "@/lib/content/pillars";
 import { checkUsageLimit } from "@/lib/payments/feature-gate";
-import { createNotificationAsync } from "@/lib/notifications/create-notification";
+import {
+  maybeNotifyUsageWarning,
+  notifyUsageLimitReached,
+} from "@/lib/notifications/usage-email";
 import { sanitizeText } from "@/lib/utils/sanitize";
 import type { DesignArchetype } from "@/lib/website/archetypes";
 import { RATE_LIMIT_MESSAGE, isRateLimitError } from "@/lib/errors/gemini-errors";
@@ -91,14 +94,12 @@ export async function POST(req: Request) {
   if (isImageFormat) {
     const gate = await checkUsageLimit(supabase, user.id, "images_generated");
     if (!gate.allowed) {
-      createNotificationAsync({
-        userId: user.id,
-        type: "usage_limit_reached",
-        title: "You've reached your images limit",
-        body: `You've used all ${gate.limit ?? 0} images this month.`,
-        actionUrl: "/settings?tab=billing",
-        actionLabel: "Upgrade my plan",
-      });
+      void notifyUsageLimitReached(
+        supabase,
+        user.id,
+        "images_generated",
+        gate.limit ?? 0
+      );
       return NextResponse.json(
         {
           error: "Image generation limit reached",
@@ -109,6 +110,13 @@ export async function POST(req: Request) {
         { status: 403 }
       );
     }
+    void maybeNotifyUsageWarning(
+      supabase,
+      user.id,
+      "images_generated",
+      gate.used,
+      gate.limit
+    );
   }
 
   if (isBlogFormat || isArticle) {
@@ -118,19 +126,24 @@ export async function POST(req: Request) {
       "blog_posts_generated"
     );
     if (!gate.allowed) {
-      createNotificationAsync({
-        userId: user.id,
-        type: "usage_limit_reached",
-        title: "You've reached your blog posts limit",
-        body: `You've used all ${gate.limit ?? 0} blog posts this month.`,
-        actionUrl: "/settings?tab=billing",
-        actionLabel: "Upgrade my plan",
-      });
+      void notifyUsageLimitReached(
+        supabase,
+        user.id,
+        "blog_posts_generated",
+        gate.limit ?? 0
+      );
       return NextResponse.json(
         { error: "Blog post limit reached" },
         { status: 403 }
       );
     }
+    void maybeNotifyUsageWarning(
+      supabase,
+      user.id,
+      "blog_posts_generated",
+      gate.used,
+      gate.limit
+    );
   }
 
   if (isNewsletterFormat) {
@@ -140,19 +153,24 @@ export async function POST(req: Request) {
       "newsletters_generated"
     );
     if (!gate.allowed) {
-      createNotificationAsync({
-        userId: user.id,
-        type: "usage_limit_reached",
-        title: "You've reached your newsletters limit",
-        body: `You've used all ${gate.limit ?? 0} newsletters this month.`,
-        actionUrl: "/settings?tab=billing",
-        actionLabel: "Upgrade my plan",
-      });
+      void notifyUsageLimitReached(
+        supabase,
+        user.id,
+        "newsletters_generated",
+        gate.limit ?? 0
+      );
       return NextResponse.json(
         { error: "Newsletter limit reached" },
         { status: 403 }
       );
     }
+    void maybeNotifyUsageWarning(
+      supabase,
+      user.id,
+      "newsletters_generated",
+      gate.used,
+      gate.limit
+    );
   }
 
   // Free plan: content generation blocked (images/blog/newsletter limits are 0)

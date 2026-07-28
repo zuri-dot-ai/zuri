@@ -4,11 +4,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 const EMAIL_RATE_LIMITS: Record<string, { count: number; windowHours: number }> = {
+  welcome: { count: 1, windowHours: 87600 }, // once ever (~10 years)
   contact_form_received: { count: 5, windowHours: 1 },
   usage_warning: { count: 1, windowHours: 720 },
   usage_limit_reached: { count: 1, windowHours: 24 },
   domain_dns_delayed: { count: 1, windowHours: 24 },
   meta_token_expired: { count: 1, windowHours: 24 },
+  monthly_report_ready: { count: 1, windowHours: 720 },
 };
 
 export async function isEmailRateLimited(

@@ -7,7 +7,7 @@ import {
 } from "@/lib/payments/feature-gate";
 import { getActivePlanId, isGrowthPlus } from "@/lib/payments/get-plan";
 import { PLAN_CONFIG, type PlanId } from "@/lib/payments/plans";
-import { createNotificationAsync } from "@/lib/notifications/create-notification";
+import { notifyUsageLimitReached } from "@/lib/notifications/usage-email";
 import { serviceNames } from "@/types/brand";
 
 export async function requireContentUser(): Promise<
@@ -84,14 +84,12 @@ export async function assertCalendarQuota(
     const limit = PLAN_CONFIG[planId].limits.calendar_posts_per_month;
     const nextMonth = new Date();
     nextMonth.setMonth(nextMonth.getMonth() + 1, 1);
-    createNotificationAsync({
+    void notifyUsageLimitReached(
+      supabase,
       userId,
-      type: "usage_limit_reached",
-      title: "You've reached your calendar posts limit",
-      body: `You've used all ${limit ?? usage.limit ?? 0} calendar posts this month.`,
-      actionUrl: "/settings?tab=billing",
-      actionLabel: "Upgrade my plan",
-    });
+      "content_calendar_posts",
+      limit ?? usage.limit ?? 0
+    );
     return {
       error: NextResponse.json(
         {

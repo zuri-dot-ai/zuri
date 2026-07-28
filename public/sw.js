@@ -1,4 +1,5 @@
-// public/sw.js — caching + FCM background messaging (via /api/firebase-messaging-sw-init)
+// public/sw.js — caching + FCM background messaging
+// Keep Firebase compat version in sync with package.json `firebase`.
 
 const CACHE_NAME = "zuri-v3";
 const STATIC_ASSETS = [
@@ -9,9 +10,13 @@ const STATIC_ASSETS = [
   "/manifest.json",
 ];
 
-// FCM: load Firebase compat + onBackgroundMessage with env-injected config.
+// FCM: all importScripts must be top-level (no nested importScripts).
 try {
-  importScripts("/api/firebase-messaging-sw-init");
+  importScripts(
+    "https://www.gstatic.com/firebasejs/12.16.0/firebase-app-compat.js",
+    "https://www.gstatic.com/firebasejs/12.16.0/firebase-messaging-compat.js",
+    "/api/firebase-messaging-sw-init"
+  );
 } catch (err) {
   console.warn("[sw] Firebase messaging init failed:", err);
 }
