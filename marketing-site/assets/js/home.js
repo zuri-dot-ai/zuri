@@ -285,8 +285,15 @@ revealEls.forEach(el=>io.observe(el));
 
 /* ---------------- Hero: sculptural chrome mark ---------------- */
 const canvas = document.getElementById('hero-canvas');
-const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
-renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+const dprCap = Math.min(window.devicePixelRatio || 1, 2);
+const useAntialias = dprCap <= 1.5;
+const renderer = new THREE.WebGLRenderer({
+  canvas,
+  antialias: useAntialias,
+  alpha: true,
+  powerPreference: 'high-performance',
+});
+renderer.setPixelRatio(dprCap);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.1;
 
@@ -296,7 +303,8 @@ camera.position.set(0, 0, 9);
 const IDLE_Z = 10.5;
 
 const pmrem = new THREE.PMREMGenerator(renderer);
-scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+const envRT = pmrem.fromScene(new RoomEnvironment(), 0.04);
+scene.environment = envRT.texture;
 
 const keyLight = new THREE.DirectionalLight(0xffffff, 1.9);
 keyLight.position.set(4, 5, 6);
@@ -337,12 +345,12 @@ function buildFrameGeometry(){
   return geo;
 }
 function buildChipGeometry(){
-  const chip = new THREE.Shape();
-  chip.moveTo(0, 0.62);
-  chip.lineTo(0.5, -0.32);
-  chip.lineTo(-0.5, -0.32);
-  chip.closePath();
-  const geo = new THREE.ExtrudeGeometry(chip, {
+  const chipShape = new THREE.Shape();
+  chipShape.moveTo(0, 0.62);
+  chipShape.lineTo(0.5, -0.32);
+  chipShape.lineTo(-0.5, -0.32);
+  chipShape.closePath();
+  const geo = new THREE.ExtrudeGeometry(chipShape, {
     depth: 0.3, bevelEnabled:true, bevelThickness:0.04, bevelSize:0.03, bevelSegments:3, curveSegments:2
   });
   geo.center();
@@ -350,6 +358,7 @@ function buildChipGeometry(){
 }
 
 const markGeo = buildFrameGeometry();
+const chipGeo = buildChipGeometry();
 const chromeMat = new THREE.MeshPhysicalMaterial({
   color: 0xc4cad2,
   metalness: 1,
@@ -369,7 +378,7 @@ const chipMat = new THREE.MeshPhysicalMaterial({
   clearcoatRoughness: 0.1,
   envMapIntensity: 0.8
 });
-const chip = new THREE.Mesh(buildChipGeometry(), chipMat);
+const chip = new THREE.Mesh(chipGeo, chipMat);
 chip.position.set(0.03, 0.05, -0.28);
 mark.add(chip);
 
@@ -385,7 +394,7 @@ canvas.addEventListener('mousemove', (e)=>{
   pointerNDC.x = ((e.clientX-r.left)/r.width)*2-1;
   pointerNDC.y = -(((e.clientY-r.top)/r.height)*2-1);
   pointerActive = true;
-});
+}, {passive:true});
 canvas.addEventListener('mouseleave', ()=>{ pointerActive=false; });
 
 let scrollT = 0;
@@ -403,24 +412,87 @@ function resize(){
   camera.updateProjectionMatrix();
 }
 window.addEventListener('resize', resize);
+let resizeObs = null;
 if(typeof ResizeObserver !== 'undefined'){
-  new ResizeObserver(resize).observe(canvas);
+  resizeObs = new ResizeObserver(resize);
+  resizeObs.observe(canvas);
 }
 resize();
 
 const heroStart = performance.now();
 const REVEAL_MS = 1900;
+const FLOAT_AMP = 0.08;
+/* Y sway stays within a safe front-facing cone so the open back never shows.
+   Threshold check: hollow starts reading past ~25–30° from base; ±18° is safe. */
+const BASE_ROT_Y = 0.48;
+const BASE_ROT_X = 0.12;
+const SWAY_AMP_Y = THREE.MathUtils.degToRad(18);
+const SWAY_AMP_X = THREE.MathUtils.degToRad(6);
+const SWAY_SPEED_Y = 0.32;
+const SWAY_SPEED_X = 0.24;
+const POINTER_Y_MAX = THREE.MathUtils.degToRad(5);
+const POINTER_X_MAX = THREE.MathUtils.degToRad(4);
 mark.scale.setScalar(0.001);
 mark.rotation.set(0.6, -2.4, 0.3);
 camera.position.z = 15;
 
 let mx = 0, my = 0;
+let rafId = 0;
+let loopRunning = false;
+let tabVisible = !document.hidden;
+let canvasVisible = true;
+
+window.__zuriHeroDebug = {
+  frames: 0,
+  rendering: false,
+  tabVisible: true,
+  canvasVisible: true,
+  pixelRatio: dprCap,
+  antialias: useAntialias,
+};
+
+function shouldRender(){
+  return tabVisible && canvasVisible && !prefersReducedMotion;
+}
+
+function startLoop(){
+  if(loopRunning || !shouldRender()) return;
+  loopRunning = true;
+  window.__zuriHeroDebug.rendering = true;
+  rafId = requestAnimationFrame(animate);
+}
+
+function stopLoop(){
+  loopRunning = false;
+  window.__zuriHeroDebug.rendering = false;
+  if(rafId){ cancelAnimationFrame(rafId); rafId = 0; }
+}
+
+function syncLoop(){
+  window.__zuriHeroDebug.tabVisible = tabVisible;
+  window.__zuriHeroDebug.canvasVisible = canvasVisible;
+  if(shouldRender()) startLoop();
+  else stopLoop();
+}
+
+document.addEventListener('visibilitychange', ()=>{
+  tabVisible = !document.hidden;
+  syncLoop();
+});
+
+const heroIO = new IntersectionObserver((entries)=>{
+  canvasVisible = entries.some(e => e.isIntersecting && e.intersectionRatio > 0);
+  syncLoop();
+}, {threshold: 0.01});
+heroIO.observe(canvas);
 
 function animate(){
-  requestAnimationFrame(animate);
+  if(!loopRunning) return;
+  rafId = requestAnimationFrame(animate);
+  window.__zuriHeroDebug.frames++;
+
   const now = performance.now();
   const elapsed = now - heroStart;
-  const t = now/1000;
 
   const tx = pointerActive ? pointerNDC.x : 0;
   const ty = pointerActive ? pointerNDC.y : 0;
@@ -430,14 +502,20 @@ function animate(){
     const p = elapsed/REVEAL_MS;
     const ease = 1 - Math.pow(1-p, 3);
     mark.scale.setScalar(THREE.MathUtils.lerp(0.001, 1, ease));
-    mark.rotation.y = THREE.MathUtils.lerp(-2.4, 0.5, ease);
-    mark.rotation.x = THREE.MathUtils.lerp(0.6, 0.12, ease);
+    mark.rotation.y = THREE.MathUtils.lerp(-2.4, BASE_ROT_Y, ease);
+    mark.rotation.x = THREE.MathUtils.lerp(0.6, BASE_ROT_X, ease);
     mark.rotation.z = THREE.MathUtils.lerp(0.3, 0, ease);
+    mark.position.y = 0;
     camera.position.z = THREE.MathUtils.lerp(15, IDLE_Z, ease);
   } else {
     const idle = (elapsed-REVEAL_MS)/1000;
-    mark.rotation.y = 0.5 + Math.sin(idle*0.19)*0.22 + mx*0.35;
-    mark.rotation.x = 0.12 + Math.cos(idle*0.13)*0.08 - my*0.25;
+    const swayY = Math.sin(idle * SWAY_SPEED_Y) * SWAY_AMP_Y;
+    const swayX = Math.cos(idle * SWAY_SPEED_X) * SWAY_AMP_X;
+    const ptrY = THREE.MathUtils.clamp(mx * 0.18, -POINTER_Y_MAX, POINTER_Y_MAX);
+    const ptrX = THREE.MathUtils.clamp(-my * 0.14, -POINTER_X_MAX, POINTER_X_MAX);
+    mark.rotation.y = BASE_ROT_Y + swayY + ptrY;
+    mark.rotation.x = BASE_ROT_X + swayX + ptrX;
+    mark.position.y = Math.sin(idle * 0.65) * FLOAT_AMP;
     camera.position.z = IDLE_Z - scrollT*1.5;
 
     const lightAngle = idle*0.11;
@@ -448,8 +526,32 @@ function animate(){
 
   camera.position.x = mx*0.6;
   camera.position.y = my*0.4;
-  camera.lookAt(0,0,0);
+  camera.lookAt(0, mark.position.y, 0);
 
   renderer.render(scene, camera);
 }
-animate();
+
+function disposeHero(){
+  stopLoop();
+  heroIO.disconnect();
+  if(resizeObs) resizeObs.disconnect();
+  markGeo.dispose();
+  chipGeo.dispose();
+  edgeGeo.dispose();
+  chromeMat.dispose();
+  chipMat.dispose();
+  edgeMat.dispose();
+  envRT.dispose();
+  pmrem.dispose();
+  renderer.dispose();
+}
+window.addEventListener('pagehide', disposeHero);
+
+if(prefersReducedMotion){
+  mark.scale.setScalar(1);
+  mark.rotation.set(0.12, 0.5, 0);
+  resize();
+  renderer.render(scene, camera);
+} else {
+  syncLoop();
+}

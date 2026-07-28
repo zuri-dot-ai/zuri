@@ -111,41 +111,47 @@ main{
   background:transparent;
   cursor:pointer;
   isolation:isolate;
-  contain:layout paint style;
   transform:translateZ(0);
+  transition:box-shadow .3s ease;
 }
 .btn-ghost::before{
   content:'';
   position:absolute;
   inset:0;
   border:1px solid var(--chrome-dark);
-  opacity:1;
-  transition:border-color .25s ease, opacity .25s ease;
+  clip-path:inset(0 100% 100% 0);
+  transition:clip-path .45s ease, border-color .35s ease;
   z-index:-1;
   pointer-events:none;
 }
 .btn-ghost::after{
   content:'';
   position:absolute;
-  inset:-10px;
-  background:radial-gradient(ellipse at center, rgba(212,175,55,.18) 0%, transparent 70%);
+  inset:-6px;
+  border-radius:2px;
+  box-shadow:0 0 20px rgba(212,175,55,.25);
   opacity:0;
   pointer-events:none;
-  transition:opacity .25s ease;
+  transition:opacity .3s ease;
   z-index:-2;
 }
 .btn-ghost:hover::before,
 .btn-ghost:focus-visible::before{
   border-color:var(--gold);
+  clip-path:inset(0 0 0 0);
 }
 .btn-ghost:hover::after,
 .btn-ghost:focus-visible::after{ opacity:1; }
+.btn-ghost:hover{ box-shadow:0 0 24px rgba(212,175,55,.12); }
 .btn-ghost.auto-active::before{
   border-color:var(--gold);
+  clip-path:inset(0 0 0 0);
+  transition:clip-path .45s ease, border-color .45s ease;
 }
 .btn-ghost.auto-fading::before{
   border-color:var(--chrome-dark);
-  transition:border-color 2s ease;
+  clip-path:inset(0 100% 100% 0);
+  transition:clip-path 2s ease, border-color 2s ease;
 }
 .btn-ghost:focus{ outline:none; }
 .btn-ghost:focus-visible{
@@ -265,14 +271,46 @@ main{
   align-items:center;
   padding:6.5rem 6vw 0;
   gap:2vw;
+  isolation:isolate;
+}
+/* Ambient behind the WebGL canvas — CSS only, not inside Three.js */
+.hero .ambient--hero{
+  position:absolute;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  transform:translateZ(0);
+  isolation:isolate;
+  contain:strict;
 }
 #hero-canvas{
   position:absolute;
   top:0; left:0;
   width:50%; height:100%;
   display:block;
+  z-index:1;
+  /* Never CSS-transform the WebGL canvas — conflicts with viewport */
 }
-.hero-copy{ grid-column:2; position:relative; z-index:2; }
+.hero-copy{
+  grid-column:2;
+  position:relative;
+  z-index:2;
+}
+.hero-copy--reveal{
+  opacity:0;
+  transform:translateY(24px);
+  animation:heroCopyIn .85s ease-out .25s forwards;
+}
+@keyframes heroCopyIn{
+  to{ opacity:1; transform:translateY(0); }
+}
+@media (prefers-reduced-motion: reduce){
+  .hero-copy--reveal{
+    opacity:1;
+    transform:none;
+    animation:none;
+  }
+}
 .eyebrow, .page-eyebrow{
   color:var(--gold);
   font-size:.65rem;
