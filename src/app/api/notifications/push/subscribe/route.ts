@@ -1,5 +1,4 @@
-// POST — store a browser PushSubscription against the current user.
-// docs/08_NOTIFICATIONS.md addendum — Session 4B v2.
+// POST — store an FCM device token against the current user.
 
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
@@ -14,25 +13,18 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json().catch(() => null);
-  const endpoint: string | undefined = body?.endpoint;
-  const p256dh: string | undefined = body?.keys?.p256dh;
-  const authKey: string | undefined = body?.keys?.auth;
+  const fcmToken: string | undefined = body?.fcm_token;
 
-  if (!endpoint || !p256dh || !authKey) {
-    return NextResponse.json(
-      { error: "Missing endpoint or keys" },
-      { status: 400 }
-    );
+  if (!fcmToken || typeof fcmToken !== "string") {
+    return NextResponse.json({ error: "Missing fcm_token" }, { status: 400 });
   }
 
   const { error } = await supabase.from("push_subscriptions").upsert(
     {
       user_id: user.id,
-      endpoint,
-      p256dh,
-      auth_key: authKey,
+      fcm_token: fcmToken,
     },
-    { onConflict: "endpoint" }
+    { onConflict: "fcm_token" }
   );
 
   if (error) {

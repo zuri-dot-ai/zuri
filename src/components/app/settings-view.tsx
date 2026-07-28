@@ -42,6 +42,12 @@ import {
 } from "@/lib/payments/trials";
 import type { PlanId } from "@/lib/payments/plans";
 import type { AccountView, BusinessProfileRow } from "@/types/database";
+import {
+  isPushSupported,
+  requestPushPermission,
+  subscribeToPush,
+  unsubscribeFromPush,
+} from "@/lib/notifications/push-subscribe";
 
 function errorMessage(e: unknown, fallback: string): string {
   if (e instanceof Error && e.message) return e.message;
@@ -964,14 +970,38 @@ function NotificationsTab() {
     nudge_emails: true,
     badge_alerts: true,
   });
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushSupported, setPushSupported] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
   const { status: saveStatus, run: runSave } = useSaveStatus();
+
+  useEffect(() => {
+    setPushSupported(isPushSupported());
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch("/api/notifications/preferences");
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          preferences?: { push_enabled?: boolean };
+        };
+        if (!cancelled) {
+          setPushEnabled(data.preferences?.push_enabled !== false);
+        }
+      } catch {
+        // Keep default; toggle still works offline for local email prefs.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Optimistic toggle-and-autosave (Notion-style): flipping a switch commits
   // immediately and persists in the background, instead of batching changes
   // behind an explicit "Save preferences" click-and-wait.
-  // NOTE: no notification_prefs column exists yet — this still persists to
-  // localStorage only (V1 behavior unchanged); wiring to a real DB column
-  // is a backend follow-up, not a UI polish change.
+  // NOTE: email toggles below still persist to localStorage only (V1);
+  // browser push uses /api/notifications/preferences + FCM subscribe.
   async function toggle(key: keyof typeof prefs) {
     const next = { ...prefs, [key]: !prefs[key] };
     setPrefs(next);
@@ -985,19 +1015,90 @@ function NotificationsTab() {
     }
   }
 
+  async function togglePush() {
+    if (!pushSupported || pushBusy) return;
+    setPushBusy(true);
+    const enabling = !pushEnabled;
+    setPushEnabled(enabling);
+
+    try {
+      await runSave(async () => {
+        if (enabling) {
+          const permission = await requestPushPermission();
+          if (permission !== "granted") {
+            throw new Error(
+              permission === "denied"
+                ? "Browser blocked notifications. Enable them in site settings."
+                : "Notification permission was not granted."
+            );
+          }
+          const token = await subscribeToPush();
+          if (!token) {
+            throw new Error("Could not register this device for push.");
+          }
+          const res = await fetch("/api/notifications/preferences", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ push_enabled: true }),
+          });
+          if (!res.ok) throw new Error("Could not save push preference.");
+        } else {
+          await unsubscribeFromPush();
+          const res = await fetch("/api/notifications/preferences", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ push_enabled: false }),
+          });
+          if (!res.ok) throw new Error("Could not save push preference.");
+        }
+      });
+    } catch (e) {
+      setPushEnabled(!enabling);
+      toast.error(errorMessage(e, "Could not update browser push"));
+    } finally {
+      setPushBusy(false);
+    }
+  }
+
   return (
     <div className="space-y-5">
       <div className="flex items-start justify-between gap-2">
         <div>
           <h2 className="text-page-title">Notifications</h2>
           <p className="text-card-body mt-1">
-            Control which emails Zuri sends you.
+            Control which emails Zuri sends you, and browser push alerts.
           </p>
         </div>
         <SaveStatus status={saveStatus} />
       </div>
 
       <div className="space-y-4">
+        {pushSupported && (
+          <label className="flex cursor-pointer items-start gap-4 rounded-sm border border-[var(--border-solid)] p-4 [transition-duration:var(--transition-fast)] transition-colors hover:bg-muted/50">
+            <div className="mt-0.5 flex-1">
+              <p className="text-card-title">Browser push</p>
+              <p className="mt-0.5 text-card-meta">
+                Instant alerts on this device when something needs your attention
+                — even if Zuri is closed.
+              </p>
+            </div>
+            <div
+              role="switch"
+              aria-checked={pushEnabled}
+              aria-disabled={pushBusy}
+              onClick={() => void togglePush()}
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors active:scale-95 ${
+                pushEnabled ? "bg-gold" : "bg-border"
+              } ${pushBusy ? "opacity-60" : ""}`}
+            >
+              <span
+                className={`inline-block size-4 rounded-full bg-white transition-transform ${
+                  pushEnabled ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </div>
+          </label>
+        )}
         {(
           [
             {

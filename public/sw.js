@@ -1,6 +1,6 @@
-// public/sw.js — COMPLETE FILE (docs/09_DEPLOYMENT.md §8.2)
+// public/sw.js — caching + FCM background messaging (via /api/firebase-messaging-sw-init)
 
-const CACHE_NAME = "zuri-v2";
+const CACHE_NAME = "zuri-v3";
 const STATIC_ASSETS = [
   "/",
   "/offline",
@@ -8,6 +8,13 @@ const STATIC_ASSETS = [
   "/Zuri_Favicon.png",
   "/manifest.json",
 ];
+
+// FCM: load Firebase compat + onBackgroundMessage with env-injected config.
+try {
+  importScripts("/api/firebase-messaging-sw-init");
+} catch (err) {
+  console.warn("[sw] Firebase messaging init failed:", err);
+}
 
 // Install: cache static assets
 self.addEventListener("install", (e) => {
@@ -27,28 +34,6 @@ self.addEventListener("activate", (e) => {
     )
   );
   self.clients.claim();
-});
-
-// Push: render a notification from the server-sent payload
-// (docs/08_NOTIFICATIONS.md addendum — Session 4C v2; sent via
-// src/lib/notifications/send-push.ts).
-self.addEventListener("push", (e) => {
-  let data = {};
-  try {
-    data = e.data ? e.data.json() : {};
-  } catch {
-    data = { title: "Zuri", body: e.data ? e.data.text() : "" };
-  }
-
-  const title = data.title || "Zuri";
-  const options = {
-    body: data.body || "",
-    icon: "/Zuri_Logo.png",
-    badge: "/Zuri_Favicon.png",
-    data: { url: data.url || "/" },
-  };
-
-  e.waitUntil(self.registration.showNotification(title, options));
 });
 
 // Notification click: focus an existing tab on the target route, or open one.

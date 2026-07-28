@@ -1,7 +1,6 @@
 /**
- * Client-side web push helpers (docs/08_NOTIFICATIONS.md addendum —
- * Session 4B v2). Register the service worker (src/app/layout.tsx already
- * does this on load) before calling subscribeToPush().
+ * Client-side FCM push helpers. Register the service worker
+ * (src/app/layout.tsx already does this on load) before calling subscribeToPush().
  *
  * Callers must render their own pre-prompt UI before invoking
  * requestPushPermission() — this never cold-opens the raw browser dialog on
@@ -9,27 +8,17 @@
  * "Enable notifications" button click).
  */
 
-const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
+import { deleteToken, getToken } from "firebase/messaging";
+import { getFirebaseMessaging } from "@/lib/firebase/client";
 
-/** Base64url string -> Uint8Array, required by pushManager.subscribe(). */
-function urlBase64ToUint8Array(base64String: string): BufferSource {
-  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding)
-    .replace(/-/g, "+")
-    .replace(/_/g, "/");
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
-  }
-  return outputArray as BufferSource;
-}
+const VAPID_KEY = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY ?? "";
 
 export function isPushSupported(): boolean {
   return (
     typeof window !== "undefined" &&
     "serviceWorker" in navigator &&
-    "PushManager" in window
+    "PushManager" in window &&
+    "Notification" in window
   );
 }
 
@@ -46,58 +35,78 @@ export async function requestPushPermission(): Promise<NotificationPermission> {
 }
 
 /**
- * Registers a PushSubscription with the browser and stores it server-side.
+ * Obtains an FCM token and stores it server-side.
  * Assumes permission has already been granted (call requestPushPermission
  * first, gated behind the custom pre-prompt UI).
  */
-export async function subscribeToPush(): Promise<PushSubscription | null> {
+export async function subscribeToPush(): Promise<string | null> {
   if (!isPushSupported()) return null;
-  if (!VAPID_PUBLIC_KEY) {
-    console.error("subscribeToPush: NEXT_PUBLIC_VAPID_PUBLIC_KEY is not set.");
+  if (!VAPID_KEY) {
+    console.error("subscribeToPush: NEXT_PUBLIC_FIREBASE_VAPID_KEY is not set.");
+    return null;
+  }
+
+  const messaging = await getFirebaseMessaging();
+  if (!messaging) {
+    console.error("subscribeToPush: Firebase Messaging is not available.");
     return null;
   }
 
   const registration = await navigator.serviceWorker.ready;
 
-  let subscription = await registration.pushManager.getSubscription();
-  if (!subscription) {
-    subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+  let token: string;
+  try {
+    token = await getToken(messaging, {
+      vapidKey: VAPID_KEY,
+      serviceWorkerRegistration: registration,
     });
+  } catch (err) {
+    console.error("subscribeToPush: getToken failed:", err);
+    return null;
   }
 
-  const json = subscription.toJSON();
+  if (!token) {
+    console.error("subscribeToPush: getToken returned empty token.");
+    return null;
+  }
+
   const res = await fetch("/api/notifications/push/subscribe", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      endpoint: json.endpoint,
-      keys: json.keys,
-    }),
+    body: JSON.stringify({ fcm_token: token }),
   });
 
   if (!res.ok) {
-    console.error("subscribeToPush: failed to store subscription server-side.");
+    console.error("subscribeToPush: failed to store token server-side.");
+    return null;
   }
 
-  return subscription;
+  return token;
 }
 
-/** Unsubscribes the current device and removes the stored subscription. */
+/** Unsubscribes the current device and removes the stored FCM token. */
 export async function unsubscribeFromPush(): Promise<void> {
   if (!isPushSupported()) return;
 
-  const registration = await navigator.serviceWorker.ready;
-  const subscription = await registration.pushManager.getSubscription();
-  if (!subscription) return;
+  const messaging = await getFirebaseMessaging();
+  let token: string | null = null;
 
-  const endpoint = subscription.endpoint;
-  await subscription.unsubscribe().catch(() => {});
+  if (messaging) {
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      token = await getToken(messaging, {
+        vapidKey: VAPID_KEY || undefined,
+        serviceWorkerRegistration: registration,
+      });
+      await deleteToken(messaging);
+    } catch {
+      // Best-effort — still clear server-side below.
+    }
+  }
 
   await fetch("/api/notifications/push/unsubscribe", {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ endpoint }),
+    body: JSON.stringify(token ? { fcm_token: token } : {}),
   }).catch(() => {});
 }
