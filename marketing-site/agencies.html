@@ -6,6 +6,7 @@
 <title>Agencies — Zuri</title>
 <meta name="description" content="Browse Nigerian agencies for social, design, ads, and more — or apply to join the Zuri agency directory. Contact agencies on Growth and Premium.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/styles.css">
 
@@ -29,9 +30,17 @@
 <body>
 <canvas id="dust-canvas"></canvas>
 
+<div class="ambient" aria-hidden="true">
+  <div class="ambient-orb ambient-orb--1"></div>
+  <div class="ambient-orb ambient-orb--2"></div>
+  <div class="ambient-orb ambient-orb--3"></div>
+  <div class="ambient-orb ambient-orb--4"></div>
+  <div class="ambient-grid"></div>
+</div>
+
 <nav class="navbar" id="navbar">
   <div class="nav-inner">
-    <a href="index.html" class="nav-logo"><img src="assets/images/zuri_logo.png" alt="Zuri" class="nav-logo-img"></a>
+    <a href="index.html" class="nav-logo"><img src="assets/images/zuri_logo.png" alt="Zuri" class="nav-logo-img" width="75" height="30"></a>
     <div class="nav-links">
       <a href="features.html" class="link-underline">Features</a>
       <a href="how-it-works.html" class="link-underline">How it works</a>
@@ -59,7 +68,7 @@
 
 <main>
 
-<section class="page-header reveal in">
+<section class="page-header reveal in in-view">
   <div class="page-eyebrow">Agency marketplace</div>
   <h1>Human expertise when AI isn’t enough.</h1>
   <p>Browse a directory of Nigerian agencies — filter by service, price range, and city. Send an inquiry on Growth or Premium when you’re ready for hands-on help.</p>
@@ -68,45 +77,145 @@
 <section class="reveal">
   <div class="section-label">Who it’s for</div>
   <h2 class="section-title">Two doors. One marketplace.</h2>
-  <div class="audience-grid">
-    <div>
+  <div class="split-cta">
+    <div class="split-cta-panel">
+      <div class="panel-orb" aria-hidden="true"></div>
+      <div class="panel-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 19c.8-3 2.8-4.5 6-4.5s5.2 1.5 6 4.5"/><circle cx="17" cy="9" r="2.5"/><path d="M14.5 19c.5-2 1.8-3.2 4-3.5"/></svg>
+      </div>
       <h3>Business owners</h3>
       <p>You’ve got the site and the calendar. When you need paid ads, photography, branding, or a specialist who lives in your market — find them here. Browsing is open; contacting agencies unlocks on Growth and Premium.</p>
     </div>
-    <div>
+    <div class="split-cta-panel">
+      <div class="panel-orb" aria-hidden="true"></div>
+      <div class="panel-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="12" rx="1.5"/><path d="M3 11h18M8 7V5.5A1.5 1.5 0 0 1 9.5 4h5A1.5 1.5 0 0 1 16 5.5V7"/></svg>
+      </div>
       <h3>Agencies &amp; freelancers</h3>
       <p>Apply to join the directory. Share your services, city, price range, and portfolio — then get discovered by Zuri businesses who already know they need human help.</p>
     </div>
   </div>
 </section>
 
-<section class="reveal">
-  <div class="section-label">Services</div>
-  <h2 class="section-title">Specialists across the stack.</h2>
-  <p class="section-body">Filter the live directory by the work you need — or the work you offer.</p>
-  <div class="service-chips">
-    <span>Social Media Management</span>
-    <span>Content Creation</span>
-    <span>Photography &amp; Videography</span>
-    <span>Paid Advertising</span>
-    <span>Branding &amp; Identity</span>
-    <span>Digital PR</span>
-    <span>Email Marketing</span>
-    <span>SEO</span>
-    <span>Website Design</span>
-    <span>Graphic Design</span>
-    <span>Influencer Marketing</span>
-    <span>Copywriting</span>
+<section class="reveal feature-band feature-band--flip">
+  <div class="feature-band-copy">
+    <div class="section-label">Services</div>
+    <h2 class="section-title">Specialists across the stack.</h2>
+    <p class="feature-band-lead">Filter the live directory by the work you need — or the work you offer.</p>
+  </div>
+  <div class="card-grid">
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="1.5"/><path d="M8 10h8M8 14h5"/></svg>
+      </div>
+      <h3>Social Media Management</h3>
+      <p>Hands-on posting, community, and growth.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1.5"/><circle cx="9" cy="11" r="2"/><path d="M3 16l4.5-4 3 2.5L17 9l4 4"/></svg>
+      </div>
+      <h3>Content Creation</h3>
+      <p>Captions, carousels, and campaign assets.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5"/><path d="M12 5v2M12 17v2M5 12h2M17 12h2M7.2 7.2l1.4 1.4M15.4 15.4l1.4 1.4M7.2 16.8l1.4-1.4M15.4 8.6l1.4-1.4"/></svg>
+      </div>
+      <h3>Photography &amp; Videography</h3>
+      <p>On-location shoots and edited deliverables.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M4 18V6M4 18h16"/><path d="M8 14v-3M12 14V8M16 14v-5"/></svg>
+      </div>
+      <h3>Paid Advertising</h3>
+      <p>Meta, Google, and performance campaigns.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>
+      </div>
+      <h3>Branding &amp; Identity</h3>
+      <p>Logo systems, tone, and visual direction.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M8 12h8M12 8c1.5 1.8 1.5 6.2 0 8M12 8c-1.5 1.8-1.5 6.2 0 8"/></svg>
+      </div>
+      <h3>Digital PR</h3>
+      <p>Coverage, partnerships, and reputation.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M4 6h16v3H4zM4 12h10v6H4z"/><path d="M16 12h4v6h-4z"/></svg>
+      </div>
+      <h3>Email Marketing</h3>
+      <p>Sequences, newsletters, and list growth.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg>
+      </div>
+      <h3>SEO</h3>
+      <p>Search visibility and content structure.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="1.5"/><path d="M3 8h18"/><path d="M8 14h8"/></svg>
+      </div>
+      <h3>Website Design</h3>
+      <p>Custom layouts beyond the AI generator.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M4 18l5-10 3 5 2-3 6 8z"/><circle cx="8.5" cy="7" r="1.5"/></svg>
+      </div>
+      <h3>Graphic Design</h3>
+      <p>Print, social, and campaign visuals.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><circle cx="8" cy="10" r="3"/><circle cx="16" cy="10" r="3"/><path d="M5 17c.8-2 2.2-3 3-3s2.2 1 3 3M13 17c.8-2 2.2-3 3-3s2.2 1 3 3"/></svg>
+      </div>
+      <h3>Influencer Marketing</h3>
+      <p>Creator partnerships that fit your market.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M6 4h9l3 3v13H6z"/><path d="M15 4v3h3M8 11h8M8 15h6"/></svg>
+      </div>
+      <h3>Copywriting</h3>
+      <p>Landing pages, ads, and brand voice.</p>
+    </div>
   </div>
 </section>
 
 <section class="reveal" data-anim="draw">
   <div class="section-label">How it works</div>
   <h2 class="section-title">Browse. Inquire. Collaborate.</h2>
-  <div class="steps">
-    <div class="step"><div class="step-num">01</div><div><h3>Browse the directory</h3><p>Search by service, location, and price range. Open a profile to see tagline, portfolio, and response expectations.</p></div></div>
-    <div class="step"><div class="step-num">02</div><div><h3>Send an inquiry</h3><p>On Growth or Premium, contact an agency with your brief. Lower plans can browse — upgrade when you’re ready to reach out.</p></div></div>
-    <div class="step"><div class="step-num">03</div><div><h3>Work together</h3><p>Take the conversation offline with the agency. Zuri connects you; you own the engagement.</p></div></div>
+  <div class="card-grid card-grid--full">
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg>
+      </div>
+      <h3>01 — Browse the directory</h3>
+      <p>Search by service, location, and price. Open profiles for portfolio and response expectations.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z"/><path d="M4 8l8 5 8-5"/></svg>
+      </div>
+      <h3>02 — Send an inquiry</h3>
+      <p>On Growth or Premium, contact an agency with your brief. Lower plans can browse first.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M8 12h8M12 8v8"/><circle cx="12" cy="12" r="9"/></svg>
+      </div>
+      <h3>03 — Work together</h3>
+      <p>Take the conversation offline. Zuri connects you; you own the engagement.</p>
+    </div>
   </div>
 </section>
 
@@ -115,11 +224,19 @@
   <h2 class="section-title">Find help — or offer it.</h2>
   <div class="split-cta">
     <div class="split-cta-panel">
+      <div class="panel-orb" aria-hidden="true"></div>
+      <div class="panel-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg>
+      </div>
       <h3>Find a professional</h3>
       <p>Open the live agency directory and filter for the expertise your business needs next.</p>
       <a href="https://app.buildzuri.com/agencies" class="btn-gold">Browse agencies</a>
     </div>
     <div class="split-cta-panel">
+      <div class="panel-orb" aria-hidden="true"></div>
+      <div class="panel-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      </div>
       <h3>Join as an agency</h3>
       <p>Apply in a short guided flow — identity, services, contact, assets, review.</p>
       <a href="https://app.buildzuri.com/agencies/apply" class="btn-ghost">Apply to the directory</a>

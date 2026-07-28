@@ -6,6 +6,7 @@
 <title>How it works — Zuri</title>
 <meta name="description" content="From guided onboarding to a live website, content calendar, and 90-day action plan — how Zuri gets African businesses online and consistent.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/styles.css">
 
@@ -29,9 +30,17 @@
 <body>
 <canvas id="dust-canvas"></canvas>
 
+<div class="ambient" aria-hidden="true">
+  <div class="ambient-orb ambient-orb--1"></div>
+  <div class="ambient-orb ambient-orb--2"></div>
+  <div class="ambient-orb ambient-orb--3"></div>
+  <div class="ambient-orb ambient-orb--4"></div>
+  <div class="ambient-grid"></div>
+</div>
+
 <nav class="navbar" id="navbar">
   <div class="nav-inner">
-    <a href="index.html" class="nav-logo"><img src="assets/images/zuri_logo.png" alt="Zuri" class="nav-logo-img"></a>
+    <a href="index.html" class="nav-logo"><img src="assets/images/zuri_logo.png" alt="Zuri" class="nav-logo-img" width="75" height="30"></a>
     <div class="nav-links">
       <a href="features.html" class="link-underline">Features</a>
       <a href="how-it-works.html" class="link-underline active">How it works</a>
@@ -59,7 +68,7 @@
 
 <main>
 
-<section class="page-header reveal in">
+<section class="page-header reveal in in-view">
   <div class="page-eyebrow">How it works</div>
   <h1>From questions to a live presence.</h1>
   <p>No blank canvases. No agency kickoff calls. Answer what Zuri asks, create your account, and walk into a website, a calendar, and a plan built around your business.</p>
@@ -78,29 +87,116 @@
 <section class="reveal">
   <div class="section-label">Onboarding</div>
   <h2 class="section-title">Every question earns its place.</h2>
-  <div class="step-rail">
-    <div class="step-rail-item"><div class="step-rail-num">01</div><div><h3>What you do</h3><p>Pick your business category so Zuri can match the right design archetype.</p></div></div>
-    <div class="step-rail-item"><div class="step-rail-num">02</div><div><h3>What you offer</h3><p>List your services with short descriptions — the foundation of your site and content.</p></div></div>
-    <div class="step-rail-item"><div class="step-rail-num">03</div><div><h3>Photos</h3><p>Optional uploads for the slots your archetype needs. Skip anytime.</p></div></div>
-    <div class="step-rail-item"><div class="step-rail-num">04</div><div><h3>Your customers</h3><p>Who you’re speaking to — so captions and pages don’t sound generic.</p></div></div>
-    <div class="step-rail-item"><div class="step-rail-num">05</div><div><h3>Where they are</h3><p>Lagos, Abuja, Port Harcourt, Ibadan, Kano, nationwide, or international.</p></div></div>
-    <div class="step-rail-item"><div class="step-rail-num">06</div><div><h3>Brand feel</h3><p>Choose a vibe — bold, clean, warm, elegant, professional, or creative.</p></div></div>
-    <div class="step-rail-item"><div class="step-rail-num">07</div><div><h3>Business name</h3><p>The name that appears on your site and in your content.</p></div></div>
-    <div class="step-rail-item"><div class="step-rail-num">08</div><div><h3>Web address</h3><p>Claim your handle for yourname.buildzuri.com.</p></div></div>
-    <div class="step-rail-item"><div class="step-rail-num">09</div><div><h3>Where you show up</h3><p>Instagram, Facebook, LinkedIn, X, TikTok — skippable, with sensible defaults.</p></div></div>
-    <div class="step-rail-item"><div class="step-rail-num">10</div><div><h3>Your name</h3><p>So the product feels like it’s speaking to you, not a ticket number.</p></div></div>
-    <div class="step-rail-item"><div class="step-rail-num">11</div><div><h3>Create account</h3><p>Sign up to save your session and unlock generation.</p></div></div>
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="timeline-num">01</div>
+      <div>
+        <h3>What you do</h3>
+        <p>Pick your business category so Zuri can match the right design archetype.</p>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-num">02</div>
+      <div>
+        <h3>What you offer</h3>
+        <p>List your services with short descriptions — the foundation of your site and content.</p>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-num">03</div>
+      <div>
+        <h3>Photos</h3>
+        <p>Optional uploads for the slots your archetype needs. Skip anytime.</p>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-num">04</div>
+      <div>
+        <h3>Your customers</h3>
+        <p>Who you’re speaking to — so captions and pages don’t sound generic.</p>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-num">05</div>
+      <div>
+        <h3>Where they are</h3>
+        <p>Lagos, Abuja, Port Harcourt, Ibadan, Kano, nationwide, or international.</p>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-num">06</div>
+      <div>
+        <h3>Brand feel</h3>
+        <p>Choose a vibe — bold, clean, warm, elegant, professional, or creative.</p>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-num">07</div>
+      <div>
+        <h3>Business name</h3>
+        <p>The name that appears on your site and in your content.</p>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-num">08</div>
+      <div>
+        <h3>Web address</h3>
+        <p>Claim your handle for yourname.buildzuri.com.</p>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-num">09</div>
+      <div>
+        <h3>Where you show up</h3>
+        <p>Instagram, Facebook, LinkedIn, X, TikTok — skippable, with sensible defaults.</p>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-num">10</div>
+      <div>
+        <h3>Your name</h3>
+        <p>So the product feels like it’s speaking to you, not a ticket number.</p>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-num">11</div>
+      <div>
+        <h3>Create account</h3>
+        <p>Sign up to save your session and unlock generation.</p>
+      </div>
+    </div>
   </div>
-  <p class="step-rail-note">After signup, a short build screen prepares your presence. Ecommerce, blog/publication, and nonprofit categories are routed to a custom-site path rather than the standard AI website generator — so we don’t promise a fit we can’t deliver yet.</p>
+  <p class="timeline-note">After signup, a short build screen prepares your presence. Ecommerce, blog/publication, and nonprofit categories are routed to a custom-site path rather than the standard AI website generator — so we don’t promise a fit we can’t deliver yet.</p>
 </section>
 
-<section class="reveal" data-anim="stagger">
-  <div class="section-label">What you walk away with</div>
-  <h2 class="section-title">Not a demo. A working system.</h2>
-  <div class="pain-grid">
-    <div class="pain-item"><h3>A premium website</h3><p>Editable in Website Studio — preview on Free, publish from Pro.</p></div>
-    <div class="pain-item"><h3>A content calendar</h3><p>Captions, images, blogs, and newsletters ready for the month ahead.</p></div>
-    <div class="pain-item"><h3>A 90-day action plan</h3><p>Concrete tasks so momentum survives past week two.</p></div>
+<section class="reveal feature-band">
+  <div class="feature-band-copy">
+    <div class="section-label">What you walk away with</div>
+    <h2 class="section-title">Not a demo. A working system.</h2>
+    <p class="feature-band-lead">Three deliverables land together — editable, actionable, and ready to run from day one.</p>
+  </div>
+  <div class="card-grid">
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="1.5"/><path d="M3 8h18"/></svg>
+      </div>
+      <h3>A premium website</h3>
+      <p>Editable in Website Studio — preview on Free, publish from Pro.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="1.5"/><path d="M4 9h16M9 3v4M15 3v4"/></svg>
+      </div>
+      <h3>A content calendar</h3>
+      <p>Captions, images, blogs, and newsletters ready for the month ahead.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M5 6h14M5 12h10M5 18h12"/><path d="M8 9l2 2 4-4"/></svg>
+      </div>
+      <h3>A 90-day action plan</h3>
+      <p>Concrete tasks so momentum survives past week two.</p>
+    </div>
   </div>
 </section>
 

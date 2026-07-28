@@ -128,9 +128,12 @@ const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)
     function activate(){
       if(hovering) return;
       btn.classList.remove('auto-fading');
-      void btn.offsetWidth;
-      btn.classList.add('auto-active');
-      timer = setTimeout(()=>{ if(!hovering) fade(); }, HOLD_MS);
+      btn.classList.remove('auto-active');
+      requestAnimationFrame(()=>{
+        if(hovering) return;
+        btn.classList.add('auto-active');
+        timer = setTimeout(()=>{ if(!hovering) fade(); }, HOLD_MS);
+      });
     }
     function fade(){
       btn.classList.remove('auto-active');
@@ -249,27 +252,7 @@ const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)
   startAuto();
 })();
 
-/* ---------------- Micro-interactions (button magnetism, card tilt) ---------------- */
-if(!prefersReducedMotion){
-  document.querySelectorAll('.btn-gold').forEach(btn=>{
-    btn.addEventListener('mousemove', (e)=>{
-      const r = btn.getBoundingClientRect();
-      const x = e.clientX - r.left - r.width/2;
-      const y = e.clientY - r.top - r.height/2;
-      btn.style.transform = `translate(${x*0.15}px, ${y*0.25}px)`;
-    });
-    btn.addEventListener('mouseleave', ()=>{ btn.style.transform = 'translate(0,0)'; });
-  });
-  document.querySelectorAll('.feature-card').forEach(card=>{
-    card.addEventListener('mousemove', (e)=>{
-      const r = card.getBoundingClientRect();
-      const px = (e.clientX - r.left)/r.width - 0.5;
-      const py = (e.clientY - r.top)/r.height - 0.5;
-      card.style.transform = `perspective(600px) rotateY(${px*6}deg) rotateX(${-py*6}deg)`;
-    });
-    card.addEventListener('mouseleave', ()=>{ card.style.transform = 'perspective(600px) rotateY(0) rotateX(0)'; });
-  });
-}
+/* Magnetic / 3D tilt removed — pure CSS :hover only (INP). */
 
 /* ---------------- Pricing toggle — generic, data-attribute driven (shared logic, home-page instance) ---------------- */
 (function(){

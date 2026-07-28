@@ -83,29 +83,83 @@ const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)
   const drawer = document.getElementById('drawer');
   const backdrop = document.getElementById('drawer-backdrop');
   if(!hamburger || !drawer || !backdrop) return;
-  function open(){
-    hamburger.classList.add('open'); drawer.classList.add('open'); backdrop.classList.add('open');
-    document.body.style.overflow = 'hidden';
+
+  let openState = false;
+  function setOpen(next){
+    openState = next;
+    hamburger.classList.toggle('open', next);
+    drawer.classList.toggle('open', next);
+    backdrop.classList.toggle('open', next);
+    /* Defer body overflow — not needed for next paint */
+    const applyOverflow = ()=>{ document.body.style.overflow = next ? 'hidden' : ''; };
+    if('requestIdleCallback' in window) requestIdleCallback(applyOverflow, {timeout:100});
+    else setTimeout(applyOverflow, 0);
   }
-  function close(){
-    hamburger.classList.remove('open'); drawer.classList.remove('open'); backdrop.classList.remove('open');
-    document.body.style.overflow = '';
-  }
-  hamburger.addEventListener('click', ()=> hamburger.classList.contains('open') ? close() : open());
-  backdrop.addEventListener('click', close);
-  drawer.querySelectorAll('a,button').forEach(el=> el.addEventListener('click', close));
-  window.addEventListener('keydown', e=>{ if(e.key==='Escape') close(); });
-  window.addEventListener('resize', ()=>{ if(window.innerWidth>900) close(); });
+  hamburger.addEventListener('click', ()=> setOpen(!openState));
+  backdrop.addEventListener('click', ()=> setOpen(false));
+  drawer.addEventListener('click', (e)=>{
+    if(e.target.closest('a,button')) setOpen(false);
+  });
+  window.addEventListener('keydown', e=>{ if(e.key==='Escape' && openState) setOpen(false); });
+  window.addEventListener('resize', ()=>{ if(window.innerWidth>900 && openState) setOpen(false); });
 })();
 
 /* ---------------- Scroll reveal ---------------- */
 (function(){
   const revealEls = document.querySelectorAll('.reveal');
   if(!revealEls.length) return;
-  const io = new IntersectionObserver((entries)=>{
-    entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('in'); });
-  },{threshold:0.15});
-  revealEls.forEach(el=>io.observe(el));
+
+  function markInView(el){
+    el.classList.add('in', 'in-view');
+  }
+
+  function initReveal(){
+    if(prefersReducedMotion){
+      revealEls.forEach(markInView);
+      return;
+    }
+    const io = new IntersectionObserver((entries)=>{
+      entries.forEach(e=>{
+        if(e.isIntersecting){
+          markInView(e.target);
+          io.unobserve(e.target);
+        }
+      });
+    },{threshold:0.2});
+    revealEls.forEach(el=>io.observe(el));
+  }
+
+  if('requestIdleCallback' in window){
+    requestIdleCallback(initReveal, {timeout:1200});
+  } else {
+    setTimeout(initReveal, 1);
+  }
+})();
+
+/* ---------------- Timeline pulse-once (How it works) ---------------- */
+(function(){
+  const items = document.querySelectorAll('.timeline-item');
+  if(!items.length) return;
+  if(prefersReducedMotion){
+    items.forEach(el=>el.classList.add('pulse-once'));
+    return;
+  }
+  function initTimeline(){
+    const io = new IntersectionObserver((entries)=>{
+      entries.forEach(e=>{
+        if(e.isIntersecting){
+          e.target.classList.add('pulse-once');
+          io.unobserve(e.target);
+        }
+      });
+    },{threshold:0.35});
+    items.forEach(el=>io.observe(el));
+  }
+  if('requestIdleCallback' in window){
+    requestIdleCallback(initTimeline, {timeout:1500});
+  } else {
+    setTimeout(initTimeline, 50);
+  }
 })();
 
 /* ---------------- Ghost button auto-pulse CTA cycle ---------------- */
@@ -117,9 +171,13 @@ const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)
     function activate(){
       if(hovering) return;
       btn.classList.remove('auto-fading');
-      void btn.offsetWidth;
-      btn.classList.add('auto-active');
-      timer = setTimeout(()=>{ if(!hovering) fade(); }, HOLD_MS);
+      /* Avoid forced reflow (offsetWidth); restart via rAF class toggle */
+      btn.classList.remove('auto-active');
+      requestAnimationFrame(()=>{
+        if(hovering) return;
+        btn.classList.add('auto-active');
+        timer = setTimeout(()=>{ if(!hovering) fade(); }, HOLD_MS);
+      });
     }
     function fade(){
       btn.classList.remove('auto-active');
@@ -136,27 +194,8 @@ const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)
   });
 })();
 
-/* ---------------- 3D card tilt on hover (feature cards, desktop only) ---------------- */
-if(!prefersReducedMotion){
-  document.querySelectorAll('.btn-gold').forEach(btn=>{
-    btn.addEventListener('mousemove', (e)=>{
-      const r = btn.getBoundingClientRect();
-      const x = e.clientX - r.left - r.width/2;
-      const y = e.clientY - r.top - r.height/2;
-      btn.style.transform = `translate(${x*0.15}px, ${y*0.25}px)`;
-    });
-    btn.addEventListener('mouseleave', ()=>{ btn.style.transform = 'translate(0,0)'; });
-  });
-  document.querySelectorAll('.feature-card').forEach(card=>{
-    card.addEventListener('mousemove', (e)=>{
-      const r = card.getBoundingClientRect();
-      const px = (e.clientX - r.left)/r.width - 0.5;
-      const py = (e.clientY - r.top)/r.height - 0.5;
-      card.style.transform = `perspective(600px) rotateY(${px*6}deg) rotateX(${-py*6}deg)`;
-    });
-    card.addEventListener('mouseleave', ()=>{ card.style.transform = 'perspective(600px) rotateY(0) rotateX(0)'; });
-  });
-}
+/* Magnetic / 3D tilt removed — pure CSS :hover only (INP).
+   No document/window cursor-tracking for ambient orbs. */
 
 /* ---------------- FAQ accordion ---------------- */
 (function(){

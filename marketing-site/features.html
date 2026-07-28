@@ -6,6 +6,7 @@
 <title>Features — Zuri</title>
 <meta name="description" content="Website Studio, content calendar, 90-day action plan, and analytics — everything Zuri ships to keep African businesses visible.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/styles.css">
 
@@ -29,9 +30,17 @@
 <body>
 <canvas id="dust-canvas"></canvas>
 
+<div class="ambient" aria-hidden="true">
+  <div class="ambient-orb ambient-orb--1"></div>
+  <div class="ambient-orb ambient-orb--2"></div>
+  <div class="ambient-orb ambient-orb--3"></div>
+  <div class="ambient-orb ambient-orb--4"></div>
+  <div class="ambient-grid"></div>
+</div>
+
 <nav class="navbar" id="navbar">
   <div class="nav-inner">
-    <a href="index.html" class="nav-logo"><img src="assets/images/zuri_logo.png" alt="Zuri" class="nav-logo-img"></a>
+    <a href="index.html" class="nav-logo"><img src="assets/images/zuri_logo.png" alt="Zuri" class="nav-logo-img" width="75" height="30"></a>
     <div class="nav-links">
       <a href="features.html" class="link-underline active">Features</a>
       <a href="how-it-works.html" class="link-underline">How it works</a>
@@ -59,68 +68,196 @@
 
 <main>
 
-<section class="page-header reveal in">
+<section class="page-header reveal in in-view">
   <div class="page-eyebrow">Features</div>
   <h1>Everything to stay visible — without hiring a team.</h1>
   <p>Zuri is an operating system for your digital presence: a premium website, a content calendar, a 90-day action plan, and analytics that grow with your plan.</p>
 </section>
 
-<section class="reveal feature-deep">
-  <div class="section-label">01 — Website</div>
-  <h2 class="section-title">Website Studio</h2>
-  <p class="feature-deep-lead">Generate a premium site from guided onboarding, then shape every section yourself — no code, no waiting on a designer.</p>
-  <ul class="feature-deep-list">
-    <li>AI-generated site matched to your business category and brand feel</li>
-    <li>Edit copy, images, links, embeds, and theme in Website Studio</li>
-    <li>Preview on Free; publish live to yourname.buildzuri.com from Pro</li>
-    <li>Custom domain and branding controls on Growth and above</li>
-  </ul>
+<section class="reveal feature-band">
+  <div class="feature-band-copy">
+    <div class="section-label">01 — Website</div>
+    <h2 class="section-title">Website Studio</h2>
+    <p class="feature-band-lead">Generate a premium site from guided onboarding, then shape every section yourself — no code, no waiting on a designer.</p>
+  </div>
+  <div class="card-grid">
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="1.5"/><path d="M3 8h18"/><circle cx="6.5" cy="6" r=".6" fill="currentColor" stroke="none"/><circle cx="9" cy="6" r=".6" fill="currentColor" stroke="none"/></svg>
+      </div>
+      <h3>AI-matched site</h3>
+      <p>Generated to fit your category and brand feel.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M4 17l5-5 3 3 7-7"/><path d="M14 8h5v5"/></svg>
+      </div>
+      <h3>Full Studio edits</h3>
+      <p>Copy, images, links, embeds, and theme — no code.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2.5"/></svg>
+      </div>
+      <h3>Preview, then publish</h3>
+      <p>Preview free; go live on yourname.buildzuri.com from Pro.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 3 2.5 15 0 18M12 3c-2.5 3-2.5 15 0 18"/></svg>
+      </div>
+      <h3>Custom domain</h3>
+      <p>Domain and branding controls on Growth and above.</p>
+    </div>
+  </div>
 </section>
 
-<section class="reveal feature-deep">
-  <div class="section-label">02 — Content</div>
-  <h2 class="section-title">Content calendar that knows what to post next</h2>
-  <p class="feature-deep-lead">Stop staring at a blank caption box. Zuri prepares a monthly calendar of ready-to-use assets — so showing up online becomes a checklist, not a side hustle.</p>
-  <ul class="feature-deep-list">
-    <li>Captions and hashtags for your connected platforms</li>
-    <li>AI-generated images for posts, carousels, and stories</li>
-    <li>Blog posts and newsletters you can export and publish</li>
-    <li>Video scripts for reels and shorts (rendered video is not included yet)</li>
-    <li>Platform limits follow your plan — Pro and Growth support four platforms; Premium unlocks all</li>
-  </ul>
+<section class="reveal feature-band feature-band--flip">
+  <div class="feature-band-copy">
+    <div class="section-label">02 — Content</div>
+    <h2 class="section-title">Content calendar that knows what to post next</h2>
+    <p class="feature-band-lead">Stop staring at a blank caption box. Zuri prepares a monthly calendar of ready-to-use assets — so showing up online becomes a checklist, not a side hustle.</p>
+  </div>
+  <div class="card-grid">
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="1.5"/><path d="M4 9h16M9 3v4M15 3v4"/></svg>
+      </div>
+      <h3>Captions &amp; hashtags</h3>
+      <p>Ready for your connected platforms.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1.5"/><circle cx="9" cy="11" r="2"/><path d="M3 16l4.5-4 3 2.5L17 9l4 4"/></svg>
+      </div>
+      <h3>AI images</h3>
+      <p>Posts, carousels, and stories — generated for you.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M6 4h9l3 3v13H6z"/><path d="M15 4v3h3M8 11h8M8 15h6"/></svg>
+      </div>
+      <h3>Blogs &amp; newsletters</h3>
+      <p>Export and publish when you’re ready.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="1.5"/><path d="M10 9.5l5 2.5-5 2.5z" fill="currentColor" stroke="none"/></svg>
+      </div>
+      <h3>Video scripts</h3>
+      <p>Reels and shorts scripts (rendered video not included yet).</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M8 6h8v12H8z"/><path d="M4 9h4M16 9h4M4 15h4M16 15h4"/></svg>
+      </div>
+      <h3>Plan-aware limits</h3>
+      <p>Four platforms on Pro/Growth; all on Premium.</p>
+    </div>
+  </div>
 </section>
 
-<section class="reveal feature-deep">
-  <div class="section-label">03 — Plan</div>
-  <h2 class="section-title">90-day action plan &amp; progress tracker</h2>
-  <p class="feature-deep-lead">Visibility dies when momentum dies. Your Plan view breaks the next ninety days into concrete tasks — with streaks and badges that keep you honest.</p>
-  <ul class="feature-deep-list">
-    <li>Personalized 90-day action plan generated after onboarding</li>
-    <li>Weekly tasks you can complete and track</li>
-    <li>Streaks, badges, and consistency on your dashboard</li>
-    <li>Today’s next action surfaced on Home so you never wonder what to do</li>
-  </ul>
+<section class="reveal feature-band">
+  <div class="feature-band-copy">
+    <div class="section-label">03 — Plan</div>
+    <h2 class="section-title">90-day action plan &amp; progress tracker</h2>
+    <p class="feature-band-lead">Visibility dies when momentum dies. Your Plan view breaks the next ninety days into concrete tasks — with streaks and badges that keep you honest.</p>
+  </div>
+  <div class="card-grid">
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M5 6h14M5 12h10M5 18h12"/><circle cx="19" cy="12" r="1.5"/></svg>
+      </div>
+      <h3>Personalized 90 days</h3>
+      <p>Action plan generated after onboarding.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1.5"/><path d="M8 12l2.5 2.5L16 9"/></svg>
+      </div>
+      <h3>Weekly tasks</h3>
+      <p>Complete and track what moves the needle.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M12 3l2.2 4.5 5 .7-3.6 3.5.9 5L12 14.8 7.5 16.7l.9-5L4.8 8.2l5-.7z"/></svg>
+      </div>
+      <h3>Streaks &amp; badges</h3>
+      <p>Consistency visible on your dashboard.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>
+      </div>
+      <h3>Today’s next action</h3>
+      <p>Surfaced on Home so you never wonder what to do.</p>
+    </div>
+  </div>
 </section>
 
-<section class="reveal feature-deep">
-  <div class="section-label">04 — Analytics</div>
-  <h2 class="section-title">See what’s working — at the right plan level</h2>
-  <p class="feature-deep-lead">Measure presence without duct-taping five dashboards together. Analytics unlock as you grow.</p>
-  <ul class="feature-deep-list">
-    <li>Pro: website analytics — pageviews, visitors, form submissions, top pages and sources</li>
-    <li>Growth: Meta (Facebook &amp; Instagram) insights plus Google Search Console</li>
-    <li>Premium: longer retention and a monthly performance report</li>
-  </ul>
+<section class="reveal feature-band feature-band--flip">
+  <div class="feature-band-copy">
+    <div class="section-label">04 — Analytics</div>
+    <h2 class="section-title">See what’s working — at the right plan level</h2>
+    <p class="feature-band-lead">Measure presence without duct-taping five dashboards together. Analytics unlock as you grow.</p>
+  </div>
+  <div class="card-grid">
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M4 18V6M4 18h16"/><path d="M8 14v-3M12 14V8M16 14v-5"/></svg>
+      </div>
+      <h3>Pro — site analytics</h3>
+      <p>Pageviews, visitors, forms, top pages and sources.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><circle cx="8" cy="10" r="3"/><circle cx="16" cy="10" r="3"/><path d="M5 17c.8-2 2.2-3 3-3s2.2 1 3 3M13 17c.8-2 2.2-3 3-3s2.2 1 3 3"/></svg>
+      </div>
+      <h3>Growth — Meta &amp; Search</h3>
+      <p>Facebook, Instagram insights plus Search Console.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M5 19V5h4v14M10 19V9h4v10M15 19v-7h4v7"/></svg>
+      </div>
+      <h3>Premium — deeper reports</h3>
+      <p>Longer retention and a monthly performance report.</p>
+    </div>
+  </div>
 </section>
 
 <section class="reveal" data-anim="cascade">
   <div class="section-label">At a glance</div>
   <h2 class="section-title">Four pillars. One operating system.</h2>
-  <div class="feature-grid">
-    <div class="feature-card"><div class="trace"></div><div class="feature-icon">◆</div><h3>Website Studio</h3><p>Generate, edit, and publish a premium site — preview free, go live from Pro.</p></div>
-    <div class="feature-card"><div class="trace"></div><div class="feature-icon">◆</div><h3>Content calendar</h3><p>Captions, images, blogs, and newsletters ready when you are.</p></div>
-    <div class="feature-card"><div class="trace"></div><div class="feature-icon">◆</div><h3>Action plan</h3><p>Ninety days of tasks, streaks, and accountability on Plan and Home.</p></div>
-    <div class="feature-card"><div class="trace"></div><div class="feature-icon">◆</div><h3>Analytics</h3><p>Site metrics on Pro; Meta and Search Console on Growth; deeper reports on Premium.</p></div>
+  <div class="card-grid card-grid--full">
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="1.5"/><path d="M3 8h18"/></svg>
+      </div>
+      <h3>Website Studio</h3>
+      <p>Generate, edit, and publish a premium site — preview free, go live from Pro.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="1.5"/><path d="M4 9h16M9 3v4M15 3v4"/></svg>
+      </div>
+      <h3>Content calendar</h3>
+      <p>Captions, images, blogs, and newsletters ready when you are.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M5 6h14M5 12h10M5 18h12"/><path d="M8 9l2 2 4-4"/></svg>
+      </div>
+      <h3>Action plan</h3>
+      <p>Ninety days of tasks, streaks, and accountability on Plan and Home.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M4 18V6M4 18h16"/><path d="M8 14v-3M12 14V8M16 14v-5"/></svg>
+      </div>
+      <h3>Analytics</h3>
+      <p>Site metrics on Pro; Meta and Search Console on Growth; deeper reports on Premium.</p>
+    </div>
   </div>
 </section>
 
