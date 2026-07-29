@@ -525,21 +525,23 @@ export function WebsiteStudio({
         onClick={() => openPanel(item.id)}
         className={cn(
           "flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm font-medium [transition-duration:var(--transition-fast)] transition-colors",
+          // At lg+, share panel height equally so rows fill down to the preview edge.
+          "lg:min-h-0 lg:flex-1 lg:gap-3.5 lg:px-4 lg:py-0 lg:text-[0.9375rem]",
           selected
             ? "bg-surface text-gold"
             : "text-foreground hover:bg-surface/50"
         )}
       >
-        <Icon className="size-4 shrink-0 text-muted-foreground" />
+        <Icon className="size-4 shrink-0 text-muted-foreground lg:size-5" />
         <span className="min-w-0 flex-1 truncate">{item.label}</span>
-        <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+        <ChevronRight className="size-4 shrink-0 text-muted-foreground lg:size-5" />
       </button>
     );
   }
 
   function renderSidePanel(items: SectionItem[]) {
     return (
-      <aside className="zuri-card divide-y divide-[var(--border-solid)] p-0">
+      <aside className="zuri-card flex flex-col divide-y divide-[var(--border-solid)] p-0 lg:h-full lg:min-h-0">
         {items.map((item) => renderSectionButton(item))}
       </aside>
     );
@@ -588,10 +590,10 @@ export function WebsiteStudio({
         </div>
       </header>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-4 lg:grid lg:grid-cols-[minmax(280px,320px)_minmax(0,1fr)_minmax(280px,320px)]">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 lg:grid lg:min-h-[70vh] lg:grid-cols-[minmax(11rem,1fr)_minmax(0,3fr)_minmax(11rem,1fr)] lg:items-stretch">
         {renderSidePanel(leftPanelItems)}
 
-        <div className="min-h-[50vh] lg:min-h-[70vh]">
+        <div className="min-h-[50vh] lg:h-full lg:min-h-0">
           <PreviewFrame
             handle={previewHandle}
             refreshKey={previewKey}
