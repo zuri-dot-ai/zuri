@@ -24,6 +24,19 @@ function isAgencyService(value: unknown): value is AgencyService {
 }
 
 export async function POST(req: Request) {
+  try {
+    return await handleApply(req);
+  } catch (err) {
+    console.error("[agency-apply] unhandled:", err);
+    return errorResponse(
+      500,
+      "Could not submit your application. Please try again.",
+      err instanceof Error ? err.message : String(err)
+    );
+  }
+}
+
+async function handleApply(req: Request) {
   const body = await req.json().catch(() => ({}));
   const errors: string[] = [];
 
@@ -121,7 +134,7 @@ export async function POST(req: Request) {
     return rateLimitExceededResponse(rate.resetIn);
   }
 
-  const { count: existingApps } = await supabase
+  const { count: existingApps, error: existingAppsError } = await supabase
     .from("agency_applications")
     .select("id", { count: "exact" })
     .eq("email", email)
@@ -130,6 +143,14 @@ export async function POST(req: Request) {
       new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
     );
 
+  if (existingAppsError) {
+    return errorResponse(
+      500,
+      "Could not submit your application. Please try again.",
+      existingAppsError.message
+    );
+  }
+
   if ((existingApps ?? 0) > 0) {
     return errorResponse(
       429,
@@ -137,11 +158,19 @@ export async function POST(req: Request) {
     );
   }
 
-  const { data: existingAgency } = await supabase
+  const { data: existingAgency, error: existingAgencyError } = await supabase
     .from("agencies")
     .select("id")
     .ilike("name", agencyName)
     .maybeSingle();
+
+  if (existingAgencyError) {
+    return errorResponse(
+      500,
+      "Could not submit your application. Please try again.",
+      existingAgencyError.message
+    );
+  }
 
   if (existingAgency) {
     return errorResponse(

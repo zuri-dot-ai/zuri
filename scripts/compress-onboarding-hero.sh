@@ -12,7 +12,7 @@ if ! command -v ffmpeg >/dev/null 2>&1; then
 fi
 
 ffmpeg -y -i "$SRC" \
-  -an -c:v libx264 -preset slow -crf 28 -pix_fmt yuv420p \
+  -an -c:v libx264 -profile:v main -level 4.0 -preset slow -crf 28 -pix_fmt yuv420p \
   -vf "scale='min(1280,iw)':-2" -movflags +faststart \
   "$TMP"
 

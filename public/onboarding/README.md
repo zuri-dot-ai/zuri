@@ -17,9 +17,9 @@ Used only on desktop `lg`+ (`OnboardingHeroPanel`). Poster sits under the video;
 
 | Check | Result |
 |-------|--------|
-| CSP `media-src` | Already allows `'self'` � same-origin MP4 is **not** blocked by CSP |
-| Codec | File brands include `avc1` (H.264) � web-safe |
-| Size | Uncompressed source can be ~20MB+ � **too heavy**; compress before shipping |
+| CSP `media-src` | Already allows `'self'` — same-origin MP4 is **not** blocked by CSP |
+| Codec | Must be H.264 **Main** (or Baseline) **Level ≤ 4.0**, `yuv420p` — High@L5.1 causes `NotSupportedError` in many browsers |
+| Size | Target **2–3MB**; uncompressed source was ~21MB High@L5.1 — re-encode before shipping |
 
 ### Re-encode (requires ffmpeg on PATH)
 
@@ -29,7 +29,7 @@ bash scripts/compress-onboarding-hero.sh
 
 # Or manually:
 ffmpeg -y -i public/onboarding/onboarding-hero.mp4 \
-  -an -c:v libx264 -preset slow -crf 28 -pix_fmt yuv420p \
+  -an -c:v libx264 -profile:v main -level 4.0 -preset slow -crf 28 -pix_fmt yuv420p \
   -vf "scale='min(1280,iw)':-2" -movflags +faststart \
   public/onboarding/onboarding-hero.tmp.mp4
 
