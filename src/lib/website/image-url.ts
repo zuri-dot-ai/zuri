@@ -1,5 +1,5 @@
 import type { DesignArchetype, ResolvedImage } from "@/types/website";
-import { cloudinaryUrl } from "@/lib/website/cloudinary";
+import { cloudinaryUrl } from "@/lib/website/cloudinary-url";
 
 /** Last-resort Cloudinary zuri-stock public ids (one hero per archetype). */
 const ARCHETYPE_FALLBACK_PUBLIC_IDS: Record<DesignArchetype, string> = {
