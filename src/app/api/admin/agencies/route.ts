@@ -58,6 +58,32 @@ export async function POST(req: Request) {
     );
   }
 
+  const applicationId =
+    typeof body.application_id === "string" && body.application_id
+      ? body.application_id
+      : null;
+
+  if (applicationId) {
+    const { data: application, error: appFetchError } = await service
+      .from("agency_applications")
+      .select("id, status")
+      .eq("id", applicationId)
+      .maybeSingle();
+
+    if (appFetchError || !application) {
+      return NextResponse.json(
+        { error: "Application not found" },
+        { status: 404 }
+      );
+    }
+    if (application.status !== "pending") {
+      return NextResponse.json(
+        { error: `Application is already ${application.status}` },
+        { status: 409 }
+      );
+    }
+  }
+
   const slugBase = generateSlug(name);
   const { data: existing } = await service
     .from("agencies")
@@ -65,6 +91,9 @@ export async function POST(req: Request) {
     .eq("slug", slugBase)
     .maybeSingle();
   const finalSlug = existing ? `${slugBase}-${Date.now().toString(36)}` : slugBase;
+
+  // Default inactive for manual creates; applications UI passes is_active: true.
+  const isActive = body.is_active === true;
 
   const { data: agency, error } = await service
     .from("agencies")
@@ -83,7 +112,7 @@ export async function POST(req: Request) {
       contact_email: contactEmail,
       contact_whatsapp: body.contact_whatsapp ?? null,
       response_time: body.response_time ?? "1_2_days",
-      is_active: false, // admin activates manually after final review
+      is_active: isActive,
     })
     .select()
     .single();
@@ -92,11 +121,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  if (body.application_id) {
+  if (applicationId) {
     await service
       .from("agency_applications")
       .update({ status: "approved", reviewed_at: new Date().toISOString() })
-      .eq("id", body.application_id);
+      .eq("id", applicationId);
 
     await sendEmail({
       to: contactEmail,

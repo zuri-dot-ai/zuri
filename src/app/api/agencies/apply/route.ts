@@ -221,7 +221,7 @@ async function handleApply(req: Request) {
   const appUrl = (
     process.env.NEXT_PUBLIC_APP_URL || "https://app.buildzuri.com"
   ).replace(/\/$/, "");
-  const adminUrl = `${appUrl}/admin`;
+  const adminUrl = `${appUrl}/admin/agency-applications`;
 
   void (async () => {
     try {
@@ -268,7 +268,7 @@ async function handleApply(req: Request) {
           type: "agency_application_received",
           title: "New agency application",
           body: `${agencyName} applied (${primarySpecialty || "services TBD"} · ${locationCity}).`,
-          actionUrl: "/admin",
+          actionUrl: "/admin/agency-applications",
           actionLabel: "Open admin",
           metadata: {
             agency_name: agencyName,

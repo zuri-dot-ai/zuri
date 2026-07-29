@@ -35,6 +35,12 @@ export default async function AdminLayout({
             </div>
           </div>
           <nav className="flex flex-wrap gap-4 text-sm text-muted-foreground md:gap-6">
+            <Link href="/admin/agency-applications" className="hover:text-gold">
+              Agency applications
+            </Link>
+            <Link href="/admin/agencies" className="hover:text-gold">
+              Agencies
+            </Link>
             <Link href="/admin/category-images" className="hover:text-gold">
               Category images
             </Link>
