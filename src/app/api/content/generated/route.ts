@@ -26,7 +26,7 @@ export async function GET(req: Request) {
   let query = auth.supabase
     .from("generated_content")
     .select(
-      "id, caption, hashtags, image_url, platform, format_type, status, calendar_slot_id"
+      "id, caption, hashtags, image_url, platform, format_type, status, calendar_slot_id, platform_variants"
     )
     .eq("user_id", auth.user.id);
 

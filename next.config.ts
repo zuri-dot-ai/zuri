@@ -36,8 +36,8 @@ const appSecurityHeaders = [
       "worker-src 'self' blob: https://www.gstatic.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
-      "img-src 'self' data: blob: https://images.unsplash.com https://images.pexels.com https://*.supabase.co https://*.supabase.in https://generativelanguage.googleapis.com https://*.googleusercontent.com https://res.cloudinary.com",
-      "connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://api.flutterwave.com https://checkout.flutterwave.com https://api.unsplash.com https://api.pexels.com https://generativelanguage.googleapis.com https://api.resend.com https://graph.facebook.com https://searchconsole.googleapis.com https://api.vercel.com https://firebaseinstallations.googleapis.com https://fcmregistrations.googleapis.com https://firebase.googleapis.com https://*.googleapis.com https://*.firebaseio.com",
+      "img-src 'self' data: blob: https://*.supabase.co https://*.supabase.in https://generativelanguage.googleapis.com https://*.googleusercontent.com https://res.cloudinary.com",
+      "connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://api.flutterwave.com https://checkout.flutterwave.com https://res.cloudinary.com https://*.googleusercontent.com https://fonts.googleapis.com https://fonts.gstatic.com https://generativelanguage.googleapis.com https://api.resend.com https://graph.facebook.com https://searchconsole.googleapis.com https://api.vercel.com https://firebaseinstallations.googleapis.com https://fcmregistrations.googleapis.com https://firebase.googleapis.com https://*.googleapis.com https://*.firebaseio.com",
       "frame-src 'self' https://checkout.flutterwave.com https://www.facebook.com",
       "media-src 'self' blob: https://*.supabase.co",
       "object-src 'none'",
@@ -54,9 +54,9 @@ const appSecurityHeaders = [
  * needs to allow whatever origins template_html actually renders: Google
  * Fonts (link tags in every template), Supabase (image storage + any
  * client-side data fetches from injected scripts), the stock image
- * providers used for fallback/slot images, and allowlisted embed iframe
- * hosts (YouTube/Vimeo/Maps/Calendly/Forms/Eventbrite). Explicitly
- * enumerated — never `*`.
+ * providers used for fallback/slot images (Cloudinary), and allowlisted
+ * embed iframe hosts (YouTube/Vimeo/Maps/Calendly/Forms/Eventbrite).
+ * Explicitly enumerated — never `*`.
  */
 const previewSecurityHeaders = [
   ...baseSecurityHeaders,
@@ -67,8 +67,8 @@ const previewSecurityHeaders = [
       "script-src 'self' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
-      "img-src 'self' data: blob: https://images.unsplash.com https://images.pexels.com https://*.supabase.co https://*.supabase.in https://res.cloudinary.com",
-      "connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com https://api.unsplash.com https://api.pexels.com",
+      "img-src 'self' data: blob: https://*.supabase.co https://*.supabase.in https://res.cloudinary.com",
+      "connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com https://res.cloudinary.com",
       "media-src 'self' blob: https://*.supabase.co",
       "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://www.google.com https://maps.google.com https://calendly.com https://www.calendly.com https://docs.google.com https://forms.gle https://www.eventbrite.com https://eventbrite.com",
       "frame-ancestors 'self'",
@@ -85,10 +85,6 @@ const nextConfig: NextConfig = {
 
   images: {
     remotePatterns: [
-      { protocol: "https", hostname: "images.unsplash.com" },
-      { protocol: "https", hostname: "source.unsplash.com" },
-      { protocol: "https", hostname: "images.pexels.com" },
-      { protocol: "https", hostname: "videos.pexels.com" },
       { protocol: "https", hostname: "*.supabase.co" },
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
       { protocol: "https", hostname: "*.googleusercontent.com" },

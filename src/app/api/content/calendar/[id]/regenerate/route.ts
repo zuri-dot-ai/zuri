@@ -8,8 +8,38 @@ import { checkUsageLimit } from "@/lib/payments/feature-gate";
 import { sanitizeForPrompt } from "@/lib/utils/sanitize";
 import { RATE_LIMIT_MESSAGE, isRateLimitError } from "@/lib/errors/gemini-errors";
 
+const ADJUST_MODES = new Set([
+  "punchier",
+  "shorter",
+  "more_formal",
+  "more_casual",
+  "custom",
+]);
+
+function adjustInstruction(
+  mode: string | undefined,
+  custom: string | undefined
+): string | null {
+  switch (mode) {
+    case "punchier":
+      return "Make the topic, hook, and brief punchier and more attention-grabbing. Keep the same underlying idea — do not invent a wholly new direction.";
+    case "shorter":
+      return "Tighten the topic, hook, and brief — shorter and sharper. Keep the same idea.";
+    case "more_formal":
+      return "Make the tone more formal and polished. Keep the same idea.";
+    case "more_casual":
+      return "Make the tone more casual and conversational. Keep the same idea.";
+    case "custom":
+      return custom?.trim()
+        ? `Apply this instruction while keeping the same core idea: ${custom.trim().slice(0, 400)}`
+        : null;
+    default:
+      return null;
+  }
+}
+
 export async function POST(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await requireContentUser();
@@ -30,6 +60,22 @@ export async function POST(
     );
   }
 
+  let body: { mode?: string; instruction?: string } = {};
+  try {
+    body = await req.json();
+  } catch {
+    body = {};
+  }
+
+  const mode =
+    typeof body.mode === "string" && ADJUST_MODES.has(body.mode)
+      ? body.mode
+      : undefined;
+  const instruction = adjustInstruction(
+    mode,
+    typeof body.instruction === "string" ? body.instruction : undefined
+  );
+
   const { id } = await params;
 
   const { data: slot } = await auth.supabase
@@ -45,7 +91,9 @@ export async function POST(
 
   const { data: brand } = await auth.supabase
     .from("business_profiles")
-    .select("business_name, industry, brand_tone, tone, target_audience")
+    .select(
+      "business_name, industry, brand_tone, tone, target_audience, services, content_profile, pitch_line, tone_sample_choice"
+    )
     .eq("user_id", auth.user.id)
     .single();
 
@@ -53,21 +101,44 @@ export async function POST(
     (slot as { content_pillars?: { name?: string } }).content_pillars?.name ??
     "General";
 
+  const { formatContentProfileForPrompt, parseContentProfile } = await import(
+    "@/lib/content/content-profile"
+  );
+  const contentProfile = parseContentProfile(brand?.content_profile, {
+    brand_tone: brand?.brand_tone ?? brand?.tone,
+    target_audience: brand?.target_audience,
+    services: brand?.services,
+  });
+  const profileBlock = formatContentProfileForPrompt(contentProfile);
+
+  const reviseBlock = instruction
+    ? `
+INSTRUCTION: ${sanitizeForPrompt(instruction)}
+Revise the CURRENT topic/hook/brief below — do not invent a wholly new direction.
+CURRENT TOPIC: ${sanitizeForPrompt(slot.topic)}
+CURRENT HOOK: ${sanitizeForPrompt(slot.hook ?? "")}
+CURRENT BRIEF: ${sanitizeForPrompt(slot.brief ?? "")}
+`
+    : `
+CURRENT TOPIC (replace with a fresh idea in the same pillar): ${sanitizeForPrompt(slot.topic)}
+`;
+
   const prompt = `
-Regenerate a social media content brief for a Nigerian business.
+${instruction ? "Revise" : "Regenerate"} a social media content brief for a Nigerian business.
 
 BUSINESS: ${sanitizeForPrompt(brand?.business_name)} (${sanitizeForPrompt(brand?.industry)})
-AUDIENCE: ${sanitizeForPrompt(brand?.target_audience)}
-TONE: ${sanitizeForPrompt(brand?.brand_tone ?? brand?.tone ?? "professional")}
+AUDIENCE: ${sanitizeForPrompt(contentProfile.target_customer || brand?.target_audience)}
+TONE: ${sanitizeForPrompt(contentProfile.primary_tone)}
+${profileBlock}
 PLATFORM: ${sanitizeForPrompt(slot.platform)}
 FORMAT: ${sanitizeForPrompt(slot.format_type)}
 PILLAR: ${sanitizeForPrompt(pillarName)}
-CURRENT TOPIC (replace with a fresh idea): ${sanitizeForPrompt(slot.topic)}
+${reviseBlock}
 
 Output ONLY valid JSON:
 {
-  "topic": "new specific topic",
-  "hook": "new opening hook max 15 words",
+  "topic": "specific topic",
+  "hook": "opening hook max 15 words",
   "brief": "2-3 sentence brief"
 }
 `;
@@ -111,10 +182,6 @@ Output ONLY valid JSON:
 
     return NextResponse.json({ slot: { ...data, generation_source: "ai" } });
   } catch (err) {
-    // err.message from nvidiaJSON carries the real status code + a
-    // truncated response body — that goes to the server logs in full for
-    // diagnostics, but never back to the client: a raw 429 body must not
-    // be dumped to the user as-is.
     console.error(
       `[calendar regenerate] slotId=${id} userId=${auth.user.id}:`,
       err

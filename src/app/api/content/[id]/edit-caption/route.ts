@@ -21,7 +21,7 @@ export async function PATCH(
 
   const { id } = await params;
 
-  let body: { caption?: unknown };
+  let body: { caption?: unknown; platform_variants?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -61,9 +61,21 @@ export async function PATCH(
     }
   }
 
+  const updates: Record<string, unknown> = {
+    caption: clean,
+    updated_at: new Date().toISOString(),
+  };
+  if (
+    body.platform_variants &&
+    typeof body.platform_variants === "object" &&
+    !Array.isArray(body.platform_variants)
+  ) {
+    updates.platform_variants = body.platform_variants;
+  }
+
   const { error: updateError } = await auth.supabase
     .from("generated_content")
-    .update({ caption: clean, updated_at: new Date().toISOString() })
+    .update(updates)
     .eq("id", id);
 
   if (updateError) {

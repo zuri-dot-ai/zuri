@@ -1,7 +1,7 @@
 // public/sw.js — caching + FCM background messaging
 // Keep Firebase compat version in sync with package.json `firebase`.
 
-const CACHE_NAME = "zuri-v3";
+const CACHE_NAME = "zuri-v4";
 const STATIC_ASSETS = [
   "/",
   "/offline",
@@ -65,6 +65,12 @@ self.addEventListener("notificationclick", (e) => {
 // Fetch: network-first for API calls, cache-first for static assets
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
+
+  // Let the browser handle CDNs (Cloudinary, Google Fonts, avatars, etc.)
+  // under img-src / font-src — SW fetch() is governed by connect-src.
+  if (url.origin !== self.location.origin) {
+    return;
+  }
 
   // Always network-first for API calls — never serve stale API responses
   if (url.pathname.startsWith("/api/")) {

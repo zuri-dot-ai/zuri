@@ -9,6 +9,13 @@ import type { BusinessProfile } from "@/types/brand";
 import { serviceLines } from "@/types/brand";
 import type { ContentCalendarRow } from "@/types/database";
 import { getNigerianCulturalMoments, type CulturalMoment } from "./cultural-calendar";
+import {
+  formatContentProfileForPrompt,
+  parseContentProfile,
+  postingKeyForDate,
+  type ContentProfile,
+  type PostingDayKey,
+} from "./content-profile";
 import type { ContentPillar } from "./pillars";
 import { getSuggestedTime } from "./posting-times";
 import { getTrendingTopics, type TrendingTopic } from "./trending-topics";
@@ -220,7 +227,8 @@ export function distributeFormats(
 export function distributeDatesAcrossMonth(
   month: number,
   year: number,
-  total: number
+  total: number,
+  postingDays?: PostingDayKey[]
 ): Date[] {
   const daysInMonth = new Date(year, month, 0).getDate();
   const today = new Date();
@@ -231,12 +239,26 @@ export function distributeDatesAcrossMonth(
 
   if (startDay > daysInMonth || total <= 0) return [];
 
+  const allowed = postingDays && postingDays.length > 0 ? new Set(postingDays) : null;
+
   const availableDays = Array.from(
     { length: daysInMonth - startDay + 1 },
     (_, i) => startDay + i
-  );
+  ).filter((day) => {
+    if (!allowed) {
+      const d = new Date(year, month - 1, day);
+      return d.getDay() !== 0;
+    }
+    const key = postingKeyForDate(new Date(year, month - 1, day));
+    return key != null && allowed.has(key);
+  });
 
-  const interval = Math.max(1, Math.floor(availableDays.length / total));
+  if (availableDays.length === 0 && postingDays && postingDays.length > 0) {
+    // Fallback: any non-Sunday day if filter emptied the month
+    return distributeDatesAcrossMonth(month, year, total, undefined);
+  }
+
+  const interval = Math.max(1, Math.floor(availableDays.length / Math.max(total, 1)));
   const dates: Date[] = [];
 
   for (let i = 0; i < total && i * interval < availableDays.length; i++) {
@@ -244,7 +266,6 @@ export function distributeDatesAcrossMonth(
     dates.push(new Date(year, month - 1, day));
   }
 
-  // If we need more dates than interval allows, fill remaining evenly
   while (dates.length < total && availableDays.length > 0) {
     const day =
       availableDays[
@@ -261,13 +282,27 @@ export function distributeDatesAcrossMonth(
 
 export function rotatePillars(
   pillars: ContentPillar[],
-  total: number
+  total: number,
+  scheduledDates?: Date[],
+  schedule?: Partial<Record<PostingDayKey, string>>
 ): string[] {
   const activePillars = pillars.filter((p) => p.is_active && p.id);
   if (activePillars.length === 0) return [];
 
   const rotation: string[] = [];
   for (let i = 0; i < total; i++) {
+    const date = scheduledDates?.[i];
+    if (date && schedule) {
+      const key = postingKeyForDate(date);
+      const scheduledId = key ? schedule[key] : undefined;
+      if (
+        scheduledId &&
+        activePillars.some((p) => p.id === scheduledId)
+      ) {
+        rotation.push(scheduledId);
+        continue;
+      }
+    }
     rotation.push(activePillars[i % activePillars.length].id!);
   }
   return rotation;
@@ -303,6 +338,19 @@ export function buildCalendarPrompt(params: CalendarPromptParams): string {
   const tone = sanitizeForPrompt(brandField(brand, "brand_tone", "professional"));
   const pitchLine = sanitizeForPrompt(brandField(brand, "pitch_line"));
   const toneSample = sanitizeForPrompt(brandField(brand, "tone_sample_choice"));
+
+  const brandRecord = brand as Record<string, unknown>;
+  const contentProfile: ContentProfile =
+    brandRecord.content_profile &&
+    typeof brandRecord.content_profile === "object" &&
+    "primary_tone" in (brandRecord.content_profile as object)
+      ? (brandRecord.content_profile as ContentProfile)
+      : parseContentProfile(brandRecord.content_profile, {
+          brand_tone: brandField(brand, "brand_tone", "professional"),
+          target_audience: rawAudience,
+          services: brandRecord.services,
+        });
+  const profileBlock = formatContentProfileForPrompt(contentProfile);
 
   // Onboarding frequently leaves these thin (e.g. "everyone", a single
   // generic service, no city) — a working Gemini call with thin input
@@ -341,10 +389,14 @@ BUSINESS:
 - Brand tone: ${tone}
 ${pitchLine ? `- Differentiator: ${pitchLine}` : ""}
 ${toneSample ? `- Preferred voice sample (match this register): "${toneSample}"` : ""}
+${profileBlock}
 ${inferenceNote}
 
-CONTENT PILLARS (rotate through these):
+CONTENT PILLARS (rotate through these — match pillar_name exactly when assigning):
 ${pillars.map((p) => `- ${sanitizeForPrompt(p.name)}: ${sanitizeForPrompt(p.description ?? "")}`).join("\n")}
+
+POSTING CADENCE: Prefer scheduling on the business's preferred weekdays when possible.
+Respect pillar rotation — each slot's pillar_name must be one of the pillars listed above.
 
 PLATFORM DISTRIBUTION (posts in this batch):
 ${Object.entries(distribution)
@@ -443,10 +495,32 @@ async function buildMonthPlan(
     waitForFresh: false,
   });
 
+  const brandRecord = brand as Record<string, unknown>;
+  const contentProfile =
+    brandRecord.content_profile &&
+    typeof brandRecord.content_profile === "object" &&
+    "primary_tone" in (brandRecord.content_profile as object)
+      ? (brandRecord.content_profile as ContentProfile)
+      : parseContentProfile(brandRecord.content_profile, {
+          brand_tone: brandField(brand, "brand_tone", "professional"),
+          target_audience: brandField(brand, "target_audience"),
+          services: brandRecord.services,
+        });
+
   const requested = postsPerMonth === null ? 30 : postsPerMonth;
-  const scheduledDates = distributeDatesAcrossMonth(month, year, requested);
+  const scheduledDates = distributeDatesAcrossMonth(
+    month,
+    year,
+    requested,
+    contentProfile.posting_days
+  );
   const totalPosts = scheduledDates.length;
-  const pillarRotation = rotatePillars(pillars, totalPosts);
+  const pillarRotation = rotatePillars(
+    pillars,
+    totalPosts,
+    scheduledDates,
+    contentProfile.pillar_schedule
+  );
   const formatsDistribution = distributeFormats(totalPosts, platforms);
 
   return {

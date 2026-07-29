@@ -2,8 +2,72 @@ import { nvidiaJSON } from "@/lib/content/nvidia-llm";
 import { createServiceClient } from "@/lib/supabase/service";
 import { sanitizeForPrompt, sanitizeText } from "@/lib/utils/sanitize";
 import { CAPTION_RULES, type CaptionRule } from "./caption-rules";
-import type { GenerationInput } from "./types";
+import {
+  formatContentProfileForPrompt,
+  parseContentProfile,
+  type ContentProfile,
+} from "./content-profile";
+import type { GenerationInput, PlatformVariants } from "./types";
 import { getVoiceContext } from "./voice-bank";
+
+function normalizeVariants(
+  raw: unknown,
+  fallbackCaption: string,
+  fallbackHashtags: string[]
+): PlatformVariants {
+  const obj =
+    raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+  const ig =
+    obj.instagram && typeof obj.instagram === "object"
+      ? (obj.instagram as Record<string, unknown>)
+      : {};
+  const wa =
+    obj.whatsapp && typeof obj.whatsapp === "object"
+      ? (obj.whatsapp as Record<string, unknown>)
+      : {};
+  const x =
+    obj.x && typeof obj.x === "object"
+      ? (obj.x as Record<string, unknown>)
+      : {};
+
+  const igTags = Array.isArray(ig.hashtags)
+    ? ig.hashtags
+        .map((h) => sanitizeHashtag(String(h)))
+        .filter((h) => h.length >= 2)
+        .slice(0, 7)
+    : fallbackHashtags.slice(0, 7);
+
+  const igCaption = sanitizeText(String(ig.caption ?? fallbackCaption));
+  const waCaption = sanitizeText(
+    String(wa.caption ?? fallbackCaption).slice(0, 400)
+  );
+  let xCaption = sanitizeText(String(x.caption ?? fallbackCaption));
+  if (xCaption.length > 280) xCaption = xCaption.slice(0, 277) + "...";
+
+  return {
+    instagram: {
+      caption: igCaption || fallbackCaption,
+      hashtags: igTags.length > 0 ? igTags : fallbackHashtags.slice(0, 7),
+    },
+    whatsapp: { caption: waCaption || fallbackCaption },
+    x: { caption: xCaption || fallbackCaption.slice(0, 280) },
+  };
+}
+
+function profileBlockFromBrand(brand: GenerationInput["brand"]): string {
+  const raw = brand as Record<string, unknown>;
+  const profile: ContentProfile =
+    raw.content_profile &&
+    typeof raw.content_profile === "object" &&
+    "primary_tone" in (raw.content_profile as object)
+      ? (raw.content_profile as ContentProfile)
+      : parseContentProfile(raw.content_profile, {
+          brand_tone: brand.brand_tone,
+          target_audience: brand.target_audience,
+          services: brand.services,
+        });
+  return formatContentProfileForPrompt(profile);
+}
 
 export function sanitizeHashtag(tag: string): string {
   const clean = tag.replace(/^#+/, "").replace(/[^a-zA-Z0-9]/g, "");
@@ -30,6 +94,7 @@ Write a ${input.platform} post about: ${topic}
 Hook: ${hook}
 Brief: ${brief}
 Brand tone: ${brandTone}
+${profileBlockFromBrand(input.brand)}
 ${voiceContext}
 ${imageUrl ? "There is an image accompanying this post. Write copy that complements a visual." : "This is a text-only post."}
 
@@ -42,9 +107,8 @@ PLATFORM RULES FOR ${input.platform.toUpperCase()}:
 
 HASHTAG RULES:
 - Generate exactly ${rules.hashtag_count.min}-${rules.hashtag_count.max} hashtags
-- Mix: 5 niche (very specific), 5-10 mid-range (industry), 5 broad (wide reach)
-- Always include at least 2 Nigerian/African hashtags where relevant
-  (e.g. #NaijaBusinesses #LagosFood #NigerianFashion #MadeInNigeria)
+- Mix broad reach tags with niche/local Nigerian tags (e.g. #NaijaBusinesses #MadeInNigeria)
+- Weave 1-2 hashtags naturally into the caption body when it reads well; list the full set in the hashtags array
 - Hashtags must start with # and contain only letters and numbers after the #
 - No spaces inside hashtags
 
@@ -54,11 +118,24 @@ COPY RULES:
 3. Nigerian voice: natural, warm, culturally aware — not stiff corporate copy
 4. No placeholder text, no [brackets], no lorem ipsum
 5. End with a specific CTA — not just "contact us"
+6. Also produce three platform variants of the SAME idea (not three different topics)
 
 Output ONLY valid JSON:
 {
-  "caption": "full post caption here",
-  "hashtags": ["#hashtag1", "#hashtag2"]
+  "caption": "full post caption for the primary platform (${input.platform})",
+  "hashtags": ["#hashtag1", "#hashtag2"],
+  "variants": {
+    "instagram": {
+      "caption": "Instagram caption with natural hashtag integration",
+      "hashtags": ["#tag1", "#tag2", "#tag3"]
+    },
+    "whatsapp": {
+      "caption": "Shorter WhatsApp Status/Broadcast version — direct, no hashtags"
+    },
+    "x": {
+      "caption": "Punchy X/Twitter version under 280 characters"
+    }
+  }
 }
 `;
 }
@@ -77,6 +154,7 @@ export function buildThreadPrompt(
 Write an X (Twitter) thread for ${businessName} about: ${topic}
 Brief: ${brief}
 Brand tone: ${brandTone}
+${profileBlockFromBrand(input.brand)}
 ${voiceContext}
 Thread rules:
 - 4-6 posts in the thread
@@ -110,6 +188,7 @@ export function buildPollPrompt(
 Write a ${input.platform} poll for ${businessName} about: ${topic}
 Brief: ${brief}
 Brand tone: ${brandTone}
+${profileBlockFromBrand(input.brand)}
 ${voiceContext}
 The poll should be engaging and relevant to the audience: ${audience}
 
@@ -143,6 +222,7 @@ export function buildLinkedInArticlePrompt(
 Write a LinkedIn article for ${businessName} about: ${topic}
 Brief: ${brief}
 Brand tone: ${brandTone} (professional adaptation)
+${profileBlockFromBrand(input.brand)}
 ${voiceContext}
 Target audience: ${audience}
 
@@ -165,7 +245,11 @@ Output ONLY valid JSON:
 export async function generateCaption(
   input: GenerationInput,
   imageUrl?: string
-): Promise<{ caption: string; hashtags: string[] }> {
+): Promise<{
+  caption: string;
+  hashtags: string[];
+  variants: PlatformVariants;
+}> {
   const rules = CAPTION_RULES[input.platform];
   if (!rules) throw new Error(`Unknown platform: ${input.platform}`);
 
@@ -197,11 +281,16 @@ export async function generateCaption(
     );
   }
 
-  if (process.env.NODE_ENV === "development" && voiceContext) {
-    console.log(
-      "[generateCaption] voice context injected:",
-      voiceContext.slice(0, 200)
-    );
+  // Special formats still need cross-platform variants of the core idea
+  if (isThread || isPoll || isArticle) {
+    captionPrompt += `
+
+Also include variants of the same idea:
+"variants": {
+  "instagram": { "caption": "...", "hashtags": ["#a","#b","#c"] },
+  "whatsapp": { "caption": "short direct status, no hashtags" },
+  "x": { "caption": "under 280 chars" }
+}`;
   }
 
   const result = await nvidiaJSON<{
@@ -211,6 +300,7 @@ export async function generateCaption(
     poll_options?: string[];
     article_body?: string;
     poll_question?: string;
+    variants?: unknown;
   }>(captionPrompt, "flash");
 
   let finalCaption = sanitizeText(result.caption ?? "");
@@ -227,13 +317,18 @@ export async function generateCaption(
   }
 
   if (/\[.*?\]|lorem ipsum|placeholder/i.test(finalCaption)) {
-    const retry = await nvidiaJSON<{ caption: string; hashtags: string[] }>(
+    const retry = await nvidiaJSON<{
+      caption: string;
+      hashtags: string[];
+      variants?: unknown;
+    }>(
       captionPrompt +
         "\n\nCRITICAL: Do NOT use placeholder text, brackets, or lorem ipsum.",
       "flash"
     );
     finalCaption = sanitizeText(retry.caption ?? finalCaption);
     result.hashtags = retry.hashtags ?? result.hashtags;
+    result.variants = retry.variants ?? result.variants;
   }
 
   if (finalCaption.length > rules.max_chars) {
@@ -245,5 +340,17 @@ export async function generateCaption(
     .filter((h) => h.length >= 2 && h.length <= 30)
     .slice(0, rules.hashtag_count.max);
 
-  return { caption: finalCaption, hashtags: cleanHashtags };
+  const variants = normalizeVariants(
+    result.variants,
+    finalCaption,
+    cleanHashtags
+  );
+
+  // When primary platform is Instagram, prefer variant IG tags if richer
+  const hashtags =
+    input.platform === "instagram" && variants.instagram.hashtags.length > 0
+      ? variants.instagram.hashtags.slice(0, rules.hashtag_count.max)
+      : cleanHashtags;
+
+  return { caption: finalCaption, hashtags, variants };
 }

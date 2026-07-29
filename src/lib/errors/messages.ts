@@ -45,6 +45,8 @@ export const ERROR_MESSAGES = {
   // Website Builder
   WEBSITE_NOT_FOUND:
     "No website found. Generate your website from the dashboard.",
+  WEBSITE_TEMPLATE_MISSING:
+    "This website is missing its template binding. Regenerate your site or contact support.",
   WEBSITE_GENERATION_FAILED:
     "Website generation failed. Please try again — if this keeps happening, contact support.",
   WEBSITE_GENERATION_TIMEOUT:

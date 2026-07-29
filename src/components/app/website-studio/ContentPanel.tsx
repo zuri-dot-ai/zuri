@@ -101,12 +101,14 @@ function FieldEditor({
   onSaved,
   onFocusField,
   onNeedsReview,
+  canSave = true,
 }: {
   field: string;
   value: string;
   onSaved: (field: string, value: string) => void;
   onFocusField?: (field: string) => void;
   onNeedsReview?: (needsReview: boolean) => void;
+  canSave?: boolean;
 }) {
   const [local, setLocal] = useState(value);
   const [regenerating, setRegenerating] = useState(false);
@@ -122,6 +124,12 @@ function FieldEditor({
 
   const save = useCallback(
     async (next: string, action: "edit" | "regenerate" = "edit") => {
+      if (!canSave) {
+        toast.error(
+          "This website is missing its template binding. Regenerate your site or contact support."
+        );
+        return;
+      }
       if (action === "edit" && next === value) return;
       if (action === "regenerate") setRegenerating(true);
       try {
@@ -156,16 +164,18 @@ function FieldEditor({
         setRegenerating(false);
       }
     },
-    [field, onSaved, onNeedsReview, runSave, value]
+    [canSave, field, onSaved, onNeedsReview, runSave, value]
   );
 
   function handleBlur() {
+    if (!canSave) return;
     if (dirty && !saving) void save(local);
   }
 
   function handleKeyDown(e: KeyboardEvent) {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
+      if (!canSave) return;
       if (dirty && !saving) void save(local);
     }
   }
@@ -174,7 +184,7 @@ function FieldEditor({
     <SaveCheckButton
       dirty={dirty}
       status={saveStatus}
-      disabled={regenerating}
+      disabled={regenerating || !canSave}
       onSave={() => void save(local)}
     />
   );
@@ -191,7 +201,7 @@ function FieldEditor({
               variant="ghost"
               size="sm"
               className="h-7 px-2 text-xs text-gold"
-              disabled={regenerating || saving}
+              disabled={regenerating || saving || !canSave}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => save(local, "regenerate")}
             >
@@ -210,13 +220,15 @@ function FieldEditor({
           id={field}
           value={local}
           rows={4}
+          disabled={!canSave}
           onFocus={() => onFocusField?.(field)}
           onChange={(e) => setLocal(e.target.value)}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           className={cn(
             "flex w-full rounded-sm border border-[var(--border-solid)] bg-[var(--bg-secondary)] px-3.5 py-2 text-sm [transition-duration:var(--transition-fast)] transition-colors",
-            "focus-visible:outline-none focus-visible:border-[var(--accent)] focus-visible:ring-2 focus-visible:ring-[var(--accent)]/20"
+            "focus-visible:outline-none focus-visible:border-[var(--accent)] focus-visible:ring-2 focus-visible:ring-[var(--accent)]/20",
+            !canSave && "opacity-60"
           )}
         />
       ) : (
@@ -225,6 +237,7 @@ function FieldEditor({
             id={field}
             type={inputType}
             value={local}
+            disabled={!canSave}
             onFocus={() => onFocusField?.(field)}
             onChange={(e) => setLocal(e.target.value)}
             onBlur={handleBlur}
@@ -245,6 +258,7 @@ function ItemCards({
   onChange,
   onFocusField,
   onNeedsReview,
+  canSave = true,
 }: {
   groupId: string;
   fields: string[];
@@ -252,6 +266,7 @@ function ItemCards({
   onChange: (field: string, value: string) => void;
   onFocusField?: (field: string) => void;
   onNeedsReview?: (needsReview: boolean) => void;
+  canSave?: boolean;
 }) {
   const cards = groupIntoItemCards(groupId, fields);
   const [expandedOptional, setExpandedOptional] = useState<Set<string>>(
@@ -269,6 +284,7 @@ function ItemCards({
             onSaved={onChange}
             onFocusField={onFocusField}
             onNeedsReview={onNeedsReview}
+            canSave={canSave}
           />
         ))}
       </div>
@@ -311,6 +327,7 @@ function ItemCards({
                 onSaved={onChange}
                 onFocusField={onFocusField}
                 onNeedsReview={onNeedsReview}
+                canSave={canSave}
               />
             ))}
           </div>
@@ -331,6 +348,7 @@ export function ContentPanel({
   accordion = false,
   /** When set, render only this group's fields without a section heading. */
   singleGroupId,
+  canSave = true,
 }: {
   filledPlaceholders: Record<string, string>;
   onChange: (field: string, value: string) => void;
@@ -341,6 +359,8 @@ export function ContentPanel({
   onExpandGroup?: (id: string) => void;
   accordion?: boolean;
   singleGroupId?: string;
+  /** False when website has no template_id — blocks PATCH storms. */
+  canSave?: boolean;
 }) {
   const keys = Object.keys(filledPlaceholders).filter(
     (k) => k !== "active_theme"
@@ -362,6 +382,13 @@ export function ContentPanel({
     );
   }
 
+  const missingTemplateBanner = !canSave ? (
+    <p className="rounded-sm border border-[var(--border-solid)] bg-[var(--bg-secondary)] px-3 py-2.5 text-sm text-muted-foreground">
+      This site is missing a template reference, so content edits can’t be
+      saved. Regenerate your website or contact support.
+    </p>
+  ) : null;
+
   if (singleGroupId) {
     const group = groups.find((g) => g.id === singleGroupId) ?? {
       id: singleGroupId,
@@ -369,20 +396,25 @@ export function ContentPanel({
       fields: keys,
     };
     return (
-      <ItemCards
-        groupId={group.id}
-        fields={group.fields}
-        filledPlaceholders={filledPlaceholders}
-        onChange={onChange}
-        onFocusField={onFocusField}
-        onNeedsReview={onNeedsReview}
-      />
+      <div className="space-y-4">
+        {missingTemplateBanner}
+        <ItemCards
+          groupId={group.id}
+          fields={group.fields}
+          filledPlaceholders={filledPlaceholders}
+          onChange={onChange}
+          onFocusField={onFocusField}
+          onNeedsReview={onNeedsReview}
+          canSave={canSave}
+        />
+      </div>
     );
   }
 
   if (accordion) {
     return (
       <div className="space-y-2">
+        {missingTemplateBanner}
         {groups.map((group) => {
           const open = expandedGroupId === group.id;
           return (
@@ -415,6 +447,7 @@ export function ContentPanel({
                     onChange={onChange}
                     onFocusField={onFocusField}
                     onNeedsReview={onNeedsReview}
+                    canSave={canSave}
                   />
                 </div>
               )}
@@ -427,6 +460,7 @@ export function ContentPanel({
 
   return (
     <div className="space-y-6">
+      {missingTemplateBanner}
       {groups.map((group) => (
         <section key={group.id} className="space-y-4">
           <h3 className="text-section-header">{group.label}</h3>
@@ -437,6 +471,7 @@ export function ContentPanel({
             onChange={onChange}
             onFocusField={onFocusField}
             onNeedsReview={onNeedsReview}
+            canSave={canSave}
           />
         </section>
       ))}

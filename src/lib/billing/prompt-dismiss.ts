@@ -25,6 +25,7 @@ export const PROMPT_KEYS = {
   startTrialSessionDismissed: "zuri_start_trial_session_dismissed",
   lastGateAttempt: "zuri_last_gate_attempt",
   trialEndedAckPrefix: "zuri_trial_ended_ack_",
+  contentProfileNudgeDay: "zuri_content_profile_nudge_day",
 } as const;
 
 export function todayKey(): string {

@@ -18,6 +18,23 @@ import type { ActiveTheme } from "@/types/website";
 
 const MAX_FIELD_LENGTH = 500;
 
+const ALLOW_PATCH = { Allow: "PATCH" };
+
+/** Accidental navigations/prefetches — not a resource URL. */
+export async function GET() {
+  return NextResponse.json(
+    { error: "Method not allowed. Use PATCH to edit a placeholder field." },
+    { status: 405, headers: ALLOW_PATCH }
+  );
+}
+
+export async function POST() {
+  return NextResponse.json(
+    { error: "Method not allowed. Use PATCH to edit a placeholder field." },
+    { status: 405, headers: ALLOW_PATCH }
+  );
+}
+
 export async function PATCH(req: Request) {
   const { user, error: authError } = await requireAuth();
   if (authError) return authError;
@@ -46,10 +63,17 @@ export async function PATCH(req: Request) {
     .eq("user_id", user.id)
     .maybeSingle();
 
-  if (!website?.template_id) {
+  if (!website) {
     return NextResponse.json(
       { error: ERROR_MESSAGES.WEBSITE_NOT_FOUND },
       { status: 404 }
+    );
+  }
+
+  if (!website.template_id) {
+    return NextResponse.json(
+      { error: ERROR_MESSAGES.WEBSITE_TEMPLATE_MISSING },
+      { status: 409 }
     );
   }
 

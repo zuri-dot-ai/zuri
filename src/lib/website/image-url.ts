@@ -1,52 +1,69 @@
 import type { DesignArchetype, ResolvedImage } from "@/types/website";
+import { cloudinaryUrl } from "@/lib/website/cloudinary";
 
-/** Last-resort static fallback — Unsplash URLs allowed by CSP (never picsum). */
-const ARCHETYPE_FALLBACK_URLS: Record<DesignArchetype, string> = {
+/** Last-resort Cloudinary zuri-stock public ids (one hero per archetype). */
+const ARCHETYPE_FALLBACK_PUBLIC_IDS: Record<DesignArchetype, string> = {
   "warm-sensory":
-    "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&h=800&fit=crop",
+    "zuri-stock/warm-sensory/hero/glenov-brankovic-nulJA9vxJII-unsplash",
   "authority-minimal":
-    "https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&h=800&fit=crop",
+    "zuri-stock/authority-minimal/hero/kate-sade-2zZp12ChxhU-unsplash",
   "luxury-aspirational":
-    "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1200&h=800&fit=crop",
+    "zuri-stock/luxury-aspirational/hero/franco-debartolo-Q6-CbUd2n3k-unsplash",
   "editorial-bold":
-    "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&h=800&fit=crop",
+    "zuri-stock/editorial-bold/hero/alyssa-strohmann-TS--uNw-JqE-unsplash",
   "clean-modern":
-    "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1200&h=800&fit=crop",
+    "zuri-stock/clean-modern/hero/anthony-riera--ZZ7I31c0B8-unsplash",
   "portfolio-dramatic":
-    "https://images.unsplash.com/photo-1452587925148-ce544e77e70d?w=1200&h=800&fit=crop",
+    "zuri-stock/portfolio-dramatic/hero/christopher-campbell-Xo4YvBp6IBM-unsplash",
   "community-vibrant":
-    "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1200&h=800&fit=crop",
+    "zuri-stock/community-vibrant/hero/fitnish-media-UM8I5D5Z4fo-unsplash",
   "trust-professional":
-    "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1200&h=800&fit=crop",
+    "zuri-stock/trust-professional/hero/pexels-cedric-fauntleroy-4266934",
 };
 
-/** Extra Unsplash pool for curated library display when DB rows still use picsum. */
-const LIBRARY_UNSPLASH_POOL = [
-  "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=900&h=700&fit=crop",
-  "https://images.unsplash.com/photo-1497366216548-37526070297c?w=900&h=700&fit=crop",
-  "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=900&h=700&fit=crop",
-  "https://images.unsplash.com/photo-1556761175-b413da4baf72?w=900&h=700&fit=crop",
-  "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=900&h=700&fit=crop",
-  "https://images.unsplash.com/photo-1553877522-43269d4ea984?w=900&h=700&fit=crop",
+/** Extra Cloudinary pool for curated library display when DB rows still use picsum/Unsplash. */
+const LIBRARY_CLOUDINARY_PUBLIC_IDS = [
+  "zuri-stock/clean-modern/hero/anthony-riera--ZZ7I31c0B8-unsplash",
+  "zuri-stock/authority-minimal/hero/kate-sade-2zZp12ChxhU-unsplash",
+  "zuri-stock/luxury-aspirational/hero/franco-debartolo-Q6-CbUd2n3k-unsplash",
+  "zuri-stock/editorial-bold/hero/alyssa-strohmann-TS--uNw-JqE-unsplash",
+  "zuri-stock/warm-sensory/hero/glenov-brankovic-nulJA9vxJII-unsplash",
+  "zuri-stock/portfolio-dramatic/hero/christopher-campbell-Xo4YvBp6IBM-unsplash",
 ];
 
+function stockUrl(publicId: string, transform: "hero" | "card" = "hero"): string {
+  const url = cloudinaryUrl(publicId, transform);
+  // Dev/misconfig safety — templates ship against this cloud.
+  if (url.includes("res.cloudinary.com/undefined/")) {
+    return url.replace(
+      "res.cloudinary.com/undefined/",
+      "res.cloudinary.com/dzuvmw4l/"
+    );
+  }
+  return url;
+}
+
 export function getArchetypeFallback(archetype: DesignArchetype): ResolvedImage {
+  const publicId =
+    ARCHETYPE_FALLBACK_PUBLIC_IDS[archetype] ??
+    ARCHETYPE_FALLBACK_PUBLIC_IDS["clean-modern"];
   return {
-    url:
-      ARCHETYPE_FALLBACK_URLS[archetype] ??
-      ARCHETYPE_FALLBACK_URLS["clean-modern"],
+    url: stockUrl(publicId, "hero"),
     source: "fallback",
-    width: 1200,
-    height: 800,
+    width: 1600,
+    height: 900,
     alt: `${archetype} fallback`,
   };
 }
 
-/** True when a URL is empty, picsum, or a missing local fallback path. */
+/** True when a URL is empty, picsum, Unsplash, or a missing local fallback path. */
 export function isBrokenImageUrl(url: string | null | undefined): boolean {
   if (!url || !url.trim()) return true;
   const u = url.trim().toLowerCase();
   if (u.includes("picsum.photos")) return true;
+  if (u.includes("images.unsplash.com") || u.includes("source.unsplash.com")) {
+    return true;
+  }
   if (u.includes("/images/fallbacks/")) return true;
   if (
     !/^https?:\/\//i.test(u) &&
@@ -59,8 +76,8 @@ export function isBrokenImageUrl(url: string | null | undefined): boolean {
 }
 
 /**
- * Library/curated rows were often seeded with picsum — blocked by app CSP.
- * Rewrite to Unsplash so the editor Library tab can render thumbnails.
+ * Library/curated rows were often seeded with picsum or Unsplash — rewrite to
+ * Cloudinary so the editor Library tab can render thumbnails under CSP.
  */
 export function sanitizeLibraryImageUrl(
   url: string | null | undefined,
@@ -70,5 +87,7 @@ export function sanitizeLibraryImageUrl(
   if (!isBrokenImageUrl(url)) return String(url);
   const arch = (archetype as DesignArchetype) || "clean-modern";
   if (index <= 0) return getArchetypeFallback(arch).url;
-  return LIBRARY_UNSPLASH_POOL[index % LIBRARY_UNSPLASH_POOL.length];
+  const publicId =
+    LIBRARY_CLOUDINARY_PUBLIC_IDS[index % LIBRARY_CLOUDINARY_PUBLIC_IDS.length];
+  return stockUrl(publicId, "card");
 }

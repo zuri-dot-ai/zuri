@@ -108,6 +108,16 @@ export const NIGERIAN_CULTURAL_CALENDAR: CulturalMoment[] = [
     urgency: "medium",
   },
   {
+    name: "Children's Day",
+    month: 5,
+    day: 27,
+    is_floating: false,
+    applicable_to: "all",
+    content_angle:
+      "Celebrate children and families — relevant for family-focused, food, education, and lifestyle brands",
+    urgency: "medium",
+  },
+  {
     name: "Mother's Day",
     month: 5,
     day: 12,
@@ -125,8 +135,28 @@ export const NIGERIAN_CULTURAL_CALENDAR: CulturalMoment[] = [
     content_angle: "African pride, continent-wide identity, pan-African narrative",
     urgency: "medium",
   },
+  {
+    name: "End-of-month payday",
+    month: 5,
+    day: 28,
+    is_floating: false,
+    applicable_to: "all",
+    content_angle:
+      "Payday timing — promotions and offers for salary week",
+    urgency: "medium",
+  },
 
   // JUNE
+  {
+    name: "Democracy Day",
+    month: 6,
+    day: 12,
+    is_floating: false,
+    applicable_to: "all",
+    content_angle:
+      "Nigerian civic pride, community, progress — keep it respectful and hopeful, tie gently to how your business serves people",
+    urgency: "high",
+  },
   {
     name: "Eid al-Adha (Sallah)",
     month: 6,
@@ -144,6 +174,62 @@ export const NIGERIAN_CULTURAL_CALENDAR: CulturalMoment[] = [
     applicable_to: "all",
     content_angle: "Celebrate fathers — gifts, experiences, dedications",
     urgency: "high",
+  },
+  {
+    name: "End-of-month payday",
+    month: 6,
+    day: 28,
+    is_floating: false,
+    applicable_to: "all",
+    content_angle:
+      "Payday timing — promotions, value packs, 'treat yourself' offers timed for when salaries land",
+    urgency: "medium",
+  },
+
+  // JULY
+  {
+    name: "End-of-month payday",
+    month: 7,
+    day: 28,
+    is_floating: false,
+    applicable_to: "all",
+    content_angle:
+      "Payday timing — promotions and offers for salary week",
+    urgency: "medium",
+  },
+
+  // AUGUST
+  {
+    name: "End-of-month payday",
+    month: 8,
+    day: 28,
+    is_floating: false,
+    applicable_to: "all",
+    content_angle:
+      "Payday timing — promotions and offers for salary week",
+    urgency: "medium",
+  },
+
+  // SEPTEMBER
+  {
+    name: "Back to School",
+    month: 9,
+    day: 8,
+    is_floating: false,
+    applicable_to: "all",
+    content_angle:
+      "New term energy — family prep, routines, products/services that help parents and students",
+    urgency: "high",
+  },
+  {
+    name: "End-of-month payday",
+    month: 9,
+    day: 28,
+    is_floating: false,
+    applicable_to: "all",
+    content_angle:
+      "Payday timing — promotions and offers for salary week",
+    urgency: "medium",
   },
 
   // OCTOBER
@@ -174,6 +260,16 @@ export const NIGERIAN_CULTURAL_CALENDAR: CulturalMoment[] = [
     content_angle: "Mental wellness, breaking stigma, resources",
     urgency: "medium",
   },
+  {
+    name: "End-of-month payday",
+    month: 10,
+    day: 28,
+    is_floating: false,
+    applicable_to: "all",
+    content_angle:
+      "Payday timing — promotions and offers for salary week",
+    urgency: "medium",
+  },
 
   // NOVEMBER
   {
@@ -185,8 +281,28 @@ export const NIGERIAN_CULTURAL_CALENDAR: CulturalMoment[] = [
     content_angle: "Promotions, deals, special offers — even service businesses can offer limited-time deals",
     urgency: "high",
   },
+  {
+    name: "End-of-month payday",
+    month: 11,
+    day: 28,
+    is_floating: false,
+    applicable_to: "all",
+    content_angle:
+      "Payday timing — promotions and offers for salary week",
+    urgency: "medium",
+  },
 
   // DECEMBER
+  {
+    name: "Detty December",
+    month: 12,
+    day: 1,
+    is_floating: false,
+    applicable_to: "all",
+    content_angle:
+      "Lagos end-of-year energy — celebrations, gifting, events, gratitude. Lean into festive season demand without implying nightlife if it doesn't fit the brand.",
+    urgency: "high",
+  },
   {
     name: "Christmas Season",
     month: 12,
@@ -204,6 +320,15 @@ export const NIGERIAN_CULTURAL_CALENDAR: CulturalMoment[] = [
     applicable_to: "all",
     content_angle: "Celebration, family, gifts, gratitude — warmest post of the year",
     urgency: "high",
+  },
+  {
+    name: "Boxing Day / Sales",
+    month: 12,
+    day: 26,
+    is_floating: false,
+    applicable_to: ["editorial-bold", "warm-sensory", "luxury-aspirational"],
+    content_angle: "Post-Christmas offers, clear-outs, last gifting moments",
+    urgency: "medium",
   },
   {
     name: "New Year's Eve",

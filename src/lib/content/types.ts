@@ -93,6 +93,7 @@ export interface GenerationOutput {
   formatType: string;
   caption?: string;
   hashtags?: string[];
+  platformVariants?: PlatformVariants;
   imageUrl?: string;
   imagePromptUsed?: string;
   carouselImageUrls?: string[];
@@ -101,6 +102,12 @@ export interface GenerationOutput {
   videoScript?: VideoScript;
   status: "ready" | "partial" | "failed";
   warnings: string[];
+}
+
+export interface PlatformVariants {
+  instagram: { caption: string; hashtags: string[] };
+  whatsapp: { caption: string };
+  x: { caption: string };
 }
 
 export interface GeneratedContentRow {
@@ -118,6 +125,7 @@ export interface GeneratedContentRow {
   newsletter_content: NewsletterContent | null;
   video_script: VideoScript | null;
   thumbnail_url: string | null;
+  platform_variants?: PlatformVariants | null;
   status: string;
   created_at: string;
   updated_at: string;

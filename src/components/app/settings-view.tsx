@@ -34,6 +34,14 @@ import { formatNGN as fmtNGN } from "@/lib/utils";
 import { safeFetchJSON } from "@/lib/utils/safe-fetch";
 import { serviceNames } from "@/types/brand";
 import {
+  CONTENT_TONES,
+  CONTENT_TONE_LABELS,
+  isContentProfileComplete,
+  parseContentProfile,
+  serializeContentProfile,
+  type ContentTone,
+} from "@/lib/content/content-profile";
+import {
   canStartTrial,
   daysUntil,
   freeTierLossSummary,
@@ -431,12 +439,17 @@ const PRIMARY_GOAL_LABELS: Record<string, string> = {
 
 function BusinessTab({ profile }: { profile: BusinessProfileRow | null }) {
   const supabase = createClient();
+  const initialProfile = parseContentProfile(profile?.content_profile, {
+    brand_tone: profile?.brand_tone,
+    target_audience: profile?.target_audience,
+    services: profile?.services,
+  });
   const [f, setF] = useState({
     business_name: profile?.business_name ?? "",
     industry: profile?.industry ?? "",
     services: serviceNames(profile?.services).join(", "),
     target_audience: profile?.target_audience ?? "",
-    tone: profile?.brand_tone ?? "professional",
+    tone: profile?.brand_tone ?? initialProfile.primary_tone,
     tagline: profile?.tagline ?? "",
     location: profile?.location ?? "",
     pitch_line: profile?.pitch_line ?? "",
@@ -444,6 +457,11 @@ function BusinessTab({ profile }: { profile: BusinessProfileRow | null }) {
     social_handle: profile?.social_handle ?? "",
     reference_url: profile?.reference_url ?? "",
     logo_url: profile?.logo_url ?? "",
+    primary_tone: initialProfile.primary_tone,
+    secondary_tone: (initialProfile.secondary_tone ?? "") as ContentTone | "",
+    target_customer: initialProfile.target_customer,
+    key_offerings: initialProfile.key_offerings.join("\n"),
+    avoid: initialProfile.avoid,
   });
   const { status: saveStatus, run: runSave } = useSaveStatus();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -457,6 +475,31 @@ function BusinessTab({ profile }: { profile: BusinessProfileRow | null }) {
     profile.logo_url == null &&
     profile.reference_url == null;
 
+  const contentProfileIncomplete =
+    !!profile &&
+    !isContentProfileComplete(
+      parseContentProfile(
+        {
+          primary_tone: f.primary_tone,
+          secondary_tone: f.secondary_tone || null,
+          target_customer: f.target_customer,
+          key_offerings: f.key_offerings
+            .split("\n")
+            .map((s) => s.trim())
+            .filter(Boolean),
+          avoid: f.avoid,
+          posting_days: initialProfile.posting_days,
+          pillar_schedule: initialProfile.pillar_schedule,
+          profile_completed_at: initialProfile.profile_completed_at,
+        },
+        {
+          brand_tone: f.tone,
+          target_audience: f.target_audience,
+          services: f.services,
+        }
+      )
+    );
+
   async function save(next: typeof f) {
     if (!profile) return;
     try {
@@ -467,14 +510,31 @@ function BusinessTab({ profile }: { profile: BusinessProfileRow | null }) {
           .filter(Boolean)
           .map((name) => ({ name, description: "" }));
 
+        const offerings = next.key_offerings
+          .split("\n")
+          .map((s) => s.trim())
+          .filter(Boolean)
+          .slice(0, 5);
+
+        const content_profile = serializeContentProfile({
+          ...initialProfile,
+          primary_tone: next.primary_tone,
+          secondary_tone: next.secondary_tone
+            ? (next.secondary_tone as ContentTone)
+            : null,
+          target_customer: next.target_customer,
+          key_offerings: offerings,
+          avoid: next.avoid,
+        });
+
         const { error } = await supabase
           .from("business_profiles")
           .update({
             business_name: next.business_name,
             industry: next.industry,
             services: servicesPayload,
-            target_audience: next.target_audience,
-            brand_tone: next.tone,
+            target_audience: next.target_customer || next.target_audience,
+            brand_tone: next.primary_tone,
             tagline: next.tagline,
             location: next.location,
             pitch_line: next.pitch_line || null,
@@ -482,6 +542,7 @@ function BusinessTab({ profile }: { profile: BusinessProfileRow | null }) {
             social_handle: next.social_handle || null,
             reference_url: next.reference_url || null,
             logo_url: next.logo_url || null,
+            content_profile,
           })
           .eq("id", profile.id);
         if (error) throw error;
@@ -553,11 +614,19 @@ function BusinessTab({ profile }: { profile: BusinessProfileRow | null }) {
         />
       )}
 
+      {contentProfileIncomplete && (
+        <Banner
+          variant="info"
+          title="Content profile"
+          message="Add your tone, target customer, and key offerings below so content calendar posts sound like your brand."
+        />
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2">
         {(
           [
             { key: "business_name", label: "Business name" },
-            { key: "industry", label: "Industry" },
+            { key: "industry", label: "Industry / category" },
             { key: "location", label: "Location" },
             { key: "tagline", label: "Tagline" },
           ] as const
@@ -581,29 +650,103 @@ function BusinessTab({ profile }: { profile: BusinessProfileRow | null }) {
         />
       </div>
 
+      <div className="rounded-md border border-border bg-muted/20 p-4 space-y-4">
+        <div>
+          <h3 className="text-sm font-medium text-[var(--text-primary)]">
+            Content voice
+          </h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Used for every content calendar caption and idea.
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label>Primary brand tone</Label>
+            <Select
+              value={f.primary_tone}
+              onChange={(e) =>
+                updateFieldNow({
+                  ...f,
+                  primary_tone: e.target.value as ContentTone,
+                  tone: e.target.value,
+                })
+              }
+              className="h-11"
+            >
+              {CONTENT_TONES.map((t) => (
+                <option key={t} value={t}>
+                  {CONTENT_TONE_LABELS[t]}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Secondary tone (optional)</Label>
+            <Select
+              value={f.secondary_tone}
+              onChange={(e) =>
+                updateFieldNow({
+                  ...f,
+                  secondary_tone: e.target.value as ContentTone | "",
+                })
+              }
+              className="h-11"
+            >
+              <option value="">None</option>
+              {CONTENT_TONES.filter((t) => t !== f.primary_tone).map((t) => (
+                <option key={t} value={t}>
+                  {CONTENT_TONE_LABELS[t]}
+                </option>
+              ))}
+            </Select>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Target customer</Label>
+          <textarea
+            className="flex min-h-[72px] w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            value={f.target_customer}
+            onChange={(e) =>
+              updateField({ ...f, target_customer: e.target.value })
+            }
+            placeholder="1–2 sentences: who you sell to (e.g. busy Lagos professionals who want healthy lunch delivery)"
+            maxLength={280}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Key products / services (one per line, 3–5)</Label>
+          <textarea
+            className="flex min-h-[88px] w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            value={f.key_offerings}
+            onChange={(e) =>
+              updateField({ ...f, key_offerings: e.target.value })
+            }
+            placeholder={"Signature jollof\nWeekend catering\nCorporate lunch packs"}
+            maxLength={400}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Avoid in content</Label>
+          <Input
+            value={f.avoid}
+            onChange={(e) => updateField({ ...f, avoid: e.target.value })}
+            placeholder="e.g. no slang, no emojis, no humor, no competitor names"
+          />
+        </div>
+      </div>
+
       <div className="space-y-2">
-        <Label>Target audience</Label>
+        <Label>Target audience (legacy)</Label>
         <Input
           value={f.target_audience}
           onChange={(e) =>
             updateField({ ...f, target_audience: e.target.value })
           }
         />
-      </div>
-
-      <div className="space-y-2">
-        <Label>Brand tone</Label>
-        <Select
-          value={f.tone}
-          onChange={(e) => updateFieldNow({ ...f, tone: e.target.value })}
-          className="h-11"
-        >
-          {["professional", "warm", "bold", "playful"].map((t) => (
-            <option key={t} value={t} className="capitalize">
-              {t.charAt(0).toUpperCase() + t.slice(1)}
-            </option>
-          ))}
-        </Select>
       </div>
 
       <div className="space-y-2">

@@ -117,6 +117,7 @@ export default async function WebsitePage() {
     <ErrorBoundary context="website-builder">
       <WebsiteStudio
         websiteId={website.id}
+        templateId={(website.template_id as string | null) ?? null}
         filledPlaceholders={
           (website.filled_placeholders as Record<string, string>) ?? {}
         }

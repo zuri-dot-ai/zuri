@@ -108,6 +108,8 @@ export interface BusinessProfileRow {
   tone_sample_choice: string | null;
   social_handle: string | null;
   reference_url: string | null;
+  /** Structured content-generation profile (tones, offerings, avoid, schedule). */
+  content_profile?: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
 }

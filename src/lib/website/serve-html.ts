@@ -81,8 +81,8 @@ export function notFoundResponse(): Response {
 }
 
 /**
- * Rewrite broken / picsum / missing-fallback img srcs on data-image-slot
- * elements to a reachable Unsplash archetype fallback before serving.
+ * Rewrite broken / picsum / Unsplash / missing-fallback img srcs on
+ * data-image-slot elements to a Cloudinary archetype fallback before serving.
  */
 export function sanitizeServedImages(
   html: string,

@@ -7,7 +7,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Copy,
-  Diamond,
   Pencil,
   RefreshCw,
   Share2,
@@ -25,10 +24,21 @@ import { Banner, type BannerVariant } from "@/components/ui/Banner";
 import { EmptyState } from "@/components/app/empty-state";
 import { RatingsSummaryCard } from "@/components/content/RatingsSummaryCard";
 import { GeneratedContentView } from "@/components/content/GeneratedContentView";
-import { ZuriSpinner } from "@/components/ui/skeleton";
+import { PillarEditorPanel } from "@/components/content/PillarEditorPanel";
+import { ContentMonthGrid } from "@/components/content/ContentMonthGrid";
+import {
+  ContentAdjustControls,
+  type AdjustMode,
+} from "@/components/content/ContentAdjustControls";
+import { LocalMomentBadge } from "@/components/content/LocalMomentBadge";
+import { getPostingTimesForPlatform } from "@/lib/content/posting-times";
 import { cn } from "@/lib/utils";
 import { safeFetchJSON, FetchError } from "@/lib/utils/safe-fetch";
 import { getNigerianCulturalMoments } from "@/lib/content/cultural-calendar";
+import {
+  DEFAULT_CONTENT_PROFILE,
+  type ContentProfile,
+} from "@/lib/content/content-profile";
 import {
   PLATFORM_SHORT_LABELS,
   PLATFORM_META,
@@ -36,6 +46,11 @@ import {
 } from "@/lib/content/format-meta";
 import { RATE_LIMIT_MESSAGE } from "@/lib/errors/gemini-errors";
 import { statusStyle, statusColors, pillarStripeStyle } from "@/styles/tokens";
+import {
+  PROMPT_KEYS,
+  dismissForDay,
+  isDismissedForDay,
+} from "@/lib/billing/prompt-dismiss";
 import type {
   ContentCalendarRow,
   ContentPillarRow,
@@ -98,18 +113,23 @@ function formatMonthLabel(year: number, month: number) {
 
 export function ContentCalendar({
   initialSlots,
-  pillars,
+  pillars: initialPillars,
   plan,
   initialMonth,
   initialYear,
+  contentProfileComplete = true,
+  initialContentProfile,
 }: {
   initialSlots: SlotWithPillar[];
   pillars: ContentPillarRow[];
   plan: PlanId;
   initialMonth: number;
   initialYear: number;
+  contentProfileComplete?: boolean;
+  initialContentProfile?: ContentProfile;
 }) {
   const [slots, setSlots] = useState<SlotWithPillar[]>(initialSlots);
+  const [pillars, setPillars] = useState<ContentPillarRow[]>(initialPillars);
   const [month, setMonth] = useState(initialMonth);
   const [year, setYear] = useState(initialYear);
   const [visibleDayCount, setVisibleDayCount] = useState(DAYS_PER_PAGE);
@@ -118,6 +138,19 @@ export function ContentCalendar({
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [trendingOnly, setTrendingOnly] = useState(false);
   const [active, setActive] = useState<SlotWithPillar | null>(null);
+  const [showProfileNudge, setShowProfileNudge] = useState(false);
+  const [showPillarEditor, setShowPillarEditor] = useState(false);
+  const [contentProfile, setContentProfile] = useState<ContentProfile>(
+    initialContentProfile ?? DEFAULT_CONTENT_PROFILE
+  );
+  const [viewMode, setViewMode] = useState<"month" | "list">("month");
+  const [adjustingCaption, setAdjustingCaption] = useState(false);
+
+  useEffect(() => {
+    if (contentProfileComplete) return;
+    if (isDismissedForDay(PROMPT_KEYS.contentProfileNudgeDay)) return;
+    setShowProfileNudge(true);
+  }, [contentProfileComplete]);
   const [generating, setGenerating] = useState(false);
   const [busy, setBusy] = useState(false);
   // Per-action pending state so a slow AI action (regenerate/repurpose)
@@ -392,21 +425,28 @@ export function ContentCalendar({
     }
   }
 
-  async function regenerateSlot(slot: SlotWithPillar) {
+  async function regenerateSlot(
+    slot: SlotWithPillar,
+    mode?: AdjustMode,
+    instruction?: string
+  ) {
     setRegenerating(true);
     try {
       const data = await safeFetchJSON<{ slot: SlotWithPillar }>(
         `/api/content/calendar/${slot.id}/regenerate`,
-        { method: "POST", timeoutMs: AI_FETCH_TIMEOUT_MS }
+        {
+          method: "POST",
+          timeoutMs: AI_FETCH_TIMEOUT_MS,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(
+            mode ? { mode, instruction: instruction ?? null } : {}
+          ),
+        }
       );
       setSlots((prev) => prev.map((s) => (s.id === slot.id ? data.slot : s)));
       setActive(data.slot);
-      toast.success("Brief regenerated");
+      toast.success(mode ? "Brief adjusted" : "Brief regenerated");
     } catch (e) {
-      // A 429 (Gemini quota/rate-limit) always shows the friendly Banner
-      // message — the API never forwards the raw Gemini error body to the
-      // client (see calendar/[id]/regenerate/route.ts), so this can't leak
-      // a raw JSON dump. Other failures keep the existing toast.
       if (isRateLimited(e)) {
         setNotice({ variant: "error", message: RATE_LIMIT_MESSAGE });
       } else {
@@ -414,6 +454,38 @@ export function ContentCalendar({
       }
     } finally {
       setRegenerating(false);
+    }
+  }
+
+  async function adjustGeneratedCaption(
+    slot: SlotWithPillar,
+    mode: AdjustMode,
+    instruction?: string
+  ) {
+    if (!slot.content_id) return;
+    setAdjustingCaption(true);
+    try {
+      await safeFetchJSON(`/api/content/regenerate`, {
+        method: "POST",
+        timeoutMs: AI_FETCH_TIMEOUT_MS,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contentId: slot.content_id,
+          regenerateField: "caption",
+          mode,
+          instruction: instruction ?? null,
+        }),
+      });
+      setContentRefreshKey((k) => k + 1);
+      toast.success("Caption adjusted");
+    } catch (e) {
+      if (isRateLimited(e)) {
+        setNotice({ variant: "error", message: RATE_LIMIT_MESSAGE });
+      } else {
+        toast.error(e instanceof Error ? e.message : "Could not adjust caption");
+      }
+    } finally {
+      setAdjustingCaption(false);
     }
   }
 
@@ -668,6 +740,32 @@ export function ContentCalendar({
         </div>
       </header>
 
+      {showProfileNudge && (
+        <Banner
+          variant="info"
+          title="Complete your content profile"
+          message="Add your tone, target customer, and key offerings so posts sound like your brand — generation still works with defaults until then."
+          actions={
+            <>
+              <Button size="sm" variant="outline" asChild>
+                <Link href="/settings?tab=business">Edit profile</Link>
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  dismissForDay(PROMPT_KEYS.contentProfileNudgeDay);
+                  setShowProfileNudge(false);
+                }}
+                aria-label="Dismiss"
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            </>
+          }
+        />
+      )}
+
       {notice && (
         <Banner
           variant={notice.variant}
@@ -721,6 +819,36 @@ export function ContentCalendar({
       )}
 
       <RatingsSummaryCard />
+
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div
+          role="tablist"
+          className="inline-flex rounded-md border border-border bg-muted/30 p-1"
+        >
+          {(
+            [
+              { id: "month" as const, label: "Month" },
+              { id: "list" as const, label: "List" },
+            ] as const
+          ).map((v) => (
+            <button
+              key={v.id}
+              type="button"
+              role="tab"
+              aria-selected={viewMode === v.id}
+              onClick={() => setViewMode(v.id)}
+              className={cn(
+                "rounded-sm px-3 py-1.5 text-xs font-medium transition-colors",
+                viewMode === v.id
+                  ? "bg-[var(--bg-elevated)] text-[var(--text-primary)] shadow-sm"
+                  : "text-muted-foreground"
+              )}
+            >
+              {v.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="mb-4 flex flex-wrap gap-2">
         <FilterChip
@@ -822,27 +950,38 @@ export function ContentCalendar({
       {filtered.length === 0 && (
         <div className="space-y-4">
           {generating ? (
-            <div className="flex flex-col items-center justify-center gap-4 py-16">
-              <ZuriSpinner size={40} label="Planning your calendar" />
-              <p className="text-sm text-[var(--text-tertiary)]">
+            <div className="space-y-3 py-6">
+              <div className="grid grid-cols-7 gap-1.5">
+                {Array.from({ length: 28 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="min-h-[72px] animate-pulse rounded-md bg-muted/40"
+                  />
+                ))}
+              </div>
+              <p className="text-center text-sm text-[var(--text-tertiary)]">
                 {generateProgress ?? "Planning your calendar…"}
               </p>
-              <Button disabled>
-                <span className="zuri-spinner zuri-spinner--on-gold mr-2 !size-4" />
-                Generating…
-              </Button>
             </div>
           ) : (
             <>
               <EmptyState
                 variant="content"
-                title={`No posts scheduled for ${monthName.split(" ")[0]}. Generate your content calendar.`}
-                description="Zuri will plan topics, hooks, and briefs across your platforms."
+                title="Your content calendar, ready when you are"
+                description="Get recurring content pillars, Instagram · WhatsApp · X copy for each idea, and Nigerian local-moment suggestions — then copy into your apps to post."
               />
-              <div className="flex justify-center pb-8">
+              <div className="flex flex-wrap justify-center gap-2 pb-8">
+                {!contentProfileComplete && (
+                  <Button variant="outline" asChild>
+                    <Link href="/settings?tab=business">Complete profile</Link>
+                  </Button>
+                )}
+                <Button variant="outline" onClick={() => setShowPillarEditor(true)}>
+                  Edit pillars
+                </Button>
                 <Button onClick={() => void generateMonth()}>
                   <Sparkles className="mr-2 h-4 w-4" />
-                  Generate {monthName.split(" ")[0]} Calendar
+                  Generate {monthName.split(" ")[0]} calendar
                 </Button>
               </div>
             </>
@@ -850,7 +989,17 @@ export function ContentCalendar({
         </div>
       )}
 
-      {filtered.length > 0 && (
+      {filtered.length > 0 && viewMode === "month" && (
+        <ContentMonthGrid
+          year={year}
+          month={month}
+          slots={filtered}
+          activeId={active?.id}
+          onSelect={openSlot}
+        />
+      )}
+
+      {filtered.length > 0 && viewMode === "list" && (
         <div className="space-y-5">
           {visibleDayGroups.map(({ date, slots: daySlots }) => {
             const dayNum = Number(date.slice(8, 10));
@@ -863,20 +1012,12 @@ export function ContentCalendar({
               <div key={date}>
                 <div className="mb-3 flex items-center gap-2 border-b border-[var(--border-solid)] pb-2">
                   <h3 className="text-section-header">{dateLabel}</h3>
-                  {cultural && (
-                    <span
-                      title={cultural}
-                      className="inline-flex items-center gap-1 text-[10px] font-medium text-[#C9A84C]"
-                    >
-                      <Diamond className="h-3 w-3 fill-current" />
-                      {cultural}
-                    </span>
-                  )}
+                  {cultural && <LocalMomentBadge name={cultural} />}
                   <span className="ml-auto text-card-meta">
                     {daySlots.length} {daySlots.length === 1 ? "post" : "posts"}
                   </span>
                 </div>
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {daySlots.map((slot) => (
                     <SlotCard
                       key={slot.id}
@@ -910,6 +1051,13 @@ export function ContentCalendar({
 
       {filtered.length > 0 && (
         <div className="mt-4 flex flex-wrap justify-end gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowPillarEditor(true)}
+            disabled={busy}
+          >
+            Edit pillars
+          </Button>
           {growth && (
             <Button
               variant="outline"
@@ -933,6 +1081,17 @@ export function ContentCalendar({
             {generating
               ? (generateProgress ?? "Generating…")
               : "Regenerate / add more"}
+          </Button>
+        </div>
+      )}
+
+      {filtered.length === 0 && !busy && (
+        <div className="mt-4 flex justify-end">
+          <Button
+            variant="outline"
+            onClick={() => setShowPillarEditor(true)}
+          >
+            Edit pillars
           </Button>
         </div>
       )}
@@ -1088,6 +1247,28 @@ export function ContentCalendar({
                       <p className="text-card-body mt-1">{active.brief}</p>
                     </div>
                   )}
+                  {active.is_cultural_moment && (
+                    <LocalMomentBadge
+                      name={active.cultural_moment_name}
+                      className="mt-2"
+                    />
+                  )}
+                  {active.scheduled_time && (
+                    <div className="mt-3 rounded-md border border-border/60 bg-muted/20 px-3 py-2">
+                      <p className="text-label">Suggested time</p>
+                      <p className="mt-1 text-sm text-[var(--text-primary)]">
+                        {active.scheduled_time.slice(0, 5)} WAT
+                      </p>
+                      <p className="mt-1 text-[11px] text-muted-foreground">
+                        General best-practice timing for Nigerian{" "}
+                        {active.platform} audiences
+                        {getPostingTimesForPlatform(active.platform)?.notes
+                          ? ` — ${getPostingTimesForPlatform(active.platform)?.notes}`
+                          : ""}
+                        . Not based on your account analytics.
+                      </p>
+                    </div>
+                  )}
                   {active.trend_source && (
                     <div className="rounded-md border border-[#C9A84C]/40 bg-[#C9A84C]/5 px-3 py-3">
                       <p className="flex items-center gap-1 text-xs font-medium text-[#C9A84C]">
@@ -1100,12 +1281,29 @@ export function ContentCalendar({
                       <p className="text-card-meta mt-1">{active.trend_source.angle}</p>
                     </div>
                   )}
-                  {(active.status === "generated" || active.content_id) && (
-                    <GeneratedContentView
-                      key={`${active.id}-${contentRefreshKey}`}
-                      contentId={active.content_id}
-                      calendarSlotId={active.id}
+                  {!editing && (
+                    <ContentAdjustControls
+                      loading={regenerating}
+                      onAdjust={(mode, instruction) =>
+                        void regenerateSlot(active, mode, instruction)
+                      }
                     />
+                  )}
+                  {(active.status === "generated" || active.content_id) && (
+                    <>
+                      <GeneratedContentView
+                        key={`${active.id}-${contentRefreshKey}`}
+                        contentId={active.content_id}
+                        calendarSlotId={active.id}
+                        refreshKey={contentRefreshKey}
+                      />
+                      <ContentAdjustControls
+                        loading={adjustingCaption}
+                        onAdjust={(mode, instruction) =>
+                          void adjustGeneratedCaption(active, mode, instruction)
+                        }
+                      />
+                    </>
                   )}
                 </>
               )}
@@ -1159,15 +1357,16 @@ export function ContentCalendar({
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => regenerateSlot(active)}
+                onClick={() => void regenerateSlot(active)}
                 disabled={regenerating}
+                title="Fresh idea in the same pillar"
               >
                 {regenerating ? (
                   <span className="zuri-spinner mr-1 !size-3.5" />
                 ) : (
                   <RefreshCw className="mr-1 h-3.5 w-3.5" />
                 )}
-                Regenerate
+                New idea
               </Button>
               <Button
                 size="sm"
@@ -1279,6 +1478,15 @@ export function ContentCalendar({
             </div>
           </div>
         </div>
+      )}
+      {showPillarEditor && (
+        <PillarEditorPanel
+          pillars={pillars}
+          contentProfile={contentProfile}
+          onPillarsChange={setPillars}
+          onProfileChange={setContentProfile}
+          onClose={() => setShowPillarEditor(false)}
+        />
       )}
     </div>
   );
@@ -1413,6 +1621,12 @@ function SlotCard({
           <span className="text-card-meta">
             {slot.scheduled_time ? slot.scheduled_time.slice(0, 5) : ""}
           </span>
+          {slot.is_cultural_moment && (
+            <LocalMomentBadge
+              name={slot.cultural_moment_name}
+              compact
+            />
+          )}
           {slot.trend_source && (
             <span
               title={trendTip}

@@ -15,10 +15,10 @@ export const CAPTION_RULES: Record<string, CaptionRule> = {
     recommended_chars: 150,
     tone: "visual-first, conversational, emoji-friendly",
     cta_style: "end with a question or direct call to action",
-    hashtag_count: { min: 15, max: 25 },
-    hashtag_position: "end",
+    hashtag_count: { min: 3, max: 7 },
+    hashtag_position: "woven naturally into the caption where possible, rest at end",
     emoji_usage: "encouraged — 2-4 emojis to add energy",
-    structure: "Hook line → 2-3 sentences → CTA → line break → hashtags",
+    structure: "Hook line → 2-3 sentences with natural hashtag use → CTA",
   },
   facebook: {
     max_chars: 63206,

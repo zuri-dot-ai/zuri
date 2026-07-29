@@ -1,6 +1,7 @@
 import { createServiceClient } from "@/lib/supabase/service";
 import { generateBlogPost } from "./blog-generator";
 import { generateCaption } from "./caption-generator";
+import { CONTENT_IMAGES_ENABLED } from "./feature-flags";
 import { getAspectRatio } from "./image-dimensions";
 import {
   generateCarouselSlidePrompts,
@@ -14,6 +15,7 @@ import type {
   GenerationInput,
   GenerationOutput,
   NewsletterContent,
+  PlatformVariants,
   VideoScript,
 } from "./types";
 import { generateVideoScript } from "./video-script-generator";
@@ -32,6 +34,7 @@ export async function runGenerationPipeline(
   let carouselImageUrls: string[] = [];
   let caption: string | undefined;
   let hashtags: string[] = [];
+  let platformVariants: PlatformVariants | undefined;
   let blogContent: BlogContent | undefined;
   let newsletterContent: NewsletterContent | undefined;
   let videoScript: VideoScript | undefined;
@@ -41,7 +44,7 @@ export async function runGenerationPipeline(
   const isBlogFormat = input.formatType === "blog_post";
   const isNewsletterFormat = input.formatType === "newsletter";
 
-  if (isImageFormat) {
+  if (isImageFormat && CONTENT_IMAGES_ENABLED) {
     try {
       if (input.formatType === "carousel") {
         const slides = await generateCarouselSlidePrompts(input, 4);
@@ -52,8 +55,11 @@ export async function runGenerationPipeline(
         );
         const successful = results
           .filter(
-            (r): r is PromiseFulfilledResult<Awaited<ReturnType<typeof generateImageWithSafetyRetry>>> =>
-              r.status === "fulfilled" && !!r.value.base64
+            (
+              r
+            ): r is PromiseFulfilledResult<
+              Awaited<ReturnType<typeof generateImageWithSafetyRetry>>
+            > => r.status === "fulfilled" && !!r.value.base64
           )
           .map((r) => r.value);
 
@@ -109,13 +115,13 @@ export async function runGenerationPipeline(
     try {
       videoScript = await generateVideoScript(input);
       warnings.push(
-        "Video generation is coming soon. Your script is ready for when Higgsfield launches."
+        "Video generation is coming soon. Your script is ready — copy it for now."
       );
       if (videoScript.caption_for_post) {
         caption = videoScript.caption_for_post;
         hashtags = videoScript.hashtags ?? [];
       }
-      if (videoScript.thumbnail_url && !imageUrl) {
+      if (CONTENT_IMAGES_ENABLED && videoScript.thumbnail_url && !imageUrl) {
         imageUrl = videoScript.thumbnail_url;
       }
     } catch (err) {
@@ -131,9 +137,7 @@ export async function runGenerationPipeline(
       blogContent = await generateBlogPost(input);
     } catch (err) {
       console.error("Blog generation failed:", err);
-      warnings.push(
-        "Blog generation encountered an issue. Please try again."
-      );
+      warnings.push("Blog generation encountered an issue. Please try again.");
     }
   }
 
@@ -153,6 +157,7 @@ export async function runGenerationPipeline(
       const result = await generateCaption(input, imageUrl);
       caption = result.caption;
       hashtags = result.hashtags;
+      platformVariants = result.variants;
     } catch (err) {
       console.error("Caption generation failed:", err);
       warnings.push(
@@ -179,6 +184,7 @@ export async function runGenerationPipeline(
       newsletter_content: newsletterContent ?? null,
       video_script: videoScript ?? null,
       thumbnail_url: videoScript?.thumbnail_url ?? null,
+      platform_variants: platformVariants ?? null,
       status,
     })
     .select()
@@ -199,7 +205,7 @@ export async function runGenerationPipeline(
       .eq("id", input.calendarSlotId);
   }
 
-  if (imageUrl || carouselImageUrls.length > 0) {
+  if (CONTENT_IMAGES_ENABLED && (imageUrl || carouselImageUrls.length > 0)) {
     const imageCount =
       carouselImageUrls.length > 0 ? carouselImageUrls.length : 1;
     await supabase.rpc("increment_usage", {
@@ -231,6 +237,7 @@ export async function runGenerationPipeline(
     formatType: input.formatType,
     caption,
     hashtags,
+    platformVariants,
     imageUrl,
     imagePromptUsed,
     carouselImageUrls:

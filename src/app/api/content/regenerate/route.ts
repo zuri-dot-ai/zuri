@@ -4,6 +4,7 @@ import {
   requireContentUser,
 } from "@/lib/content/api-helpers";
 import { generateCaption } from "@/lib/content/caption-generator";
+import { CONTENT_IMAGES_ENABLED } from "@/lib/content/feature-flags";
 import { getAspectRatio } from "@/lib/content/image-dimensions";
 import { generateImagePrompt } from "@/lib/content/image-prompt-generator";
 import { generateImageWithSafetyRetry } from "@/lib/content/imagen";
@@ -28,6 +29,35 @@ import { ERROR_MESSAGES } from "@/lib/errors/messages";
 export const maxDuration = 120;
 
 const VALID_FIELDS = new Set(["caption", "hashtags", "image", "all"]);
+const ADJUST_MODES = new Set([
+  "punchier",
+  "shorter",
+  "more_formal",
+  "more_casual",
+  "custom",
+]);
+
+function adjustInstruction(
+  mode: string | undefined,
+  custom: string | undefined
+): string | null {
+  switch (mode) {
+    case "punchier":
+      return "Revise to be punchier and more attention-grabbing. Keep the same idea and direction — do not invent a new topic.";
+    case "shorter":
+      return "Make it significantly shorter while keeping the same idea and CTA direction.";
+    case "more_formal":
+      return "Make the tone more formal and polished. Keep the same idea.";
+    case "more_casual":
+      return "Make the tone more casual and conversational. Keep the same idea.";
+    case "custom":
+      return custom?.trim()
+        ? `Apply this instruction while keeping the same core idea: ${custom.trim().slice(0, 400)}`
+        : null;
+    default:
+      return null;
+  }
+}
 
 export async function POST(req: Request) {
   const auth = await requireContentUser();
@@ -46,8 +76,15 @@ export async function POST(req: Request) {
 
   const contentId = String(body.contentId ?? body.content_id ?? "");
   const regenerateField = String(
-    body.regenerateField ?? body.regenerate_field ?? ""
+    body.regenerateField ?? body.regenerate_field ?? "caption"
   );
+  const adjustMode =
+    typeof body.mode === "string" && ADJUST_MODES.has(body.mode)
+      ? body.mode
+      : undefined;
+  const customInstruction =
+    typeof body.instruction === "string" ? body.instruction : undefined;
+  const instruction = adjustInstruction(adjustMode, customInstruction);
 
   if (!contentId) {
     return NextResponse.json(
@@ -62,6 +99,16 @@ export async function POST(req: Request) {
           "regenerateField must be one of: caption, hashtags, image, all",
       },
       { status: 400 }
+    );
+  }
+
+  if (
+    (regenerateField === "image" || regenerateField === "all") &&
+    !CONTENT_IMAGES_ENABLED
+  ) {
+    return NextResponse.json(
+      { error: "Image generation is temporarily unavailable." },
+      { status: 403 }
     );
   }
 
@@ -188,15 +235,68 @@ export async function POST(req: Request) {
       regenerateField === "hashtags" ||
       regenerateField === "all"
     ) {
-      const { caption, hashtags } = await generateCaption(
-        input,
-        (updates.image_url as string | undefined) ?? content.image_url ?? undefined
-      );
-      if (regenerateField === "hashtags") {
-        updates.hashtags = hashtags;
+      // Contextual adjust: revise existing copy rather than inventing a new idea
+      if (instruction && content.caption) {
+        const { nvidiaJSON } = await import("@/lib/content/nvidia-llm");
+        const { formatContentProfileForPrompt } = await import(
+          "@/lib/content/content-profile"
+        );
+        const profileBlock = formatContentProfileForPrompt(
+          brand.content_profile
+        );
+        const adjusted = await nvidiaJSON<{
+          caption: string;
+          hashtags: string[];
+          variants: {
+            instagram: { caption: string; hashtags: string[] };
+            whatsapp: { caption: string };
+            x: { caption: string };
+          };
+        }>(
+          `You are revising social copy for ${brand.business_name}.
+${profileBlock}
+
+ORIGINAL TOPIC: ${input.topic}
+ORIGINAL HOOK: ${input.hook}
+ORIGINAL BRIEF: ${input.brief}
+ORIGINAL CAPTION:
+${content.caption}
+
+INSTRUCTION: ${instruction}
+
+Keep the same underlying idea. Output ONLY valid JSON:
+{
+  "caption": "revised primary caption",
+  "hashtags": ["#a","#b"],
+  "variants": {
+    "instagram": { "caption": "...", "hashtags": ["#a","#b","#c"] },
+    "whatsapp": { "caption": "short, no hashtags" },
+    "x": { "caption": "under 280 chars" }
+  }
+}`,
+          "flash"
+        );
+        if (regenerateField === "hashtags") {
+          updates.hashtags = adjusted.hashtags ?? content.hashtags;
+        } else {
+          updates.caption = adjusted.caption;
+          updates.hashtags = adjusted.hashtags ?? [];
+          updates.platform_variants = adjusted.variants ?? null;
+        }
       } else {
-        updates.caption = caption;
-        updates.hashtags = hashtags;
+        const { caption, hashtags, variants } = await generateCaption(
+          input,
+          (updates.image_url as string | undefined) ??
+            content.image_url ??
+            undefined
+        );
+        if (regenerateField === "hashtags") {
+          updates.hashtags = hashtags;
+        } else {
+          updates.caption = caption;
+          updates.hashtags = hashtags;
+          updates.platform_variants = variants;
+        }
       }
     }
 

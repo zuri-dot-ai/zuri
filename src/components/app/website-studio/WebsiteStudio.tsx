@@ -130,6 +130,7 @@ export function WebsiteStudio({
   plan,
   needsReview: initialNeedsReview,
   hasOpenCustomRequest = false,
+  templateId = null,
 }: {
   websiteId: string;
   filledPlaceholders: Record<string, string>;
@@ -148,6 +149,7 @@ export function WebsiteStudio({
   plan: string;
   needsReview: boolean;
   hasOpenCustomRequest?: boolean;
+  templateId?: string | null;
 }) {
   const router = useRouter();
   const [activePanel, setActivePanel] = useState<PanelId | null>(null);
@@ -403,6 +405,7 @@ export function WebsiteStudio({
           onNeedsReview={setNeedsReview}
           focusFieldId={focusFieldId}
           singleGroupId={group.id}
+          canSave={Boolean(templateId)}
         />
       );
     }
