@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -10,7 +9,6 @@ import {
   ChevronRight,
   Code2,
   Eye,
-  ExternalLink,
   FileText,
   HelpCircle,
   ImageIcon,
@@ -23,9 +21,7 @@ import {
   Share2,
   Sparkles,
   Star,
-  Undo2,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { UpgradeSheet } from "@/components/app/upgrade-sheet";
@@ -56,7 +52,6 @@ import { PublishPanel } from "./PublishPanel";
 import { PreviewFrame } from "./PreviewFrame";
 import { ImageSwapModal } from "./ImageSwapModal";
 import { LinkEditorModal } from "./LinkEditorModal";
-import { ReviewChecklist } from "./ReviewChecklist";
 import { StudioModal } from "./StudioModal";
 import { CustomDomainPanel } from "./CustomDomainPanel";
 import { CustomSiteCTA } from "@/components/website/CustomSiteCTA";
@@ -91,6 +86,12 @@ type LinkModalState = {
   label?: string;
 };
 
+type SectionItem = {
+  id: PanelId;
+  label: string;
+  icon: React.ElementType;
+};
+
 const SECTION_ICONS: Record<string, React.ElementType> = {
   hero: Sparkles,
   about: Info,
@@ -102,6 +103,19 @@ const SECTION_ICONS: Record<string, React.ElementType> = {
   business: Building2,
   other: FileText,
 };
+
+/** Left-panel content groups in display order. FAQ/Other only render when present. */
+const LEFT_GROUP_ORDER = [
+  "hero",
+  "about",
+  "services",
+  "testimonials",
+  "faq",
+  "contact",
+  "social",
+  "business",
+  "other",
+] as const;
 
 const PANEL_SIZE: Partial<Record<PanelId, "md" | "lg" | "xl">> = {
   images: "lg",
@@ -162,7 +176,6 @@ export function WebsiteStudio({
   const [published, setPublished] = useState(isPublished);
   const [liveSlug, setLiveSlug] = useState(slug);
   const [previewKey, setPreviewKey] = useState(0);
-  const [portalReady, setPortalReady] = useState(false);
   const [busy, setBusy] = useState(false);
   const [busyAction, setBusyAction] = useState<"publish" | "unpublish" | null>(
     null
@@ -178,7 +191,6 @@ export function WebsiteStudio({
       "Pro unlocks a live subdomain — editing and preview stay free on all plans.",
     requiredPlan: "Pro",
   });
-  const [reviewOpen, setReviewOpen] = useState(false);
   const [imageModalSlot, setImageModalSlot] = useState<string | null>(null);
   const [linkModal, setLinkModal] = useState<LinkModalState | null>(null);
   const [highlightSection, setHighlightSection] = useState<string | null>(null);
@@ -205,9 +217,26 @@ export function WebsiteStudio({
 
   const effectiveNeedsReview = needsReview || reviewIssues.length > 0;
 
-  useEffect(() => {
-    setPortalReady(true);
-  }, []);
+  const leftPanelItems = useMemo((): SectionItem[] => {
+    const byId = new Map(contentGroups.map((g) => [g.id, g]));
+    return LEFT_GROUP_ORDER.filter((id) => byId.has(id)).map((id) => {
+      const g = byId.get(id)!;
+      return {
+        id: g.id as PanelId,
+        label: g.label,
+        icon: SECTION_ICONS[g.id] ?? FileText,
+      };
+    });
+  }, [contentGroups]);
+
+  const rightPanelItems: SectionItem[] = [
+    { id: "images", label: "Images", icon: ImageIcon },
+    { id: "links", label: "Links", icon: Link2 },
+    { id: "embeds", label: "Embeds", icon: Code2 },
+    { id: "theme", label: "Theme", icon: Palette },
+    { id: "publish", label: "Publish", icon: Rocket },
+    { id: "settings", label: "Domain", icon: Settings },
+  ];
 
   useEffect(() => {
     const hasBrokenImages = Object.values(initialImages).some((img) =>
@@ -302,7 +331,6 @@ export function WebsiteStudio({
   }
 
   function jumpToIssue(issue: ReviewIssue) {
-    setReviewOpen(false);
     setActivePanel(issue.sectionId as PanelId);
     if (issue.kind === "image") {
       setImageModalSlot(issue.target);
@@ -382,16 +410,6 @@ export function WebsiteStudio({
     }
   }
 
-  const staticPanels: { id: PanelId; label: string; icon: React.ElementType }[] =
-    [
-      { id: "images", label: "Images", icon: ImageIcon },
-      { id: "links", label: "Links", icon: Link2 },
-      { id: "embeds", label: "Embeds", icon: Code2 },
-      { id: "theme", label: "Theme", icon: Palette },
-      { id: "publish", label: "Publish", icon: Rocket },
-      { id: "settings", label: "Domain", icon: Settings },
-    ];
-
   function renderPanelBody(id: PanelId) {
     if (contentGroups.some((g) => g.id === id)) {
       const group = contentGroups.find((g) => g.id === id)!;
@@ -456,9 +474,11 @@ export function WebsiteStudio({
           previewUrl={previewUrl}
           liveUrl={liveUrl}
           busy={busy}
+          issues={reviewIssues}
           onPublish={publish}
           onUnpublish={unpublish}
           onUpgrade={() => openUpgrade()}
+          onJump={jumpToIssue}
         />
       );
     }
@@ -491,24 +511,11 @@ export function WebsiteStudio({
     );
   }
 
-  const sidebarItems: { id: PanelId; label: string; icon: React.ElementType }[] =
-    [
-      ...contentGroups.map((g) => ({
-        id: g.id as PanelId,
-        label: g.label,
-        icon: SECTION_ICONS[g.id] ?? FileText,
-      })),
-      ...staticPanels.map((p) => ({ id: p.id, label: p.label, icon: p.icon })),
-    ];
-
+  const allPanelItems = [...leftPanelItems, ...rightPanelItems];
   const activeLabel =
-    sidebarItems.find((i) => i.id === activePanel)?.label ?? "Edit";
+    allPanelItems.find((i) => i.id === activePanel)?.label ?? "Edit";
 
-  function renderSectionButton(item: {
-    id: PanelId;
-    label: string;
-    icon: React.ElementType;
-  }) {
+  function renderSectionButton(item: SectionItem) {
     const Icon = item.icon;
     const selected = activePanel === item.id;
     return (
@@ -517,7 +524,7 @@ export function WebsiteStudio({
         type="button"
         onClick={() => openPanel(item.id)}
         className={cn(
-          "flex w-full items-center gap-3 px-4 py-3.5 text-left text-sm font-medium [transition-duration:var(--transition-fast)] transition-colors",
+          "flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm font-medium [transition-duration:var(--transition-fast)] transition-colors",
           selected
             ? "bg-surface text-gold"
             : "text-foreground hover:bg-surface/50"
@@ -530,87 +537,39 @@ export function WebsiteStudio({
     );
   }
 
+  function renderSidePanel(items: SectionItem[]) {
+    return (
+      <aside className="zuri-card divide-y divide-[var(--border-solid)] p-0">
+        {items.map((item) => renderSectionButton(item))}
+      </aside>
+    );
+  }
+
   return (
     <div className="flex min-h-[calc(100vh-6rem)] flex-col gap-4">
-      <header className="page-head flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div className="space-y-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1>Your Website</h1>
-            <Badge variant={published ? "success" : "muted"}>
-              {published ? "Live" : "Draft"}
-            </Badge>
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setReviewOpen((o) => !o)}
-                className="inline-flex"
-              >
-                {effectiveNeedsReview ? (
-                  <Badge
-                    variant="outline"
-                    className="cursor-pointer border-amber-500/50 text-amber-600 hover:bg-amber-500/10"
-                  >
-                    Needs review ({reviewIssues.length})
-                  </Badge>
-                ) : (
-                  <Badge
-                    variant="outline"
-                    className="cursor-pointer border-emerald-500/40 text-emerald-600"
-                  >
-                    Ready
-                  </Badge>
-                )}
-              </button>
-              <ReviewChecklist
-                open={reviewOpen}
-                issues={reviewIssues}
-                onClose={() => setReviewOpen(false)}
-                onJump={jumpToIssue}
-              />
-            </div>
-            {plan === "free" && (
-              <Badge variant="outline">Free — preview only</Badge>
-            )}
-          </div>
-          <p className="text-card-body capitalize">
-            {archetype?.replace(/-/g, " ") ?? "Custom template"} ·{" "}
-            {activeTheme.replace("-", " ")}
-          </p>
-          {published && liveUrl ? (
-            <p className="text-card-meta font-mono text-xs">
-              {liveUrl.replace(/^https?:\/\//, "")}
-            </p>
-          ) : null}
-        </div>
-        <div className="hidden flex-wrap gap-2 lg:flex">
-          {previewUrl && !published && (
+      <header className="page-head flex flex-row items-center justify-between gap-3">
+        <h1>Your Website</h1>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {previewUrl ? (
             <Button variant="outline" size="sm" asChild>
               <a href={previewUrl} target="_blank" rel="noreferrer">
                 <Eye className="size-4" /> Preview
               </a>
             </Button>
-          )}
-          {liveUrl && published && (
-            <Button variant="outline" size="sm" asChild>
-              <a href={liveUrl} target="_blank" rel="noreferrer">
-                <ExternalLink className="size-4" /> Visit
-              </a>
-            </Button>
-          )}
-          {published && canPublish ? (
+          ) : (
             <Button
               variant="outline"
               size="sm"
-              onClick={unpublish}
-              disabled={busy}
-              className="border-destructive/40 text-destructive hover:bg-destructive/10"
+              onClick={openFullScreenPreview}
+              disabled={!previewHandle}
             >
-              {busyAction === "unpublish" ? (
-                <span className="zuri-spinner !size-3.5" />
-              ) : (
-                <Undo2 className="size-4" />
-              )}
-              {busyAction === "unpublish" ? "Unpublishing…" : "Unpublish"}
+              <Eye className="size-4" /> Preview
+            </Button>
+          )}
+          {published ? (
+            <Button size="sm" onClick={() => openPanel("publish")} disabled={busy}>
+              <Rocket className="size-4" />
+              Publish
             </Button>
           ) : (
             <Button size="sm" onClick={publish} disabled={busy}>
@@ -629,21 +588,10 @@ export function WebsiteStudio({
         </div>
       </header>
 
-      <div className="hidden min-h-0 flex-1 gap-4 lg:grid lg:grid-cols-[minmax(280px,380px)_1fr]">
-        <aside className="zuri-card flex max-h-[calc(100vh-10rem)] flex-col overflow-hidden p-0">
-          <div className="min-h-0 flex-1 overflow-y-auto divide-y divide-[var(--border-solid)]">
-            {sidebarItems.map((item) => renderSectionButton(item))}
-          </div>
-          <div className="border-t border-[var(--border-solid)] p-4">
-            <CustomSiteCTA
-              context="editor"
-              compact
-              hasOpenRequest={hasOpenCustomRequest}
-            />
-          </div>
-        </aside>
+      <div className="flex min-h-0 flex-1 flex-col gap-4 lg:grid lg:grid-cols-[minmax(280px,320px)_minmax(0,1fr)_minmax(280px,320px)]">
+        {renderSidePanel(leftPanelItems)}
 
-        <div className="min-h-[70vh]">
+        <div className="min-h-[50vh] lg:min-h-[70vh]">
           <PreviewFrame
             handle={previewHandle}
             refreshKey={previewKey}
@@ -653,75 +601,15 @@ export function WebsiteStudio({
             onLinkSlotClick={onLinkSlotClick}
           />
         </div>
+
+        {renderSidePanel(rightPanelItems)}
       </div>
 
-      <div className="flex flex-1 flex-col lg:hidden">
-        <div className="space-y-1">
-          {sidebarItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => openPanel(item.id)}
-                className="content-card flex w-full items-center gap-3 px-4 py-3.5 text-left text-sm font-medium"
-              >
-                <Icon className="size-4 shrink-0 text-muted-foreground" />
-                <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-              </button>
-            );
-          })}
-          <div className="pt-3">
-            <CustomSiteCTA
-              context="editor"
-              compact
-              hasOpenRequest={hasOpenCustomRequest}
-            />
-          </div>
-
-          {published && canPublish ? (
-            <Button
-              variant="outline"
-              className="mt-4 w-full border-destructive/40 text-destructive"
-              onClick={unpublish}
-              disabled={busy}
-            >
-              {busyAction === "unpublish" ? (
-                <span className="zuri-spinner !size-3.5" />
-              ) : (
-                <Undo2 className="size-4" />
-              )}
-              Unpublish
-            </Button>
-          ) : (
-            <Button className="mt-4 w-full" onClick={publish} disabled={busy}>
-              {busyAction === "publish" ? (
-                <span className="zuri-spinner !size-3.5" />
-              ) : (
-                <Rocket className="size-4" />
-              )}
-              {canPublish ? "Publish" : "Upgrade"}
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {portalReady &&
-        previewUrl &&
-        createPortal(
-          <button
-            type="button"
-            onClick={openFullScreenPreview}
-            aria-label="Preview site"
-            title="Preview site"
-            className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 z-40 flex items-center gap-2 rounded-full border border-[var(--border-solid)] bg-[var(--bg-elevated)] px-4 py-3 text-sm font-medium text-foreground shadow-[0_8px_24px_rgba(0,0,0,0.35)] transition-colors hover:text-gold lg:hidden"
-          >
-            <Eye className="size-[18px]" />
-            Preview
-          </button>,
-          document.body
-        )}
+      <CustomSiteCTA
+        context="editor"
+        compact
+        hasOpenRequest={hasOpenCustomRequest}
+      />
 
       <StudioModal
         open={activePanel !== null}

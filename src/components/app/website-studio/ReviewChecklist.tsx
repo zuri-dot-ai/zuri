@@ -4,17 +4,71 @@ import { AlertCircle, CheckCircle2, X } from "lucide-react";
 import type { ReviewIssue } from "@/lib/website/review-issues";
 import { cn } from "@/lib/utils";
 
+function IssueList({
+  issues,
+  onJump,
+}: {
+  issues: ReviewIssue[];
+  onJump: (issue: ReviewIssue) => void;
+}) {
+  if (issues.length === 0) {
+    return (
+      <li className="flex items-center gap-2 px-2 py-3 text-sm text-emerald-500">
+        <CheckCircle2 className="size-4" />
+        Ready to publish
+      </li>
+    );
+  }
+
+  return (
+    <>
+      {issues.map((issue) => (
+        <li key={issue.id}>
+          <button
+            type="button"
+            onClick={() => onJump(issue)}
+            className={cn(
+              "flex w-full items-start gap-2 rounded-sm px-2 py-2 text-left text-sm",
+              "text-muted-foreground hover:bg-surface hover:text-foreground"
+            )}
+          >
+            <AlertCircle className="mt-0.5 size-3.5 shrink-0 text-amber-500" />
+            <span>{issue.label}</span>
+          </button>
+        </li>
+      ))}
+    </>
+  );
+}
+
 export function ReviewChecklist({
-  open,
+  open = true,
   issues,
   onClose,
   onJump,
+  variant = "popover",
 }: {
-  open: boolean;
+  open?: boolean;
   issues: ReviewIssue[];
-  onClose: () => void;
+  onClose?: () => void;
   onJump: (issue: ReviewIssue) => void;
+  variant?: "popover" | "inline";
 }) {
+  if (variant === "inline") {
+    return (
+      <div className="content-card space-y-2 p-4">
+        <p className="text-sm font-medium">
+          {issues.length === 0
+            ? "Review checklist — all clear"
+            : `Review checklist — ${issues.length} to review`}
+        </p>
+        <ul className="max-h-56 overflow-y-auto">
+          <IssueList issues={issues} onJump={onJump} />
+        </ul>
+      </div>
+    );
+  }
+
   if (!open) return null;
 
   return (
@@ -23,37 +77,18 @@ export function ReviewChecklist({
         <p className="text-sm font-medium">
           {issues.length === 0 ? "All clear" : `${issues.length} to review`}
         </p>
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-sm p-1 text-muted-foreground hover:bg-surface"
-        >
-          <X className="size-3.5" />
-        </button>
+        {onClose ? (
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-sm p-1 text-muted-foreground hover:bg-surface"
+          >
+            <X className="size-3.5" />
+          </button>
+        ) : null}
       </div>
       <ul className="max-h-72 overflow-y-auto p-2">
-        {issues.length === 0 ? (
-          <li className="flex items-center gap-2 px-2 py-3 text-sm text-emerald-500">
-            <CheckCircle2 className="size-4" />
-            Ready to publish
-          </li>
-        ) : (
-          issues.map((issue) => (
-            <li key={issue.id}>
-              <button
-                type="button"
-                onClick={() => onJump(issue)}
-                className={cn(
-                  "flex w-full items-start gap-2 rounded-sm px-2 py-2 text-left text-sm",
-                  "text-muted-foreground hover:bg-surface hover:text-foreground"
-                )}
-              >
-                <AlertCircle className="mt-0.5 size-3.5 shrink-0 text-amber-500" />
-                <span>{issue.label}</span>
-              </button>
-            </li>
-          ))
-        )}
+        <IssueList issues={issues} onJump={onJump} />
       </ul>
     </div>
   );

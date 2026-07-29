@@ -4,6 +4,8 @@ import { AlertCircle, CheckCircle2, ExternalLink, Rocket, Undo2 } from "lucide-r
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getSiteUrlMode } from "@/lib/website/public-site-url";
+import type { ReviewIssue } from "@/lib/website/review-issues";
+import { ReviewChecklist } from "./ReviewChecklist";
 
 export function PublishPanel({
   published,
@@ -12,9 +14,11 @@ export function PublishPanel({
   previewUrl,
   liveUrl,
   busy,
+  issues,
   onPublish,
   onUnpublish,
   onUpgrade,
+  onJump,
 }: {
   published: boolean;
   canPublish: boolean;
@@ -22,9 +26,11 @@ export function PublishPanel({
   previewUrl: string | null;
   liveUrl: string | null;
   busy: boolean;
+  issues: ReviewIssue[];
   onPublish: () => void;
   onUnpublish: () => void;
   onUpgrade: () => void;
+  onJump: (issue: ReviewIssue) => void;
 }) {
   const urlMode = getSiteUrlMode();
   const publishLabel =
@@ -51,6 +57,12 @@ export function PublishPanel({
 
   return (
     <div className="space-y-6">
+      <ReviewChecklist
+        variant="inline"
+        issues={issues}
+        onJump={onJump}
+      />
+
       <div className="content-card space-y-3 p-4">
         {checks.map((c) => (
           <div key={c.label} className="flex items-start gap-2">
