@@ -44,6 +44,15 @@ export function OnboardingHeroPanel({ scrollProgress }: OnboardingHeroPanelProps
     const el = videoRef.current;
     if (!el) return;
 
+    // fetchPriority isn't in React's VideoHTMLAttributes types yet (as of
+    // this Next/React version) — set it as a raw DOM property instead of a
+    // JSX prop to avoid a TS build error. Valid HTML attribute at runtime.
+    try {
+      (el as HTMLVideoElement & { fetchPriority?: string }).fetchPriority = "high";
+    } catch {
+      /* older browsers without the property — harmless no-op */
+    }
+
     let cancelled = false;
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
     let windowLoadRetryDone = false;
@@ -197,8 +206,6 @@ export function OnboardingHeroPanel({ scrollProgress }: OnboardingHeroPanelProps
           loop
           playsInline
           preload="auto"
-          // Compete harder for bandwidth against JS/CSS/fonts on cold loads.
-          fetchPriority="high"
         >
           <source src={HERO_VIDEO_SRC} type="video/mp4" />
         </video>
