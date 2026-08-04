@@ -739,6 +739,22 @@
       scrollbar-color: rgba(201, 162, 39, 0.18) transparent;
     }
   }
+  .onboarding-scroll-fade {
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      black 20px,
+      black calc(100% - 20px),
+      transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      black 20px,
+      black calc(100% - 20px),
+      transparent 100%
+    );
+  }
   .onboarding-shell::before {
     content: "";
     position: fixed;
@@ -1019,3 +1035,20 @@
 .animate-marquee {
   animation: marquee 25s linear infinite;
 }
+
+.onboarding-scroll-fade {
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      black 20px,
+      black calc(100% - 20px),
+      transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      black 20px,
+      black calc(100% - 20px),
+      transparent 100%
+    );
+  }

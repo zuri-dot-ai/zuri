@@ -1,12 +1,24 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { motion, useTransform, type MotionValue } from "framer-motion";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { cn } from "@/lib/utils";
 
 const HERO_VIDEO_SRC = "/onboarding/onboarding-hero.mp4";
 const HERO_POSTER_SRC = "/onboarding/onboarding-hero.png";
 const MAX_RETRIES = 2;
+
+interface OnboardingHeroPanelProps {
+  /**
+   * 0→1 scroll progress of the current step's content column. When
+   * provided, the hero's gold glow subtly intensifies as the user
+   * scrolls, so the two panels read as connected rather than static-left
+   * vs scrolling-right. Optional — omit or pass undefined to disable
+   * (e.g. under prefers-reduced-motion).
+   */
+  scrollProgress?: MotionValue<number>;
+}
 
 /**
  * Desktop split hero for onboarding shells (`/start`, `/agencies/apply`).
@@ -15,13 +27,22 @@ const MAX_RETRIES = 2;
  * network blips retry load()/play(). NotSupportedError (unsupported H.264
  * profile/level or empty source) gives up immediately — poster remains.
  */
-export function OnboardingHeroPanel() {
+export function OnboardingHeroPanel({ scrollProgress }: OnboardingHeroPanelProps) {
   const reducedMotion = useReducedMotion();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoVisible, setVideoVisible] = useState(false);
   const [videoDisabled, setVideoDisabled] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
   const retriesRef = useRef(0);
+
+  // Fallback static value (0) when no scroll motion value is supplied —
+  // keeps the hooks below unconditional per rules-of-hooks.
+  const fallbackProgress = useRef<MotionValue<number> | null>(null);
+  const glowOpacity = useTransform(
+    scrollProgress ?? fallbackProgress.current ?? scrollProgress!,
+    [0, 1],
+    [0.12, 0.32]
+  );
 
   useEffect(() => {
     if (reducedMotion || videoDisabled) {
@@ -59,7 +80,6 @@ export function OnboardingHeroPanel() {
               ? String((err as { name: unknown }).name)
               : "";
           if (name === "AbortError") return;
-          // Unsupported codec/container — retries will never help.
           if (name === "NotSupportedError") {
             giveUp();
             return;
@@ -91,7 +111,6 @@ export function OnboardingHeroPanel() {
     const onError = () => {
       if (cancelled || gaveUp) return;
       setVideoVisible(false);
-      // MEDIA_ERR_SRC_NOT_SUPPORTED === 4
       if (el.error?.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED) {
         giveUp();
         return;
@@ -158,6 +177,20 @@ export function OnboardingHeroPanel() {
       )}
 
       <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/20" />
+
+      {/* Scroll-linked gold glow — subtly intensifies as the questionnaire
+          column scrolls, tying the two panels together. No-op (static
+          0.12 opacity) when scrollProgress isn't supplied. */}
+      {scrollProgress && (
+        <motion.div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            opacity: glowOpacity,
+            background:
+              "radial-gradient(ellipse 60% 50% at 50% 30%, rgba(201,168,76,0.35) 0%, transparent 70%)",
+          }}
+        />
+      )}
     </aside>
   );
 }

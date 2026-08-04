@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/ui/logo";
 import { marketingUrl } from "@/lib/marketing-url";
@@ -62,8 +62,9 @@ interface OnboardingShellProps {
  * Tablet/mobile: content only, no image in the DOM.
  * Back / Continue live in the top-right header.
  *
- * PC (lg+): locked to the viewport — no page scroll. Steps must fit.
- * Below lg: content may scroll (keyboard / small phones).
+ * Content column scrolls internally at every breakpoint — the hero panel
+ * (desktop only) stays pinned at 30% width while the questionnaire scrolls
+ * beneath the fixed header. Scroll resets to top on every step change.
  */
 export function OnboardingShell({
   step,
@@ -83,6 +84,7 @@ export function OnboardingShell({
   const [launching, setLaunching] = useState(false);
   const [continueGleam, setContinueGleam] = useState(false);
   const prevCanContinueRef = useRef(canContinue);
+  const contentScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const wasEnabled = prevCanContinueRef.current;
@@ -94,6 +96,18 @@ export function OnboardingShell({
     const t = window.setTimeout(() => setContinueGleam(false), 900);
     return () => window.clearTimeout(t);
   }, [canContinue, reducedMotion]);
+
+  // Reset scroll position on every step change so a tall step never
+  // renders mid-scroll after navigating from another tall step.
+  useEffect(() => {
+    contentScrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+  }, [step]);
+
+  // Scroll-linked hero reaction (desktop only — panel is hidden below lg,
+  // and this is a no-op if the container never scrolls). Tracks progress
+  // through the *current* step's content.
+  const { scrollYProgress } = useScroll({ container: contentScrollRef });
+  const heroGlowProgress = useTransform(scrollYProgress, [0, 1], [0, 1]);
 
   const variants = reducedMotion
     ? {
@@ -122,7 +136,7 @@ export function OnboardingShell({
 
   return (
     <div className="onboarding-shell flex h-dvh max-h-dvh w-full overflow-hidden">
-      <OnboardingHeroPanel />
+      <OnboardingHeroPanel scrollProgress={reducedMotion ? undefined : heroGlowProgress} />
 
       <div className="flex h-dvh max-h-dvh w-full flex-1 flex-col overflow-hidden px-5 sm:px-6 lg:w-[70%] lg:px-10 xl:px-14">
         <header className="onboarding-safe-top z-20 shrink-0 -mx-5 bg-[var(--bg-primary)] px-5 pb-4 pt-3 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
@@ -180,14 +194,16 @@ export function OnboardingShell({
         </header>
 
         {/*
-          lg+: overflow-hidden — no scroll; steps must fit the viewport.
-          max-lg: overflow-y-auto for phones / tablets / keyboard.
+          Scrolls at every breakpoint. Hero stays pinned at 30% width on
+          desktop (it lives outside this column); only this content
+          column scrolls when a step's height exceeds the viewport.
+          Fade mask (onboarding-scroll-fade, in globals.css) feathers
+          content near the header/footer edges instead of hard-cutting it.
         */}
         <div
+          ref={contentScrollRef}
           className={cn(
-            "onboarding-scroll mx-auto flex min-h-0 w-full max-w-[840px] flex-1 flex-col pb-6 pt-6 lg:pt-8",
-            "max-lg:overflow-y-auto max-lg:overscroll-contain max-lg:pr-3",
-            "lg:overflow-hidden"
+            "onboarding-scroll onboarding-scroll-fade mx-auto flex min-h-0 w-full max-w-[840px] flex-1 flex-col overflow-y-auto overscroll-contain pb-6 pt-6 pr-3 lg:pt-8",
           )}
         >
           <div
@@ -207,7 +223,7 @@ export function OnboardingShell({
                 animate="center"
                 exit="exit"
                 transition={{ duration: 0.22, ease: "easeInOut" }}
-                className="min-h-0 w-full lg:overflow-hidden"
+                className="min-h-0 w-full"
               >
                 {children}
               </motion.div>
