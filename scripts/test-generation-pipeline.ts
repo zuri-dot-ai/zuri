@@ -292,7 +292,11 @@ bright/airy/approachable/clinical/trustworthy → light.
   }
 
   const { html: rawHtml, metadata } = fetchLocalTemplate(templateId, archetype);
-  const filledPlaceholders = await fillPlaceholders(brand, metadata, archetype);
+  const { fields: filledPlaceholders, tier: fillTier } = await fillPlaceholders(
+    brand,
+    metadata,
+    archetype
+  );
 
   let filledImages: Awaited<ReturnType<typeof resolveTemplateImages>>;
   try {
@@ -315,8 +319,10 @@ bright/airy/approachable/clinical/trustworthy → light.
     filled_placeholders: filledPlaceholders,
     filled_images: filledImages,
     validation,
+    fill_tier: fillTier,
   };
 }
+
 
 async function main() {
   const { resolveArchetype } = await import("../src/lib/website/archetypes");
@@ -335,6 +341,7 @@ async function main() {
         filled_placeholders: Record<string, string>;
         filled_images: Record<string, unknown>;
         validation: { valid: boolean; errors: string[]; warnings: string[] };
+        fill_tier: "pro" | "flash" | "generic";
       }>)
     | null = null;
 
@@ -393,6 +400,7 @@ async function main() {
 
       console.log(`  archetype: ${result.archetype}`);
       console.log(`  template:  ${result.template_id}`);
+      console.log(`  tier:      ${result.fill_tier}`);
       console.log(`  valid:     ${result.validation.valid}`);
       if (result.validation.errors.length) {
         console.log(`  errors:    ${result.validation.errors.join("; ")}`);
@@ -406,6 +414,7 @@ async function main() {
       report.push(`- Expected archetype: \`${expected}\``);
       report.push(`- Resolved archetype: \`${result.archetype}\``);
       report.push(`- Template: \`${result.template_id}\``);
+      report.push(`- Fill tier: \`${result.fill_tier}\``);
       report.push(`- Valid: ${result.validation.valid}`);
       if (result.validation.errors.length) {
         report.push(`- Errors: ${result.validation.errors.join("; ")}`);
