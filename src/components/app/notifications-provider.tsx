@@ -11,12 +11,12 @@ import {
 } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useUser } from "@/hooks/use-user";
-import type { BaseNotification } from "@/lib/notifications/types";
+import type { Notification } from "@/lib/notifications/types";
 
 const FETCH_LIMIT = 50;
 
 type NotificationsContextValue = {
-  items: BaseNotification[];
+  items: Notification[];
   loading: boolean;
   unreadCount: number;
   refresh: () => Promise<void>;
@@ -31,7 +31,7 @@ const NotificationsContext = createContext<NotificationsContextValue | null>(
 export function NotificationsProvider({ children }: { children: ReactNode }) {
   const { user } = useUser();
   const supabase = useMemo(() => createClient(), []);
-  const [items, setItems] = useState<BaseNotification[]>([]);
+  const [items, setItems] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const unreadCount = items.filter((n) => !n.is_read).length;
 
@@ -52,7 +52,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       console.warn("[notifications] fetch failed:", error.message);
       setItems([]);
     } else {
-      setItems((data as BaseNotification[]) ?? []);
+      setItems((data as Notification[]) ?? []);
     }
     setLoading(false);
   }, [user?.id, supabase]);
@@ -77,7 +77,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          setItems((prev) => [payload.new as BaseNotification, ...prev].slice(0, FETCH_LIMIT));
+          setItems((prev) => [payload.new as Notification, ...prev].slice(0, FETCH_LIMIT));
         }
       )
       .on(
@@ -89,7 +89,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          const updated = payload.new as BaseNotification;
+          const updated = payload.new as Notification;
           setItems((prev) =>
             prev.map((n) => (n.id === updated.id ? updated : n))
           );
