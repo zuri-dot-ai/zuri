@@ -88,12 +88,41 @@ export function AgencyMarketplace({ agencies, plan }: { agencies: AgencyRow[]; p
       )}
 
       {agencies.length === 0 && (
-        <div className="empty-state py-16 text-center">
-          <h3>Partners coming soon</h3>
-          <p>
-            We&apos;re onboarding vetted agencies for your market. Check back shortly —
-            or contact support if you need a custom intro.
-          </p>
+        <div className="relative overflow-hidden rounded-lg border border-border bg-surface px-8 py-20 text-center">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 opacity-[0.07]"
+            style={{
+              backgroundImage:
+                "radial-gradient(circle at 20% 20%, var(--gold) 0%, transparent 45%), radial-gradient(circle at 80% 80%, var(--gold) 0%, transparent 45%)",
+            }}
+          />
+          <div className="relative mx-auto max-w-md">
+            <span className="mb-5 inline-flex items-center gap-1.5 rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs font-medium uppercase tracking-wider text-gold">
+              <Sparkles className="size-3.5" />
+              The Agency Marketplace
+            </span>
+
+            <h3 className="font-heading text-2xl font-semibold leading-snug sm:text-3xl">
+              The best agencies in Africa are about to have one address.
+            </h3>
+
+            <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
+              We&apos;re building the first roster — not everyone gets in. If
+              you&apos;re a designer, marketer, or growth partner who delivers
+              real work, apply now and help define what &ldquo;credible&rdquo;
+              means here from day one.
+            </p>
+
+            <div className="mt-7 flex flex-col items-center gap-3">
+              <Button size="lg" asChild>
+                <a href="/agencies/apply">Apply to Join →</a>
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                Founding agencies get priority placement when we open to businesses.
+              </p>
+            </div>
+          </div>
         </div>
       )}
 

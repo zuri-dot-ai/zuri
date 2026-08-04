@@ -1,4 +1,18 @@
-import { BaseEmailLayout, EmailHeading, EmailBody, EmailButton, EmailDivider } from "./BaseEmailLayout";
+// src/lib/email/templates/PaymentFailedEmail.tsx
+
+import { Text as EmailText } from "@react-email/components";
+import {
+  BaseEmailLayout,
+  EmailEyebrow,
+  EmailHeading,
+  EmailBody,
+  EmailButton,
+  EmailDivider,
+  EmailCard,
+  EmailHighlight,
+  BRAND,
+  FONT_BODY,
+} from "./BaseEmailLayout";
 
 export interface PaymentFailedEmailProps {
   firstName: string;
@@ -15,16 +29,34 @@ export function PaymentFailedEmail({
 }: PaymentFailedEmailProps) {
   return (
     <BaseEmailLayout preview="Action required: your Zuri payment failed">
-      <EmailHeading>We couldn&apos;t process your payment.</EmailHeading>
+      <EmailEyebrow>Payment Issue</EmailEyebrow>
+      <EmailHeading>{`We couldn't charge your card, ${firstName}.`}</EmailHeading>
       <EmailBody>
-        {`Hi ${firstName}, we attempted to charge your card for your ${planName} plan but the payment did not go through.`}
+        {`This happens for ordinary reasons — an expired card, a bank decline, insufficient funds. Your ${planName} plan is still active for now, so there's no need to rush.`}
       </EmailBody>
-      <EmailBody>
-        {`Your account is in a grace period until ${gracePeriodEnd}. Update your payment method before then to avoid losing access to your features.`}
-      </EmailBody>
+
+      <EmailCard>
+        <EmailText
+          style={{
+            color: BRAND.textTertiary,
+            fontFamily: FONT_BODY,
+            fontSize: "11px",
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            margin: "0 0 14px",
+          }}
+        >
+          What happens next
+        </EmailText>
+        <EmailHighlight label="Plan" value={planName} />
+        <EmailHighlight label="Access continues until" value={gracePeriodEnd} />
+      </EmailCard>
+
       <EmailButton href={updatePaymentUrl}>Update payment method</EmailButton>
       <EmailDivider />
-      <EmailBody>{`If you have any questions, reply to this email and our team will help.`}</EmailBody>
+      <EmailBody style={{ fontSize: "13px", margin: 0 }}>
+        {`Questions about the charge? Reply to this email — our team can help directly.`}
+      </EmailBody>
     </BaseEmailLayout>
   );
 }

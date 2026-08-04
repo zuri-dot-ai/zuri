@@ -1,4 +1,12 @@
-import { BaseEmailLayout, EmailHeading, EmailBody, EmailButton } from "./BaseEmailLayout";
+// src/lib/email/templates/PlanDowngradedEmail.tsx
+
+import {
+  BaseEmailLayout,
+  EmailEyebrow,
+  EmailHeading,
+  EmailBody,
+  EmailButton,
+} from "./BaseEmailLayout";
 
 export interface PlanDowngradedEmailProps {
   firstName: string;
@@ -8,11 +16,14 @@ export interface PlanDowngradedEmailProps {
 export function PlanDowngradedEmail({ firstName, billingUrl }: PlanDowngradedEmailProps) {
   return (
     <BaseEmailLayout preview="Your Zuri plan has been updated to Free">
-      <EmailHeading>Your plan is now Free.</EmailHeading>
+      <EmailEyebrow>Plan Changed</EmailEyebrow>
+      <EmailHeading>{`Your account is now on Free, ${firstName}.`}</EmailHeading>
       <EmailBody>
-        {`Hi ${firstName}, your grace period ended without a successful payment, so your account is now on the Free plan.`}
+        {`Your grace period ended without a successful payment, so your account has moved to the Free plan. Your account and data are safe — nothing has been deleted.`}
       </EmailBody>
-      <EmailBody>{`You can resubscribe any time to restore full access.`}</EmailBody>
+      <EmailBody>
+        {`Resubscribe any time to pick up exactly where you left off.`}
+      </EmailBody>
       <EmailButton href={billingUrl}>Resubscribe</EmailButton>
     </BaseEmailLayout>
   );

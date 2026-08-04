@@ -1,4 +1,13 @@
-import { BaseEmailLayout, EmailHeading, EmailBody, EmailButton } from "./BaseEmailLayout";
+// src/lib/email/templates/WebsiteGenerationFailedEmail.tsx
+
+import {
+  BaseEmailLayout,
+  EmailEyebrow,
+  EmailHeading,
+  EmailBody,
+  EmailButton,
+  EmailDivider,
+} from "./BaseEmailLayout";
 
 export interface WebsiteGenerationFailedEmailProps {
   firstName: string;
@@ -11,13 +20,15 @@ export function WebsiteGenerationFailedEmail({
 }: WebsiteGenerationFailedEmailProps) {
   return (
     <BaseEmailLayout preview="We hit a snag generating your website.">
-      <EmailHeading>We couldn&apos;t generate your website.</EmailHeading>
+      <EmailEyebrow>Generation Issue</EmailEyebrow>
+      <EmailHeading>{`We hit a snag, ${firstName}.`}</EmailHeading>
       <EmailBody>
-        {`Hi ${firstName}, something went wrong while generating your website. This is usually temporary — please try again.`}
+        {`Something interrupted your website generation before it finished. This is almost always temporary — your details are saved, so trying again picks up right where you left off.`}
       </EmailBody>
       <EmailButton href={retryUrl}>Try again</EmailButton>
-      <EmailBody>
-        {`If this keeps happening, reply to this email and our team will help directly.`}
+      <EmailDivider />
+      <EmailBody style={{ fontSize: "13px", margin: 0 }}>
+        {`Still stuck after a second attempt? Reply to this email and our team will look into it directly.`}
       </EmailBody>
     </BaseEmailLayout>
   );

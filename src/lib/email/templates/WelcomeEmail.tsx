@@ -1,5 +1,8 @@
+// src/lib/email/templates/WelcomeEmail.tsx
+
 import {
   BaseEmailLayout,
+  EmailEyebrow,
   EmailHeading,
   EmailBody,
   EmailButton,
@@ -14,19 +17,20 @@ export interface WelcomeEmailProps {
 export function WelcomeEmail({ firstName, onboardingUrl }: WelcomeEmailProps) {
   return (
     <BaseEmailLayout
-      preview={`Welcome to Zuri, ${firstName}! Your business presence starts now.`}
+      preview={`Welcome to Zuri, ${firstName}. Your business presence starts now.`}
     >
-      <EmailHeading>Welcome to Zuri, {firstName}.</EmailHeading>
+      <EmailEyebrow>Welcome to Zuri</EmailEyebrow>
+      <EmailHeading>{`${firstName}, your business is about to look the part.`}</EmailHeading>
       <EmailBody>
-        {`You've just joined thousands of African entrepreneurs building a professional online presence. In the next few minutes, we'll create your website and content strategy — powered by AI, built for your business.`}
+        {`Most small businesses across Africa are still competing without a real online presence — no website, no proof of legitimacy, nothing to send a customer who asks "do you have a site?" You just fixed that.`}
       </EmailBody>
       <EmailBody>
-        {`Let's get started. Answer a few quick questions about your business and we'll handle the rest.`}
+        {`Answer a few questions about what you do and who you serve. We'll generate a site built specifically for your business — not a template with your name dropped in.`}
       </EmailBody>
-      <EmailButton href={onboardingUrl}>Set up my business profile</EmailButton>
+      <EmailButton href={onboardingUrl}>Build my website</EmailButton>
       <EmailDivider />
-      <EmailBody>
-        {`Questions? Reply to this email and our team will get back to you.`}
+      <EmailBody style={{ fontSize: "13px", margin: 0 }}>
+        {`Questions along the way? Just reply to this email — a real person on the Zuri team will get back to you.`}
       </EmailBody>
     </BaseEmailLayout>
   );

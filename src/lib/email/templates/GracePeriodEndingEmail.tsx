@@ -1,5 +1,12 @@
-// TODO: copywriting — stub only, doc §2.6
-import { BaseEmailLayout, EmailHeading, EmailBody, EmailButton } from "./BaseEmailLayout";
+// src/lib/email/templates/GracePeriodEndingEmail.tsx
+
+import {
+  BaseEmailLayout,
+  EmailEyebrow,
+  EmailHeading,
+  EmailBody,
+  EmailButton,
+} from "./BaseEmailLayout";
 
 export interface GracePeriodEndingEmailProps {
   firstName: string;
@@ -12,10 +19,15 @@ export function GracePeriodEndingEmail({
   hoursLeft,
   updatePaymentUrl,
 }: GracePeriodEndingEmailProps) {
+  const hoursLabel = hoursLeft === 1 ? "1 hour" : `${hoursLeft} hours`;
+
   return (
     <BaseEmailLayout preview={`Your Zuri grace period ends in ${hoursLeft} hours`}>
-      <EmailHeading>{`Your grace period ends in ${hoursLeft} hours.`}</EmailHeading>
-      <EmailBody>{`Hi ${firstName}, update your payment method now to avoid losing access.`}</EmailBody>
+      <EmailEyebrow>Action Needed</EmailEyebrow>
+      <EmailHeading>{`${hoursLabel} left, ${firstName}.`}</EmailHeading>
+      <EmailBody>
+        {`Your grace period is nearly over. Update your payment method now to keep your website and account running without interruption — it takes less than a minute.`}
+      </EmailBody>
       <EmailButton href={updatePaymentUrl}>Update payment method</EmailButton>
     </BaseEmailLayout>
   );

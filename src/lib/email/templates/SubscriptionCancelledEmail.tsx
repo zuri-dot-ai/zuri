@@ -1,5 +1,17 @@
-// TODO: copywriting — stub only, doc §2.6
-import { BaseEmailLayout, EmailHeading, EmailBody, EmailButton } from "./BaseEmailLayout";
+// src/lib/email/templates/SubscriptionCancelledEmail.tsx
+
+import { Text as EmailText } from "@react-email/components";
+import {
+  BaseEmailLayout,
+  EmailEyebrow,
+  EmailHeading,
+  EmailBody,
+  EmailButton,
+  EmailCard,
+  EmailHighlight,
+  BRAND,
+  FONT_BODY,
+} from "./BaseEmailLayout";
 
 export interface SubscriptionCancelledEmailProps {
   firstName: string;
@@ -14,9 +26,30 @@ export function SubscriptionCancelledEmail({
 }: SubscriptionCancelledEmailProps) {
   return (
     <BaseEmailLayout preview="Your Zuri subscription has been cancelled">
-      <EmailHeading>Your subscription is cancelled.</EmailHeading>
+      <EmailEyebrow>Subscription Cancelled</EmailEyebrow>
+      <EmailHeading>{`We've cancelled your subscription, ${firstName}.`}</EmailHeading>
       <EmailBody>
-        {`Hi ${firstName}, your subscription will remain active until ${periodEnd}.`}
+        {`Your plan stays fully active until the date below — no early cutoff. After that, your account moves to Free automatically.`}
+      </EmailBody>
+
+      <EmailCard>
+        <EmailText
+          style={{
+            color: BRAND.textTertiary,
+            fontFamily: FONT_BODY,
+            fontSize: "11px",
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            margin: "0 0 14px",
+          }}
+        >
+          Cancellation details
+        </EmailText>
+        <EmailHighlight label="Access continues until" value={periodEnd} />
+      </EmailCard>
+
+      <EmailBody>
+        {`Changed your mind, or plans change? You're welcome back any time — nothing to rebuild.`}
       </EmailBody>
       <EmailButton href={resubscribeUrl}>Resubscribe</EmailButton>
     </BaseEmailLayout>
