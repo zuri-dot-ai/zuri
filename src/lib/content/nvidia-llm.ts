@@ -14,6 +14,12 @@ export const NVIDIA_FLASH =
 export const NVIDIA_PRO =
   process.env.NVIDIA_LLM_PRO_MODEL?.trim() || "deepseek-ai/deepseek-v4-pro";
 
+/** Default per-call timeout. Callers on a tight request budget (e.g. the
+ * calendar generation cascade, which may make up to 6+ sequential calls
+ * inside a single 120s serverless invocation) should pass a much shorter
+ * timeoutMs explicitly — see calendar-generator.ts. */
+const DEFAULT_TIMEOUT_MS = 90_000;
+
 function getApiKey(): string {
   const key = process.env.NVIDIA_API_KEY?.trim();
   if (!key) {
@@ -38,7 +44,7 @@ function isNonRetryable(err: unknown): boolean {
 export async function nvidiaGenerate(
   prompt: string,
   model: "flash" | "pro" | string = "flash",
-  opts?: { temperature?: number; json?: boolean }
+  opts?: { temperature?: number; json?: boolean; timeoutMs?: number }
 ): Promise<string> {
   const modelId =
     model === "flash"
@@ -48,6 +54,7 @@ export async function nvidiaGenerate(
         : model;
   const temperature = opts?.temperature ?? 0.7;
   const wantJson = opts?.json ?? false;
+  const timeoutMs = opts?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 
   // Avoid response_format — not all NIM models accept it; prompt + parse is enough.
   const body: Record<string, unknown> = {
@@ -72,8 +79,7 @@ export async function nvidiaGenerate(
       Accept: "application/json",
     },
     body: JSON.stringify(body),
-    // 90s — leave headroom under Vercel maxDuration (120s) and client (130s).
-    signal: AbortSignal.timeout(90_000),
+    signal: AbortSignal.timeout(timeoutMs),
   });
 
   const errText = await res.text();
@@ -106,22 +112,14 @@ export async function nvidiaGenerate(
 /**
  * Content-path JSON helper — same call shape as nvidiaJSON("flash"|"pro").
  *
- * Retryable statuses:
- *  - 429 (rate limit)
- *  - 500 (server error)
- *  - 503 (service unavailable)
- *  - 529 (NVIDIA NIM "Service temporarily overloaded" — transient shared-
- *    infrastructure overload on free-tier endpoints, NOT a quota/auth
- *    problem. Confirmed via production logs 2026-08-04. Omitting this was
- *    causing 100% fallback-to-template rate on the content calendar even
- *    though the key/model were both valid.)
- *  - JSON/SyntaxError (malformed model output — retried with a stricter
- *    instruction appended)
+ * Retryable statuses: 429, 500, 503, 529 (NVIDIA NIM transient overload),
+ * plus JSON/SyntaxError (malformed output, retried with a stricter prompt).
  */
 export async function nvidiaJSON<T>(
   prompt: string,
   model: "flash" | "pro" = "flash",
-  maxRetries: number = 3
+  maxRetries: number = 3,
+  opts?: { timeoutMs?: number }
 ): Promise<T> {
   let lastError: unknown;
   const context = `nvidiaJSON(${model})`;
@@ -133,7 +131,7 @@ export async function nvidiaJSON<T>(
           ? `${prompt}\n\nIMPORTANT: Output ONLY valid JSON. No markdown fences. Start with { or [ and end with } or ].`
           : prompt,
         model,
-        { json: true }
+        { json: true, timeoutMs: opts?.timeoutMs }
       );
 
       const cleaned = raw
@@ -147,7 +145,6 @@ export async function nvidiaJSON<T>(
       lastError = err;
       if (isNonRetryable(err)) break;
 
-      // Never retry timeouts — they already burned most of the wall-clock budget.
       const msg = String(err);
       const retryable =
         /status=429|status=500|status=503|status=529|JSON|SyntaxError/i.test(

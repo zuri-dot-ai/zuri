@@ -547,6 +547,20 @@ function describeErr(err: unknown): string {
   return String(err).slice(0, 400);
 }
 
+/**
+ * Hard wall-clock budget for the whole calendar-tier NVIDIA cascade
+ * (Flash retries + possible Pro attempt), inside a 120s serverless
+ * invocation that also does Supabase I/O and trend warming. Leaves
+ * headroom for the rest of the route (DB reads/writes, auth, etc.).
+ */
+const CALENDAR_AI_BUDGET_MS = 80_000;
+/** Per-call timeout for calendar-tier NVIDIA calls — short enough that
+ * one slow/hanging call can't eat the whole budget by itself. */
+const CALENDAR_CALL_TIMEOUT_MS = 20_000;
+/** Don't even attempt the Pro fallback if less than this much budget remains —
+ * a Pro call plus its own retries needs realistic room to succeed. */
+const MIN_BUDGET_FOR_PRO_MS = 25_000;
+
 async function generateSlotsForSlice(
   input: CalendarGenerationInput,
   plan: MonthPlan,
@@ -560,6 +574,10 @@ async function generateSlotsForSlice(
   if (chunkCount === 0) {
     return { slots: [], usedFallback: false };
   }
+
+  const startedAt = Date.now();
+  const elapsed = () => Date.now() - startedAt;
+  const remaining = () => CALENDAR_AI_BUDGET_MS - elapsed();
 
   const chunkDistribution = distributePostsAcrossPlatforms(
     chunkCount,
@@ -585,15 +603,18 @@ async function generateSlotsForSlice(
 
   let generated: { slots: GeneratedSlot[] } | null = null;
 
-  // Tier 1: Flash — fast, cheap, used for the bulk of calendar generation.
+  // Tier 1: Flash — fast, cheap, bulk of calendar generation. Only 2
+  // retries here (not the default 3) so there's realistic budget left
+  // for a Pro attempt if Flash is having a bad run.
   try {
     try {
       generated = await nvidiaJSON<{ slots: GeneratedSlot[] }>(
         calendarPrompt,
-        "flash"
+        "flash",
+        2,
+        { timeoutMs: CALENDAR_CALL_TIMEOUT_MS }
       );
     } catch (initialErr) {
-      // Only retry inline for JSON/parse shape issues — never after a timeout.
       if (isTimeoutError(initialErr) || !isJsonParseError(initialErr)) {
         throw initialErr;
       }
@@ -603,29 +624,38 @@ async function generateSlotsForSlice(
       );
       generated = await nvidiaJSON<{ slots: GeneratedSlot[] }>(
         strictPrompt,
-        "flash"
+        "flash",
+        1,
+        { timeoutMs: CALENDAR_CALL_TIMEOUT_MS }
       );
     }
   } catch (flashErr) {
     console.warn(
-      `[generateCalendarChunk] Flash tier failed (${describeErr(flashErr)}) — trying Pro. ` +
+      `[generateCalendarChunk] Flash tier failed (${describeErr(flashErr)}) after ${elapsed()}ms — ` +
+        `${remaining() >= MIN_BUDGET_FOR_PRO_MS ? "trying Pro" : "skipping Pro, insufficient time budget"}. ` +
         `userId=${input.userId} month=${month} year=${year} sliceStart=${sliceStart}`
     );
 
-    // Tier 2: Pro — slower/costlier, tried only when Flash fully fails
-    // (all retries exhausted, including transient 529 overloads now that
-    // nvidiaJSON retries those). Real AI content beats the template
-    // fallback even at Pro's higher latency.
-    try {
-      generated = await nvidiaJSON<{ slots: GeneratedSlot[] }>(
-        calendarPrompt,
-        "pro"
-      );
-    } catch (proErr) {
-      console.error(
-        `[generateCalendarChunk] Pro tier also failed (${describeErr(proErr)}) — falling back to template slots. ` +
-          `userId=${input.userId} month=${month} year=${year} sliceStart=${sliceStart}`
-      );
+    // Tier 2: Pro — only attempted if there's realistically enough time
+    // budget left. A timed-out request returns NOTHING to the user (a bare
+    // 504); a graceful template fallback at least returns usable slots.
+    if (remaining() >= MIN_BUDGET_FOR_PRO_MS) {
+      try {
+        generated = await nvidiaJSON<{ slots: GeneratedSlot[] }>(
+          calendarPrompt,
+          "pro",
+          2,
+          { timeoutMs: Math.min(CALENDAR_CALL_TIMEOUT_MS * 2, remaining() - 2000) }
+        );
+      } catch (proErr) {
+        console.error(
+          `[generateCalendarChunk] Pro tier also failed (${describeErr(proErr)}) after ${elapsed()}ms total — ` +
+            `falling back to template slots. userId=${input.userId} month=${month} year=${year} sliceStart=${sliceStart}`
+        );
+      }
+    }
+
+    if (!generated) {
       return {
         slots: buildTemplateSlots(
           input,

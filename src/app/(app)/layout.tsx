@@ -12,6 +12,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { GracePeriodBanner } from "@/components/app/GracePeriodBanner";
 import { TrialPrompts } from "@/components/app/TrialPrompts";
 import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
+import { NotificationQueueProvider } from "@/lib/notifications/notification-queue";
+import { NotificationHost } from "@/components/notifications/NotificationHost";
+
 
 export default async function AppLayout({
   children,
@@ -79,7 +82,10 @@ export default async function AppLayout({
               {!inGracePeriod && (
                 <TrialPrompts {...trialProps} slot="inline" />
               )}
-              <ErrorBoundary context="dashboard">{children}</ErrorBoundary>
+              <NotificationQueueProvider>
+                <ErrorBoundary context="dashboard">{children}</ErrorBoundary>
+                <NotificationHost userId={user?.id ?? null} />
+              </NotificationQueueProvider>
               <PaymentToast />
               <Suspense fallback={null}>
                 <FirstVisitTour />
