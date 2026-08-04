@@ -541,6 +541,12 @@ function formatDateRangeHint(dates: Date[]): string {
   return `${fmt(dates[0])} – ${fmt(dates[dates.length - 1])}`;
 }
 
+/** Compact, always-informative error description for logs. */
+function describeErr(err: unknown): string {
+  if (err instanceof Error) return err.message.slice(0, 400);
+  return String(err).slice(0, 400);
+}
+
 async function generateSlotsForSlice(
   input: CalendarGenerationInput,
   plan: MonthPlan,
@@ -573,7 +579,13 @@ async function generateSlotsForSlice(
     dateRangeHint: formatDateRangeHint(sliceDates),
   });
 
-  let generated: { slots: GeneratedSlot[] };
+  const strictPrompt =
+    calendarPrompt +
+    "\n\nIMPORTANT: Output ONLY valid JSON. No markdown fences. Start with { end with }.";
+
+  let generated: { slots: GeneratedSlot[] } | null = null;
+
+  // Tier 1: Flash — fast, cheap, used for the bulk of calendar generation.
   try {
     try {
       generated = await nvidiaJSON<{ slots: GeneratedSlot[] }>(
@@ -581,44 +593,58 @@ async function generateSlotsForSlice(
         "flash"
       );
     } catch (initialErr) {
-      // Only retry for JSON/parse shape issues — never after a timeout.
+      // Only retry inline for JSON/parse shape issues — never after a timeout.
       if (isTimeoutError(initialErr) || !isJsonParseError(initialErr)) {
         throw initialErr;
       }
       console.warn(
-        "[generateCalendarChunk] JSON parse failed, retrying with stricter instruction:",
-        initialErr
+        "[generateCalendarChunk] Flash JSON parse failed, retrying with stricter instruction:",
+        describeErr(initialErr)
       );
       generated = await nvidiaJSON<{ slots: GeneratedSlot[] }>(
-        calendarPrompt +
-          "\n\nIMPORTANT: Output ONLY valid JSON. No markdown fences. Start with { end with }.",
+        strictPrompt,
         "flash"
       );
     }
-  } catch (err) {
-    console.error(
-      "[generateCalendarChunk] NVIDIA failed — falling back to template slots. " +
-        `userId=${input.userId} month=${month} year=${year} sliceStart=${sliceStart}. Error:`,
-      err
+  } catch (flashErr) {
+    console.warn(
+      `[generateCalendarChunk] Flash tier failed (${describeErr(flashErr)}) — trying Pro. ` +
+        `userId=${input.userId} month=${month} year=${year} sliceStart=${sliceStart}`
     );
-    return {
-      slots: buildTemplateSlots(
-        input,
-        chunkCount,
-        slicePillars,
-        sliceDates,
-        sliceFormats,
-        plan.culturalMoments
-      ),
-      usedFallback: true,
-      reason:
-        "We couldn't reach the AI right now, so starter content was created instead.",
-    };
+
+    // Tier 2: Pro — slower/costlier, tried only when Flash fully fails
+    // (all retries exhausted, including transient 529 overloads now that
+    // nvidiaJSON retries those). Real AI content beats the template
+    // fallback even at Pro's higher latency.
+    try {
+      generated = await nvidiaJSON<{ slots: GeneratedSlot[] }>(
+        calendarPrompt,
+        "pro"
+      );
+    } catch (proErr) {
+      console.error(
+        `[generateCalendarChunk] Pro tier also failed (${describeErr(proErr)}) — falling back to template slots. ` +
+          `userId=${input.userId} month=${month} year=${year} sliceStart=${sliceStart}`
+      );
+      return {
+        slots: buildTemplateSlots(
+          input,
+          chunkCount,
+          slicePillars,
+          sliceDates,
+          sliceFormats,
+          plan.culturalMoments
+        ),
+        usedFallback: true,
+        reason:
+          "We couldn't reach the AI right now, so starter content was created instead.",
+      };
+    }
   }
 
   return {
     slots: mergeCalendarOutput(
-      generated.slots ?? [],
+      generated?.slots ?? [],
       slicePillars,
       sliceDates,
       sliceFormats,

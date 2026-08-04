@@ -105,6 +105,18 @@ export async function nvidiaGenerate(
 
 /**
  * Content-path JSON helper — same call shape as nvidiaJSON("flash"|"pro").
+ *
+ * Retryable statuses:
+ *  - 429 (rate limit)
+ *  - 500 (server error)
+ *  - 503 (service unavailable)
+ *  - 529 (NVIDIA NIM "Service temporarily overloaded" — transient shared-
+ *    infrastructure overload on free-tier endpoints, NOT a quota/auth
+ *    problem. Confirmed via production logs 2026-08-04. Omitting this was
+ *    causing 100% fallback-to-template rate on the content calendar even
+ *    though the key/model were both valid.)
+ *  - JSON/SyntaxError (malformed model output — retried with a stricter
+ *    instruction appended)
  */
 export async function nvidiaJSON<T>(
   prompt: string,
@@ -138,7 +150,9 @@ export async function nvidiaJSON<T>(
       // Never retry timeouts — they already burned most of the wall-clock budget.
       const msg = String(err);
       const retryable =
-        /status=429|status=503|status=500|JSON|SyntaxError/i.test(msg);
+        /status=429|status=500|status=503|status=529|JSON|SyntaxError/i.test(
+          msg
+        );
       if (!retryable || attempt === maxRetries) break;
 
       console.warn(
