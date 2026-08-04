@@ -1,5 +1,5 @@
 // Website generation pipeline (docs/02_WEBSITE_BUILDER.md §4–§6)
-// Template select (Flash) → placeholder fill (Pro) → curated images → string replace → validate → save
+// Template select (Flash) → placeholder fill (Pro → Flash → generic) → curated images → string replace → validate → save
 
 import { geminiJSON } from "@/lib/gemini";
 import {
@@ -41,6 +41,9 @@ export interface ValidationResult {
   warnings: string[];
 }
 
+/** Which tier actually produced the filled placeholders. */
+export type FillTier = "pro" | "flash" | "generic";
+
 export interface ComposedWebsite {
   html: string;
   archetype: DesignArchetype;
@@ -48,6 +51,7 @@ export interface ComposedWebsite {
   filled_placeholders: Record<string, string>;
   filled_images: Record<string, ResolvedImage>;
   validation: ValidationResult;
+  fill_tier: FillTier;
 }
 
 type JobStatus = "queued" | "processing" | "completed" | "failed";
@@ -63,6 +67,12 @@ function escapeHtml(value: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+/** Compact, always-informative error description for logs — status/code, never just "[object Object]". */
+function describeErr(err: unknown): string {
+  if (err instanceof Error) return err.message.slice(0, 400);
+  return String(err).slice(0, 400);
 }
 
 async function markJob(
@@ -126,12 +136,19 @@ function normalizePlaceholderKeys(
   return out;
 }
 
-/** Generic-but-non-empty copy when Gemini Pro fails all retries (§14). */
+/**
+ * Generic-but-non-empty copy when both Pro and Flash fail all retries (§14).
+ * v2-aware: handles both the legacy v1 field names (service_N_title, about_body)
+ * AND the v2 template schema (service_N_name, about_body_short/long, stat_N_*,
+ * credential_N_*, faq_N_*) since production serves v2 templates from Supabase.
+ */
 function genericPlaceholderFallback(
   brand: BusinessProfile,
   fields: string[]
 ): Record<string, string> {
   const out: Record<string, string> = {};
+  const services = normalizeServices(brand.services);
+
   for (const key of fields) {
     if (key === "business_name" || key === "business_handle") {
       out[key] = key === "business_handle" ? brand.handle : brand.business_name;
@@ -145,20 +162,42 @@ function genericPlaceholderFallback(
       out[key] = brand.tagline || `${brand.business_name} — ${brand.industry}`;
       continue;
     }
-    if (key === "about_body" || key === "about_text" || key === "hero_subheadline") {
+    if (
+      key === "about_body" ||
+      key === "about_text" ||
+      key === "hero_subheadline" ||
+      key === "about_body_short"
+    ) {
       out[key] =
         brand.unique_value ||
         `${brand.business_name} serves ${brand.target_audience || "clients"} in ${brand.location_city ?? brand.location}, Nigeria.`;
+      continue;
+    }
+    if (key === "about_body_long") {
+      out[key] =
+        brand.unique_value ||
+        `${brand.business_name} is committed to serving ${brand.target_audience || "clients"} in ${brand.location_city ?? brand.location}, Nigeria, with a focus on ${brand.industry}.`;
       continue;
     }
     if (key === "hero_headline" || key === "headline") {
       out[key] = brand.tagline || brand.business_name;
       continue;
     }
+    if (key === "opening_hours") {
+      out[key] = "Mon–Sat: 9am – 6pm";
+      continue;
+    }
+    if (key === "founder_name") {
+      out[key] = "";
+      continue;
+    }
+    if (key === "founder_title") {
+      out[key] = "Founder";
+      continue;
+    }
 
-    const services = normalizeServices(brand.services);
-
-    const serviceTitle = key.match(/^service_(\d+)_title$/);
+    // Services — v1 (service_N_title/description) and v2 (service_N_name)
+    const serviceTitle = key.match(/^service_(\d+)_(title|name)$/);
     if (serviceTitle) {
       const idx = Number(serviceTitle[1]) - 1;
       out[key] = services[idx]?.name ?? "";
@@ -174,6 +213,7 @@ function genericPlaceholderFallback(
       continue;
     }
 
+    // Testimonials
     const testimonialQuote = key.match(/^testimonial_(\d+)_quote$/);
     if (testimonialQuote) {
       out[key] = `Working with ${brand.business_name} was a great experience. Highly recommended.`;
@@ -191,18 +231,61 @@ function genericPlaceholderFallback(
       continue;
     }
 
+    // v2: stats (about_stats section)
+    const statValue = key.match(/^stat_(\d+)_value$/);
+    if (statValue) {
+      out[key] = "";
+      continue;
+    }
+    const statLabel = key.match(/^stat_(\d+)_label$/);
+    if (statLabel) {
+      out[key] = "";
+      continue;
+    }
+
+    // v2: credentials
+    if (/^credential_(\d+)_/.test(key)) {
+      out[key] = "";
+      continue;
+    }
+
+    // v2: FAQ
+    const faqQuestion = key.match(/^faq_(\d+)_question$/);
+    if (faqQuestion) {
+      out[key] = `What makes ${brand.business_name} different?`;
+      continue;
+    }
+    const faqAnswer = key.match(/^faq_(\d+)_answer$/);
+    if (faqAnswer) {
+      out[key] =
+        brand.unique_value || `We focus on quality and reliability for every client.`;
+      continue;
+    }
+
     if (/cta|button|label/i.test(key)) {
       out[key] = "Contact us";
       continue;
     }
 
-    // Optional higher-index fields stay empty so cards remain hidden
+    // Optional higher-index fields (4-6) stay empty so cards remain hidden
     if (/_(4|5|6)_/.test(key)) {
       out[key] = "";
       continue;
     }
 
-    out[key] = brand.business_name;
+    // Contact-type fields we have no real data for — leave empty rather than
+    // silently filling with business_name (previous behavior produced
+    // address/email/phone = business name, which is worse than blank).
+    if (
+      /^(address|email_address|phone_number|whatsapp_number|instagram_url)$/.test(
+        key
+      )
+    ) {
+      out[key] = "";
+      continue;
+    }
+
+    out[key] = "";
   }
   return out;
 }
@@ -262,8 +345,7 @@ bright/airy/approachable/clinical/trustworthy → light.
     return rowToMetadata(match ?? candidates[0]);
   } catch (err) {
     console.warn(
-      "[generation-pipeline] selectTemplate failed, using first candidate:",
-      err
+      `[generation-pipeline] selectTemplate failed (${describeErr(err)}), using first candidate`
     );
     return rowToMetadata(candidates[0]);
   }
@@ -271,17 +353,16 @@ bright/airy/approachable/clinical/trustworthy → light.
 
 // ─── §4.3 Placeholder filling ────────────────────────────────────────────────
 
-export async function fillPlaceholders(
+function buildFillPrompt(
   brand: BusinessProfile,
-  metadata: TemplateMetadata,
-  _archetype: DesignArchetype
-): Promise<Record<string, string>> {
+  metadata: TemplateMetadata
+): string {
   const services = normalizeServices(brand.services);
   const serviceLines = services
     .map((s) => (s.description ? `${s.name} — ${s.description}` : s.name))
     .join("; ");
 
-  const prompt = `
+  return `
 You are a copywriter for African small businesses. Fill every placeholder for this template.
 
 BUSINESS: ${brand.business_name} — ${brand.industry}
@@ -309,26 +390,54 @@ RULES:
 
 Output ONLY valid JSON mapping each placeholder key (without {{ }}) to its filled string value.
 `;
+}
 
+export async function fillPlaceholders(
+  brand: BusinessProfile,
+  metadata: TemplateMetadata,
+  _archetype: DesignArchetype
+): Promise<{ fields: Record<string, string>; tier: FillTier }> {
+  const prompt = buildFillPrompt(brand, metadata);
+
+  // Tier 1: Gemini Pro (best quality)
   try {
     const raw = await geminiJSON<Record<string, string>>(prompt, "pro");
     const normalized = normalizePlaceholderKeys(raw);
-    return ensureAllPlaceholders(
-      metadata.placeholder_fields,
-      normalized,
-      brand
+    return {
+      fields: ensureAllPlaceholders(metadata.placeholder_fields, normalized, brand),
+      tier: "pro",
+    };
+  } catch (proErr) {
+    console.warn(
+      `[generation-pipeline] fillPlaceholders: Pro tier failed (${describeErr(proErr)}) — trying Flash`
     );
-  } catch (err) {
+  }
+
+  // Tier 2: Gemini Flash (real AI content, lower quality than Pro but far
+  // better than boilerplate — this is the fix for free-tier keys where Pro
+  // returns 429 quota-exceeded on every call)
+  try {
+    const raw = await geminiJSON<Record<string, string>>(prompt, "flash");
+    const normalized = normalizePlaceholderKeys(raw);
+    return {
+      fields: ensureAllPlaceholders(metadata.placeholder_fields, normalized, brand),
+      tier: "flash",
+    };
+  } catch (flashErr) {
     console.error(
-      "[generation-pipeline] fillPlaceholders failed, using generic fallback:",
-      err
+      `[generation-pipeline] fillPlaceholders: Flash tier also failed (${describeErr(flashErr)}) — using generic fallback`
     );
-    return ensureAllPlaceholders(
+  }
+
+  // Tier 3: generic-but-non-empty fallback
+  return {
+    fields: ensureAllPlaceholders(
       metadata.placeholder_fields,
       genericPlaceholderFallback(brand, metadata.placeholder_fields),
       brand
-    );
-  }
+    ),
+    tier: "generic",
+  };
 }
 
 // ─── §4.5 Image resolution ───────────────────────────────────────────────────
@@ -403,7 +512,7 @@ export function applyServiceCardVisibility(
   // Reveal any slot whose title field was actually filled.
   let out = html;
   for (const n of [4, 5, 6]) {
-    if (fields[`service_${n}_title`]?.trim()) {
+    if (fields[`service_${n}_title`]?.trim() || fields[`service_${n}_name`]?.trim()) {
       out = out.replace(
         new RegExp(`(<[^>]+data-optional-slot="${n}"[^>]*)\\shidden`, "i"),
         "$1"
@@ -601,7 +710,11 @@ export async function composeWebsiteHtml(
   const template = await selectTemplate(brand, archetype);
   const { html: rawHtml, metadata } = await fetchTemplate(template.template_id);
 
-  const filledPlaceholders = await fillPlaceholders(brand, metadata, archetype);
+  const { fields: filledPlaceholders, tier: fillTier } = await fillPlaceholders(
+    brand,
+    metadata,
+    archetype
+  );
   const filledImages = await resolveTemplateImages(metadata, archetype);
 
   let html = applyPlaceholders(rawHtml, filledPlaceholders);
@@ -617,6 +730,7 @@ export async function composeWebsiteHtml(
     filled_placeholders: filledPlaceholders,
     filled_images: filledImages,
     validation,
+    fill_tier: fillTier,
   };
 }
 
@@ -632,16 +746,25 @@ export async function generateWebsite(
 
   try {
     const composed = await composeWebsiteHtml(brand);
+
+    // needs_review now correctly reflects BOTH validation failures AND
+    // degraded generation tiers (flash/generic) — previously this only
+    // checked validation, so fallback-generated sites shipped silently
+    // marked as fine.
     const needsReview =
       !composed.validation.valid ||
-      // Generic fallback path still marks review when fill used boilerplate only —
-      // validation errors are the primary signal.
-      composed.validation.errors.length > 0;
+      composed.validation.errors.length > 0 ||
+      composed.fill_tier !== "pro";
 
     if (!composed.validation.valid) {
       console.warn(
         "[generation-pipeline] validation errors:",
         composed.validation.errors
+      );
+    }
+    if (composed.fill_tier !== "pro") {
+      console.warn(
+        `[generation-pipeline] site for user=${userId} generated via "${composed.fill_tier}" tier (not Pro) — flagged needs_review`
       );
     }
 

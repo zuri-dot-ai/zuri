@@ -7,26 +7,20 @@ import { cn } from "@/lib/utils";
 
 const HERO_VIDEO_SRC = "/onboarding/onboarding-hero.mp4";
 const HERO_POSTER_SRC = "/onboarding/onboarding-hero.png";
-const MAX_RETRIES = 2;
+
+// Cold loads (typed URL / hard refresh) have the video competing with JS,
+// CSS, fonts, and the poster for bandwidth — it can genuinely take several
+// seconds and multiple stalls before it's ready. Warm client-side nav never
+// hits this because everything else is already cached. Give it real room
+// to recover before falling back to the poster permanently.
+const MAX_RETRIES = 6;
+const RETRY_BASE_DELAY_MS = 500;
+const RETRY_MAX_DELAY_MS = 4000;
 
 interface OnboardingHeroPanelProps {
-  /**
-   * 0→1 scroll progress of the current step's content column. When
-   * provided, the hero's gold glow subtly intensifies as the user
-   * scrolls, so the two panels read as connected rather than static-left
-   * vs scrolling-right. Optional — omit or pass undefined to disable
-   * (e.g. under prefers-reduced-motion).
-   */
   scrollProgress?: MotionValue<number>;
 }
 
-/**
- * Desktop split hero for onboarding shells (`/start`, `/agencies/apply`).
- *
- * Poster stays underneath; video fades in when playing. Transient AbortError /
- * network blips retry load()/play(). NotSupportedError (unsupported H.264
- * profile/level or empty source) gives up immediately — poster remains.
- */
 export function OnboardingHeroPanel({ scrollProgress }: OnboardingHeroPanelProps) {
   const reducedMotion = useReducedMotion();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -35,11 +29,8 @@ export function OnboardingHeroPanel({ scrollProgress }: OnboardingHeroPanelProps
   const [imageFailed, setImageFailed] = useState(false);
   const retriesRef = useRef(0);
 
-  // Fallback static value (0) when no scroll motion value is supplied —
-  // keeps the hooks below unconditional per rules-of-hooks.
-  const fallbackProgress = useRef<MotionValue<number> | null>(null);
   const glowOpacity = useTransform(
-    scrollProgress ?? fallbackProgress.current ?? scrollProgress!,
+    scrollProgress ?? { get: () => 0 } as MotionValue<number>,
     [0, 1],
     [0.12, 0.32]
   );
@@ -55,6 +46,7 @@ export function OnboardingHeroPanel({ scrollProgress }: OnboardingHeroPanelProps
 
     let cancelled = false;
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    let windowLoadRetryDone = false;
     retriesRef.current = 0;
     let gaveUp = false;
 
@@ -80,6 +72,7 @@ export function OnboardingHeroPanel({ scrollProgress }: OnboardingHeroPanelProps
               ? String((err as { name: unknown }).name)
               : "";
           if (name === "AbortError") return;
+          // Unsupported codec/container — retries will never help.
           if (name === "NotSupportedError") {
             giveUp();
             return;
@@ -90,9 +83,16 @@ export function OnboardingHeroPanel({ scrollProgress }: OnboardingHeroPanelProps
     };
 
     const scheduleRetry = () => {
-      if (cancelled || gaveUp || retriesRef.current >= MAX_RETRIES) return;
+      if (cancelled || gaveUp) return;
+      if (retriesRef.current >= MAX_RETRIES) {
+        giveUp();
+        return;
+      }
       retriesRef.current += 1;
-      const delay = 400 * retriesRef.current;
+      const delay = Math.min(
+        RETRY_BASE_DELAY_MS * retriesRef.current,
+        RETRY_MAX_DELAY_MS
+      );
       retryTimer = setTimeout(() => {
         if (cancelled || gaveUp) return;
         try {
@@ -111,6 +111,7 @@ export function OnboardingHeroPanel({ scrollProgress }: OnboardingHeroPanelProps
     const onError = () => {
       if (cancelled || gaveUp) return;
       setVideoVisible(false);
+      // MEDIA_ERR_SRC_NOT_SUPPORTED === 4
       if (el.error?.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED) {
         giveUp();
         return;
@@ -126,12 +127,37 @@ export function OnboardingHeroPanel({ scrollProgress }: OnboardingHeroPanelProps
       tryPlay();
     }
 
+    // Safety net: on a cold load, network contention is worst in the first
+    // few seconds. If we've genuinely given up before the page has finished
+    // loading its other critical resources, take one more shot once things
+    // quiet down — contention will have cleared by then.
+    const onWindowLoad = () => {
+      if (windowLoadRetryDone || cancelled || !gaveUp) return;
+      windowLoadRetryDone = true;
+      gaveUp = false;
+      setVideoDisabled(false);
+      retriesRef.current = 0;
+      try {
+        el.load();
+        tryPlay();
+      } catch {
+        /* ignore */
+      }
+    };
+    if (document.readyState === "complete") {
+      // Already loaded — the immediate attempts above are our only shot,
+      // no contention-clearing event left to wait for.
+    } else {
+      window.addEventListener("load", onWindowLoad, { once: true });
+    }
+
     return () => {
       cancelled = true;
       if (retryTimer) clearTimeout(retryTimer);
       el.removeEventListener("playing", onPlaying);
       el.removeEventListener("canplay", onCanPlay);
       el.removeEventListener("error", onError);
+      window.removeEventListener("load", onWindowLoad);
     };
   }, [reducedMotion, videoDisabled]);
 
@@ -170,7 +196,9 @@ export function OnboardingHeroPanel({ scrollProgress }: OnboardingHeroPanelProps
           muted
           loop
           playsInline
-          preload="metadata"
+          preload="auto"
+          // Compete harder for bandwidth against JS/CSS/fonts on cold loads.
+          fetchPriority="high"
         >
           <source src={HERO_VIDEO_SRC} type="video/mp4" />
         </video>
@@ -178,9 +206,6 @@ export function OnboardingHeroPanel({ scrollProgress }: OnboardingHeroPanelProps
 
       <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/20" />
 
-      {/* Scroll-linked gold glow — subtly intensifies as the questionnaire
-          column scrolls, tying the two panels together. No-op (static
-          0.12 opacity) when scrollProgress isn't supplied. */}
       {scrollProgress && (
         <motion.div
           className="pointer-events-none absolute inset-0"
