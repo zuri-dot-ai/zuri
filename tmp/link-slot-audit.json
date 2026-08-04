@@ -1,0 +1,589 @@
+{
+  "generatedAt": "2026-07-29T18:41:04.901Z",
+  "totalTemplates": 116,
+  "ok": [
+    {
+      "id": "authority-minimal-dark-counsel",
+      "storage_path": "authority-minimal/dark-counsel.html",
+      "slotCount": 10
+    },
+    {
+      "id": "authority-minimal-dark-covenant",
+      "storage_path": "authority-minimal/dark-covenant.html",
+      "slotCount": 12
+    },
+    {
+      "id": "authority-minimal-dark-eaves",
+      "storage_path": "authority-minimal/dark-eaves.html",
+      "slotCount": 12
+    },
+    {
+      "id": "authority-minimal-dark-quorum",
+      "storage_path": "authority-minimal/dark-quorum.html",
+      "slotCount": 12
+    },
+    {
+      "id": "authority-minimal-dark-tenure",
+      "storage_path": "authority-minimal/dark-tenure.html",
+      "slotCount": 10
+    },
+    {
+      "id": "authority-minimal-light-atrium",
+      "storage_path": "authority-minimal/light-atrium.html",
+      "slotCount": 10
+    },
+    {
+      "id": "authority-minimal-light-endeavor",
+      "storage_path": "authority-minimal/light-endeavor.html",
+      "slotCount": 12
+    },
+    {
+      "id": "authority-minimal-light-parlor",
+      "storage_path": "authority-minimal/light-parlor.html",
+      "slotCount": 12
+    },
+    {
+      "id": "authority-minimal-light-summit",
+      "storage_path": "authority-minimal/light-summit.html",
+      "slotCount": 10
+    },
+    {
+      "id": "authority-minimal-light-vantage",
+      "storage_path": "authority-minimal/light-vantage.html",
+      "slotCount": 12
+    },
+    {
+      "id": "clean-modern-dark-cipher",
+      "storage_path": "clean-modern/dark-cipher.html",
+      "slotCount": 10
+    },
+    {
+      "id": "clean-modern-dark-mesh",
+      "storage_path": "clean-modern/dark-mesh.html",
+      "slotCount": 10
+    },
+    {
+      "id": "clean-modern-dark-relay",
+      "storage_path": "clean-modern/dark-relay.html",
+      "slotCount": 10
+    },
+    {
+      "id": "clean-modern-dark-signal",
+      "storage_path": "clean-modern/dark-signal.html",
+      "slotCount": 10
+    },
+    {
+      "id": "clean-modern-dark-vertex",
+      "storage_path": "clean-modern/dark-vertex.html",
+      "slotCount": 10
+    },
+    {
+      "id": "clean-modern-light-axiom",
+      "storage_path": "clean-modern/light-axiom.html",
+      "slotCount": 8
+    },
+    {
+      "id": "clean-modern-light-lattice",
+      "storage_path": "clean-modern/light-lattice.html",
+      "slotCount": 8
+    },
+    {
+      "id": "clean-modern-light-nimbus",
+      "storage_path": "clean-modern/light-nimbus.html",
+      "slotCount": 8
+    },
+    {
+      "id": "clean-modern-light-orbit",
+      "storage_path": "clean-modern/light-orbit.html",
+      "slotCount": 8
+    },
+    {
+      "id": "clean-modern-light-pivot",
+      "storage_path": "clean-modern/light-pivot.html",
+      "slotCount": 10
+    },
+    {
+      "id": "community-vibrant-dark-crest",
+      "storage_path": "community-vibrant/dark-crest.html",
+      "slotCount": 8
+    },
+    {
+      "id": "community-vibrant-dark-current",
+      "storage_path": "community-vibrant/dark-current.html",
+      "slotCount": 8
+    },
+    {
+      "id": "community-vibrant-dark-summit",
+      "storage_path": "community-vibrant/dark-summit.html",
+      "slotCount": 10
+    },
+    {
+      "id": "community-vibrant-dark-surge",
+      "storage_path": "community-vibrant/dark-surge.html",
+      "slotCount": 10
+    },
+    {
+      "id": "community-vibrant-dark-tempo",
+      "storage_path": "community-vibrant/dark-tempo.html",
+      "slotCount": 10
+    },
+    {
+      "id": "community-vibrant-light-drive",
+      "storage_path": "community-vibrant/light-drive.html",
+      "slotCount": 10
+    },
+    {
+      "id": "community-vibrant-light-flex",
+      "storage_path": "community-vibrant/light-flex.html",
+      "slotCount": 10
+    },
+    {
+      "id": "community-vibrant-light-momentum",
+      "storage_path": "community-vibrant/light-momentum.html",
+      "slotCount": 10
+    },
+    {
+      "id": "community-vibrant-light-pulse",
+      "storage_path": "community-vibrant/light-pulse.html",
+      "slotCount": 10
+    },
+    {
+      "id": "community-vibrant-light-rally",
+      "storage_path": "community-vibrant/light-rally.html",
+      "slotCount": 10
+    },
+    {
+      "id": "editorial-bold-dark-blitz",
+      "storage_path": "editorial-bold/dark-blitz.html",
+      "slotCount": 10
+    },
+    {
+      "id": "editorial-bold-dark-issue",
+      "storage_path": "editorial-bold/dark-issue.html",
+      "slotCount": 10
+    },
+    {
+      "id": "editorial-bold-dark-press",
+      "storage_path": "editorial-bold/dark-press.html",
+      "slotCount": 10
+    },
+    {
+      "id": "editorial-bold-dark-riot",
+      "storage_path": "editorial-bold/dark-riot.html",
+      "slotCount": 10
+    },
+    {
+      "id": "editorial-bold-dark-vantage",
+      "storage_path": "editorial-bold/dark-vantage.html",
+      "slotCount": 10
+    },
+    {
+      "id": "editorial-bold-light-cover",
+      "storage_path": "editorial-bold/light-cover.html",
+      "slotCount": 12
+    },
+    {
+      "id": "editorial-bold-light-frame",
+      "storage_path": "editorial-bold/light-frame.html",
+      "slotCount": 10
+    },
+    {
+      "id": "editorial-bold-light-motif",
+      "storage_path": "editorial-bold/light-motif.html",
+      "slotCount": 10
+    },
+    {
+      "id": "editorial-bold-light-tabloid",
+      "storage_path": "editorial-bold/light-tabloid.html",
+      "slotCount": 10
+    },
+    {
+      "id": "editorial-bold-light-vivid",
+      "storage_path": "editorial-bold/light-vivid.html",
+      "slotCount": 10
+    },
+    {
+      "id": "luxury-aspirational-dark-atelier",
+      "storage_path": "luxury-aspirational/dark-atelier.html",
+      "slotCount": 12
+    },
+    {
+      "id": "luxury-aspirational-dark-maison",
+      "storage_path": "luxury-aspirational/dark-maison.html",
+      "slotCount": 12
+    },
+    {
+      "id": "luxury-aspirational-dark-noir",
+      "storage_path": "luxury-aspirational/dark-noir.html",
+      "slotCount": 10
+    },
+    {
+      "id": "luxury-aspirational-dark-opale",
+      "storage_path": "luxury-aspirational/dark-opale.html",
+      "slotCount": 12
+    },
+    {
+      "id": "luxury-aspirational-dark-velours",
+      "storage_path": "luxury-aspirational/dark-velours.html",
+      "slotCount": 12
+    },
+    {
+      "id": "luxury-aspirational-light-blush",
+      "storage_path": "luxury-aspirational/light-blush.html",
+      "slotCount": 14
+    },
+    {
+      "id": "luxury-aspirational-light-cocoon",
+      "storage_path": "luxury-aspirational/light-cocoon.html",
+      "slotCount": 10
+    },
+    {
+      "id": "luxury-aspirational-light-ivoire",
+      "storage_path": "luxury-aspirational/light-ivoire.html",
+      "slotCount": 12
+    },
+    {
+      "id": "luxury-aspirational-light-satin",
+      "storage_path": "luxury-aspirational/light-satin.html",
+      "slotCount": 12
+    },
+    {
+      "id": "luxury-aspirational-light-veil",
+      "storage_path": "luxury-aspirational/light-veil.html",
+      "slotCount": 12
+    },
+    {
+      "id": "portfolio-dramatic-dark-aperture",
+      "storage_path": "portfolio-dramatic/dark-aperture.html",
+      "slotCount": 11
+    },
+    {
+      "id": "portfolio-dramatic-dark-exposure",
+      "storage_path": "portfolio-dramatic/dark-exposure.html",
+      "slotCount": 11
+    },
+    {
+      "id": "portfolio-dramatic-dark-gallery",
+      "storage_path": "portfolio-dramatic/dark-gallery.html",
+      "slotCount": 10
+    },
+    {
+      "id": "portfolio-dramatic-dark-reel",
+      "storage_path": "portfolio-dramatic/dark-reel.html",
+      "slotCount": 10
+    },
+    {
+      "id": "portfolio-dramatic-dark-studio",
+      "storage_path": "portfolio-dramatic/dark-studio.html",
+      "slotCount": 10
+    },
+    {
+      "id": "portfolio-dramatic-light-contact",
+      "storage_path": "portfolio-dramatic/light-contact.html",
+      "slotCount": 10
+    },
+    {
+      "id": "portfolio-dramatic-light-darkroom",
+      "storage_path": "portfolio-dramatic/light-darkroom.html",
+      "slotCount": 10
+    },
+    {
+      "id": "portfolio-dramatic-light-frame",
+      "storage_path": "portfolio-dramatic/light-frame.html",
+      "slotCount": 11
+    },
+    {
+      "id": "portfolio-dramatic-light-negative",
+      "storage_path": "portfolio-dramatic/light-negative.html",
+      "slotCount": 10
+    },
+    {
+      "id": "portfolio-dramatic-light-print",
+      "storage_path": "portfolio-dramatic/light-print.html",
+      "slotCount": 11
+    },
+    {
+      "id": "trust-professional-dark-clarity",
+      "storage_path": "trust-professional/dark-clarity.html",
+      "slotCount": 10
+    },
+    {
+      "id": "trust-professional-dark-harbor",
+      "storage_path": "trust-professional/dark-harbor.html",
+      "slotCount": 14
+    },
+    {
+      "id": "trust-professional-dark-poise",
+      "storage_path": "trust-professional/dark-poise.html",
+      "slotCount": 12
+    },
+    {
+      "id": "trust-professional-dark-provident",
+      "storage_path": "trust-professional/dark-provident.html",
+      "slotCount": 12
+    },
+    {
+      "id": "trust-professional-dark-tenet",
+      "storage_path": "trust-professional/dark-tenet.html",
+      "slotCount": 12
+    },
+    {
+      "id": "trust-professional-light-anchor",
+      "storage_path": "trust-professional/light-anchor.html",
+      "slotCount": 12
+    },
+    {
+      "id": "trust-professional-light-assure",
+      "storage_path": "trust-professional/light-assure.html",
+      "slotCount": 12
+    },
+    {
+      "id": "trust-professional-light-calm",
+      "storage_path": "trust-professional/light-calm.html",
+      "slotCount": 12
+    },
+    {
+      "id": "trust-professional-light-remedy",
+      "storage_path": "trust-professional/light-remedy.html",
+      "slotCount": 12
+    },
+    {
+      "id": "trust-professional-light-steady",
+      "storage_path": "trust-professional/light-steady.html",
+      "slotCount": 12
+    },
+    {
+      "id": "warm-sensory-dark-cinder",
+      "storage_path": "warm-sensory/dark-cinder.html",
+      "slotCount": 12
+    },
+    {
+      "id": "warm-sensory-dark-clove",
+      "storage_path": "warm-sensory/dark-clove.html",
+      "slotCount": 11
+    },
+    {
+      "id": "warm-sensory-dark-ember",
+      "storage_path": "warm-sensory/dark-ember.html",
+      "slotCount": 13
+    },
+    {
+      "id": "warm-sensory-dark-honey",
+      "storage_path": "warm-sensory/dark-honey.html",
+      "slotCount": 10
+    },
+    {
+      "id": "warm-sensory-dark-saffron",
+      "storage_path": "warm-sensory/dark-saffron.html",
+      "slotCount": 11
+    },
+    {
+      "id": "warm-sensory-light-basil",
+      "storage_path": "warm-sensory/light-basil.html",
+      "slotCount": 11
+    },
+    {
+      "id": "warm-sensory-light-harvest",
+      "storage_path": "warm-sensory/light-harvest.html",
+      "slotCount": 12
+    },
+    {
+      "id": "warm-sensory-light-linen",
+      "storage_path": "warm-sensory/light-linen.html",
+      "slotCount": 10
+    },
+    {
+      "id": "warm-sensory-light-marrow",
+      "storage_path": "warm-sensory/light-marrow.html",
+      "slotCount": 11
+    },
+    {
+      "id": "warm-sensory-light-terra",
+      "storage_path": "warm-sensory/light-terra.html",
+      "slotCount": 13
+    }
+  ],
+  "missingSlots": [
+    {
+      "id": "authority-minimal-dark-heritage",
+      "storage_path": "authority-minimal/dark-heritage.html",
+      "slotCount": 0
+    },
+    {
+      "id": "authority-minimal-dark-minimal",
+      "storage_path": "authority-minimal/dark-minimal.html",
+      "slotCount": 0
+    },
+    {
+      "id": "authority-minimal-light-advisory",
+      "storage_path": "authority-minimal/light-advisory.html",
+      "slotCount": 0
+    },
+    {
+      "id": "authority-minimal-light-editorial",
+      "storage_path": "authority-minimal/light-editorial.html",
+      "slotCount": 0
+    },
+    {
+      "id": "authority-minimal-light-real-estate",
+      "storage_path": "authority-minimal/light-real-estate.html",
+      "slotCount": 0
+    },
+    {
+      "id": "clean-modern-dark-emerging",
+      "storage_path": "clean-modern/dark-emerging.html",
+      "slotCount": 0
+    },
+    {
+      "id": "clean-modern-dark-modern",
+      "storage_path": "clean-modern/dark-modern.html",
+      "slotCount": 0
+    },
+    {
+      "id": "clean-modern-light-friendly",
+      "storage_path": "clean-modern/light-friendly.html",
+      "slotCount": 0
+    },
+    {
+      "id": "clean-modern-light-modern",
+      "storage_path": "clean-modern/light-modern.html",
+      "slotCount": 0
+    },
+    {
+      "id": "clean-modern-light-systematic",
+      "storage_path": "clean-modern/light-systematic.html",
+      "slotCount": 0
+    },
+    {
+      "id": "community-vibrant-dark-energy",
+      "storage_path": "community-vibrant/dark-energy.html",
+      "slotCount": 0
+    },
+    {
+      "id": "community-vibrant-light-active",
+      "storage_path": "community-vibrant/light-active.html",
+      "slotCount": 0
+    },
+    {
+      "id": "community-vibrant-light-coral",
+      "storage_path": "community-vibrant/light-coral.html",
+      "slotCount": 0
+    },
+    {
+      "id": "community-vibrant-light-sunrise",
+      "storage_path": "community-vibrant/light-sunrise.html",
+      "slotCount": 0
+    },
+    {
+      "id": "community-vibrant-light-vibrant",
+      "storage_path": "community-vibrant/light-vibrant.html",
+      "slotCount": 0
+    },
+    {
+      "id": "editorial-bold-dark-bold",
+      "storage_path": "editorial-bold/dark-bold.html",
+      "slotCount": 0
+    },
+    {
+      "id": "editorial-bold-dark-culture",
+      "storage_path": "editorial-bold/dark-culture.html",
+      "slotCount": 0
+    },
+    {
+      "id": "editorial-bold-light-bold",
+      "storage_path": "editorial-bold/light-bold.html",
+      "slotCount": 0
+    },
+    {
+      "id": "editorial-bold-light-neo",
+      "storage_path": "editorial-bold/light-neo.html",
+      "slotCount": 0
+    },
+    {
+      "id": "editorial-bold-light-pop",
+      "storage_path": "editorial-bold/light-pop.html",
+      "slotCount": 0
+    },
+    {
+      "id": "luxury-aspirational-dark-editorial",
+      "storage_path": "luxury-aspirational/dark-editorial.html",
+      "slotCount": 0
+    },
+    {
+      "id": "luxury-aspirational-dark-heritage",
+      "storage_path": "luxury-aspirational/dark-heritage.html",
+      "slotCount": 0
+    },
+    {
+      "id": "luxury-aspirational-light-airy",
+      "storage_path": "luxury-aspirational/light-airy.html",
+      "slotCount": 0
+    },
+    {
+      "id": "luxury-aspirational-light-champagne",
+      "storage_path": "luxury-aspirational/light-champagne.html",
+      "slotCount": 0
+    },
+    {
+      "id": "portfolio-dramatic-dark-dramatic",
+      "storage_path": "portfolio-dramatic/dark-dramatic.html",
+      "slotCount": 0
+    },
+    {
+      "id": "portfolio-dramatic-dark-expression",
+      "storage_path": "portfolio-dramatic/dark-expression.html",
+      "slotCount": 0
+    },
+    {
+      "id": "portfolio-dramatic-light-gallery",
+      "storage_path": "portfolio-dramatic/light-gallery.html",
+      "slotCount": 0
+    },
+    {
+      "id": "portfolio-dramatic-light-serif",
+      "storage_path": "portfolio-dramatic/light-serif.html",
+      "slotCount": 0
+    },
+    {
+      "id": "trust-professional-dark-professional",
+      "storage_path": "trust-professional/dark-professional.html",
+      "slotCount": 0
+    },
+    {
+      "id": "trust-professional-light-community-care",
+      "storage_path": "trust-professional/light-community-care.html",
+      "slotCount": 0
+    },
+    {
+      "id": "trust-professional-light-professional",
+      "storage_path": "trust-professional/light-professional.html",
+      "slotCount": 0
+    },
+    {
+      "id": "warm-sensory-dark-editorial",
+      "storage_path": "warm-sensory/dark-editorial.html",
+      "slotCount": 0
+    },
+    {
+      "id": "warm-sensory-dark-heritage",
+      "storage_path": "warm-sensory/dark-heritage.html",
+      "slotCount": 0
+    },
+    {
+      "id": "warm-sensory-light-airy",
+      "storage_path": "warm-sensory/light-airy.html",
+      "slotCount": 0
+    },
+    {
+      "id": "warm-sensory-light-provincial",
+      "storage_path": "warm-sensory/light-provincial.html",
+      "slotCount": 0
+    },
+    {
+      "id": "warm-sensory-light-rustic",
+      "storage_path": "warm-sensory/light-rustic.html",
+      "slotCount": 0
+    }
+  ],
+  "failedDownloads": []
+}

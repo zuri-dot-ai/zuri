@@ -3,8 +3,9 @@
  * Upload template HTML to Supabase Storage (website-templates) and upsert
  * rows into the `templates` table from sibling .json metadata files.
  *
- * Source of truth: templates-v2/ (production archetype templates with
- * data-link-slot markup). Falls back to templates/ only if v2 is missing.
+ * Source of truth: upload from both templates-v2/ and templates/.
+ * Prefer templates-v2 for duplicate template IDs, but keep legacy templates/
+ * published so older sites can still heal/recompose with data-link-slot markup.
  *
  * Excludes: trust-professional/light-modern (broken extraction).
  *
@@ -23,7 +24,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
 const TEMPLATES_V2 = path.join(ROOT, "templates-v2");
 const TEMPLATES_V1 = path.join(ROOT, "templates");
-const TEMPLATES_DIR = fs.existsSync(TEMPLATES_V2) ? TEMPLATES_V2 : TEMPLATES_V1;
 const BUCKET = "website-templates";
 const EXCLUDE = new Set(["trust-professional/light-modern"]);
 
@@ -60,6 +60,32 @@ function listJsonFiles(dir) {
     else if (entry.isFile() && entry.name.endsWith(".json")) results.push(full);
   }
   return results;
+}
+
+function collectTemplateEntries() {
+  const roots = [
+    { dir: TEMPLATES_V1, source: "templates" },
+    { dir: TEMPLATES_V2, source: "templates-v2" },
+  ].filter((entry) => fs.existsSync(entry.dir));
+
+  const byTemplateId = new Map();
+
+  for (const root of roots) {
+    const jsonFiles = listJsonFiles(root.dir).sort();
+    for (const jsonPath of jsonFiles) {
+      const meta = JSON.parse(fs.readFileSync(jsonPath, "utf8"));
+      byTemplateId.set(meta.template_id, {
+        meta,
+        jsonPath,
+        sourceRoot: root.dir,
+        sourceName: root.source,
+      });
+    }
+  }
+
+  return Array.from(byTemplateId.values()).sort((a, b) =>
+    a.meta.template_id.localeCompare(b.meta.template_id)
+  );
 }
 
 function toDbRow(meta) {
@@ -208,14 +234,20 @@ async function main() {
   await ensureTemplatesTable(url, key);
   await ensureBucket(supabase);
 
-  console.log(`Uploading from: ${TEMPLATES_DIR}`);
-  const jsonFiles = listJsonFiles(TEMPLATES_DIR).sort();
+  const entries = collectTemplateEntries();
+  const sourceSummary = [
+    fs.existsSync(TEMPLATES_V2) ? "templates-v2" : null,
+    fs.existsSync(TEMPLATES_V1) ? "templates" : null,
+  ]
+    .filter(Boolean)
+    .join(", ");
+  console.log(`Uploading from: ${sourceSummary}`);
   const uploaded = [];
   const skipped = [];
   const failed = [];
 
-  for (const jsonPath of jsonFiles) {
-    const meta = JSON.parse(fs.readFileSync(jsonPath, "utf8"));
+  for (const entry of entries) {
+    const { meta, sourceRoot, sourceName } = entry;
     const relKey = `${meta.archetype}/${path.basename(meta.storage_path, ".html")}`;
 
     if (EXCLUDE.has(relKey) || EXCLUDE.has(meta.storage_path.replace(/\.html$/, ""))) {
@@ -224,12 +256,15 @@ async function main() {
     }
 
     const htmlPath = path.join(
-      TEMPLATES_DIR,
+      sourceRoot,
       meta.archetype,
       path.basename(meta.storage_path)
     );
     if (!fs.existsSync(htmlPath)) {
-      failed.push({ id: meta.template_id, reason: `missing html: ${htmlPath}` });
+      failed.push({
+        id: meta.template_id,
+        reason: `missing html in ${sourceName}: ${htmlPath}`,
+      });
       continue;
     }
 
@@ -260,7 +295,7 @@ async function main() {
     }
 
     uploaded.push(meta.template_id);
-    console.log(`OK  ${meta.template_id}`);
+    console.log(`OK  ${meta.template_id} (${sourceName})`);
   }
 
   console.log("\n--- UPLOAD SUMMARY ---");
