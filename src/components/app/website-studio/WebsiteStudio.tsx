@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-is-mobile";
 import { UpgradeSheet } from "@/components/app/upgrade-sheet";
 import { celebrateFirstPublish } from "@/lib/ui/milestones";
 import {
@@ -166,6 +167,7 @@ export function WebsiteStudio({
   templateId?: string | null;
 }) {
   const router = useRouter();
+  const isMobile = useIsMobile();
   const [activePanel, setActivePanel] = useState<PanelId | null>(null);
   const [placeholders, setPlaceholders] = useState(initialPlaceholders);
   const [images, setImages] = useState(initialImages);
@@ -515,6 +517,10 @@ export function WebsiteStudio({
   const activeLabel =
     allPanelItems.find((i) => i.id === activePanel)?.label ?? "Edit";
 
+  // Premium section-button treatment: icon sits in a small rounded badge
+  // that lights up gold on selection, paired with a matching gold
+  // left-border accent — one consistent "active" signal reused in both
+  // places rather than two competing ones.
   function renderSectionButton(item: SectionItem) {
     const Icon = item.icon;
     const selected = activePanel === item.id;
@@ -524,25 +530,42 @@ export function WebsiteStudio({
         type="button"
         onClick={() => openPanel(item.id)}
         className={cn(
-          "flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm font-medium [transition-duration:var(--transition-fast)] transition-colors",
+          "group flex w-full items-center gap-3 border-l-2 px-3 py-3 text-left text-sm font-medium [transition-duration:var(--transition-fast)] transition-colors",
           // At lg+, share panel height equally so rows fill down to the preview edge.
           "lg:min-h-0 lg:flex-1 lg:gap-3.5 lg:px-4 lg:py-0 lg:text-[0.9375rem]",
           selected
-            ? "bg-surface text-gold"
-            : "text-foreground hover:bg-surface/50"
+            ? "border-gold bg-surface text-gold"
+            : "border-transparent text-foreground hover:bg-surface/50"
         )}
       >
-        <Icon className="size-4 shrink-0 text-muted-foreground lg:size-5" />
+        <span
+          className={cn(
+            "flex size-8 shrink-0 items-center justify-center rounded-md [transition-duration:var(--transition-fast)] transition-colors lg:size-9",
+            selected
+              ? "bg-gold/15 text-gold"
+              : "bg-[var(--bg-secondary)] text-muted-foreground group-hover:text-foreground"
+          )}
+        >
+          <Icon className="size-4 lg:size-[1.125rem]" />
+        </span>
         <span className="min-w-0 flex-1 truncate">{item.label}</span>
         <ChevronRight className="size-4 shrink-0 text-muted-foreground lg:size-5" />
       </button>
     );
   }
 
-  function renderSidePanel(items: SectionItem[]) {
+  // groupLabel renders as a small gold uppercase kicker — visible only
+  // below lg, since at lg+ the two lists are already spatially separated
+  // by the preview column and don't need a label to disambiguate them.
+  function renderSidePanel(items: SectionItem[], groupLabel: string) {
     return (
-      <aside className="zuri-card flex flex-col divide-y divide-[var(--border-solid)] p-0 lg:h-full lg:min-h-0">
-        {items.map((item) => renderSectionButton(item))}
+      <aside className="zuri-card flex flex-col p-0 lg:h-full lg:min-h-0">
+        <p className="px-4 pb-1.5 pt-3.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-gold/80 lg:hidden">
+          {groupLabel}
+        </p>
+        <div className="flex flex-col divide-y divide-[var(--border-solid)] lg:h-full lg:min-h-0">
+          {items.map((item) => renderSectionButton(item))}
+        </div>
       </aside>
     );
   }
@@ -552,7 +575,19 @@ export function WebsiteStudio({
       <header className="page-head flex flex-row items-center justify-between gap-3">
         <h1>Your Website</h1>
         <div className="flex flex-wrap items-center justify-end gap-2">
-          {previewUrl ? (
+          {isMobile ? (
+            // Mobile: always open the in-app full-screen preview route —
+            // never a new browser tab, since that's a jarring context
+            // switch on a phone.
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={openFullScreenPreview}
+              disabled={!previewHandle}
+            >
+              <Eye className="size-4" /> Preview
+            </Button>
+          ) : previewUrl ? (
             <Button variant="outline" size="sm" asChild>
               <a href={previewUrl} target="_blank" rel="noreferrer">
                 <Eye className="size-4" /> Preview
@@ -591,9 +626,13 @@ export function WebsiteStudio({
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col gap-4 lg:grid lg:min-h-[70vh] lg:grid-cols-[minmax(11rem,1fr)_minmax(0,3fr)_minmax(11rem,1fr)] lg:items-stretch">
-        {renderSidePanel(leftPanelItems)}
+        {renderSidePanel(leftPanelItems, "Content")}
 
-        <div className="min-h-[50vh] lg:h-full lg:min-h-0">
+        {/* Preview is desktop-only in the main scroll. On mobile/tablet it's
+            reached via the header's Preview button (full-screen in-app
+            route) instead of taking up vertical space between the two
+            editing panels. */}
+        <div className="hidden lg:block lg:h-full lg:min-h-0">
           <PreviewFrame
             handle={previewHandle}
             refreshKey={previewKey}
@@ -604,7 +643,7 @@ export function WebsiteStudio({
           />
         </div>
 
-        {renderSidePanel(rightPanelItems)}
+        {renderSidePanel(rightPanelItems, "Design & Publish")}
       </div>
 
       <CustomSiteCTA

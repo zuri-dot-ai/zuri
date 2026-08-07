@@ -86,6 +86,7 @@ export function PreviewFrame({
             key={refreshKey}
             title="Website preview"
             src={previewSrc}
+            loading="lazy"
             onLoad={() => setLoaded(true)}
             className={cn(
               "block h-full w-full border-0 bg-[var(--bg-secondary)] transition-opacity duration-300",
