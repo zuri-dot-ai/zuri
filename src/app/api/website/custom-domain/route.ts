@@ -115,11 +115,20 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { data: existingWebsite } = await supabase
+    const { data: existingWebsite, error: existingWebsiteError } = await supabase
       .from("websites")
       .select("user_id")
       .eq("custom_domain", domain)
       .maybeSingle();
+
+    if (existingWebsiteError) {
+      console.error(
+        `[api/website/custom-domain] websites query failed for user=${user.id}:`,
+        existingWebsiteError.message,
+        existingWebsiteError.code,
+        existingWebsiteError.details
+      );
+    }
 
     if (existingWebsite && existingWebsite.user_id !== user.id) {
       return NextResponse.json(
@@ -128,11 +137,20 @@ export async function POST(req: Request) {
       );
     }
 
-    const { data: website } = await supabase
+    const { data: website, error: websiteError } = await supabase
       .from("websites")
       .select("id, status, handle")
       .eq("user_id", user.id)
       .maybeSingle();
+
+    if (websiteError) {
+      console.error(
+        `[api/website/custom-domain] websites query failed for user=${user.id}:`,
+        websiteError.message,
+        websiteError.code,
+        websiteError.details
+      );
+    }
 
     if (!website) {
       return NextResponse.json(
@@ -207,11 +225,20 @@ export async function GET() {
   const supabase = await createClient();
 
   try {
-    const { data: website } = await supabase
+    const { data: website, error: websiteError } = await supabase
       .from("websites")
       .select("custom_domain, custom_domain_status, custom_domain_added_at")
       .eq("user_id", user.id)
       .maybeSingle();
+
+    if (websiteError) {
+      console.error(
+        `[api/website/custom-domain] websites query failed for user=${user.id}:`,
+        websiteError.message,
+        websiteError.code,
+        websiteError.details
+      );
+    }
 
     if (!website?.custom_domain) {
       return NextResponse.json({ has_custom_domain: false });
@@ -251,11 +278,20 @@ export async function DELETE() {
   if (!rateLimit.allowed) return rateLimitExceededResponse(rateLimit.resetIn);
 
   try {
-    const { data: website } = await supabase
+    const { data: website, error: websiteError } = await supabase
       .from("websites")
       .select("custom_domain")
       .eq("user_id", user.id)
       .maybeSingle();
+
+    if (websiteError) {
+      console.error(
+        `[api/website/custom-domain] websites query failed for user=${user.id}:`,
+        websiteError.message,
+        websiteError.code,
+        websiteError.details
+      );
+    }
 
     if (!website?.custom_domain) {
       return NextResponse.json({ error: "No custom domain to remove" }, { status: 404 });

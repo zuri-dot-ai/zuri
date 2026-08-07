@@ -1,5 +1,12 @@
-// TODO: copywriting — stub only, doc §2.1
-import { BaseEmailLayout, EmailHeading, EmailBody, EmailButton } from "./BaseEmailLayout";
+// src/lib/email/templates/PasswordResetEmail.tsx
+
+import {
+  BaseEmailLayout,
+  EmailEyebrow,
+  EmailHeading,
+  EmailBody,
+  EmailButton,
+} from "./BaseEmailLayout";
 
 export interface PasswordResetEmailProps {
   resetUrl: string;
@@ -8,9 +15,15 @@ export interface PasswordResetEmailProps {
 export function PasswordResetEmail({ resetUrl }: PasswordResetEmailProps) {
   return (
     <BaseEmailLayout preview="Reset your Zuri password">
-      <EmailHeading>Reset your password.</EmailHeading>
-      <EmailBody>{`Click below to choose a new password. This link expires in 1 hour.`}</EmailBody>
+      <EmailEyebrow>Password Reset</EmailEyebrow>
+      <EmailHeading>Let's get you back in.</EmailHeading>
+      <EmailBody>
+        {`Click below to choose a new password. This link is valid for 1 hour and can only be used once.`}
+      </EmailBody>
       <EmailButton href={resetUrl}>Reset password</EmailButton>
+      <EmailBody style={{ fontSize: "13px", margin: 0 }}>
+        {`Didn't request this? You can safely ignore this email — your password won't change.`}
+      </EmailBody>
     </BaseEmailLayout>
   );
 }

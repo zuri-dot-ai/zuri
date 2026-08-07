@@ -42,13 +42,22 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Invalid link slot" }, { status: 400 });
   }
 
-  const { data: website } = await supabase
+  const { data: website, error: websiteError } = await supabase
     .from("websites")
     .select(
       "id, template_id, archetype, filled_placeholders, filled_images, filled_links, filled_embeds, active_theme"
     )
     .eq("user_id", user.id)
     .maybeSingle();
+
+  if (websiteError) {
+    console.error(
+      `[api/website/link] websites query failed for user=${user.id}:`,
+      websiteError.message,
+      websiteError.code,
+      websiteError.details
+    );
+  }
 
   if (!website?.template_id) {
     return NextResponse.json(

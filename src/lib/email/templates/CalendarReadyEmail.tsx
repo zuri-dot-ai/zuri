@@ -1,5 +1,12 @@
-// TODO: copywriting — stub only, doc §2.4
-import { BaseEmailLayout, EmailHeading, EmailBody, EmailButton } from "./BaseEmailLayout";
+// src/lib/email/templates/CalendarReadyEmail.tsx
+
+import {
+  BaseEmailLayout,
+  EmailEyebrow,
+  EmailHeading,
+  EmailBody,
+  EmailButton,
+} from "./BaseEmailLayout";
 
 export interface CalendarReadyEmailProps {
   firstName: string;
@@ -9,8 +16,11 @@ export interface CalendarReadyEmailProps {
 export function CalendarReadyEmail({ firstName, calendarUrl }: CalendarReadyEmailProps) {
   return (
     <BaseEmailLayout preview="Your content calendar is ready">
-      <EmailHeading>Your content calendar is ready.</EmailHeading>
-      <EmailBody>{`Hi ${firstName}, your monthly content calendar has been generated.`}</EmailBody>
+      <EmailEyebrow>Calendar Ready</EmailEyebrow>
+      <EmailHeading>{`Your month is planned out, ${firstName}.`}</EmailHeading>
+      <EmailBody>
+        {`Your content calendar for the month ahead is ready — posts mapped out so you're never staring at a blank page wondering what to share next.`}
+      </EmailBody>
       <EmailButton href={calendarUrl}>View my calendar</EmailButton>
     </BaseEmailLayout>
   );

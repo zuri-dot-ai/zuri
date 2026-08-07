@@ -1,4 +1,13 @@
-import { BaseEmailLayout, EmailHeading, EmailBody, EmailButton } from "./BaseEmailLayout";
+// src/lib/email/templates/UsageLimitReachedEmail.tsx
+
+import {
+  BaseEmailLayout,
+  EmailEyebrow,
+  EmailHeading,
+  EmailBody,
+  EmailButton,
+  EmailDivider,
+} from "./BaseEmailLayout";
 
 export interface UsageLimitReachedEmailProps {
   firstName: string;
@@ -21,15 +30,16 @@ export function UsageLimitReachedEmail({
 }: UsageLimitReachedEmailProps) {
   return (
     <BaseEmailLayout preview={`You've used all your ${metric} for this month`}>
-      <EmailHeading>{`You've reached your ${metric} limit.`}</EmailHeading>
+      <EmailEyebrow>Limit Reached</EmailEyebrow>
+      <EmailHeading>{`You've used all ${limit} ${metric}, ${firstName}.`}</EmailHeading>
       <EmailBody>
-        {`Hi ${firstName}, you've used all ${limit} ${metric} on your ${currentPlan} plan this month. Your allowance resets on ${resetDate}.`}
+        {`That's your full ${currentPlan} allowance for the month. Your ${metric} automatically resets on ${resetDate} — or upgrade to ${upgradePlan} now for more, without waiting.`}
       </EmailBody>
-      <EmailBody>
-        {`Upgrade to ${upgradePlan} to get more ${metric} immediately — without waiting for the reset.`}
+      <EmailButton href={upgradeUrl}>Upgrade to {upgradePlan}</EmailButton>
+      <EmailDivider />
+      <EmailBody style={{ fontSize: "13px", margin: 0 }}>
+        {`Prefer to wait? Nothing to do — your allowance resets automatically on ${resetDate}.`}
       </EmailBody>
-      <EmailButton href={upgradeUrl}>Upgrade my plan</EmailButton>
-      <EmailBody>{`Or wait until ${resetDate} and your allowance will automatically reset.`}</EmailBody>
     </BaseEmailLayout>
   );
 }

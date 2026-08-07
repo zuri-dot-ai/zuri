@@ -51,7 +51,16 @@ export async function POST(req: Request) {
       query = query.eq("id", body.websiteId);
     }
 
-    const { data: website } = await query.maybeSingle();
+    const { data: website, error: websiteError } = await query.maybeSingle();
+
+    if (websiteError) {
+      console.error(
+        `[api/website/unpublish] websites query failed for user=${user.id}:`,
+        websiteError.message,
+        websiteError.code,
+        websiteError.details
+      );
+    }
 
     if (!website) {
       return NextResponse.json(

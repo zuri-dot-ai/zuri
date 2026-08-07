@@ -1,4 +1,11 @@
-import { BaseEmailLayout, EmailHeading, EmailBody } from "./BaseEmailLayout";
+// src/lib/email/templates/CustomSiteRequestStatusEmail.tsx
+
+import {
+  BaseEmailLayout,
+  EmailEyebrow,
+  EmailHeading,
+  EmailBody,
+} from "./BaseEmailLayout";
 
 export interface CustomSiteRequestStatusEmailProps {
   firstName: string;
@@ -13,28 +20,33 @@ export function CustomSiteRequestStatusEmail({
   status,
   notes,
 }: CustomSiteRequestStatusEmailProps) {
+  const eyebrow =
+    status === "approved"
+      ? "Request Approved"
+      : status === "declined"
+        ? "Request Update"
+        : "Request In Review";
+
   const heading =
     status === "approved"
-      ? "Your custom project was approved."
+      ? `Your ${projectTypeLabel} project is approved.`
       : status === "declined"
-        ? "Update on your custom project request."
-        : "Your custom project is in review.";
+        ? "An update on your custom project."
+        : "Your project is being reviewed.";
 
   const body =
     status === "approved"
-      ? `Great news — your ${projectTypeLabel} request was approved. Our team will reach out shortly with next steps for kickoff.`
+      ? `Great news — our team is moving forward with your ${projectTypeLabel} build. Expect an email shortly with next steps for kickoff.`
       : status === "declined"
-        ? `We've reviewed your ${projectTypeLabel} request and won't be proceeding with a custom build at this time. You can still create a self-serve AI site from your Zuri dashboard.`
-        : `We're reviewing your ${projectTypeLabel} request and will update you soon.`;
+        ? `We've reviewed your ${projectTypeLabel} request and won't be proceeding with a custom build at this time. You can still create a self-serve AI-generated site any time from your dashboard.`
+        : `We're currently reviewing your ${projectTypeLabel} request and will follow up soon with an update.`;
 
   return (
     <BaseEmailLayout preview={heading}>
-      <EmailHeading>
-        {firstName ? `${firstName}, ` : ""}
-        {heading}
-      </EmailHeading>
+      <EmailEyebrow>{eyebrow}</EmailEyebrow>
+      <EmailHeading>{`${firstName ? `${firstName}, ` : ""}${heading.charAt(0).toLowerCase()}${heading.slice(1)}`}</EmailHeading>
       <EmailBody>{body}</EmailBody>
-      {notes ? <EmailBody>{notes}</EmailBody> : null}
+      {notes ? <EmailBody style={{ fontSize: "13px", margin: 0 }}>{notes}</EmailBody> : null}
     </BaseEmailLayout>
   );
 }

@@ -55,7 +55,16 @@ export async function POST(req: Request) {
       query = query.eq("id", body.websiteId);
     }
 
-    const { data: website } = await query.maybeSingle();
+    const { data: website, error: websiteError } = await query.maybeSingle();
+
+    if (websiteError) {
+      console.error(
+        `[api/website/publish] websites query failed for user=${user.id}:`,
+        websiteError.message,
+        websiteError.code,
+        websiteError.details
+      );
+    }
 
     if (!website) {
       return NextResponse.json(
@@ -128,11 +137,20 @@ export async function POST(req: Request) {
       .update({ handle_locked: true })
       .eq("id", user.id);
 
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("email, full_name")
       .eq("id", user.id)
       .maybeSingle();
+
+    if (profileError) {
+      console.error(
+        `[api/website/publish] profiles query failed for user=${user.id}:`,
+        profileError.message,
+        profileError.code,
+        profileError.details
+      );
+    }
 
     createNotificationAsync({
       userId: user.id,

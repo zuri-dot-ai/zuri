@@ -1,4 +1,11 @@
-import { BaseEmailLayout, EmailHeading, EmailBody } from "./BaseEmailLayout";
+// src/lib/email/templates/AgencyInquirySentEmail.tsx
+
+import {
+  BaseEmailLayout,
+  EmailEyebrow,
+  EmailHeading,
+  EmailBody,
+} from "./BaseEmailLayout";
 
 export interface AgencyInquirySentEmailProps {
   userName: string | null;
@@ -11,15 +18,16 @@ export function AgencyInquirySentEmail({
   agencyName,
   responseTime,
 }: AgencyInquirySentEmailProps) {
-  const greeting = userName ? `Hi ${userName},` : "Hi,";
+  const greeting = userName ? `${userName}, ` : "";
   return (
     <BaseEmailLayout preview={`Your inquiry to ${agencyName} has been sent`}>
-      <EmailHeading>Your inquiry has been sent.</EmailHeading>
+      <EmailEyebrow>Inquiry Sent</EmailEyebrow>
+      <EmailHeading>{`${greeting}${agencyName} has your message.`}</EmailHeading>
       <EmailBody>
-        {`${greeting} we've forwarded your enquiry to ${agencyName}. They ${responseTime.toLowerCase()}.`}
+        {`We've forwarded your enquiry directly to ${agencyName}. They ${responseTime.toLowerCase()}.`}
       </EmailBody>
-      <EmailBody>
-        {`Your email address was shared with ${agencyName} to facilitate this connection.`}
+      <EmailBody style={{ fontSize: "13px", margin: 0 }}>
+        {`Your email address was shared with ${agencyName} so they can reply to you directly.`}
       </EmailBody>
     </BaseEmailLayout>
   );

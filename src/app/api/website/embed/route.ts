@@ -25,13 +25,23 @@ import type {
 
 async function loadWebsite(userId: string) {
   const supabase = await createClient();
-  const { data: website } = await supabase
+  const { data: website, error: websiteError } = await supabase
     .from("websites")
     .select(
       "id, template_id, archetype, filled_placeholders, filled_images, filled_links, filled_embeds, active_theme"
     )
     .eq("user_id", userId)
     .maybeSingle();
+
+  if (websiteError) {
+    console.error(
+      `[api/website/embed] websites query failed for user=${userId}:`,
+      websiteError.message,
+      websiteError.code,
+      websiteError.details
+    );
+  }
+
   return { supabase, website };
 }
 

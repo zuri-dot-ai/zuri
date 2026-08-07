@@ -41,13 +41,22 @@ export async function POST() {
   const rateLimit = await checkRateLimit(supabase, user.id, "api:general");
   if (!rateLimit.allowed) return rateLimitExceededResponse(rateLimit.resetIn);
 
-  const { data: website } = await supabase
+  const { data: website, error: websiteError } = await supabase
     .from("websites")
     .select(
       "id, template_id, archetype, template_html, filled_placeholders, filled_images, filled_links, filled_embeds, active_theme"
     )
     .eq("user_id", user.id)
     .maybeSingle();
+
+  if (websiteError) {
+    console.error(
+      `[api/website/refresh-images] websites query failed for user=${user.id}:`,
+      websiteError.message,
+      websiteError.code,
+      websiteError.details
+    );
+  }
 
   if (!website?.template_id || !website.archetype) {
     return NextResponse.json(

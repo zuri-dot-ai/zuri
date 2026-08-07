@@ -1,4 +1,12 @@
-import { BaseEmailLayout, EmailHeading, EmailBody, EmailButton } from "./BaseEmailLayout";
+// src/lib/email/templates/AgencyApprovalEmail.tsx
+
+import {
+  BaseEmailLayout,
+  EmailEyebrow,
+  EmailHeading,
+  EmailBody,
+  EmailButton,
+} from "./BaseEmailLayout";
 
 export interface AgencyApprovalEmailProps {
   agencyName: string;
@@ -8,9 +16,10 @@ export interface AgencyApprovalEmailProps {
 export function AgencyApprovalEmail({ agencyName, listingUrl }: AgencyApprovalEmailProps) {
   return (
     <BaseEmailLayout preview={`${agencyName} is now live on Zuri`}>
-      <EmailHeading>You&apos;re listed on Zuri.</EmailHeading>
+      <EmailEyebrow>You're Listed</EmailEyebrow>
+      <EmailHeading>{`${agencyName} is live on Zuri.`}</EmailHeading>
       <EmailBody>
-        {`Congratulations — ${agencyName} is now live on the Zuri agency marketplace.`}
+        {`Your listing is approved and visible in the marketplace right now — business owners across the platform can find and reach out to you directly.`}
       </EmailBody>
       <EmailButton href={listingUrl}>View my listing</EmailButton>
     </BaseEmailLayout>

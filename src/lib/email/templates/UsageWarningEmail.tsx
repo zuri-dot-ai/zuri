@@ -1,5 +1,13 @@
-// TODO: copywriting — stub only, doc §2.4
-import { BaseEmailLayout, EmailHeading, EmailBody, EmailButton } from "./BaseEmailLayout";
+// src/lib/email/templates/UsageWarningEmail.tsx
+
+import {
+  BaseEmailLayout,
+  EmailEyebrow,
+  EmailHeading,
+  EmailBody,
+  EmailButton,
+  EmailStat,
+} from "./BaseEmailLayout";
 
 export interface UsageWarningEmailProps {
   firstName: string;
@@ -16,8 +24,12 @@ export function UsageWarningEmail({
 }: UsageWarningEmailProps) {
   return (
     <BaseEmailLayout preview={`You've used ${percentUsed}% of your ${metric}`}>
-      <EmailHeading>{`You're at ${percentUsed}% of your ${metric} limit.`}</EmailHeading>
-      <EmailBody>{`Hi ${firstName}, keep an eye on your usage this month.`}</EmailBody>
+      <EmailEyebrow>Usage Update</EmailEyebrow>
+      <EmailHeading>{`Just a heads-up, ${firstName}.`}</EmailHeading>
+      <EmailBody>
+        {`You're getting close to your ${metric} allowance for this month. No action needed yet — just wanted you to see it coming.`}
+      </EmailBody>
+      <EmailStat value={`${percentUsed}%`} caption={`of your ${metric} used this month`} />
       <EmailButton href={upgradeUrl}>View my plan</EmailButton>
     </BaseEmailLayout>
   );

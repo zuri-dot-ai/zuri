@@ -1,4 +1,11 @@
-import { BaseEmailLayout, EmailHeading, EmailBody } from "./BaseEmailLayout";
+// src/lib/email/templates/CustomSiteRequestConfirmationEmail.tsx
+
+import {
+  BaseEmailLayout,
+  EmailEyebrow,
+  EmailHeading,
+  EmailBody,
+} from "./BaseEmailLayout";
 
 export interface CustomSiteRequestConfirmationEmailProps {
   firstName: string;
@@ -11,12 +18,13 @@ export function CustomSiteRequestConfirmationEmail({
 }: CustomSiteRequestConfirmationEmailProps) {
   return (
     <BaseEmailLayout preview="We received your custom site request">
-      <EmailHeading>Thanks, {firstName || "there"}.</EmailHeading>
+      <EmailEyebrow>Request Received</EmailEyebrow>
+      <EmailHeading>{`Thanks, ${firstName || "there"}.`}</EmailHeading>
       <EmailBody>
-        {`We received your custom build request for a ${projectTypeLabel}. Our team will review it and follow up by email.`}
+        {`We've received your custom build request for a ${projectTypeLabel}. Our team will review the details and follow up by email with next steps.`}
       </EmailBody>
-      <EmailBody>
-        {`You can check the status anytime from your Zuri dashboard.`}
+      <EmailBody style={{ fontSize: "13px", margin: 0 }}>
+        {`You can check the status any time from your Zuri dashboard.`}
       </EmailBody>
     </BaseEmailLayout>
   );

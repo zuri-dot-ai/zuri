@@ -1,5 +1,12 @@
-// TODO: copywriting — stub only, doc §2.5
-import { BaseEmailLayout, EmailHeading, EmailBody, EmailButton } from "./BaseEmailLayout";
+// src/lib/email/templates/MetaTokenExpiredEmail.tsx
+
+import {
+  BaseEmailLayout,
+  EmailEyebrow,
+  EmailHeading,
+  EmailBody,
+  EmailButton,
+} from "./BaseEmailLayout";
 
 export interface MetaTokenExpiredEmailProps {
   firstName: string;
@@ -9,11 +16,12 @@ export interface MetaTokenExpiredEmailProps {
 export function MetaTokenExpiredEmail({ firstName, reconnectUrl }: MetaTokenExpiredEmailProps) {
   return (
     <BaseEmailLayout preview="Your Meta connection has expired">
-      <EmailHeading>Reconnect your Meta account.</EmailHeading>
+      <EmailEyebrow>Reconnect Needed</EmailEyebrow>
+      <EmailHeading>{`Your Meta connection needs a refresh, ${firstName}.`}</EmailHeading>
       <EmailBody>
-        {`Hi ${firstName}, your Meta connection has expired. Reconnect to continue seeing social insights.`}
+        {`Meta access tokens expire periodically for security. Reconnect your account to keep seeing your Instagram and Facebook insights inside Zuri — it only takes a moment.`}
       </EmailBody>
-      <EmailButton href={reconnectUrl}>Reconnect</EmailButton>
+      <EmailButton href={reconnectUrl}>Reconnect Meta</EmailButton>
     </BaseEmailLayout>
   );
 }

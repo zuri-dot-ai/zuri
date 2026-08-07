@@ -1,5 +1,12 @@
-// TODO: copywriting — stub only, doc §2.5
-import { BaseEmailLayout, EmailHeading, EmailBody, EmailButton } from "./BaseEmailLayout";
+// src/lib/email/templates/SearchConsoleExpiredEmail.tsx
+
+import {
+  BaseEmailLayout,
+  EmailEyebrow,
+  EmailHeading,
+  EmailBody,
+  EmailButton,
+} from "./BaseEmailLayout";
 
 export interface SearchConsoleExpiredEmailProps {
   firstName: string;
@@ -12,11 +19,12 @@ export function SearchConsoleExpiredEmail({
 }: SearchConsoleExpiredEmailProps) {
   return (
     <BaseEmailLayout preview="Your Search Console connection has expired">
-      <EmailHeading>Reconnect Google Search Console.</EmailHeading>
+      <EmailEyebrow>Reconnect Needed</EmailEyebrow>
+      <EmailHeading>{`Your Google connection needs a refresh, ${firstName}.`}</EmailHeading>
       <EmailBody>
-        {`Hi ${firstName}, your Google connection has expired. Reconnect to restore search data.`}
+        {`Your Search Console access has expired. Reconnect to keep seeing how your website performs in Google search — it only takes a moment.`}
       </EmailBody>
-      <EmailButton href={reconnectUrl}>Reconnect</EmailButton>
+      <EmailButton href={reconnectUrl}>Reconnect Google</EmailButton>
     </BaseEmailLayout>
   );
 }

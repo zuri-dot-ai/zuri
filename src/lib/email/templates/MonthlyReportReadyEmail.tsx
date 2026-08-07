@@ -1,5 +1,12 @@
-// TODO: copywriting — stub only, doc §2.5
-import { BaseEmailLayout, EmailHeading, EmailBody, EmailButton } from "./BaseEmailLayout";
+// src/lib/email/templates/MonthlyReportReadyEmail.tsx
+
+import {
+  BaseEmailLayout,
+  EmailEyebrow,
+  EmailHeading,
+  EmailBody,
+  EmailButton,
+} from "./BaseEmailLayout";
 
 export interface MonthlyReportReadyEmailProps {
   firstName: string;
@@ -14,8 +21,11 @@ export function MonthlyReportReadyEmail({
 }: MonthlyReportReadyEmailProps) {
   return (
     <BaseEmailLayout preview={`Your ${monthName} performance report is ready`}>
-      <EmailHeading>Your monthly report is ready.</EmailHeading>
-      <EmailBody>{`Hi ${firstName}, your ${monthName} performance report is ready to view.`}</EmailBody>
+      <EmailEyebrow>Report Ready</EmailEyebrow>
+      <EmailHeading>{`Your ${monthName} report is in, ${firstName}.`}</EmailHeading>
+      <EmailBody>
+        {`A full look at how your website and content performed in ${monthName} — traffic, engagement, and where your growth is coming from.`}
+      </EmailBody>
       <EmailButton href={reportUrl}>View my report</EmailButton>
     </BaseEmailLayout>
   );

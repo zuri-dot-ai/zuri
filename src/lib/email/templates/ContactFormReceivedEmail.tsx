@@ -1,13 +1,16 @@
-import {
-  Text,
-} from "@react-email/components";
+// src/lib/email/templates/ContactFormReceivedEmail.tsx
+
+import { Text as EmailText } from "@react-email/components";
 import {
   BaseEmailLayout,
+  EmailEyebrow,
   EmailHeading,
   EmailBody,
   EmailButton,
-  EmailDivider,
+  EmailCard,
   EmailHighlight,
+  BRAND,
+  FONT_BODY,
 } from "./BaseEmailLayout";
 
 export interface ContactFormReceivedEmailProps {
@@ -29,35 +32,52 @@ export function ContactFormReceivedEmail({
 }: ContactFormReceivedEmailProps) {
   return (
     <BaseEmailLayout preview={`New enquiry for ${ownerBusinessName} from ${senderName}`}>
-      <EmailHeading>New enquiry on your website.</EmailHeading>
+      <EmailEyebrow>New Enquiry</EmailEyebrow>
+      <EmailHeading>{`Someone's reaching out, ${ownerName}.`}</EmailHeading>
       <EmailBody>
-        {`Someone reached out through your ${ownerBusinessName} website. Here are the details:`}
+        {`A visitor to your ${ownerBusinessName} website just got in touch. Here's what they sent:`}
       </EmailBody>
-      <EmailDivider />
-      <EmailHighlight label="From" value={senderName} />
-      <EmailHighlight label="Email" value={senderEmail} />
-      {serviceInterest && (
-        <EmailHighlight label="Service interest" value={serviceInterest} />
-      )}
-      <EmailDivider />
-      <Text style={{ color: "#A0A0A0", fontSize: "13px", marginBottom: "4px" }}>
-        Message:
-      </Text>
-      <Text
+
+      <EmailCard>
+        <EmailHighlight label="From" value={senderName} />
+        <EmailHighlight label="Email" value={senderEmail} />
+        {serviceInterest && (
+          <EmailHighlight label="Service interest" value={serviceInterest} />
+        )}
+      </EmailCard>
+
+      <EmailText
         style={{
-          color: "#F0EDE8",
+          color: BRAND.textTertiary,
+          fontFamily: FONT_BODY,
+          fontSize: "11px",
+          letterSpacing: "0.1em",
+          textTransform: "uppercase",
+          margin: "0 0 8px",
+        }}
+      >
+        Message
+      </EmailText>
+      <EmailText
+        style={{
+          color: BRAND.textPrimary,
+          fontFamily: FONT_BODY,
           fontSize: "14px",
-          lineHeight: "1.6",
-          backgroundColor: "#1A1A1C",
-          padding: "16px",
+          lineHeight: "1.65",
+          backgroundColor: BRAND.elevated,
+          border: `1px solid ${BRAND.border}`,
+          padding: "18px 20px",
           borderRadius: "8px",
-          margin: "0 0 24px",
+          margin: "0 0 28px",
         }}
       >
         {message}
-      </Text>
-      <EmailButton href={`mailto:${senderEmail}`}>Reply to {senderName}</EmailButton>
-      <EmailBody>{`You can also view all your enquiries from your Zuri dashboard.`}</EmailBody>
+      </EmailText>
+
+      <EmailButton href={`mailto:${senderEmail}`}>{`Reply to ${senderName}`}</EmailButton>
+      <EmailBody style={{ fontSize: "13px", margin: "16px 0 0" }}>
+        {`Every enquiry is also saved to your Zuri dashboard, so nothing gets lost.`}
+      </EmailBody>
     </BaseEmailLayout>
   );
 }

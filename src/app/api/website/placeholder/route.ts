@@ -55,13 +55,22 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Missing field" }, { status: 400 });
   }
 
-  const { data: website } = await supabase
+  const { data: website, error: websiteError } = await supabase
     .from("websites")
     .select(
       "id, template_id, archetype, filled_placeholders, filled_images, filled_links, filled_embeds, active_theme"
     )
     .eq("user_id", user.id)
     .maybeSingle();
+
+  if (websiteError) {
+    console.error(
+      `[api/website/placeholder] websites query failed for user=${user.id}:`,
+      websiteError.message,
+      websiteError.code,
+      websiteError.details
+    );
+  }
 
   if (!website) {
     return NextResponse.json(
@@ -103,11 +112,20 @@ export async function PATCH(req: Request) {
       );
     }
 
-    const { data: brand } = await supabase
+    const { data: brand, error: brandError } = await supabase
       .from("business_profiles")
       .select("business_name, industry, brand_tone, location")
       .eq("user_id", user.id)
       .maybeSingle();
+
+    if (brandError) {
+      console.error(
+        `[api/website/placeholder] business_profiles query failed for user=${user.id}:`,
+        brandError.message,
+        brandError.code,
+        brandError.details
+      );
+    }
 
     try {
       const result = await geminiJSON<{ value: string }>(

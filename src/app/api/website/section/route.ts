@@ -38,11 +38,20 @@ export async function PATCH(req: Request) {
   }
 
   try {
-    const { data: website } = await supabase
+    const { data: website, error: websiteError } = await supabase
       .from("websites")
       .select("id, generation_version, template_html")
       .eq("user_id", user.id)
       .maybeSingle();
+
+    if (websiteError) {
+      console.error(
+        `[api/website/section] websites query failed for user=${user.id}:`,
+        websiteError.message,
+        websiteError.code,
+        websiteError.details
+      );
+    }
 
     if (!website) {
       return NextResponse.json(
@@ -61,11 +70,20 @@ export async function PATCH(req: Request) {
       );
     }
 
-    const { data: legacy } = await supabase
+    const { data: legacy, error: legacyError } = await supabase
       .from("websites")
       .select("id, composition_json")
       .eq("user_id", user.id)
       .single();
+
+    if (legacyError) {
+      console.error(
+        `[api/website/section] websites query failed for user=${user.id}:`,
+        legacyError.message,
+        legacyError.code,
+        legacyError.details
+      );
+    }
 
     if (!legacy?.composition_json) {
       return NextResponse.json(
@@ -84,11 +102,20 @@ export async function PATCH(req: Request) {
 
     if (body.regenerate) {
       // ── Mode 2: Regenerate the block copy via Gemini Flash ───────────────
-      const { data: brand } = await supabase
+      const { data: brand, error: brandError } = await supabase
         .from("business_profiles")
         .select("*")
         .eq("user_id", user.id)
         .single();
+
+      if (brandError) {
+        console.error(
+          `[api/website/section] business_profiles query failed for user=${user.id}:`,
+          brandError.message,
+          brandError.code,
+          brandError.details
+        );
+      }
 
       const currentContent = updatedBlock;
       const prompt = `Regenerate copy for the "${blockId}" block of a website for ${brand?.business_name || "the business"}.

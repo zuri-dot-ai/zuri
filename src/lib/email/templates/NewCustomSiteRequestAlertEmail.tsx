@@ -1,10 +1,13 @@
+// src/lib/email/templates/NewCustomSiteRequestAlertEmail.tsx
+
 import {
   BaseEmailLayout,
+  EmailEyebrow,
   EmailHeading,
   EmailBody,
-  EmailDivider,
-  EmailHighlight,
   EmailButton,
+  EmailCard,
+  EmailHighlight,
 } from "./BaseEmailLayout";
 
 export interface NewCustomSiteRequestAlertEmailProps {
@@ -30,21 +33,20 @@ export function NewCustomSiteRequestAlertEmail({
 }: NewCustomSiteRequestAlertEmailProps) {
   return (
     <BaseEmailLayout preview={`New custom site request: ${projectTypeLabel}`}>
-      <EmailHeading>New custom site request.</EmailHeading>
-      <EmailBody>
-        {`A user submitted a custom backend/CMS build request.`}
-      </EmailBody>
-      <EmailDivider />
-      <EmailHighlight label="Project type" value={projectTypeLabel} />
-      <EmailHighlight label="Contact" value={userName} />
-      <EmailHighlight label="Email" value={userEmail} />
-      <EmailHighlight label="Timeline" value={timeline} />
-      {budgetRange ? (
-        <EmailHighlight label="Budget" value={budgetRange} />
-      ) : null}
-      <EmailHighlight label="Features" value={features} />
-      <EmailHighlight label="Description" value={description} />
-      <EmailDivider />
+      <EmailEyebrow>New Request</EmailEyebrow>
+      <EmailHeading>{`New ${projectTypeLabel} request.`}</EmailHeading>
+      <EmailBody>{`A user submitted a custom backend/CMS build request.`}</EmailBody>
+
+      <EmailCard>
+        <EmailHighlight label="Project type" value={projectTypeLabel} />
+        <EmailHighlight label="Contact" value={userName} />
+        <EmailHighlight label="Email" value={userEmail} />
+        <EmailHighlight label="Timeline" value={timeline} />
+        {budgetRange ? <EmailHighlight label="Budget" value={budgetRange} /> : null}
+        <EmailHighlight label="Features" value={features} />
+        <EmailHighlight label="Description" value={description} />
+      </EmailCard>
+
       {adminUrl ? (
         <EmailButton href={adminUrl}>Review in admin</EmailButton>
       ) : (
