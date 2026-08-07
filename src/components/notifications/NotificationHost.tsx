@@ -35,6 +35,7 @@ export function NotificationHost({ userId }: { userId: string | null }) {
   }, [shouldShow, latestVersion, entries.length, enqueue]);
 
   const isWhatsNewActive =
+    Boolean(latestVersion) &&
     activeInterruption?.id === `whats-new-${latestVersion}`;
 
   if (!userId) return <CornerCardHost />;

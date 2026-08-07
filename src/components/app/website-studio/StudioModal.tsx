@@ -1,3 +1,5 @@
+// src/components/app/website-studio/StudioModal.tsx
+
 "use client";
 
 import { useEffect, useId, useRef, type ReactNode } from "react";
@@ -129,7 +131,19 @@ export function StudioModal({
             aria-labelledby={titleId}
             tabIndex={-1}
             className={cn(
-              "relative z-10 flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl border border-[var(--border-solid)] bg-[var(--bg-elevated)] shadow-[0_24px_64px_rgba(0,0,0,0.45)] outline-none sm:rounded-xl",
+              // `dvh` (dynamic viewport height) instead of `vh` — mobile
+              // browsers report `vh` as the height *including* the space
+              // under the address bar / bottom chrome, which isn't
+              // actually visible. `dvh` updates live as that chrome
+              // shows/hides, so the sheet never renders taller than
+              // what's really on-screen.
+              //
+              // On mobile we additionally reserve space for the app's
+              // fixed bottom tab bar (~4rem) so the sheet's rounded top
+              // corner and drag handle don't collide with it. Desktop's
+              // centered dialog doesn't need this since there's no bottom
+              // tab bar at that breakpoint.
+              "relative z-10 flex max-h-[calc(92dvh-4rem)] w-full flex-col overflow-hidden rounded-t-2xl border border-[var(--border-solid)] bg-[var(--bg-elevated)] shadow-[0_24px_64px_rgba(0,0,0,0.45)] outline-none sm:max-h-[92dvh] sm:rounded-xl",
               SIZE_CLASS[size],
               className
             )}
@@ -138,6 +152,13 @@ export function StudioModal({
             exit={{ opacity: 0, y: 16, scale: 0.98 }}
             transition={{ type: "spring", stiffness: 380, damping: 32 }}
           >
+            {/* Drag handle — mobile bottom-sheet only. Purely visual (no
+                swipe-to-dismiss gesture wired up here); signals "this is a
+                sheet" the way native iOS/Android sheets do. */}
+            <div className="flex shrink-0 justify-center pt-2.5 pb-1 sm:hidden">
+              <div className="h-1 w-9 rounded-full bg-[var(--border-solid)]" />
+            </div>
+
             <div className="flex shrink-0 items-start justify-between gap-3 border-b border-[var(--border-solid)] px-4 py-3.5 sm:px-5">
               <div className="min-w-0 space-y-0.5">
                 <h2
@@ -150,22 +171,33 @@ export function StudioModal({
                   <div className="text-card-meta">{description}</div>
                 ) : null}
               </div>
-              <button
+              <motion.button
                 type="button"
                 onClick={onClose}
+                whileTap={{ scale: 0.9 }}
                 className="rounded-sm p-1.5 text-muted-foreground transition-colors hover:bg-surface hover:text-foreground"
                 aria-label="Close"
               >
                 <X className="size-4" />
-              </button>
+              </motion.button>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5">
+            <div
+              className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5"
+              style={
+                footer
+                  ? undefined
+                  : { paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }
+              }
+            >
               {children}
             </div>
 
             {footer ? (
-              <div className="shrink-0 border-t border-[var(--border-solid)] px-4 py-3 sm:px-5">
+              <div
+                className="shrink-0 border-t border-[var(--border-solid)] bg-[var(--bg-elevated)] px-4 py-3 sm:px-5"
+                style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+              >
                 {footer}
               </div>
             ) : null}

@@ -1,9 +1,15 @@
 // ════════════════════════════════════════════════════════
 //  ZURI — Monthly Calendar Generator
 //  docs/03_CONTENT_STRATEGY.md §3
+//  Uses Gemini (Flash → Pro cascade) for calendar generation —
+//  switched from NVIDIA/DeepSeek 2026-08-07 after the NVIDIA NIM
+//  free-tier DeepSeek models were retired (410 Gone) and the
+//  replacement Llama models proved unreliable (repeated timeouts
+//  on free-tier capacity). Gemini is the same provider already
+//  proven reliable for website generation.
 // ════════════════════════════════════════════════════════
 
-import { nvidiaJSON } from "@/lib/content/nvidia-llm";
+import { geminiJSON } from "@/lib/gemini";
 import { sanitizeForPrompt } from "@/lib/utils/sanitize";
 import type { BusinessProfile } from "@/types/brand";
 import { serviceLines } from "@/types/brand";
@@ -353,9 +359,9 @@ export function buildCalendarPrompt(params: CalendarPromptParams): string {
   const profileBlock = formatContentProfileForPrompt(contentProfile);
 
   // Onboarding frequently leaves these thin (e.g. "everyone", a single
-  // generic service, no city) — a working Gemini call with thin input
-  // still produces generic output. Detect that and explicitly ask Gemini
-  // to infer specifics rather than silently generating "everyone"-flavoured
+  // generic service, no city) — a working AI call with thin input still
+  // produces generic output. Detect that and explicitly ask the model to
+  // infer specifics rather than silently generating "everyone"-flavoured
   // posts from a blank/lazy value.
   const isThinAudience =
     !rawAudience.trim() ||
@@ -466,6 +472,35 @@ function isJsonParseError(err: unknown): boolean {
   return /JSON|SyntaxError/i.test(String(err));
 }
 
+/** Compact, always-informative error description for logs. */
+function describeErr(err: unknown): string {
+  if (err instanceof Error) return err.message.slice(0, 400);
+  return String(err).slice(0, 400);
+}
+
+/**
+ * geminiJSON has no built-in per-call timeout (unlike the old nvidiaJSON,
+ * which used AbortSignal.timeout internally). Race it against a manual
+ * timeout here so a single slow Gemini call can't consume the whole
+ * request's time budget and trigger a hard Vercel FUNCTION_INVOCATION_TIMEOUT.
+ */
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(`TimeoutError: Gemini call exceeded ${ms}ms budget`));
+    }, ms);
+    promise
+      .then((val) => {
+        clearTimeout(timer);
+        resolve(val);
+      })
+      .catch((err) => {
+        clearTimeout(timer);
+        reject(err);
+      });
+  });
+}
+
 interface MonthPlan {
   totalPosts: number;
   culturalMoments: CulturalMoment[];
@@ -490,7 +525,7 @@ async function buildMonthPlan(
     brandField(brand, "location_city") ||
     brandField(brand, "location", "Lagos");
 
-  // Never block calendar generation on a fresh NVIDIA trends call.
+  // Never block calendar generation on a fresh trending-topics call.
   const trends = await getTrendingTopics(industry, location, {
     waitForFresh: false,
   });
@@ -541,24 +576,18 @@ function formatDateRangeHint(dates: Date[]): string {
   return `${fmt(dates[0])} – ${fmt(dates[dates.length - 1])}`;
 }
 
-/** Compact, always-informative error description for logs. */
-function describeErr(err: unknown): string {
-  if (err instanceof Error) return err.message.slice(0, 400);
-  return String(err).slice(0, 400);
-}
-
 /**
- * Hard wall-clock budget for the whole calendar-tier NVIDIA cascade
+ * Hard wall-clock budget for the whole calendar-tier Gemini cascade
  * (Flash retries + possible Pro attempt), inside a 120s serverless
- * invocation that also does Supabase I/O and trend warming. Leaves
- * headroom for the rest of the route (DB reads/writes, auth, etc.).
+ * invocation that also does Supabase I/O. Leaves headroom for the rest
+ * of the route.
  */
 const CALENDAR_AI_BUDGET_MS = 80_000;
-/** Per-call timeout for calendar-tier NVIDIA calls — short enough that
+/** Per-call timeout for calendar-tier Gemini calls — short enough that
  * one slow/hanging call can't eat the whole budget by itself. */
-const CALENDAR_CALL_TIMEOUT_MS = 20_000;
-/** Don't even attempt the Pro fallback if less than this much budget remains —
- * a Pro call plus its own retries needs realistic room to succeed. */
+const CALENDAR_CALL_TIMEOUT_MS = 25_000;
+/** Don't even attempt the Pro fallback if less than this much budget
+ * remains — a Pro call needs realistic room to succeed. */
 const MIN_BUDGET_FOR_PRO_MS = 25_000;
 
 async function generateSlotsForSlice(
@@ -603,16 +632,12 @@ async function generateSlotsForSlice(
 
   let generated: { slots: GeneratedSlot[] } | null = null;
 
-  // Tier 1: Flash — fast, cheap, bulk of calendar generation. Only 2
-  // retries here (not the default 3) so there's realistic budget left
-  // for a Pro attempt if Flash is having a bad run.
+  // Tier 1: Gemini Flash — fast, cheap, bulk of calendar generation.
   try {
     try {
-      generated = await nvidiaJSON<{ slots: GeneratedSlot[] }>(
-        calendarPrompt,
-        "flash",
-        2,
-        { timeoutMs: CALENDAR_CALL_TIMEOUT_MS }
+      generated = await withTimeout(
+        geminiJSON<{ slots: GeneratedSlot[] }>(calendarPrompt, "flash", 2),
+        CALENDAR_CALL_TIMEOUT_MS
       );
     } catch (initialErr) {
       if (isTimeoutError(initialErr) || !isJsonParseError(initialErr)) {
@@ -622,11 +647,9 @@ async function generateSlotsForSlice(
         "[generateCalendarChunk] Flash JSON parse failed, retrying with stricter instruction:",
         describeErr(initialErr)
       );
-      generated = await nvidiaJSON<{ slots: GeneratedSlot[] }>(
-        strictPrompt,
-        "flash",
-        1,
-        { timeoutMs: CALENDAR_CALL_TIMEOUT_MS }
+      generated = await withTimeout(
+        geminiJSON<{ slots: GeneratedSlot[] }>(strictPrompt, "flash", 1),
+        CALENDAR_CALL_TIMEOUT_MS
       );
     }
   } catch (flashErr) {
@@ -636,16 +659,15 @@ async function generateSlotsForSlice(
         `userId=${input.userId} month=${month} year=${year} sliceStart=${sliceStart}`
     );
 
-    // Tier 2: Pro — only attempted if there's realistically enough time
-    // budget left. A timed-out request returns NOTHING to the user (a bare
-    // 504); a graceful template fallback at least returns usable slots.
+    // Tier 2: Gemini Pro — only attempted if there's realistically enough
+    // time budget left. A timed-out request returns NOTHING to the user
+    // (a bare 504); a graceful template fallback at least returns usable
+    // slots.
     if (remaining() >= MIN_BUDGET_FOR_PRO_MS) {
       try {
-        generated = await nvidiaJSON<{ slots: GeneratedSlot[] }>(
-          calendarPrompt,
-          "pro",
-          2,
-          { timeoutMs: Math.min(CALENDAR_CALL_TIMEOUT_MS * 2, remaining() - 2000) }
+        generated = await withTimeout(
+          geminiJSON<{ slots: GeneratedSlot[] }>(calendarPrompt, "pro", 2),
+          Math.min(CALENDAR_CALL_TIMEOUT_MS * 2, Math.max(remaining() - 2000, 1000))
         );
       } catch (proErr) {
         console.error(

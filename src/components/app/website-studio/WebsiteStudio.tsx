@@ -517,6 +517,16 @@ export function WebsiteStudio({
   const activeLabel =
     allPanelItems.find((i) => i.id === activePanel)?.label ?? "Edit";
 
+  // Content-field panels (Hero/About/Testimonials/etc.) autosave each
+  // field individually on blur — there's no single "Save" action to pin.
+  // A sticky "Done" footer gives the same premium closing affordance
+  // without implying a save that's already happened. Images/Links/Embeds/
+  // Theme/Publish/Domain panels are excluded since they already have
+  // their own in-panel actions.
+  const isContentFieldPanel = activePanel
+    ? contentGroups.some((g) => g.id === activePanel)
+    : false;
+
   // Premium section-button treatment: icon sits in a small rounded badge
   // that lights up gold on selection, paired with a matching gold
   // left-border accent — one consistent "active" signal reused in both
@@ -530,11 +540,11 @@ export function WebsiteStudio({
         type="button"
         onClick={() => openPanel(item.id)}
         className={cn(
-          "group flex w-full items-center gap-3 border-l-2 px-3 py-3 text-left text-sm font-medium [transition-duration:var(--transition-fast)] transition-colors",
+          "group flex w-full items-center gap-3 border-l-2 px-3 py-3 text-left text-sm font-medium [transition-duration:var(--transition-fast)] transition-colors active:scale-[0.98]",
           // At lg+, share panel height equally so rows fill down to the preview edge.
           "lg:min-h-0 lg:flex-1 lg:gap-3.5 lg:px-4 lg:py-0 lg:text-[0.9375rem]",
           selected
-            ? "border-gold bg-surface text-gold"
+            ? "border-gold bg-gold/[0.06] text-gold"
             : "border-transparent text-foreground hover:bg-surface/50"
         )}
       >
@@ -582,13 +592,14 @@ export function WebsiteStudio({
             <Button
               variant="outline"
               size="sm"
+              className="active:scale-[0.96]"
               onClick={openFullScreenPreview}
               disabled={!previewHandle}
             >
               <Eye className="size-4" /> Preview
             </Button>
           ) : previewUrl ? (
-            <Button variant="outline" size="sm" asChild>
+            <Button variant="outline" size="sm" className="active:scale-[0.96]" asChild>
               <a href={previewUrl} target="_blank" rel="noreferrer">
                 <Eye className="size-4" /> Preview
               </a>
@@ -597,6 +608,7 @@ export function WebsiteStudio({
             <Button
               variant="outline"
               size="sm"
+              className="active:scale-[0.96]"
               onClick={openFullScreenPreview}
               disabled={!previewHandle}
             >
@@ -604,12 +616,17 @@ export function WebsiteStudio({
             </Button>
           )}
           {published ? (
-            <Button size="sm" onClick={() => openPanel("publish")} disabled={busy}>
+            <Button
+              size="sm"
+              className="active:scale-[0.96]"
+              onClick={() => openPanel("publish")}
+              disabled={busy}
+            >
               <Rocket className="size-4" />
               Publish
             </Button>
           ) : (
-            <Button size="sm" onClick={publish} disabled={busy}>
+            <Button size="sm" className="active:scale-[0.96]" onClick={publish} disabled={busy}>
               {busyAction === "publish" ? (
                 <span className="zuri-spinner !size-3.5" />
               ) : (
@@ -660,6 +677,19 @@ export function WebsiteStudio({
         }}
         title={activeLabel}
         size={activePanel ? PANEL_SIZE[activePanel] ?? "md" : "md"}
+        footer={
+          isContentFieldPanel ? (
+            <Button
+              className="w-full active:scale-[0.98]"
+              onClick={() => {
+                setActivePanel(null);
+                setFocusFieldId(null);
+              }}
+            >
+              Done
+            </Button>
+          ) : undefined
+        }
       >
         {activePanel ? renderPanelBody(activePanel) : null}
       </StudioModal>
