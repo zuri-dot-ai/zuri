@@ -94,9 +94,9 @@ function LoginForm() {
       eyebrow="Welcome back"
       headline={
         <>
-          Launch, plan, <em className="italic text-gold">grow</em>
+          Launch, plan, <em className="italic text-gold">grow</em>.
           <br />
-          — all in one place.
+          All in one place.
         </>
       }
       tagline="Launch your business online with Zuri. Instantly create a premium website, unlock a personalized 90-day content plan, and accelerate growth with AI."

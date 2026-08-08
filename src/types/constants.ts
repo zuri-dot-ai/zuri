@@ -4,7 +4,7 @@
 
 export const BRAND = {
   name: "Zuri",
-  tagline: "Launch, plan, grow — all in one place.",
+  tagline: "Launch, plan, grow. All in one place.",
   description:
     "Launch your business online with Zuri. Instantly create a premium website, unlock a personalized 90-day content plan, and accelerate growth with AI.",
   colors: {

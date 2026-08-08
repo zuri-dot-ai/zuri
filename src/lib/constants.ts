@@ -1,7 +1,7 @@
 export const BRAND = {
   name: "Zuri",
   /** Short headline — matches marketing hero */
-  tagline: "Launch, plan, grow — all in one place.",
+  tagline: "Launch, plan, grow. All in one place.",
   /** Supporting sentence under the headline */
   description:
     "Launch your business online with Zuri. Instantly create a premium website, unlock a personalized 90-day content plan, and accelerate growth with AI.",
