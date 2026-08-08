@@ -1,4 +1,4 @@
-import { nvidiaJSON } from "@/lib/content/nvidia-llm";
+import { geminiJSON } from "@/lib/gemini";
 import { createServiceClient } from "@/lib/supabase/service";
 import { sanitizeForPrompt } from "@/lib/utils/sanitize";
 import { generateImageWithSafetyRetry } from "./imagen";
@@ -64,7 +64,7 @@ Output ONLY valid JSON:
 }
 `;
 
-  const script = await nvidiaJSON<VideoScript>(prompt, "flash");
+  const script = await geminiJSON<VideoScript>(prompt, "flash");
   script.status = "script_ready";
   script.total_duration_seconds = duration;
 

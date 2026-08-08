@@ -237,14 +237,14 @@ export async function POST(req: Request) {
     ) {
       // Contextual adjust: revise existing copy rather than inventing a new idea
       if (instruction && content.caption) {
-        const { nvidiaJSON } = await import("@/lib/content/nvidia-llm");
+        const { geminiJSON } = await import("@/lib/gemini");
         const { formatContentProfileForPrompt } = await import(
           "@/lib/content/content-profile"
         );
         const profileBlock = formatContentProfileForPrompt(
           brand.content_profile
         );
-        const adjusted = await nvidiaJSON<{
+        const adjusted = await geminiJSON<{
           caption: string;
           hashtags: string[];
           variants: {

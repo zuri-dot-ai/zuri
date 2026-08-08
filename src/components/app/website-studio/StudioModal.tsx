@@ -108,7 +108,14 @@ export function StudioModal({
       {open && (
         <div
           className={cn(
-            "fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4",
+            // z-[55], not z-50: BottomTabs is also z-50 and is declared
+            // later in the DOM (after <main> in the app layout), so at
+            // equal z-index it was winning the stacking fight and
+            // painting over this modal. Nested editors (ImageSwapModal /
+            // LinkEditorModal) still layer above this at z-[60] via
+            // overlayClassName, and UpgradeSheet stays above everything
+            // at z-[100].
+            "fixed inset-0 z-[55] flex items-end justify-center sm:items-center sm:p-4",
             overlayClassName
           )}
           role="presentation"
@@ -139,11 +146,13 @@ export function StudioModal({
               // what's really on-screen.
               //
               // On mobile we additionally reserve space for the app's
-              // fixed bottom tab bar (~4rem) so the sheet's rounded top
-              // corner and drag handle don't collide with it. Desktop's
-              // centered dialog doesn't need this since there's no bottom
-              // tab bar at that breakpoint.
-              "relative z-10 flex max-h-[calc(92dvh-4rem)] w-full flex-col overflow-hidden rounded-t-2xl border border-[var(--border-solid)] bg-[var(--bg-elevated)] shadow-[0_24px_64px_rgba(0,0,0,0.45)] outline-none sm:max-h-[92dvh] sm:rounded-xl",
+              // fixed BottomTabs bar: ~3.625rem for its own content
+              // (py-2.5 + size-5 icon + gap-1 + label text), PLUS
+              // env(safe-area-inset-bottom) since BottomTabs pads itself
+              // for the iPhone home-indicator strip on top of that. Both
+              // terms are needed — omitting the safe-area term left the
+              // sheet slightly too tall on notched phones.
+              "relative z-10 flex max-h-[calc(92dvh-3.625rem-env(safe-area-inset-bottom))] w-full flex-col overflow-hidden rounded-t-2xl border border-[var(--border-solid)] bg-[var(--bg-elevated)] shadow-[0_24px_64px_rgba(0,0,0,0.45)] outline-none sm:max-h-[92dvh] sm:rounded-xl",
               SIZE_CLASS[size],
               className
             )}

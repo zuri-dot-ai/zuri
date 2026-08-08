@@ -3,7 +3,7 @@
 //  docs/03_CONTENT_STRATEGY.md §8
 // ════════════════════════════════════════════════════════
 
-import { nvidiaJSON } from "@/lib/content/nvidia-llm";
+import { geminiJSON } from "@/lib/gemini";
 import { sanitizeForPrompt } from "@/lib/utils/sanitize";
 import type { BusinessProfile } from "@/types/brand";
 import type { DesignArchetype } from "./cultural-calendar";
@@ -124,7 +124,7 @@ Output ONLY valid JSON:
 }
 `;
 
-  const { series_title, posts } = await nvidiaJSON<{
+  const { series_title, posts } = await geminiJSON<{
     series_title: string;
     posts: Array<{
       part_number: number;

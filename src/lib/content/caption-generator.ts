@@ -1,4 +1,4 @@
-import { nvidiaJSON } from "@/lib/content/nvidia-llm";
+import { geminiJSON } from "@/lib/gemini";
 import { createServiceClient } from "@/lib/supabase/service";
 import { sanitizeForPrompt, sanitizeText } from "@/lib/utils/sanitize";
 import { CAPTION_RULES, type CaptionRule } from "./caption-rules";
@@ -293,7 +293,7 @@ Also include variants of the same idea:
 }`;
   }
 
-  const result = await nvidiaJSON<{
+  const result = await geminiJSON<{
     caption: string;
     hashtags: string[];
     thread_posts?: string[];
@@ -317,7 +317,7 @@ Also include variants of the same idea:
   }
 
   if (/\[.*?\]|lorem ipsum|placeholder/i.test(finalCaption)) {
-    const retry = await nvidiaJSON<{
+    const retry = await geminiJSON<{
       caption: string;
       hashtags: string[];
       variants?: unknown;

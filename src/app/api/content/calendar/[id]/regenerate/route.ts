@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { nvidiaJSON } from "@/lib/content/nvidia-llm";
+import { geminiJSON } from "@/lib/gemini";
 import {
   requireContentUser,
   requireProCalendar,
@@ -144,7 +144,7 @@ Output ONLY valid JSON:
 `;
 
   try {
-    const regenerated = await nvidiaJSON<{
+    const regenerated = await geminiJSON<{
       topic: string;
       hook: string;
       brief: string;

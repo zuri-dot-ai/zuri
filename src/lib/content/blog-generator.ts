@@ -1,4 +1,4 @@
-import { nvidiaJSON } from "@/lib/content/nvidia-llm";
+import { geminiJSON } from "@/lib/gemini";
 import { createServiceClient } from "@/lib/supabase/service";
 import { sanitizeForPrompt } from "@/lib/utils/sanitize";
 import { serviceNames } from "@/types/brand";
@@ -71,10 +71,10 @@ Output ONLY valid JSON (no markdown wrapping):
 
   let blog: BlogContent;
   try {
-    blog = await nvidiaJSON<BlogContent>(prompt, "pro");
+    blog = await geminiJSON<BlogContent>(prompt, "pro");
   } catch (err) {
     console.warn("Blog Pro generation failed, falling back to Flash:", err);
-    blog = await nvidiaJSON<BlogContent>(prompt, "flash");
+    blog = await geminiJSON<BlogContent>(prompt, "flash");
   }
 
   const allText = [

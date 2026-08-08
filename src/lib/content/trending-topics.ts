@@ -1,12 +1,12 @@
 // ════════════════════════════════════════════════════════
 //  ZURI — Trending Topics Engine
 //  docs/03_CONTENT_STRATEGY.md §5
-//  Uses NVIDIA for Content AI (no Gemini / Google Search).
+//  Uses Gemini for Content AI (switched from NVIDIA 2026-08-07).
 // ════════════════════════════════════════════════════════
 
 import { createServiceClient } from "@/lib/supabase/service";
 import { sanitizeForPrompt } from "@/lib/utils/sanitize";
-import { nvidiaJSON } from "@/lib/content/nvidia-llm";
+import { geminiJSON } from "@/lib/gemini";
 
 export interface TrendingTopic {
   topic: string;
@@ -22,7 +22,7 @@ export interface TrendingTopic {
 export function warmTrendingCache(industry: string, location: string): void {
   void (async () => {
     try {
-      const topics = await fetchTrendingWithNvidia(industry, location);
+      const topics = await fetchTrendingWithGemini(industry, location);
       await cacheTrends(industry, topics);
     } catch (err) {
       console.error(
@@ -35,8 +35,8 @@ export function warmTrendingCache(industry: string, location: string): void {
 
 /**
  * @param waitForFresh When false (calendar generation), return cache or
- *   hardcoded fallback immediately and refresh NVIDIA trends in the background.
- *   When true (default — trending API), await a fresh NVIDIA fetch on cache miss.
+ *   hardcoded fallback immediately and refresh trends in the background.
+ *   When true (default — trending API), await a fresh fetch on cache miss.
  */
 export async function getTrendingTopics(
   industry: string,
@@ -53,7 +53,7 @@ export async function getTrendingTopics(
   }
 
   try {
-    const topics = await fetchTrendingWithNvidia(industry, location);
+    const topics = await fetchTrendingWithGemini(industry, location);
     await cacheTrends(industry, topics);
     return topics;
   } catch (err) {
@@ -65,14 +65,14 @@ export async function getTrendingTopics(
   }
 }
 
-export async function fetchTrendingWithNvidia(
+export async function fetchTrendingWithGemini(
   industry: string,
   location: string
 ): Promise<TrendingTopic[]> {
   const safeIndustry = sanitizeForPrompt(industry).slice(0, 100);
   const safeLocation = sanitizeForPrompt(location).slice(0, 100);
 
-  const parsed = await nvidiaJSON<{
+  const parsed = await geminiJSON<{
     topics?: Array<{ topic: string; angle: string; relevance?: string }>;
   }>(
     `Suggest 5 timely social media topics for a ${safeIndustry} business in Nigeria (${safeLocation}) this week.
@@ -93,13 +93,12 @@ No markdown, no explanation.`,
     topic: t.topic,
     angle: t.angle,
     relevance: t.relevance === "medium" ? ("medium" as const) : ("high" as const),
-    // Kept for schema compatibility; source is LLM-suggested, not live web search.
     source: "web_search" as const,
   }));
 }
 
-/** @deprecated Use fetchTrendingWithNvidia — kept as alias for any external callers. */
-export const fetchTrendingWithGemini = fetchTrendingWithNvidia;
+/** @deprecated Use fetchTrendingWithGemini — kept as alias for any external callers. */
+export const fetchTrendingWithNvidia = fetchTrendingWithGemini;
 
 export function getFallbackTopics(industry: string): TrendingTopic[] {
   const FALLBACKS: Record<string, TrendingTopic[]> = {
