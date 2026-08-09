@@ -1637,7 +1637,7 @@ function FilterChip({
   );
 }
 
-function SlotCard({
+export function SlotCard({
   slot,
   onClick,
   selected,

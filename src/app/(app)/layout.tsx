@@ -9,11 +9,12 @@ import { FirstVisitTour } from "@/components/app/first-visit-tour";
 import { CommandPalette } from "@/components/app/command-palette";
 import { AppShellProviders } from "@/components/app/app-shell-providers";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { GracePeriodBanner } from "@/components/app/GracePeriodBanner";
+import { AccountAlerts } from "@/components/app/AccountAlerts";
 import { TrialPrompts } from "@/components/app/TrialPrompts";
 import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
 import { NotificationQueueProvider } from "@/lib/notifications/notification-queue";
 import { NotificationHost } from "@/components/notifications/NotificationHost";
+import { PLAN_CONFIG, isPlanId } from "@/lib/payments/plans";
 
 
 export default async function AppLayout({
@@ -72,18 +73,49 @@ export default async function AppLayout({
             <div className="md:hidden">
               <Topbar />
             </div>
-            {inGracePeriod && (
-              <GracePeriodBanner gracePeriodEnd={gracePeriodEnd} />
-            )}
-            {!inGracePeriod && (
-              <TrialPrompts {...trialProps} slot="banners" />
-            )}
             <main className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-6 sm:px-5 md:px-8 md:pb-8 md:pt-8">
               {!inGracePeriod && (
                 <TrialPrompts {...trialProps} slot="inline" />
               )}
               <NotificationQueueProvider>
                 <ErrorBoundary context="dashboard">{children}</ErrorBoundary>
+                <AccountAlerts
+                  inGracePeriod={inGracePeriod}
+                  gracePeriodEnd={gracePeriodEnd}
+                  trialing={trialProps.status === "trialing" && !!trialProps.trialEndsAt}
+                  daysLeft={
+                    trialProps.trialEndsAt
+                      ? Math.ceil(
+                          (new Date(trialProps.trialEndsAt).getTime() - Date.now()) /
+                            (1000 * 60 * 60 * 24)
+                        )
+                      : null
+                  }
+                  endingSoon={
+                    trialProps.status === "trialing" &&
+                    !!trialProps.trialEndsAt &&
+                    (() => {
+                      const d = Math.ceil(
+                        (new Date(trialProps.trialEndsAt).getTime() - Date.now()) /
+                          (1000 * 60 * 60 * 24)
+                      );
+                      return d >= 0 && d <= 3;
+                    })()
+                  }
+                  showEnded={
+                    !!trialProps.trialEndedAt &&
+                    effectivePlanId === "free" &&
+                    rawStatus === "active"
+                  }
+                  trialEndedAt={trialProps.trialEndedAt}
+                  trialTierName={PLAN_CONFIG[
+                    trialProps.trialTier && isPlanId(trialProps.trialTier)
+                      ? trialProps.trialTier
+                      : isPlanId(effectivePlanId)
+                        ? effectivePlanId
+                        : "pro"
+                  ].name}
+                />
                 <NotificationHost userId={user?.id ?? null} />
               </NotificationQueueProvider>
               <PaymentToast />

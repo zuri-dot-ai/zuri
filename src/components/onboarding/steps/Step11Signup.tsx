@@ -67,11 +67,14 @@ export function Step11Signup({
   async function flushBeforeAuth(): Promise<boolean> {
     try {
       await onFlushSession();
-      return true;
-    } catch {
-      toast.error("Could not save your progress. Please try again.");
-      return false;
+    } catch (err) {
+      // Non-fatal: the debounced autosave has almost certainly already
+      // persisted the latest answers within the last 500ms-2s. Don't block
+      // account creation on this best-effort freshness guarantee — a rate
+      // limit or transient network blip here should never prevent signup.
+      console.warn("[Step11Signup] flushBeforeAuth failed, proceeding anyway:", err);
     }
+    return true;
   }
 
   async function completeAndAdvance() {
