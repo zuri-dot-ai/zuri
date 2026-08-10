@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/app/sidebar";
 import { BottomTabs } from "@/components/app/bottom-tabs";
 import { Topbar } from "@/components/app/topbar";
 import { PaymentToast } from "@/components/app/payment-toast";
+import { PaymentFailedModalHost } from "@/components/app/PaymentFailedModalHost";
 import { Suspense } from "react";
 import { FirstVisitTour } from "@/components/app/first-visit-tour";
 import { CommandPalette } from "@/components/app/command-palette";
@@ -37,6 +38,16 @@ export default async function AppLayout({
     .maybeSingle();
 
   const inGracePeriod = subscription?.status === "grace_period";
+  const justEnteredGracePeriod =
+    inGracePeriod &&
+    subscription?.grace_period_end &&
+    (() => {
+      const graceStart = new Date(
+        new Date(subscription.grace_period_end).getTime() -
+          3 * 24 * 60 * 60 * 1000
+      );
+      return Date.now() - graceStart.getTime() < 24 * 60 * 60 * 1000;
+    })();
   const graceEndRaw =
     subscription?.grace_period_end ?? subscription?.current_period_end;
   const gracePeriodEnd = graceEndRaw
@@ -79,6 +90,13 @@ export default async function AppLayout({
               )}
               <NotificationQueueProvider>
                 <ErrorBoundary context="dashboard">{children}</ErrorBoundary>
+                <PaymentFailedModalHost
+                  shouldShow={!!justEnteredGracePeriod}
+                  planName={PLAN_CONFIG[
+                    isPlanId(effectivePlanId) ? effectivePlanId : "pro"
+                  ].name}
+                  graceEndDate={gracePeriodEnd}
+                />
                 <AccountAlerts
                   inGracePeriod={inGracePeriod}
                   gracePeriodEnd={gracePeriodEnd}
