@@ -13,6 +13,7 @@ export type WebsiteStatus =
   | "suspended"
   | "failed"
   | "deleted";
+  
 
 export type ActiveTheme = "theme-1" | "theme-2" | "theme-3";
 
@@ -111,6 +112,7 @@ export interface WebsiteRow {
   /** pending_verification | verified | verification_failed | null */
   custom_domain_status: string | null;
   custom_domain_added_at: string | null;
+  custom_domain_verification: { type: string; domain: string; value: string; reason?: string }[] | null; // add this line 
   status: WebsiteStatus;
   template_id: string | null;
   active_theme: ActiveTheme;

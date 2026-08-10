@@ -21,6 +21,13 @@ type DnsInstruction = {
   description: string;
 };
 
+type VerificationInstruction = {
+  type: string;
+  domain: string;
+  value: string;
+  reason?: string;
+};
+
 type DomainStatus =
   | "pending_verification"
   | "verified"
@@ -36,6 +43,7 @@ type DomainState =
       status: DomainStatus;
       added_at?: string | null;
       dns_instructions?: DnsInstruction[];
+      verification_instructions?: VerificationInstruction[];
     };
 
 export function CustomDomainPanel({
@@ -51,6 +59,9 @@ export function CustomDomainPanel({
   const [domainInput, setDomainInput] = useState("");
   const [state, setState] = useState<DomainState>({ has_custom_domain: false });
   const [dns, setDns] = useState<DnsInstruction[]>([]);
+  const [verification, setVerification] = useState<VerificationInstruction[]>(
+    []
+  );
 
   const refresh = useCallback(async () => {
     try {
@@ -58,8 +69,9 @@ export function CustomDomainPanel({
         "/api/website/custom-domain"
       );
       setState(data);
-      if (data.has_custom_domain && data.dns_instructions) {
-        setDns(data.dns_instructions);
+      if (data.has_custom_domain) {
+        setDns(data.dns_instructions ?? []);
+        setVerification(data.verification_instructions ?? []);
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not load domain");
@@ -85,6 +97,7 @@ export function CustomDomainPanel({
         domain: string;
         status: DomainStatus;
         dns_instructions?: DnsInstruction[];
+        verification_instructions?: VerificationInstruction[];
       }>("/api/website/custom-domain", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -95,8 +108,10 @@ export function CustomDomainPanel({
         domain: data.domain,
         status: data.status,
         dns_instructions: data.dns_instructions,
+        verification_instructions: data.verification_instructions,
       });
       setDns(data.dns_instructions ?? []);
+      setVerification(data.verification_instructions ?? []);
       setDomainInput("");
       toast.success("Domain added — update your DNS records");
     } catch (e) {
@@ -123,6 +138,7 @@ export function CustomDomainPanel({
       await safeFetchJSON("/api/website/custom-domain", { method: "DELETE" });
       setState({ has_custom_domain: false });
       setDns([]);
+      setVerification([]);
       toast.success("Custom domain removed");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not remove domain");
@@ -203,6 +219,10 @@ export function CustomDomainPanel({
       <Badge variant="outline" className="border-destructive/40 text-destructive">
         Verification failed
       </Badge>
+    ) : verification.length > 0 ? (
+      <Badge variant="outline" className="border-amber-500/50 text-amber-600">
+        Ownership check needed
+      </Badge>
     ) : (
       <Badge variant="outline" className="border-amber-500/50 text-amber-600">
         Pending DNS
@@ -236,9 +256,51 @@ export function CustomDomainPanel({
         <div className="flex items-start gap-2 text-card-body">
           <AlertCircle className="mt-0.5 size-4 shrink-0 text-amber-500" />
           <p>
-            Add these DNS records at your registrar. Propagation can take up to
-            48 hours.
+            {verification.length > 0
+              ? "Add this ownership-verification record first, then the DNS records below. Propagation can take up to 48 hours."
+              : "Add these DNS records at your registrar. Propagation can take up to 48 hours."}
           </p>
+        </div>
+      )}
+
+      {verification.length > 0 && status !== "verified" && (
+        <div className="space-y-2">
+          <p className="text-label">Ownership verification (add this first)</p>
+          {verification.map((row, i) => (
+            <div
+              key={`verify-${row.domain}-${i}`}
+              className="content-card space-y-2 border-amber-500/30 p-3"
+            >
+              <p className="text-card-meta">
+                Required before Zuri can route traffic to this domain.
+              </p>
+              <div className="grid grid-cols-[auto_1fr_auto] items-center gap-x-2 gap-y-1 text-xs">
+                <span className="text-muted-foreground">Type</span>
+                <span className="font-mono">{row.type}</span>
+                <span />
+                <span className="text-muted-foreground">Name</span>
+                <span className="truncate font-mono">{row.domain}</span>
+                <button
+                  type="button"
+                  className="rounded p-1 text-muted-foreground hover:text-foreground"
+                  aria-label="Copy name"
+                  onClick={() => copyText(row.domain)}
+                >
+                  <Copy className="size-3.5" />
+                </button>
+                <span className="text-muted-foreground">Value</span>
+                <span className="truncate font-mono">{row.value}</span>
+                <button
+                  type="button"
+                  className="rounded p-1 text-muted-foreground hover:text-foreground"
+                  aria-label="Copy value"
+                  onClick={() => copyText(row.value)}
+                >
+                  <Copy className="size-3.5" />
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 

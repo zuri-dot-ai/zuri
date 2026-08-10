@@ -1,3 +1,4 @@
+// src/components/onboarding/steps/Step3PhotoUpload.tsx
 "use client";
 
 import { useEffect } from "react";
@@ -16,11 +17,6 @@ interface Step3PhotoUploadProps {
   onValidityChange: (valid: boolean) => void;
 }
 
-/**
- * Step 3 (docs/01_ONBOARDING_V2.md §5) — conditional on archetype. Always
- * skippable: before/after archetypes get no stock fallback if skipped
- * (Decision 10), everything else falls back to curated stock images.
- */
 export function Step3PhotoUpload({
   sessionToken,
   archetype,
@@ -58,27 +54,33 @@ export function Step3PhotoUpload({
       )}
 
       {!skipped && config.pairedSlots && (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {Array.from({ length: config.pairedSlots.maxPairs }).map((_, i) => (
-            <div key={i} className="grid grid-cols-2 gap-3">
-              <PhotoUploadZone
-                sessionToken={sessionToken}
-                slotType={config.pairedSlots!.beforeSlot}
-                images={images}
-                onChange={onChange}
-                maxImages={config.pairedSlots!.maxPairs}
-                pairIndex={i}
-                label={i === 0 ? "Before" : undefined}
-              />
-              <PhotoUploadZone
-                sessionToken={sessionToken}
-                slotType={config.pairedSlots!.afterSlot}
-                images={images}
-                onChange={onChange}
-                maxImages={config.pairedSlots!.maxPairs}
-                pairIndex={i}
-                label={i === 0 ? "After" : undefined}
-              />
+            // Each before/after pair now sits inside a bordered panel —
+            // matches .onboarding-panel used elsewhere in onboarding —
+            // so the pair reads as one designed unit instead of two
+            // boxes floating loose on the page.
+            <div key={i} className="onboarding-panel">
+              <div className="grid grid-cols-2 gap-3">
+                <PhotoUploadZone
+                  sessionToken={sessionToken}
+                  slotType={config.pairedSlots!.beforeSlot}
+                  images={images}
+                  onChange={onChange}
+                  maxImages={config.pairedSlots!.maxPairs}
+                  pairIndex={i}
+                  label="Before"
+                />
+                <PhotoUploadZone
+                  sessionToken={sessionToken}
+                  slotType={config.pairedSlots!.afterSlot}
+                  images={images}
+                  onChange={onChange}
+                  maxImages={config.pairedSlots!.maxPairs}
+                  pairIndex={i}
+                  label="After"
+                />
+              </div>
             </div>
           ))}
         </div>

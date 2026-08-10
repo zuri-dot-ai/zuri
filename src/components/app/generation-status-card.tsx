@@ -7,6 +7,8 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { safeFetchJSON } from "@/lib/utils/safe-fetch";
+import { WebsiteGeneratedModal } from "@/components/notifications/WebsiteGeneratedModal";
+import { useSearchParams } from "next/navigation";
 
 type JobStatus = "queued" | "processing" | "failed" | "completed" | null;
 
@@ -25,6 +27,11 @@ export function GenerationStatusCard({
   const kickoffAttempted = useRef(false);
   const statusRef = useRef(status);
   statusRef.current = status;
+
+  const searchParams = useSearchParams();
+  const [showGeneratedModal, setShowGeneratedModal] = useState(
+    searchParams.get("justGenerated") === "1"
+  );
 
   useEffect(() => {
     setStatus(initialStatus);
@@ -54,8 +61,7 @@ export function GenerationStatusCard({
       setErrorMessage(data.error_message);
 
       if (next === "completed") {
-        toast.success("Your website is ready!");
-        window.location.reload();
+        window.location.href = window.location.pathname + "?justGenerated=1";
       }
     }
 
@@ -90,6 +96,24 @@ export function GenerationStatusCard({
       clearInterval(pollTimer);
     };
   }, [jobId, initialStatus]);
+
+  if (showGeneratedModal) {
+    return (
+      <WebsiteGeneratedModal
+        open={showGeneratedModal}
+        onOpenChange={(open) => {
+          setShowGeneratedModal(open);
+          if (!open) {
+            const url = new URL(window.location.href);
+            url.searchParams.delete("justGenerated");
+            window.history.replaceState({}, "", url.toString());
+          }
+        }}
+        siteName="Your website"
+        previewUrl="/website"
+      />
+    );
+  }
 
   if (!status || status === "completed") return null;
 

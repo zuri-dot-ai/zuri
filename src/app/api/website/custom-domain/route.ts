@@ -19,6 +19,13 @@ interface DnsInstruction {
   description: string;
 }
 
+interface VercelVerificationChallenge {
+  type: string;
+  domain: string;
+  value: string;
+  reason?: string;
+}
+
 function vercelHeaders(): Record<string, string> {
   const headers: Record<string, string> = {
     Authorization: `Bearer ${process.env.VERCEL_API_TOKEN}`,
@@ -169,24 +176,42 @@ export async function POST(req: Request) {
       }
     );
 
-    if (!vercelRes.ok) {
-      let errData: { error?: { code?: string } } = {};
-      try {
-        errData = await vercelRes.json();
-      } catch {
-        // ignore parse errors
-      }
-      if (errData.error?.code !== "domain_already_in_use") {
-        console.error("Vercel domain add error:", errData);
-        return NextResponse.json(
-          {
-            error:
-              "Could not configure your domain. Please try again or contact support.",
-          },
-          { status: 500 }
-        );
-      }
+    // We need the response body whether it succeeded or hit
+    // "domain_already_in_use" (which we treat as a non-fatal, idempotent case
+    // below) — Vercel includes the `verification` challenge array in both.
+    let vercelData: {
+      error?: { code?: string };
+      verified?: boolean;
+      verification?: VercelVerificationChallenge[];
+    } = {};
+    try {
+      vercelData = await vercelRes.json();
+    } catch {
+      // ignore parse errors — vercelData stays {}
     }
+
+    if (!vercelRes.ok && vercelData.error?.code !== "domain_already_in_use") {
+      console.error("Vercel domain add error:", vercelData);
+      return NextResponse.json(
+        {
+          error:
+            "Could not configure your domain. Please try again or contact support.",
+        },
+        { status: 500 }
+      );
+    }
+
+    // Vercel returns `verified: false` + a `verification` array of TXT
+    // challenges when it needs proof of domain ownership before it will ever
+    // route traffic — this is separate from, and prior to, DNS (A/CNAME)
+    // propagation. If present, we must surface it; otherwise the domain can
+    // sit in "pending_verification" forever with the user only ever seeing
+    // (already-correct) DNS instructions and no way to know why nothing
+    // happens.
+    const verificationChallenge =
+      vercelData.verified === false && vercelData.verification?.length
+        ? vercelData.verification
+        : null;
 
     // ── Save to DB ───────────────────────────────────────────────────────────
     await supabase
@@ -195,6 +220,7 @@ export async function POST(req: Request) {
         custom_domain: domain,
         custom_domain_status: "pending_verification",
         custom_domain_added_at: new Date().toISOString(),
+        custom_domain_verification: verificationChallenge,
         updated_at: new Date().toISOString(),
       })
       .eq("user_id", user.id);
@@ -206,6 +232,9 @@ export async function POST(req: Request) {
       domain,
       status: "pending_verification",
       dns_instructions: dnsInstructions,
+      ...(verificationChallenge
+        ? { verification_instructions: verificationChallenge }
+        : {}),
       estimated_propagation: "Up to 48 hours, usually within a few minutes",
     });
   } catch (err) {
@@ -227,7 +256,9 @@ export async function GET() {
   try {
     const { data: website, error: websiteError } = await supabase
       .from("websites")
-      .select("custom_domain, custom_domain_status, custom_domain_added_at")
+      .select(
+        "custom_domain, custom_domain_status, custom_domain_added_at, custom_domain_verification"
+      )
       .eq("user_id", user.id)
       .maybeSingle();
 
@@ -257,6 +288,9 @@ export async function GET() {
       // status: pending_verification | verified | verification_failed
       added_at: website.custom_domain_added_at,
       ...(dns_instructions ? { dns_instructions } : {}),
+      ...(website.custom_domain_verification
+        ? { verification_instructions: website.custom_domain_verification }
+        : {}),
     });
   } catch (err) {
     const ref = generateSupportRef();
@@ -311,6 +345,7 @@ export async function DELETE() {
         custom_domain: null,
         custom_domain_status: null,
         custom_domain_added_at: null,
+        custom_domain_verification: null,
         updated_at: new Date().toISOString(),
       })
       .eq("user_id", user.id);

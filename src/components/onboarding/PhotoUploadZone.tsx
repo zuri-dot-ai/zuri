@@ -1,3 +1,4 @@
+// src/components/onboarding/PhotoUploadZone.tsx
 "use client";
 
 import { useRef, useState } from "react";
@@ -17,11 +18,6 @@ interface PhotoUploadZoneProps {
   label?: string;
 }
 
-/**
- * Single upload slot for a given `slotType` — used both for the primary
- * gallery config and each side of a before/after pair (docs/01_ONBOARDING_V2.md
- * §5.2). Client-side type/size checks are UX-only; the server re-validates.
- */
 export function PhotoUploadZone({
   sessionToken,
   slotType,
@@ -52,7 +48,7 @@ export function PhotoUploadZone({
     }
 
     if (!sessionToken) {
-      setError("Upload session isn’t ready yet. Please wait a moment and try again.");
+      setError("Upload session isn't ready yet. Please wait a moment and try again.");
       return;
     }
 
@@ -105,14 +101,20 @@ export function PhotoUploadZone({
 
   return (
     <div className="space-y-2">
-      {label && <p className="onboarding-label">{label}</p>}
+      {label && (
+        // Gold uppercase kicker — same "EmailEyebrow" / section-header
+        // pattern used in the website editor and content calendar, so
+        // "Before"/"After" reads as a designed label, not plain gray text.
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gold/80">
+          {label}
+        </p>
+      )}
       <div className="grid grid-cols-3 gap-2">
         {slotImages.map((img) => (
           <div
             key={img.cloudinaryPublicId}
-            className="group relative aspect-square overflow-hidden rounded-sm border border-border"
+            className="group relative aspect-square overflow-hidden rounded-sm border border-[var(--border-solid)]"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={img.cloudinaryUrl}
               alt=""
@@ -122,7 +124,7 @@ export function PhotoUploadZone({
               type="button"
               onClick={() => removeImage(img.cloudinaryPublicId)}
               aria-label="Remove photo"
-              className="absolute right-1 top-1 flex size-6 items-center justify-center rounded-full bg-black/60 text-white transition-opacity"
+              className="absolute right-1 top-1 flex size-6 items-center justify-center rounded-full bg-black/60 text-white transition-transform active:scale-90"
             >
               <X className="size-3.5" />
             </button>
@@ -135,8 +137,14 @@ export function PhotoUploadZone({
             onClick={() => inputRef.current?.click()}
             disabled={uploading}
             className={cn(
-              "flex aspect-square flex-col items-center justify-center gap-1.5 rounded-sm border border-dashed border-border text-[var(--text-tertiary)] transition-colors duration-150",
-              "hover:border-gold hover:text-gold",
+              // Was `border-border` — the shadcn neutral bridge token,
+              // not the app's gold-tinted design-system border. That was
+              // the actual bug: this box was never wired into the same
+              // "premium" token set every other card/panel in the app
+              // uses, so it looked like an unstyled default even though
+              // technically nothing was missing.
+              "group/zone flex aspect-square flex-col items-center justify-center gap-2 rounded-sm border border-dashed border-[var(--border-solid)] bg-[var(--bg-elevated)]/40 transition-all [transition-duration:var(--transition-fast)] active:scale-[0.97]",
+              "hover:border-gold hover:bg-gold/5",
               uploading && "pointer-events-none"
             )}
           >
@@ -144,8 +152,17 @@ export function PhotoUploadZone({
               <ZuriSpinner size={20} label="Uploading" />
             ) : (
               <>
-                <ImagePlus className="size-5" strokeWidth={1.75} />
-                <span className="text-xs">Add photo</span>
+                {/* Icon badge — visible at rest, not just on hover. The
+                    old version only turned gold on :hover, which meant it
+                    never showed as gold at all on touch devices (no
+                    hover state), so every mobile user only ever saw the
+                    flat gray version. */}
+                <span className="flex size-9 items-center justify-center rounded-md bg-gold/10 text-gold transition-colors [transition-duration:var(--transition-fast)] group-hover/zone:bg-gold/15">
+                  <ImagePlus className="size-4" strokeWidth={1.75} />
+                </span>
+                <span className="text-xs font-medium text-[var(--text-secondary)]">
+                  Add photo
+                </span>
               </>
             )}
           </button>
