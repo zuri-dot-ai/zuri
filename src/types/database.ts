@@ -259,3 +259,72 @@ export interface CompleteTaskResult {
   new_badges?: string[];
 }
 
+export interface AnalyticsEventRow {
+  id: string;
+  website_id: string;
+  event_type: string;
+  session_id: string;
+  visitor_id: string;
+  is_new_visitor: boolean;
+  page_path: string | null;
+  page_title: string | null;
+  referrer_domain: string | null;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  device_type: string | null;
+  browser: string | null;
+  os: string | null;
+  country: string | null;
+  region: string | null;
+  city: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface AnalyticsRollupHourlyRow {
+  id: string;
+  website_id: string;
+  hour_bucket: string;
+  page_views: number;
+  unique_visitors: number;
+  new_visitors: number;
+  sessions: number;
+  whatsapp_clicks: number;
+  phone_clicks: number;
+  form_submits: number;
+  cta_clicks: number;
+  mobile_count: number;
+  desktop_count: number;
+  tablet_count: number;
+  top_pages: { path: string; count: number }[];
+  top_referrers: { domain: string; count: number }[];
+  top_countries: { country: string; count: number }[];
+  created_at: string;
+}
+
+export interface AnalyticsRollupDailyRow {
+  id: string;
+  website_id: string;
+  day_bucket: string;
+  page_views: number;
+  unique_visitors: number;
+  new_visitors: number;
+  returning_visitors: number;
+  sessions: number;
+  avg_session_duration_seconds: number | null;
+  bounce_rate: number | null;
+  whatsapp_clicks: number;
+  phone_clicks: number;
+  form_submits: number;
+  cta_clicks: number;
+  mobile_count: number;
+  desktop_count: number;
+  tablet_count: number;
+  top_pages: { path: string; count: number }[];
+  top_referrers: { domain: string; count: number }[];
+  top_countries: { country: string; count: number }[];
+  top_cities: { city: string; count: number }[];
+  created_at: string;
+}
+

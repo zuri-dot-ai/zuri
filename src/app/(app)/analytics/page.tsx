@@ -26,6 +26,11 @@ import {
   type AnalyticsRange,
   type WebsiteAnalyticsSummary,
 } from "@/lib/analytics/website-stats";
+import {
+  getCustomerAnalytics,
+  emptyCustomerAnalytics,
+  type CustomerAnalyticsRange,
+} from "@/lib/analytics/customer-analytics-stats";
 import { formatCompactNumber } from "@/lib/dashboard/home-helpers";
 import { EmptyState } from "@/components/app/empty-state";
 import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
@@ -90,7 +95,34 @@ export default async function AnalyticsPage({
     .maybeSingle();
 
   let summary = emptySummary(range);
-  if (website?.handle && analyticsEnabled) {
+  let customerSummary = emptyCustomerAnalytics(range);
+  const useCustomerAnalytics = analyticsEnabled && !!website?.handle;
+
+  if (useCustomerAnalytics) {
+    try {
+      const service = createServiceClient();
+      const { data: site } = await service
+        .from("websites")
+        .select("id")
+        .eq("handle", website.handle)
+        .maybeSingle();
+
+      if (site?.id) {
+        const result = await getCustomerAnalytics(service, {
+          websiteId: site.id,
+          range: range as CustomerAnalyticsRange,
+        });
+        customerSummary = result;
+        if (result.totalViews > 0) {
+          summary = emptySummary(range);
+        }
+      }
+    } catch {
+      customerSummary = emptyCustomerAnalytics(range);
+    }
+  }
+
+  if (useCustomerAnalytics && customerSummary.totalViews === 0) {
     try {
       const service = createServiceClient();
       summary = await getWebsiteAnalytics(service, {
@@ -210,17 +242,28 @@ export default async function AnalyticsPage({
     }
   }
 
-  const fourthStat = summary.topSource
+  const useCustomer = useCustomerAnalytics && customerSummary.totalViews > 0;
+  const display = useCustomer ? customerSummary : summary;
+
+  const fourthStat = useCustomer
     ? {
-        label: "Top source",
-        value: `${summary.topSource.share}%`,
-        hint: `via ${summary.topSource.domain}`,
+        label: "CTA clicks",
+        value: formatCompactNumber(display.ctaClicks),
+        hint: display.whatsappClicks > 0
+          ? `${display.whatsappClicks} WhatsApp`
+          : "Clicks on tracked buttons",
       }
-    : {
-        label: "Top source",
-        value: "—",
-        hint: "No traffic yet",
-      };
+    : display.topSource
+      ? {
+          label: "Top source",
+          value: `${display.topSource.share}%`,
+          hint: `via ${display.topSource.domain}`,
+        }
+      : {
+          label: "Top source",
+          value: "—",
+          hint: "No traffic yet",
+        };
 
   const banner =
     params.meta_connect === "success"
@@ -339,48 +382,75 @@ export default async function AnalyticsPage({
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard
               label="Pageviews"
-              value={formatCompactNumber(summary.totalViews)}
+              value={formatCompactNumber(display.totalViews)}
               icon={Eye}
             />
             <StatCard
               label="Unique visitors"
-              value={formatCompactNumber(summary.uniqueVisitors)}
+              value={formatCompactNumber(display.uniqueVisitors)}
               icon={Users}
             />
-            <StatCard
-              label="Form submissions"
-              value={summary.submissions}
-              icon={Inbox}
-            />
-            <StatCard
-              label={fourthStat.label}
-              value={fourthStat.value}
-              hint={fourthStat.hint}
-              icon={Share2}
-              accent={!!summary.topSource}
-            />
+            {useCustomer ? (
+              <>
+                <StatCard
+                  label="WhatsApp clicks"
+                  value={display.whatsappClicks}
+                  icon={Inbox}
+                />
+                <StatCard
+                  label="Phone clicks"
+                  value={display.phoneClicks}
+                  icon={Inbox}
+                />
+              </>
+            ) : (
+              <>
+                <StatCard
+                  label="Form submissions"
+                  value={display.submissions}
+                  icon={Inbox}
+                />
+                <StatCard
+                  label={fourthStat.label}
+                  value={fourthStat.value}
+                  hint={fourthStat.hint}
+                  icon={Share2}
+                  accent={!!display.topSource}
+                />
+              </>
+            )}
           </div>
 
           <section className="surface p-5 md:p-6">
             <div className="card-head mb-4 flex items-center justify-between">
-              <h3 className="text-sm font-medium">Traffic over time</h3>
+              <h3 className="text-sm font-medium">
+                {useCustomer ? "Traffic over time" : "Traffic over time"}
+              </h3>
             </div>
-            {summary.totalViews === 0 ? (
+            {display.totalViews === 0 ? (
               <p className="py-6 text-sm text-muted-foreground">
                 Your analytics will appear here once visitors start arriving.
                 Share your site to get started.
               </p>
             ) : (
-              <AnalyticsBarChart series={summary.series} />
+              <AnalyticsBarChart
+                series={
+                  useCustomer
+                    ? (customerSummary.series as unknown as import("@/lib/analytics/website-stats").DailyPoint[])
+                    : summary.series
+                }
+              />
             )}
           </section>
 
           <div className="grid gap-4 lg:grid-cols-2">
             <section className="surface overflow-hidden p-0">
               <div className="border-b border-border px-5 py-4">
-                <h3 className="text-sm font-medium">Top pages</h3>
+                <h3 className="text-sm font-medium">
+                  {useCustomer ? "Top pages" : "Top pages"}
+                </h3>
               </div>
-              {summary.topPages.length === 0 ? (
+              {(useCustomer ? customerSummary.topPages : summary.topPages).length === 0 ? (
                 <p className="px-5 py-8 text-sm text-muted-foreground">
                   No pageviews in this range.
                 </p>
@@ -395,13 +465,20 @@ export default async function AnalyticsPage({
                         <th className="px-5 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
                           Views
                         </th>
-                        <th className="px-5 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                          Submissions
-                        </th>
+                        {useCustomer && (
+                          <th className="px-5 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                            WhatsApp
+                          </th>
+                        )}
+                        {!useCustomer && (
+                          <th className="px-5 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                            Submissions
+                          </th>
+                        )}
                       </tr>
                     </thead>
                     <tbody>
-                      {summary.topPages.map((row) => (
+                      {(useCustomer ? customerSummary.topPages : summary.topPages).map((row) => (
                         <tr
                           key={row.path}
                           className="border-t border-border"
@@ -410,9 +487,15 @@ export default async function AnalyticsPage({
                           <td className="px-5 py-3 text-right font-mono">
                             {row.views}
                           </td>
-                          <td className="px-5 py-3 text-right font-mono text-muted-foreground">
-                            {row.submissions || "—"}
-                          </td>
+                          {useCustomer ? (
+                            <td className="px-5 py-3 text-right font-mono text-muted-foreground">
+                              —
+                            </td>
+                          ) : (
+                            <td className="px-5 py-3 text-right font-mono text-muted-foreground">
+                              {row.submissions || "—"}
+                            </td>
+                          )}
                         </tr>
                       ))}
                     </tbody>
@@ -422,8 +505,42 @@ export default async function AnalyticsPage({
             </section>
 
             <section className="surface p-5 md:p-6">
-              <h3 className="mb-4 text-sm font-medium">Traffic sources</h3>
-              <TrafficSourcesBreakdown sources={summary.sources} />
+              <h3 className="mb-4 text-sm font-medium">
+                {useCustomer ? "Device split" : "Traffic sources"}
+              </h3>
+              {useCustomer ? (
+                <div className="space-y-3">
+                  {[
+                    { label: "Mobile", count: customerSummary.deviceSplit.mobile },
+                    { label: "Desktop", count: customerSummary.deviceSplit.desktop },
+                    { label: "Tablet", count: customerSummary.deviceSplit.tablet },
+                  ].map((item) => {
+                    const total =
+                      customerSummary.deviceSplit.mobile +
+                      customerSummary.deviceSplit.desktop +
+                      customerSummary.deviceSplit.tablet || 1;
+                    const pct = Math.round((item.count / total) * 100);
+                    return (
+                      <div key={item.label}>
+                        <div className="flex items-center justify-between text-sm">
+                          <span>{item.label}</span>
+                          <span className="font-mono text-muted-foreground">
+                            {item.count} ({pct}%)
+                          </span>
+                        </div>
+                        <div className="mt-1 h-1.5 rounded bg-border">
+                          <div
+                            className="h-1.5 rounded bg-gold"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <TrafficSourcesBreakdown sources={summary.sources} />
+              )}
             </section>
           </div>
 

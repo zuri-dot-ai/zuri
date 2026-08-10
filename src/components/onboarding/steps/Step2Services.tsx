@@ -25,7 +25,7 @@ export function Step2Services({
       <div>
         <h1 className="onboarding-headline">What do you offer?</h1>
         <p className="onboarding-subtext">
-          Add each service or product with a short description — this becomes
+          Add 3 services, each service or product with a short description — this becomes
           your services section.
         </p>
       </div>

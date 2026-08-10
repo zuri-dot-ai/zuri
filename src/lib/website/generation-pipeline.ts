@@ -19,6 +19,7 @@ import {
 } from "@/lib/website/template-registry";
 import { createServiceClient } from "@/lib/supabase/service";
 import { createNotificationAsync } from "@/lib/notifications/create-notification";
+import { injectTrackingScript } from "@/lib/website/serve-html";
 import type { BusinessProfile } from "@/types/brand";
 import { normalizeServices, serviceNames } from "@/types/brand";
 import type {
@@ -786,10 +787,18 @@ export async function generateWebsite(
         },
         { onConflict: "user_id" }
       )
-      .select("handle")
+      .select("id, handle")
       .single();
 
     if (error) throw error;
+
+    if (website.id) {
+      const trackedHtml = injectTrackingScript(composed.html, website.id);
+      await supabase
+        .from("websites")
+        .update({ template_html: trackedHtml })
+        .eq("id", website.id);
+    }
 
     await markJob(supabase, jobId, "completed");
 

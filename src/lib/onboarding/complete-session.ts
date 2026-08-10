@@ -22,6 +22,7 @@ import {
 import { classifySupabaseError } from "@/lib/errors/supabase-errors";
 import { checkRateLimit } from "@/lib/security/rate-limit";
 import { sendWelcomeEmailIfNewUser } from "@/lib/email/send-welcome";
+import { createNotification } from "@/lib/notifications/create-notification";
 
 const FIRST_NAME_PATTERN = /^[\p{L}]+(?:[\s'-][\p{L}]+)*$/u;
 const BLOCKED_SERVICE_KEYWORDS = new Set(["drop", "select", "insert", "delete"]);
@@ -415,6 +416,18 @@ export async function completeOnboardingSession(
     user.id,
     job?.id ?? null
   );
+
+  try {
+    await createNotification({
+      userId: user.id,
+      type: "generation_started",
+      title: "We're building your site 🎉",
+      body: "This usually takes a couple of minutes — we'll notify you the moment it's ready.",
+      actionUrl: "/dashboard",
+    });
+  } catch (err) {
+    console.error("createNotification failed:", err);
+  }
 
   if (clearCookie) {
     await clearAnonymousSessionCookie();

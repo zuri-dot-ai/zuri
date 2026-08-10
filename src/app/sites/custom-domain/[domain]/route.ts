@@ -61,7 +61,7 @@ export async function GET(
   });
   if (website.analytics_enabled !== false) {
     html = injectConsentBanner(html);
-    html = injectTrackingScript(html, website.handle);
+    html = injectTrackingScript(html, website.id);
   }
 
   return htmlResponse(html);

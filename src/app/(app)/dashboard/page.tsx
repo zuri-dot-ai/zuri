@@ -30,6 +30,10 @@ import {
 } from "@/lib/dashboard/home-helpers";
 import { getMonthPageviewCount } from "@/lib/analytics/website-stats";
 import {
+  getCustomerAnalytics,
+  emptyCustomerAnalytics,
+} from "@/lib/analytics/customer-analytics-stats";
+import {
   isActiveCustomSiteStatus,
   type CustomSiteRequestStatus,
 } from "@/lib/custom-site/types";
@@ -149,10 +153,28 @@ export default async function DashboardPage() {
   ]);
 
   let monthViews = 0;
+  let whatsappClicks = 0;
+  let phoneClicks = 0;
   if (website?.handle) {
     try {
       const service = createServiceClient();
-      monthViews = await getMonthPageviewCount(service, website.handle);
+      const { data: site } = await service
+        .from("websites")
+        .select("id")
+        .eq("handle", website.handle)
+        .maybeSingle();
+
+      if (site?.id) {
+        const customer = await getCustomerAnalytics(service, {
+          websiteId: site.id,
+          range: "30",
+        });
+        monthViews = customer.totalViews;
+        whatsappClicks = customer.whatsappClicks;
+        phoneClicks = customer.phoneClicks;
+      } else {
+        monthViews = await getMonthPageviewCount(service, website.handle);
+      }
     } catch {
       monthViews = 0;
     }
@@ -273,12 +295,21 @@ export default async function DashboardPage() {
           icon={Flame}
           accent={streak > 0}
         />
-        <StatCard
-          label="Form submissions"
-          value={formCount ?? 0}
-          hint="This month"
-          icon={Inbox}
-        />
+        {whatsappClicks > 0 || phoneClicks > 0 ? (
+          <StatCard
+            label="WhatsApp clicks"
+            value={whatsappClicks}
+            hint={phoneClicks > 0 ? `${phoneClicks} phone taps` : undefined}
+            icon={Inbox}
+          />
+        ) : (
+          <StatCard
+            label="Form submissions"
+            value={formCount ?? 0}
+            hint="This month"
+            icon={Inbox}
+          />
+        )}
       </div>
 
       <ConsistencyTracker days={consistencyDays} streak={streak} />

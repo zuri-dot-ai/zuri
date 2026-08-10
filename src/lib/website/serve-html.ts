@@ -6,8 +6,8 @@ import { existsSync, readFileSync } from "fs";
 import { join } from "path";
 import {
   getConsentBannerScript,
-  getTrackingScript,
-} from "@/lib/analytics/tracking-script";
+  getCustomerTrackingScript,
+} from "@/lib/analytics/customer-tracking-script";
 import {
   getArchetypeFallback,
   isBrokenImageUrl,
@@ -182,8 +182,8 @@ export function injectContactFormEndpoint(
  * Inject cookie-free analytics tracking into <head> for published sites
  * when analytics_enabled is true.
  */
-export function injectTrackingScript(html: string, handle: string): string {
-  const script = getTrackingScript(handle);
+export function injectTrackingScript(html: string, websiteId: string): string {
+  const script = getCustomerTrackingScript(websiteId);
   if (/<\/head>/i.test(html)) {
     return html.replace(/<\/head>/i, `${script}</head>`);
   }
