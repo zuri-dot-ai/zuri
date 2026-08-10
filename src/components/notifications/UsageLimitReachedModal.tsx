@@ -1,35 +1,35 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { AlertTriangle, ArrowRight } from "lucide-react";
+import { ArrowRight, Lock } from "lucide-react";
 import { PremiumModal } from "./PremiumModal";
 
-interface PaymentFailedModalProps {
+interface UsageLimitReachedModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  planName: string;
-  /** Formatted date string, e.g. "Aug 15" */
-  graceEndDate?: string;
-  updatePaymentUrl?: string;
+  /** e.g. "content generations", "website publishes", "AI images" */
+  limitLabel: string;
+  /** e.g. "Free" — the plan they're currently on and about to be upsold from */
+  currentPlanName: string;
+  upgradeUrl?: string;
 }
 
 /**
- * Escalated from a toast to a modal per the agreed tier list — a failed
- * payment is consequential enough that a transient toast risks being
- * missed entirely. This does NOT go through the priority queue like the
- * corner-card grace-period alert does; it's meant to fire once, at the
- * moment the failure is detected (e.g. returning from a payment redirect
- * or a webhook-driven status change), not persist across every session.
- * The corner card (already built) continues to handle the ongoing
- * "still in grace period" ambient reminder after this first alert closes.
+ * Shown when a user hits a hard usage ceiling (e.g. free-tier generation
+ * limit). This is a *blocking* moment in the sense that the action they
+ * wanted to take didn't happen — so unlike toasts, a modal here is earned:
+ * it's a direct, honest response to something the user just tried to do,
+ * not an unprompted interruption.
+ *
+ * Priority 2 in the notification hierarchy (blocking upgrade prompt).
  */
-export function PaymentFailedModal({
+export function UsageLimitReachedModal({
   open,
   onOpenChange,
-  planName,
-  graceEndDate,
-  updatePaymentUrl = "/settings?tab=billing",
-}: PaymentFailedModalProps) {
+  limitLabel,
+  currentPlanName,
+  upgradeUrl = "/settings?tab=billing",
+}: UsageLimitReachedModalProps) {
   return (
     <PremiumModal open={open} onOpenChange={onOpenChange} size="sm">
       <div className="flex flex-col items-center px-8 pb-8 pt-10 text-center">
@@ -39,11 +39,11 @@ export function PaymentFailedModal({
           transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
           className="mb-5 flex size-14 items-center justify-center rounded-full"
           style={{
-            background: "rgba(192, 57, 43, 0.12)",
-            border: "1px solid rgba(192, 57, 43, 0.28)",
+            background: "rgba(226, 168, 58, 0.12)",
+            border: "1px solid rgba(226, 168, 58, 0.28)",
           }}
         >
-          <AlertTriangle className="size-6" style={{ color: "#c0392b" }} />
+          <Lock className="size-6" style={{ color: "#e2a83a" }} />
         </motion.div>
 
         <motion.div
@@ -52,13 +52,12 @@ export function PaymentFailedModal({
           transition={{ delay: 0.12, duration: 0.35 }}
         >
           <h2 className="font-heading text-2xl leading-tight text-[var(--text-primary)]">
-            We couldn&apos;t process your payment
+            You&apos;ve reached your {limitLabel} limit
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">
-            Your {planName} subscription payment didn&apos;t go through.
-            {graceEndDate
-              ? ` Update your payment method by ${graceEndDate} to keep your plan active.`
-              : " Update your payment method to keep your plan active."}
+            The {currentPlanName} plan includes a limited number of{" "}
+            {limitLabel} each month. Upgrade to keep going without
+            interruption.
           </p>
         </motion.div>
 
@@ -69,14 +68,14 @@ export function PaymentFailedModal({
           className="mt-7 flex w-full flex-col gap-2"
         >
           <a
-            href={updatePaymentUrl}
+            href={upgradeUrl}
             className="flex w-full items-center justify-center gap-1.5 rounded-full px-5 py-2.5 text-sm font-medium transition-transform active:scale-[0.98]"
             style={{
               background: "var(--accent)",
               color: "var(--accent-foreground)",
             }}
           >
-            Update payment method
+            See upgrade options
             <ArrowRight className="size-3.5" />
           </a>
           <button
@@ -84,7 +83,7 @@ export function PaymentFailedModal({
             onClick={() => onOpenChange(false)}
             className="w-full py-2 text-sm text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-primary)]"
           >
-            I&apos;ll do this later
+            Maybe later
           </button>
         </motion.div>
       </div>

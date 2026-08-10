@@ -1,9 +1,9 @@
 "use client";
 
-import * as Dialog from "@radix-ui/react-dialog";
-import { AnimatePresence, motion } from "framer-motion";
-import { X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useEffect, useRef } from "react";
+import { motion } from "framer-motion";
+import { Crown } from "lucide-react";
+import { PremiumModal } from "./PremiumModal";
 
 interface PlanUpgradedModalProps {
   open: boolean;
@@ -11,92 +11,111 @@ interface PlanUpgradedModalProps {
   planName: string;
 }
 
+/**
+ * Celebration moment for a successful upgrade — the one modal in this
+ * system that uses a (deliberately restrained) confetti burst, per
+ * explicit request. Requires `canvas-confetti`:
+ *
+ *   npm install canvas-confetti
+ *   npm install -D @types/canvas-confetti
+ *
+ * The burst is gold-toned to match the brand, fires once on open, and
+ * is short (a few hundred ms) — this should read as a tasteful flourish,
+ * not a party popper. If canvas-confetti is not desired long-term, the
+ * effect is fully isolated to the useEffect below and can be deleted
+ * without touching the rest of the modal.
+ */
 export function PlanUpgradedModal({
   open,
   onOpenChange,
   planName,
 }: PlanUpgradedModalProps) {
+  const firedRef = useRef(false);
+
+  useEffect(() => {
+    if (!open || firedRef.current) return;
+    firedRef.current = true;
+
+    let cancelled = false;
+
+    import("canvas-confetti").then(({ default: confetti }) => {
+      if (cancelled) return;
+      const goldTones = ["#c9a84c", "#d4b55f", "#f5f5f4"];
+
+      confetti({
+        particleCount: 60,
+        spread: 65,
+        startVelocity: 32,
+        gravity: 1.1,
+        ticks: 140,
+        origin: { y: 0.35 },
+        colors: goldTones,
+        scalar: 0.85,
+        disableForReducedMotion: true,
+      });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) firedRef.current = false;
+  }, [open]);
+
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <AnimatePresence>
-        {open && (
-          <Dialog.Portal forceMount>
-            <Dialog.Overlay asChild forceMount>
-              <motion.div
-                className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-              />
-            </Dialog.Overlay>
+    <PremiumModal open={open} onOpenChange={onOpenChange} size="sm">
+      <div className="flex flex-col items-center px-8 pb-8 pt-10 text-center">
+        <motion.div
+          initial={{ scale: 0.5, opacity: 0, rotate: -8 }}
+          animate={{ scale: 1, opacity: 1, rotate: 0 }}
+          transition={{
+            duration: 0.55,
+            ease: [0.34, 1.56, 0.64, 1], // bold-energetic
+          }}
+          className="mb-5 flex size-14 items-center justify-center rounded-full"
+          style={{
+            background: "rgba(201, 168, 76, 0.14)",
+            border: "1px solid rgba(201, 168, 76, 0.32)",
+          }}
+        >
+          <Crown className="size-6" style={{ color: "var(--accent)" }} />
+        </motion.div>
 
-            <div className="fixed inset-0 z-[101] flex items-center justify-center p-4">
-              <Dialog.Content asChild forceMount>
-                <motion.div
-                  className={cn(
-                    "relative w-full overflow-hidden rounded-[var(--radius-lg)] border",
-                    "max-w-md"
-                  )}
-                  style={{
-                    background:
-                      "linear-gradient(180deg, var(--bg-elevated) 0%, var(--bg-secondary) 100%)",
-                    borderColor: "var(--border-solid)",
-                    boxShadow:
-                      "0 0 0 1px rgba(201, 168, 76, 0.08), 0 24px 64px rgba(0,0,0,0.5)",
-                  }}
-                  initial={{ opacity: 0, scale: 0.96, y: 12 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.97, y: 8 }}
-                  transition={{
-                    duration: 0.3,
-                    ease: [0.25, 0.1, 0.25, 1],
-                  }}
-                >
-                  <div
-                    className="absolute inset-x-0 top-0 h-px"
-                    style={{
-                      background:
-                        "linear-gradient(90deg, transparent, var(--accent), transparent)",
-                      opacity: 0.6,
-                    }}
-                  />
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.18, duration: 0.35 }}
+        >
+          <h2 className="font-heading text-2xl leading-tight text-[var(--text-primary)]">
+            Welcome to {planName}
+          </h2>
+          <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">
+            Your upgrade is active. Everything included in {planName} is
+            unlocked right now — no need to refresh.
+          </p>
+        </motion.div>
 
-                  <Dialog.Close asChild>
-                    <button
-                      type="button"
-                      aria-label="Close"
-                      className="absolute right-4 top-4 z-10 rounded-full p-1.5 text-[var(--text-tertiary)] transition-colors duration-150 hover:bg-white/5 hover:text-[var(--text-primary)]"
-                    >
-                      <X className="size-4" />
-                    </button>
-                  </Dialog.Close>
-
-                  <div className="p-6 text-center">
-                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                    </div>
-                    <h2 className="text-xl font-semibold text-[var(--text-primary)]">
-                      Welcome to {planName}!
-                    </h2>
-                    <p className="mt-2 text-sm text-[var(--text-secondary)]">
-                      Your plan is now active. Start building your AI-powered presence.
-                    </p>
-                    <Dialog.Close asChild>
-                      <button
-                        type="button"
-                        className="mt-6 w-full rounded-lg bg-gold py-2.5 text-sm font-medium text-black transition-colors hover:bg-gold/90"
-                      >
-                        Go to dashboard
-                      </button>
-                    </Dialog.Close>
-                  </div>
-                </motion.div>
-              </Dialog.Content>
-            </div>
-          </Dialog.Portal>
-        )}
-      </AnimatePresence>
-    </Dialog.Root>
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.35 }}
+          className="mt-7 w-full"
+        >
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            className="w-full rounded-full px-5 py-2.5 text-sm font-medium transition-transform active:scale-[0.98]"
+            style={{
+              background: "var(--accent)",
+              color: "var(--accent-foreground)",
+            }}
+          >
+            Continue
+          </button>
+        </motion.div>
+      </div>
+    </PremiumModal>
   );
 }
