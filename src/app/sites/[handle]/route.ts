@@ -26,7 +26,7 @@ export async function GET(
 
   const { data: website, error } = await supabase
     .from("websites")
-    .select("template_html, status, user_id, archetype, analytics_enabled")
+    .select("id, template_html, status, user_id, archetype, analytics_enabled")
     .eq("handle", handle)
     .maybeSingle();
 

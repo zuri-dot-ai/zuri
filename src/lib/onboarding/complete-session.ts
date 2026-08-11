@@ -420,7 +420,7 @@ export async function completeOnboardingSession(
   try {
     await createNotification({
       userId: user.id,
-      type: "generation_started",
+      type: "website_generation_started",
       title: "We're building your site 🎉",
       body: "This usually takes a couple of minutes — we'll notify you the moment it's ready.",
       actionUrl: "/dashboard",

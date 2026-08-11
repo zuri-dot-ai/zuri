@@ -57,9 +57,9 @@ export async function POST(req: NextRequest) {
       : ua.getDevice().type === "tablet" ? "tablet" : "desktop";
 
     const geo = {
-      country: (req.geo?.country as string | null) ?? null,
-      region: (req.geo?.region as string | null) ?? null,
-      city: (req.geo?.city as string | null) ?? null,
+      country: null,
+      region: null,
+      city: null,
     };
 
     let referrerDomain: string | null = null;
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
     }
 
     await supabase.from("analytics_events").insert({
-      website_id,
+      website_id: websiteId,
       event_type: eventType,
       session_id: body.session_id,
       visitor_id: body.visitor_id,

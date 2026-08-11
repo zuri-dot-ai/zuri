@@ -28,7 +28,7 @@ export async function GET(
   const { data: website } = await supabase
     .from("websites")
     .select(
-      "template_html, status, user_id, handle, analytics_enabled, archetype"
+      "id, template_html, status, user_id, handle, analytics_enabled, archetype"
     )
     .eq("custom_domain", domain)
     .maybeSingle();

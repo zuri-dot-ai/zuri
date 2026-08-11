@@ -26,6 +26,7 @@ export type NotificationType =
   | "website_generation_failed"
   | "website_unpublished"
   | "website_suspended"
+  | "website_generation_started"
   | "contact_form_received"
   | "domain_connected"
   | "domain_dns_delayed"
@@ -71,6 +72,7 @@ export const NOTIFICATION_DISPLAY: Record<NotificationType, { icon: string; colo
   website_generation_failed:    { icon: "AlertTriangle",  color: "text-red-400" },
   website_unpublished:          { icon: "EyeOff",         color: "text-white/50" },
   website_suspended:            { icon: "AlertOctagon",   color: "text-red-400" },
+  website_generation_started:   { icon: "Loader2",        color: "text-gold" },
   contact_form_received:        { icon: "Mail",           color: "text-gold" },
   domain_connected:             { icon: "Link",           color: "text-green-400" },
   domain_dns_delayed:           { icon: "Clock",          color: "text-amber-400" },
