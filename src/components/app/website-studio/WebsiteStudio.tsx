@@ -16,6 +16,7 @@ import {
   Link2,
   Palette,
   Phone,
+  RefreshCw,
   Rocket,
   Settings,
   Share2,
@@ -127,6 +128,15 @@ const PANEL_SIZE: Partial<Record<PanelId, "md" | "lg" | "xl">> = {
   faq: "lg",
 };
 
+/** website_regenerations caps per plan (src/lib/payments/plans.ts) —
+ *  mirrored here only for display copy; the API route is the real gate. */
+const REGENERATION_LIMIT_LABEL: Record<string, string> = {
+  free: "not available on Free",
+  pro: "2 per month",
+  growth: "4 per month",
+  premium: "7 per month",
+};
+
 export function WebsiteStudio({
   websiteId,
   filledPlaceholders: initialPlaceholders,
@@ -179,9 +189,9 @@ export function WebsiteStudio({
   const [liveSlug, setLiveSlug] = useState(slug);
   const [previewKey, setPreviewKey] = useState(0);
   const [busy, setBusy] = useState(false);
-  const [busyAction, setBusyAction] = useState<"publish" | "unpublish" | null>(
-    null
-  );
+  const [busyAction, setBusyAction] = useState<
+    "publish" | "unpublish" | "regenerate" | null
+  >(null);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState<{
     feature: string;
@@ -197,12 +207,18 @@ export function WebsiteStudio({
   const [linkModal, setLinkModal] = useState<LinkModalState | null>(null);
   const [highlightSection, setHighlightSection] = useState<string | null>(null);
   const [focusFieldId, setFocusFieldId] = useState<string | null>(null);
+  const [regenRemaining, setRegenRemaining] = useState<number | null>(null);
+  const [regenLimit, setRegenLimit] = useState<number | null>(null);
+  const [regenChecked, setRegenChecked] = useState(false);
 
   const rootDomain = getRootDomain();
   const previewHandle = handle ?? liveSlug;
   const liveUrl = liveSlug ? getPublicSiteUrl(liveSlug) : null;
   const previewUrl = previewHandle ? `/preview/${previewHandle}` : null;
   const canPublish = plan !== "free";
+  // Regenerate follows the same paid-plan gate as Publish — Free never has
+  // a website_regenerations allotment (see src/lib/payments/plans.ts).
+  const canRegenerate = plan !== "free";
 
   const contentGroups = useMemo(
     () =>
@@ -260,6 +276,27 @@ export function WebsiteStudio({
       })
       .catch(() => {});
   }, [initialImages, initialNeedsReview]);
+
+  // Fetch remaining regeneration count once on mount (paid plans only —
+  // Free is always locked, no need to hit the endpoint) so the button can
+  // show "3 left" / "Limit reached" without waiting for a click.
+  useEffect(() => {
+    if (!canRegenerate) {
+      setRegenChecked(true);
+      return;
+    }
+    safeFetchJSON<{
+      used: number;
+      limit: number | null;
+      remaining: number | null;
+    }>("/api/website/regenerate", { method: "GET" })
+      .then((data) => {
+        setRegenLimit(data.limit);
+        setRegenRemaining(data.remaining);
+      })
+      .catch(() => {})
+      .finally(() => setRegenChecked(true));
+  }, [canRegenerate]);
 
   function bumpPreview() {
     setPreviewKey((k) => k + 1);
@@ -412,6 +449,78 @@ export function WebsiteStudio({
     }
   }
 
+  async function regenerate() {
+    if (!canRegenerate) {
+      openUpgrade({
+        feature: "Regenerate website",
+        benefit:
+          "Pro and above let you regenerate your whole site with a fresh template, layout, and copy whenever you want a new direction.",
+        requiredPlan: "Pro",
+      });
+      return;
+    }
+    if (regenRemaining === 0) {
+      openUpgrade({
+        feature: "Regenerate website",
+        benefit:
+          "You've used all your regenerations this month — upgrade for a higher monthly allowance.",
+        requiredPlan: plan === "pro" ? "Growth" : "Pro",
+      });
+      return;
+    }
+    if (
+      !window.confirm(
+        "Regenerate your website? This replaces your current template, layout, copy, and images with a brand new AI-generated version. Your link and embed customizations will be cleared. This can't be undone."
+      )
+    ) {
+      return;
+    }
+    setBusy(true);
+    setBusyAction("regenerate");
+    try {
+      const data = await safeFetchJSON<{
+        handle: string;
+        needsReview: boolean;
+        remaining: number | null;
+      }>("/api/website/regenerate", { method: "POST" });
+      setNeedsReview(data.needsReview);
+      setLinks({});
+      setEmbeds([]);
+      setRegenRemaining(data.remaining);
+      bumpPreview();
+      router.refresh();
+      toast.success("Your website has been regenerated — take a look!");
+    } catch (e) {
+      if (e instanceof FetchError && e.status === 403) {
+        // FetchError only exposes raw bodyText (see safe-fetch.ts) — parse
+        // it ourselves to recover the `limit` field the regenerate route
+        // sends on 403 (see src/app/api/website/regenerate/route.ts).
+        // Falls back to the generic message if parsing fails for any
+        // reason (non-JSON body, unexpected shape, etc.).
+        let limit: number | undefined;
+        try {
+          const parsed = JSON.parse(e.bodyText) as { limit?: number };
+          limit = parsed.limit;
+        } catch {
+          /* not JSON — use generic fallback message below */
+        }
+        openUpgrade({
+          feature: "Regenerate website",
+          benefit:
+            limit === 0
+              ? "Regenerating your website requires a paid plan."
+              : "You've used all your regenerations this month — upgrade for a higher monthly allowance.",
+          requiredPlan: plan === "pro" ? "Growth" : "Pro",
+        });
+        return;
+      }
+      toast.error(e instanceof Error ? e.message : "Regeneration failed");
+    } finally {
+      setBusy(false);
+      setBusyAction(null);
+    }
+  }
+
   function renderPanelBody(id: PanelId) {
     if (contentGroups.some((g) => g.id === id)) {
       const group = contentGroups.find((g) => g.id === id)!;
@@ -527,6 +636,17 @@ export function WebsiteStudio({
     ? contentGroups.some((g) => g.id === activePanel)
     : false;
 
+  // Regenerate button label: locked (Free), out-of-credits, remaining
+  // count once known, or a neutral label while the check is in flight.
+  const regenerateLabel = (() => {
+    if (busyAction === "regenerate") return "Regenerating…";
+    if (!canRegenerate) return "Upgrade to regenerate";
+    if (!regenChecked) return "Regenerate";
+    if (regenRemaining === 0) return "Limit reached";
+    if (regenRemaining != null) return `Regenerate (${regenRemaining} left)`;
+    return "Regenerate";
+  })();
+
   // Premium section-button treatment: icon sits in a small rounded badge
   // that lights up gold on selection, paired with a matching gold
   // left-border accent — one consistent "active" signal reused in both
@@ -615,6 +735,31 @@ export function WebsiteStudio({
               <Eye className="size-4" /> Preview
             </Button>
           )}
+
+          {/* Regenerate — same visible-but-locked pattern as Publish for
+              Free-tier users. Disabled (not hidden) once a paid user hits
+              their monthly cap, so the "N left" state is always visible
+              rather than surprising. */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="active:scale-[0.96]"
+            onClick={regenerate}
+            disabled={busy || (canRegenerate && regenRemaining === 0)}
+            title={
+              canRegenerate
+                ? REGENERATION_LIMIT_LABEL[plan] ?? undefined
+                : "Upgrade to Pro or higher to regenerate your website"
+            }
+          >
+            {busyAction === "regenerate" ? (
+              <span className="zuri-spinner !size-3.5" />
+            ) : (
+              <RefreshCw className="size-4" />
+            )}
+            {regenerateLabel}
+          </Button>
+
           {published ? (
             <Button
               size="sm"

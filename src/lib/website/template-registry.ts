@@ -1,5 +1,13 @@
 // src/lib/website/template-registry.ts
 // Helpers for the `templates` table + website-templates Storage bucket.
+//
+// CHANGED (2026-08 audit fix): getTemplatesForArchetype() previously
+// returned ALL rows for an archetype, including 34 leftover v1 templates
+// mixed in with 82 v2 ones — Gemini's template-selection call was choosing
+// from a pool that included templates already decided to be retired.
+// Now filters to template_version = 2 only. Requires migration
+// 20260811_templates_v2_module_selector.sql to have run and backfilled
+// template_version correctly first.
 
 import { createServiceClient } from "@/lib/supabase/service";
 import type { DesignArchetype } from "@/lib/website/archetypes";
@@ -8,6 +16,11 @@ import type { TemplateMetadata, TemplateRow } from "@/types/website";
 export type { ColorTheme, TemplateMetadata, TemplateRow } from "@/types/website";
 
 const TEMPLATES_BUCKET = "website-templates";
+
+/** Templates below this version are legacy v1 and must never be selected
+ *  for new generations — see TEMPLATE_PROMPTS_V2.md, which fully supersedes
+ *  the original 24-template v1 library. */
+const CURRENT_TEMPLATE_VERSION = 2;
 
 function rowToMetadata(row: TemplateRow): TemplateMetadata {
   return {
@@ -21,14 +34,14 @@ function rowToMetadata(row: TemplateRow): TemplateMetadata {
     placeholder_fields: row.placeholder_fields,
     image_slots: row.image_slots,
     has_unique_section: false,
+    // hero_type / supportedModules are read directly off the row by callers
+    // that need them (module-selector.ts) via a cast, since TemplateMetadata
+    // in types/website.ts hasn't been extended with these fields yet — see
+    // note in generation-pipeline.ts selectModulesForWebsite().
   };
 }
 
-function storageJsonPath(htmlPath: string): string {
-  return htmlPath.replace(/\.html$/i, ".json");
-}
-
-/** List all templates for an archetype (expected: 3 rows). */
+/** List all v2 templates for an archetype (legacy v1 rows excluded). */
 export async function getTemplatesForArchetype(
   archetype: DesignArchetype
 ): Promise<TemplateRow[]> {
@@ -37,10 +50,30 @@ export async function getTemplatesForArchetype(
     .from("templates")
     .select("*")
     .eq("archetype", archetype)
+    .eq("template_version", CURRENT_TEMPLATE_VERSION)
     .order("id");
 
   if (error) throw new Error(`Failed to list templates for ${archetype}: ${error.message}`);
-  return (data ?? []) as TemplateRow[];
+
+  const rows = (data ?? []) as TemplateRow[];
+
+  if (rows.length === 0) {
+    // Defensive fallback: if template_version backfill hasn't run yet or
+    // missed rows for this archetype, don't hard-fail generation — log
+    // loudly and fall back to unfiltered so the pipeline still works,
+    // but this should never happen in steady state post-migration.
+    console.error(
+      `[template-registry] No v2 templates found for archetype "${archetype}" — falling back to unfiltered query. Run/verify migration 20260811_templates_v2_module_selector.sql.`
+    );
+    const fallback = await supabase
+      .from("templates")
+      .select("*")
+      .eq("archetype", archetype)
+      .order("id");
+    return (fallback.data ?? []) as TemplateRow[];
+  }
+
+  return rows;
 }
 
 /** Fetch a single template row by id. */
@@ -54,6 +87,10 @@ export async function getTemplateById(templateId: string): Promise<TemplateRow |
 
   if (error) throw new Error(`Failed to fetch template ${templateId}: ${error.message}`);
   return data as TemplateRow | null;
+}
+
+function storageJsonPath(htmlPath: string): string {
+  return htmlPath.replace(/\.html$/i, ".json");
 }
 
 /**

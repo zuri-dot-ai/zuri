@@ -1,5 +1,26 @@
-// Website generation pipeline (docs/02_WEBSITE_BUILDER.md §4–§6)
-// Template select (Flash) → placeholder fill (Pro → Flash → generic) → curated images → string replace → validate → save
+// Website generation pipeline (docs/02_WEBSITE_BUILDER.md §4–§6,
+// docs/TEMPLATE_PROMPTS_V2.md §2.4, §6.2, §8)
+// Template select (Flash) → module select (data-driven, zero-AI) →
+// placeholder fill (Pro → Flash → generic) → field-length validation →
+// curated images (before/after hard exception) → string replace →
+// validate → save
+//
+// CHANGES vs previous version (2026-08 audit fixes):
+//   1. getTemplatesForArchetype() now implicitly returns v2-only rows —
+//      see template-registry.ts fix (filters template_version = 2).
+//   2. selectModules() (new module-selector.ts) is now called in Stage 2,
+//      alongside selectTemplate(), and its result is threaded through to
+//      applyModuleVisibility() so unselected module blocks are stripped
+//      from the rendered HTML instead of silently rendering with no data.
+//   3. resolveTemplateImages() now enforces the before/after hard
+//      exception (TEMPLATE_PROMPTS_V2.md §5.3): before_N/after_N and
+//      results_before_N/results_after_N slots NEVER pull from
+//      category_images stock. If no real uploaded pair exists, those
+//      slots are left unresolved and the module is excluded entirely
+//      (handled via selectModules ineligibility), rather than silently
+//      falling back to a mismatched stock photo.
+//   4. validateAndTruncateFields() (new validate-field-lengths.ts) runs
+//      immediately after fillPlaceholders(), before image resolution.
 
 import { geminiJSON } from "@/lib/gemini";
 import {
@@ -17,6 +38,12 @@ import {
   fetchTemplate,
   getTemplatesForArchetype,
 } from "@/lib/website/template-registry";
+import {
+  selectModules,
+  deriveAvailableData,
+  type ModuleId,
+} from "@/lib/website/module-selector";
+import { validateAndTruncateFields } from "@/lib/website/validate-field-lengths";
 import { createServiceClient } from "@/lib/supabase/service";
 import { createNotificationAsync } from "@/lib/notifications/create-notification";
 import { injectTrackingScript } from "@/lib/website/serve-html";
@@ -45,12 +72,19 @@ export interface ValidationResult {
 /** Which tier actually produced the filled placeholders. */
 export type FillTier = "pro" | "flash" | "generic";
 
+/** Slot-name patterns that are the before/after hard exception —
+ *  TEMPLATE_PROMPTS_V2.md §5.3. Never resolved from category_images. */
+const BEFORE_AFTER_SLOT_PATTERN =
+  /^(before|after|results_before|results_after)(_\d+)?$/i;
+
 export interface ComposedWebsite {
   html: string;
   archetype: DesignArchetype;
   template_id: string;
   filled_placeholders: Record<string, string>;
   filled_images: Record<string, ResolvedImage>;
+  selected_modules: ModuleId[];
+  truncated_fields: string[];
   validation: ValidationResult;
   fill_tier: FillTier;
 }
@@ -352,6 +386,53 @@ bright/airy/approachable/clinical/trustworthy → light.
   }
 }
 
+// ─── §2.4 Module selection (new — data-driven, zero-AI) ──────────────────────
+
+/**
+ * Stage 2b: given the selected template's declared supportedModules and
+ * what real uploaded data exists for this business, pick the eligible
+ * subset. Runs in the same logical stage as selectTemplate() per
+ * TEMPLATE_PROMPTS_V2.md §8 point 1, though as a separate deterministic
+ * call rather than combined into the Gemini round-trip (no AI needed here,
+ * so no latency reason to combine them).
+ */
+export async function selectModulesForWebsite(
+  brand: BusinessProfile,
+  template: TemplateMetadata
+): Promise<ModuleId[]> {
+  const supportedModules =
+    (template as unknown as { supportedModules?: string[] }).supportedModules ??
+    [];
+
+  if (supportedModules.length === 0) return [];
+
+  const supabase = createServiceClient();
+
+  // Real uploaded images (not stock) — used for gallery/masonry/case-study
+  // eligibility. Before/after eligibility is intentionally separate and
+  // stricter (see hasUploadedBeforeAfterPair below) per §5.3.
+  const { data: uploadedImages } = await supabase
+    .from("website_images")
+    .select("id, slot")
+    .eq("user_id", brand.user_id ?? "");
+
+  const uploaded = uploadedImages ?? [];
+  const uploadedImageCount = uploaded.length;
+
+  const hasUploadedBeforeAfterPair =
+    uploaded.some((img) => /^before(_\d+)?$/i.test(img.slot ?? "")) &&
+    uploaded.some((img) => /^after(_\d+)?$/i.test(img.slot ?? ""));
+
+  const availableData = deriveAvailableData({
+    uploadedImageCount,
+    hasUploadedBeforeAfterPair,
+    scheduleData: (brand as unknown as { schedule_data?: unknown }).schedule_data,
+    propertyData: (brand as unknown as { property_data?: unknown }).property_data,
+  });
+
+  return selectModules(supportedModules, availableData);
+}
+
 // ─── §4.3 Placeholder filling ────────────────────────────────────────────────
 
 function buildFillPrompt(
@@ -388,6 +469,21 @@ RULES:
 6. CTA-type fields: max 5 words, action-specific
 7. Category-specific fields (credentials, class schedule, property details, etc.): only fill
    if present in the placeholder list above — plausible, realistic values for this business
+
+FIELD LENGTH LIMITS (hard requirements, not suggestions):
+- tagline: maximum 8 words. This is a hero headline — it must read as a
+  single confident line, never a sentence.
+- about_body_short (used in hero subhead context): maximum 22 words.
+- about_body_long (used in dedicated About section context): maximum 60 words.
+- service_N_name: maximum 5 words / 40 characters.
+- service_N_description: maximum 12 words / 70 characters.
+- testimonial_N_quote: maximum 30 words.
+- testimonial_N_name: maximum 4 words.
+- testimonial_N_role: maximum 6 words.
+- Any category-specific field (credentials, schedule, property details):
+  maximum 6 words.
+If you cannot say something meaningful within these limits, say less —
+brevity is the deliverable, not a constraint to work around.
 
 Output ONLY valid JSON mapping each placeholder key (without {{ }}) to its filled string value.
 `;
@@ -445,13 +541,40 @@ export async function fillPlaceholders(
 
 export async function resolveTemplateImages(
   metadata: TemplateMetadata,
-  archetype: DesignArchetype
+  archetype: DesignArchetype,
+  options?: { uploadedImages?: Record<string, ResolvedImage> }
 ): Promise<Record<string, ResolvedImage>> {
   const supabase = createServiceClient();
   const resolved: Record<string, ResolvedImage> = {};
+  const uploadedImages = options?.uploadedImages ?? {};
 
   await Promise.all(
     metadata.image_slots.map(async (slot) => {
+      // ── Before/after hard exception (TEMPLATE_PROMPTS_V2.md §5.3) ──
+      // NEVER pull before_N/after_N/results_before_N/results_after_N from
+      // category_images stock, regardless of fallback logic elsewhere.
+      // Previously this fell through to a generic archetype hero image,
+      // silently violating the spec's explicit rule against fake
+      // "before/after" stock photos. Fixed: if a real uploaded image
+      // exists for this slot, use it; otherwise leave the slot
+      // unresolved entirely — module-selector.ts already excludes the
+      // before-after module from rendering when no real pair exists, so
+      // an unresolved slot here should never actually reach the HTML.
+      if (BEFORE_AFTER_SLOT_PATTERN.test(slot)) {
+        const uploaded = uploadedImages[slot];
+        if (uploaded) {
+          resolved[slot] = uploaded;
+        }
+        // No stock fallback — intentionally leave unresolved. If this
+        // slot's module was incorrectly selected upstream despite no
+        // real pair existing, assertImageSlotsFilled() will still catch
+        // the empty src at the end of applyImages() and force the
+        // archetype fallback rather than shipping a broken <img>, but
+        // that path indicates a module-selector bug worth alerting on,
+        // not expected behavior.
+        return;
+      }
+
       const slotType = normalizeSlotType(slot);
       const { data, error } = await supabase
         .from("category_images")
@@ -523,6 +646,26 @@ export function applyServiceCardVisibility(
   return out;
 }
 
+/**
+ * Strips module blocks (data-module="...") that were NOT selected by
+ * selectModulesForWebsite(). Templates author every declared module's HTML
+ * unconditionally (per §7.2's meta-prompt — "build the module as if it
+ * will always have real data, since selection already happened before this
+ * HTML is filled"), so this is the runtime enforcement point that actually
+ * removes the ones module-selector.ts determined aren't eligible.
+ */
+export function applyModuleVisibility(
+  html: string,
+  selectedModules: ModuleId[]
+): string {
+  const moduleBlockRegex =
+    /<(section|div)\b[^>]*\bdata-module="([^"]+)"[^>]*>[\s\S]*?<\/\1>/gi;
+
+  return html.replace(moduleBlockRegex, (full, _tag, moduleId: string) => {
+    return selectedModules.includes(moduleId as ModuleId) ? full : "";
+  });
+}
+
 export function applyImages(
   html: string,
   images: Record<string, ResolvedImage>,
@@ -545,7 +688,14 @@ export function applyImages(
     );
   }
 
-  // Assert every data-image-slot has a non-empty valid-looking src
+  // Assert every data-image-slot has a non-empty valid-looking src.
+  // NOTE: before/after slots with no real uploaded pair are expected to be
+  // unresolved here (see resolveTemplateImages) — but if their module
+  // wasn't correctly stripped by applyModuleVisibility(), this still
+  // guarantees no broken <img> ships, at the cost of a forced fallback
+  // image on a module that should have been excluded. Treat any
+  // [critical] log from this function on a before/after slot as a
+  // module-selector bug to investigate, not normal operation.
   out = assertImageSlotsFilled(out, archetype);
   return out;
 }
@@ -709,16 +859,33 @@ export async function composeWebsiteHtml(
   );
 
   const template = await selectTemplate(brand, archetype);
+
+  // Stage 2b: data-driven module selection (new — TEMPLATE_PROMPTS_V2.md §2.4)
+  const selectedModules = await selectModulesForWebsite(brand, template);
+
   const { html: rawHtml, metadata } = await fetchTemplate(template.template_id);
 
-  const { fields: filledPlaceholders, tier: fillTier } = await fillPlaceholders(
+  const { fields: rawPlaceholders, tier: fillTier } = await fillPlaceholders(
     brand,
     metadata,
     archetype
   );
+
+  // Stage 4b: field-length validation/truncation (new — §6.2), immediately
+  // after fillPlaceholders(), before image resolution per §8 point 3.
+  const { fields: filledPlaceholders, truncated: truncatedFields } =
+    validateAndTruncateFields(rawPlaceholders);
+
+  if (truncatedFields.length > 0) {
+    console.warn(
+      `[generation-pipeline] Field-length truncation applied to: ${truncatedFields.join(", ")} — prompt-level limit was not respected by the model`
+    );
+  }
+
   const filledImages = await resolveTemplateImages(metadata, archetype);
 
   let html = applyPlaceholders(rawHtml, filledPlaceholders);
+  html = applyModuleVisibility(html, selectedModules);
   html = applyImages(html, filledImages, { archetype });
   html = applyServiceCardVisibility(html, filledPlaceholders);
 
@@ -730,6 +897,8 @@ export async function composeWebsiteHtml(
     template_id: template.template_id,
     filled_placeholders: filledPlaceholders,
     filled_images: filledImages,
+    selected_modules: selectedModules,
+    truncated_fields: truncatedFields,
     validation,
     fill_tier: fillTier,
   };
@@ -866,4 +1035,68 @@ export async function generateWebsite(
 
     throw err;
   }
+}
+
+/**
+ * Full re-generation entry point for the "Regenerate my website" feature.
+ * Re-runs the entire pipeline (new archetype resolution → new template pick
+ * → new module selection → new copy → new images) exactly like initial
+ * generation, rather than patching the existing site. Called from
+ * POST /api/website/regenerate after plan-limit gating.
+ *
+ * Does NOT create a new website_generation_jobs row for a UI progress
+ * screen — the API route wraps this with its own job bookkeeping if the
+ * frontend needs a "generating…" state; this function returns once the
+ * new HTML is composed and saved.
+ */
+export async function regenerateWebsite(
+  brand: BusinessProfile,
+  userId: string
+): Promise<{ handle: string; needsReview: boolean; templateId: string }> {
+  const supabase = createServiceClient();
+
+  const composed = await composeWebsiteHtml(brand);
+
+  const needsReview =
+    !composed.validation.valid ||
+    composed.validation.errors.length > 0 ||
+    composed.fill_tier !== "pro";
+
+  const { data: website, error } = await supabase
+    .from("websites")
+    .update({
+      template_id: composed.template_id,
+      active_theme: "theme-1",
+      template_html: composed.html,
+      filled_placeholders: composed.filled_placeholders,
+      filled_images: composed.filled_images,
+      // Regeneration intentionally clears prior link/embed overrides since
+      // the template itself may have changed (different data-link-slot
+      // set) — surfaced to the user before confirming regenerate in the UI.
+      filled_links: {},
+      filled_embeds: [],
+      archetype: composed.archetype,
+      needs_review: needsReview,
+      status: "preview",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", userId)
+    .select("id, handle")
+    .single();
+
+  if (error) throw error;
+
+  if (website.id) {
+    const trackedHtml = injectTrackingScript(composed.html, website.id);
+    await supabase
+      .from("websites")
+      .update({ template_html: trackedHtml })
+      .eq("id", website.id);
+  }
+
+  return {
+    handle: website.handle,
+    needsReview,
+    templateId: composed.template_id,
+  };
 }

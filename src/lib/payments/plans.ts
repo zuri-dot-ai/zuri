@@ -1,4 +1,9 @@
 // Single source of truth for all plan limits. Used by feature gating, UI, and API routes.
+//
+// CHANGED (2026-08): website_regenerations caps updated per product decision —
+// pro 1→2, growth stays 4, premium unlimited(null)→7. Full site regeneration
+// is a real Gemini Pro cost per run, so even the top plan gets a cap now
+// rather than true unlimited.
 
 export type PlanId = "free" | "pro" | "growth" | "premium";
 
@@ -12,14 +17,13 @@ export interface PlanConfig {
 
 export interface PlanLimits {
   websites: number;
-  /** Live publish to {handle}.buildzuri.com — Free is preview-only. */
   can_publish: boolean;
   custom_domain: boolean;
-  max_pages_per_site: number | null; // null = unlimited
+  max_pages_per_site: number | null;
   website_regenerations: number | null; // null = unlimited
   priority_queue: boolean;
   remove_branding: boolean;
-  social_platforms: number | null; // null = all
+  social_platforms: number | null;
   calendar_posts_per_month: number | null;
   images_per_month: number;
   blog_posts_per_month: number | null;
@@ -36,7 +40,7 @@ export interface PlanLimits {
   seats: number;
   api_access: boolean;
   video_generation: boolean;
-  content_ideas_per_month: number | null; // null = no limit (paid plans use full generation)
+  content_ideas_per_month: number | null;
   supported_branches: number[];
 }
 
@@ -47,7 +51,7 @@ export const PLAN_CONFIG: Record<PlanId, PlanConfig> = {
     price_monthly: 0,
     price_annual: 0,
     limits: {
-      websites: 1, // preview site allowed; publish gated by can_publish
+      websites: 1,
       can_publish: false,
       custom_domain: false,
       max_pages_per_site: 5,
@@ -85,7 +89,7 @@ export const PLAN_CONFIG: Record<PlanId, PlanConfig> = {
       can_publish: true,
       custom_domain: false,
       max_pages_per_site: 5,
-      website_regenerations: 1,
+      website_regenerations: 2, // was 1
       priority_queue: false,
       remove_branding: false,
       social_platforms: 4,
@@ -119,7 +123,7 @@ export const PLAN_CONFIG: Record<PlanId, PlanConfig> = {
       can_publish: true,
       custom_domain: true,
       max_pages_per_site: null,
-      website_regenerations: 4,
+      website_regenerations: 4, // unchanged
       priority_queue: false,
       remove_branding: true,
       social_platforms: 4,
@@ -153,7 +157,7 @@ export const PLAN_CONFIG: Record<PlanId, PlanConfig> = {
       can_publish: true,
       custom_domain: true,
       max_pages_per_site: null,
-      website_regenerations: null,
+      website_regenerations: 7, // was null (unlimited)
       priority_queue: true,
       remove_branding: true,
       social_platforms: null,
@@ -179,7 +183,6 @@ export const PLAN_CONFIG: Record<PlanId, PlanConfig> = {
   },
 };
 
-/** Rank for upgrade/downgrade comparisons (higher = more features). */
 export const PLAN_RANK: Record<PlanId, number> = {
   free: 0,
   pro: 1,
