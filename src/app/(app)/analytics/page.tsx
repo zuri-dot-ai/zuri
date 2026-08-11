@@ -248,16 +248,16 @@ export default async function AnalyticsPage({
   const fourthStat = useCustomer
     ? {
         label: "CTA clicks",
-        value: formatCompactNumber(display.ctaClicks),
-        hint: display.whatsappClicks > 0
-          ? `${display.whatsappClicks} WhatsApp`
+        value: formatCompactNumber(customerSummary.ctaClicks),
+        hint: customerSummary.whatsappClicks > 0
+          ? `${customerSummary.whatsappClicks} WhatsApp`
           : "Clicks on tracked buttons",
       }
-    : display.topSource
+    : summary.topSource
       ? {
           label: "Top source",
-          value: `${display.topSource.share}%`,
-          hint: `via ${display.topSource.domain}`,
+          value: `${summary.topSource.share}%`,
+          hint: `via ${summary.topSource.domain}`,
         }
       : {
           label: "Top source",
@@ -394,12 +394,12 @@ export default async function AnalyticsPage({
               <>
                 <StatCard
                   label="WhatsApp clicks"
-                  value={display.whatsappClicks}
+                  value={customerSummary.whatsappClicks}
                   icon={Inbox}
                 />
                 <StatCard
                   label="Phone clicks"
-                  value={display.phoneClicks}
+                  value={customerSummary.phoneClicks}
                   icon={Inbox}
                 />
               </>
@@ -407,7 +407,7 @@ export default async function AnalyticsPage({
               <>
                 <StatCard
                   label="Form submissions"
-                  value={display.submissions}
+                  value={summary.submissions}
                   icon={Inbox}
                 />
                 <StatCard
@@ -415,7 +415,7 @@ export default async function AnalyticsPage({
                   value={fourthStat.value}
                   hint={fourthStat.hint}
                   icon={Share2}
-                  accent={!!display.topSource}
+                  accent={!!summary.topSource}
                 />
               </>
             )}
@@ -478,26 +478,35 @@ export default async function AnalyticsPage({
                       </tr>
                     </thead>
                     <tbody>
-                      {(useCustomer ? customerSummary.topPages : summary.topPages).map((row) => (
-                        <tr
-                          key={row.path}
-                          className="border-t border-border"
-                        >
-                          <td className="px-5 py-3 font-medium">{row.path}</td>
-                          <td className="px-5 py-3 text-right font-mono">
-                            {row.views}
-                          </td>
-                          {useCustomer ? (
-                            <td className="px-5 py-3 text-right font-mono text-muted-foreground">
-                              —
-                            </td>
-                          ) : (
-                            <td className="px-5 py-3 text-right font-mono text-muted-foreground">
-                              {row.submissions || "—"}
-                            </td>
-                          )}
-                        </tr>
-                      ))}
+                      {useCustomer
+                        ? customerSummary.topPages.map((row) => (
+                            <tr
+                              key={row.path}
+                              className="border-t border-border"
+                            >
+                              <td className="px-5 py-3 font-medium">{row.path}</td>
+                              <td className="px-5 py-3 text-right font-mono">
+                                {row.views}
+                              </td>
+                              <td className="px-5 py-3 text-right font-mono text-muted-foreground">
+                                —
+                              </td>
+                            </tr>
+                          ))
+                        : summary.topPages.map((row) => (
+                            <tr
+                              key={row.path}
+                              className="border-t border-border"
+                            >
+                              <td className="px-5 py-3 font-medium">{row.path}</td>
+                              <td className="px-5 py-3 text-right font-mono">
+                                {row.views}
+                              </td>
+                              <td className="px-5 py-3 text-right font-mono text-muted-foreground">
+                                {row.submissions || "—"}
+                              </td>
+                            </tr>
+                          ))}
                     </tbody>
                   </table>
                 </div>
