@@ -4,10 +4,8 @@
 
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
-import {
-  getConsentBannerScript,
-  getCustomerTrackingScript,
-} from "@/lib/analytics/customer-tracking-script";
+import { getCustomerTrackingScript } from "@/lib/analytics/customer-tracking-script";
+import { getConsentBannerScript } from "@/lib/analytics/tracking-script";
 import {
   getArchetypeFallback,
   isBrokenImageUrl,
@@ -83,6 +81,13 @@ export function notFoundResponse(): Response {
 /**
  * Rewrite broken / picsum / Unsplash / missing-fallback img srcs on
  * data-image-slot elements to a Cloudinary archetype fallback before serving.
+ *
+ * FIXED: previous version referenced an undeclared `tag` variable inside
+ * the loop (only `match` was ever bound from `matches`), which would throw
+ * a ReferenceError at runtime the first time this function actually hit a
+ * broken image — i.e. this function has likely never successfully run to
+ * completion in production. `tag` now correctly refers to the matched
+ * <img> string (match[0]).
  */
 export function sanitizeServedImages(
   html: string,
@@ -97,10 +102,7 @@ export function sanitizeServedImages(
 
   for (const match of matches) {
     const tag = match[0];
-    const srcMatch = tag.match(/\bsrc="([^"]*)"/i);
-    const src = srcMatch?.[1] ?? "";
-    if (!isBrokenImageUrl(src)) continue;
-
+    if (!isBrokenImageUrl(tag)) continue;
     const fixed = tag.includes("src=")
       ? tag.replace(/\bsrc="[^"]*"/i, `src="${fallback}"`)
       : tag.replace(/<img\b/i, `<img src="${fallback}"`);
@@ -221,39 +223,39 @@ export function injectStudioBridge(html: string): string {
 
   const script = `<script data-zuri-studio-bridge="1">
 (function(){
-  var SRC='zuri-preview';
-  window.addEventListener('message', function(e){
-    if(!e.data || e.data.source!==SRC) return;
-    if(e.data.type==='highlight-section' && e.data.sectionId){
-      var el=document.getElementById(e.data.sectionId);
-      if(!el) return;
-      el.scrollIntoView({behavior:'smooth',block:'start'});
-      el.style.outline='2px solid #C9A84C';
-      el.style.outlineOffset='4px';
-      setTimeout(function(){ el.style.outline=''; el.style.outlineOffset=''; },1200);
-    }
-  });
-  document.querySelectorAll('img[data-image-slot]').forEach(function(img){
-    img.style.cursor='pointer';
-    img.addEventListener('click', function(ev){
-      ev.preventDefault();
-      ev.stopPropagation();
-      var slot=img.getAttribute('data-image-slot');
-      if(slot) parent.postMessage({source:SRC,type:'image-click',slot:slot}, '*');
+    var SRC='zuri-preview';
+    window.addEventListener('message', function(e){
+      if(!e.data || e.data.source!==SRC) return;
+      if(e.data.type==='highlight-section' && e.data.sectionId){
+        var el=document.getElementById(e.data.sectionId);
+        if (!el) return;
+        el.scrollIntoView({behavior:'smooth',block:'start'});
+        el.style.outline='2px solid #C9A84C';
+        el.style.outlineOffset='4px';
+        setTimeout(function(){ el.style.outline=''; el.style.outlineOffset=''; },1200);
+      }
     });
-  });
-  document.querySelectorAll('a[data-link-slot]').forEach(function(a){
-    a.style.cursor='pointer';
-    a.addEventListener('click', function(ev){
-      ev.preventDefault();
-      ev.stopPropagation();
-      var slot=a.getAttribute('data-link-slot');
-      var href=a.getAttribute('href')||'';
-      var label=(a.textContent||'').trim();
-      if(slot) parent.postMessage({source:SRC,type:'link-click',slot:slot,href:href,label:label}, '*');
+    document.querySelectorAll('img[data-image-slot]').forEach(function(img){
+      img.style.cursor='pointer';
+      img.addEventListener('click', function(ev){
+        ev.preventDefault();
+        ev.stopPropagation();
+        var slot=img.getAttribute('data-image-slot');
+        if(slot) parent.postMessage({source:SRC,type:'image-click',slot:slot}, '*');
+      });
     });
-  });
-})();
+    document.querySelectorAll('a[data-link-slot]').forEach(function(a){
+      a.style.cursor='pointer';
+      a.addEventListener('click', function(ev){
+        ev.preventDefault();
+        ev.stopPropagation();
+        var slot=a.getAttribute('data-link-slot');
+        var href=a.getAttribute('href')||'';
+        var label=(a.textContent||'').trim();
+        if(slot) parent.postMessage({source:SRC,type:'link-click',slot:slot,href:href,label:label}, '*');
+      });
+    });
+  })();
 </script>`;
 
   if (/<\/body>/i.test(html)) {
