@@ -4,8 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
-  Briefcase,
-  Building2,
+  Briefcase,  Building2,
   ChevronRight,
   Code2,
   Eye,
@@ -45,6 +44,7 @@ import {
 } from "@/lib/website/field-groups";
 import type { LinkSlotsHealReason } from "@/lib/website/link-slots";
 import { FetchError, safeFetchJSON } from "@/lib/utils/safe-fetch";
+import { createClient as createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { ContentPanel } from "./ContentPanel";
 import { ImagesPanel } from "./ImagesPanel";
 import { LinksPanel } from "./LinksPanel";
@@ -478,25 +478,40 @@ export function WebsiteStudio({
     setBusy(true);
     setBusyAction("regenerate");
     try {
+      // Kicks off the job and returns immediately — the actual pipeline
+      // (template select + Gemini Pro copy fill + image resolution) runs
+      // server-to-server via an internal fire-and-forget request, exactly
+      // like initial generation already does (see
+      // src/lib/onboarding/complete-session.ts's triggerPostOnboardingJobs
+      // + src/components/app/generation-status-card.tsx's polling loop).
+      // This avoids making the browser hold one HTTP request open for the
+      // full pipeline duration, which was timing out.
       const data = await safeFetchJSON<{
-        handle: string;
-        needsReview: boolean;
-        remaining: number | null;
+        jobId: string;
+        alreadyInProgress?: boolean;
+        clientMustTrigger?: boolean;
       }>("/api/website/regenerate", { method: "POST" });
-      setNeedsReview(data.needsReview);
-      setLinks({});
-      setEmbeds([]);
-      setRegenRemaining(data.remaining);
-      bumpPreview();
-      router.refresh();
-      toast.success("Your website has been regenerated — take a look!");
+
+      if (data.clientMustTrigger) {
+        // Env not configured for server-to-server trigger (dev/local) —
+        // fire the worker route ourselves, unawaited, same fallback shape
+        // as generation-status-card.tsx's kickoffIfStuck().
+        void safeFetchJSON("/api/website/regenerate/run", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ jobId: data.jobId }),
+        }).catch(() => {});
+      }
+
+      toast.info(
+        data.alreadyInProgress
+          ? "A regeneration is already in progress — tracking it now."
+          : "Regenerating your website — this usually takes under a minute."
+      );
+
+      pollRegenerationJob(data.jobId);
     } catch (e) {
       if (e instanceof FetchError && e.status === 403) {
-        // FetchError only exposes raw bodyText (see safe-fetch.ts) — parse
-        // it ourselves to recover the `limit` field the regenerate route
-        // sends on 403 (see src/app/api/website/regenerate/route.ts).
-        // Falls back to the generic message if parsing fails for any
-        // reason (non-JSON body, unexpected shape, etc.).
         let limit: number | undefined;
         try {
           const parsed = JSON.parse(e.bodyText) as { limit?: number };
@@ -512,13 +527,90 @@ export function WebsiteStudio({
               : "You've used all your regenerations this month — upgrade for a higher monthly allowance.",
           requiredPlan: plan === "pro" ? "Growth" : "Pro",
         });
+        setBusy(false);
+        setBusyAction(null);
         return;
       }
       toast.error(e instanceof Error ? e.message : "Regeneration failed");
-    } finally {
       setBusy(false);
       setBusyAction(null);
     }
+    // NOTE: busy/busyAction are intentionally NOT cleared in a `finally`
+    // here — they stay true until pollRegenerationJob's own completion/
+    // failure path clears them, since the operation isn't actually done
+    // when this function returns (it only just started).
+  }
+
+  /**
+   * Polls website_generation_jobs for the regenerate job's status via the
+   * client Supabase SDK, matching generation-status-card.tsx's proven
+   * pattern exactly (same 4s interval, same terminal-state handling).
+   */
+  function pollRegenerationJob(jobId: string) {
+    const supabase = createSupabaseBrowserClient();
+    let cancelled = false;
+
+    async function poll() {
+      const { data } = await supabase
+        .from("website_generation_jobs")
+        .select("status, error_message")
+        .eq("id", jobId)
+        .maybeSingle();
+
+      if (cancelled || !data) return;
+
+      if (data.status === "completed") {
+        cancelled = true;
+        clearInterval(timer);
+        setBusy(false);
+        setBusyAction(null);
+        setLinks({});
+        setEmbeds([]);
+        // Full regen changes template_id/archetype/placeholders/images —
+        // more than local state can safely patch — pull fresh data from
+        // the server component parent.
+        router.refresh();
+        // Re-check remaining count now that a credit was consumed.
+        safeFetchJSON<{ remaining: number | null }>(
+          "/api/website/regenerate",
+          { method: "GET" }
+        )
+          .then((d) => setRegenRemaining(d.remaining))
+          .catch(() => {});
+        bumpPreview();
+        toast.success("Your website has been regenerated — take a look!");
+        return;
+      }
+
+      if (data.status === "failed") {
+        cancelled = true;
+        clearInterval(timer);
+        setBusy(false);
+        setBusyAction(null);
+        toast.error(
+          data.error_message || "Regeneration failed. Please try again."
+        );
+        return;
+      }
+    }
+
+    const timer = setInterval(() => void poll(), 4000);
+    void poll();
+
+    // Safety timeout: if a job never resolves (stuck), stop polling after
+    // 3 minutes rather than forever, and let the user know to check back —
+    // the cron job (detect-stuck-jobs) will also catch and retry stuck
+    // jobs server-side independently of this client-side giveup.
+    setTimeout(() => {
+      if (cancelled) return;
+      cancelled = true;
+      clearInterval(timer);
+      setBusy(false);
+      setBusyAction(null);
+      toast.error(
+        "This is taking longer than expected. Refresh in a minute to check if your new website is ready."
+      );
+    }, 180_000);
   }
 
   function renderPanelBody(id: PanelId) {
