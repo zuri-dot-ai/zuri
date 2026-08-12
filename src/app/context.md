@@ -4,7 +4,7 @@
 
 ## PROJECT
 Zuri — AI presence activation system for African business owners.
-Tagline: "Your business, online. Beautifully."
+Tagline: "Launch, plan, grow. All in one place. Beautifully."
 Takes a business owner from zero online presence to a live premium
 website + 90-day content action plan + vetted agency partners,
 starting from a single conversation.

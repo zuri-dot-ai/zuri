@@ -1,8 +1,8 @@
+import { PLAN_CONFIG, type PlanId } from "@/lib/payments/plans";
+
 export const BRAND = {
   name: "Zuri",
-  /** Short headline — matches marketing hero */
   tagline: "Launch, plan, grow. All in one place.",
-  /** Supporting sentence under the headline */
   description:
     "Launch your business online with Zuri. Instantly create a premium website, unlock a personalized 90-day content plan, and accelerate growth with AI.",
   colors: {
@@ -27,22 +27,20 @@ export interface PricingPlan {
   id: "pro" | "growth" | "premium";
   name: string;
   ngnMonthly: number;
-  usdMonthly: number;
   ngnAnnual: number;
-  usdAnnual: number;
   highlight: boolean;
   description: string;
   features: PlanFeature[];
 }
 
-export const PRICING: PricingPlan[] = [
-  {
-    id: "pro",
-    name: "Pro",
-    ngnMonthly: 23000,
-    usdMonthly: 15,
-    ngnAnnual: 230000,
-    usdAnnual: 150,
+// Derived from PLAN_CONFIG (src/lib/payments/plans.ts) — the single source
+// of truth for pricing. Do not hardcode prices here again; only display
+// copy (description, features, highlight) lives in this file.
+const PRICING_COPY: Record<
+  "pro" | "growth" | "premium",
+  Pick<PricingPlan, "description" | "features" | "highlight">
+> = {
+  pro: {
     highlight: false,
     description: "Publish your site and run a consistent content cadence.",
     features: [
@@ -55,13 +53,7 @@ export const PRICING: PricingPlan[] = [
       { text: "Custom domain", included: false },
     ],
   },
-  {
-    id: "growth",
-    name: "Growth",
-    ngnMonthly: 51000,
-    usdMonthly: 33,
-    ngnAnnual: 510000,
-    usdAnnual: 330,
+  growth: {
     highlight: true,
     description: "For owners ready to scale with daily content and partners.",
     features: [
@@ -73,13 +65,7 @@ export const PRICING: PricingPlan[] = [
       { text: "Priority support", included: true },
     ],
   },
-  {
-    id: "premium",
-    name: "Premium",
-    ngnMonthly: 99000,
-    usdMonthly: 65,
-    ngnAnnual: 990000,
-    usdAnnual: 650,
+  premium: {
     highlight: false,
     description: "Full stack — advanced analytics and unlimited regenerations.",
     features: [
@@ -89,7 +75,17 @@ export const PRICING: PricingPlan[] = [
       { text: "Priority generation queue", included: true },
     ],
   },
-];
+};
+
+export const PRICING: PricingPlan[] = (["pro", "growth", "premium"] as const).map(
+  (id) => ({
+    id,
+    name: PLAN_CONFIG[id].name,
+    ngnMonthly: PLAN_CONFIG[id].price_monthly,
+    ngnAnnual: PLAN_CONFIG[id].price_annual,
+    ...PRICING_COPY[id],
+  })
+);
 
 export const EARLY_ADOPTER = {
   ngnMonthly: 25000,

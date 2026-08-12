@@ -58,8 +58,9 @@ export function canStartTrial(
   sub: Pick<SubscriptionTrialRow, "plan_id" | "status" | "trials_used">,
   targetPlan: PlanId
 ): { ok: true } | { ok: false; reason: string } {
-  if (!PAID_PLAN_IDS.includes(targetPlan)) {
-    return { ok: false, reason: "Invalid trial plan" };
+  // Only Growth is trialable. Pro and Premium are purchase-only, no trial.
+  if (targetPlan !== "growth") {
+    return { ok: false, reason: "Only the Growth plan offers a free trial." };
   }
   if (!isUnconverted(sub)) {
     return {
@@ -71,25 +72,20 @@ export function canStartTrial(
   if (used.includes(targetPlan)) {
     return {
       ok: false,
-      reason: `You've already used your ${PLAN_CONFIG[targetPlan].name} trial.`,
+      reason: "You've already used your Growth trial.",
     };
   }
-
-  const currentId: PlanId =
-    sub.status === "trialing" && isPlanId(sub.plan_id) ? sub.plan_id : "free";
-  // Allow Free → any unused paid tier; trialing → only higher unused tiers
-  if (currentId !== "free" && PLAN_RANK[targetPlan] <= PLAN_RANK[currentId]) {
-    return {
-      ok: false,
-      reason: `Choose a higher plan than ${PLAN_CONFIG[currentId].name} to start a new trial.`,
-    };
+  // Already trialing something (shouldn't happen now that only one tier
+  // trials, but guards against stale trialing rows from before this change)
+  if (sub.status === "trialing") {
+    return { ok: false, reason: "You already have an active trial." };
   }
 
   return { ok: true };
 }
 
 export function trialDaysForPlan(planId: PlanId): number {
-  return planId === "pro" ? PRO_TRIAL_DAYS : UPGRADE_TRIAL_DAYS;
+  return UPGRADE_TRIAL_DAYS; // 7 days — only Growth trials exist now
 }
 
 /** Lowest unused paid tier the user can still trial, or null if none. */

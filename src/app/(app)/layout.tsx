@@ -16,6 +16,8 @@ import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
 import { NotificationQueueProvider } from "@/lib/notifications/notification-queue";
 import { NotificationHost } from "@/components/notifications/NotificationHost";
 import { PLAN_CONFIG, isPlanId } from "@/lib/payments/plans";
+import { getNudgeToShow } from "@/lib/payments/upgrade-nudge";
+import { UpgradeNudgeModal } from "@/components/notifications/UpgradeNudgeModal";
 
 
 export default async function AppLayout({
@@ -32,7 +34,7 @@ export default async function AppLayout({
   const { data: subscription } = await supabase
     .from("subscriptions")
     .select(
-      "status, plan_id, current_period_end, grace_period_end, trial_ends_at, trial_tier, trial_ended_at, trials_used"
+      "status, plan_id, current_period_end, grace_period_end, trial_ends_at, trial_tier, trial_ended_at, trials_used, last_upgrade_nudge_at, created_at"
     )
     .eq("user_id", user.id)
     .maybeSingle();
@@ -74,6 +76,16 @@ export default async function AppLayout({
     trialEndedAt: subscription?.trial_ended_at ?? null,
     trialsUsed: subscription?.trials_used ?? [],
   };
+
+  const nudgeKind = subscription
+    ? getNudgeToShow({
+        planId: isPlanId(effectivePlanId) ? effectivePlanId : "free",
+        status: rawStatus,
+        createdAt: subscription.created_at,
+        trialEndedAt: subscription.trial_ended_at,
+        lastUpgradeNudgeAt: subscription.last_upgrade_nudge_at,
+      })
+    : null;
 
   return (
     <TooltipProvider delayDuration={280} skipDelayDuration={100}>
@@ -137,6 +149,7 @@ export default async function AppLayout({
                 <NotificationHost userId={user?.id ?? null} />
               </NotificationQueueProvider>
               <PaymentToast />
+              {nudgeKind && !inGracePeriod && <UpgradeNudgeModal kind={nudgeKind} />}
               <Suspense fallback={null}>
                 <FirstVisitTour />
               </Suspense>

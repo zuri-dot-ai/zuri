@@ -186,7 +186,7 @@ export function Step4Signup({
           </a>{" "}
           and{" "}
           <a
-            href={marketingUrl("/privacy")}
+            href={marketingUrl("/privacy.html")}
             target="_blank"
             rel="noreferrer"
             className="text-gold underline-offset-2 hover:underline"

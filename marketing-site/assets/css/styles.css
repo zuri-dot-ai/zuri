@@ -66,6 +66,7 @@ main{
   isolation:isolate;
   contain:layout paint style;
   transform:translateZ(0);
+  white-space:nowrap;
 }
 .btn-gold::before{
   content:'';
@@ -113,6 +114,7 @@ main{
   isolation:isolate;
   transform:translateZ(0);
   transition:box-shadow .3s ease;
+  white-space:nowrap;
 }
 .btn-ghost::before{
   content:'';
@@ -175,8 +177,12 @@ main{
   position:fixed;
   top:0; left:0; right:0;
   z-index:50;
+  background:rgba(10,10,10,0);
+  border-bottom:1px solid rgba(255,255,255,0);
+  transition:background .4s ease, border-color .4s ease;
+}
+.navbar.scrolled{
   background:rgba(10,10,10,0.96);
-  /* No backdrop-filter — solid fill is enough and avoids expensive blur on every frame */
   border-bottom:1px solid #1e1e1e;
 }
 .nav-inner{
@@ -189,8 +195,8 @@ main{
 }
 .nav-logo{ display:flex; align-items:center; }
 .nav-logo-img{
-  height:30px;
-  width:75px;
+  height:auto;
+  width:110px;
   aspect-ratio:1986 / 792;
   display:block;
   object-fit:contain;
@@ -255,8 +261,12 @@ main{
   border-bottom:1px solid #1e1e1e;
 }
 @media (max-width:900px){
-  .navbar.home{ opacity:0; transform:translateY(-14px); pointer-events:none; }
-  .navbar.home.scrolled{ opacity:1; transform:translateY(0); pointer-events:auto; }
+  .navbar.home{
+    opacity:1;
+    transform:none;
+    pointer-events:auto;
+    background:rgba(10,10,10,0.96);
+  }
 }
 
 /* ---------- HERO (home page only) ---------- */
@@ -269,8 +279,8 @@ main{
   display:grid;
   grid-template-columns:1.1fr 1fr;
   align-items:center;
-  padding:6.5rem 6vw 0;
-  gap:2vw;
+  padding:6.5rem clamp(2rem,6vw,5rem) 0;
+  gap:clamp(1.5rem,2vw,3rem);
   isolation:isolate;
 }
 /* Ambient behind the WebGL canvas — CSS only, not inside Three.js */
@@ -295,6 +305,7 @@ main{
   grid-column:2;
   position:relative;
   z-index:2;
+  min-width:0;
 }
 .hero-copy--reveal{
   opacity:0;
@@ -319,11 +330,11 @@ main{
   margin-bottom:1rem;
 }
 .hero-copy h1{
-  font-size:clamp(2.2rem,3.6vw,3.35rem);
+  font-size:clamp(2.5rem,1.7vw,3.1rem);
   line-height:1.05;
   color:var(--chrome-light);
   margin-bottom:1.2rem;
-  max-width:min(22ch, 34vw);
+  max-width:22ch;
   text-wrap:balance;
 }
 .hero-copy h1 em{
@@ -339,7 +350,27 @@ main{
   line-height:1.6;
   margin-bottom:2.2rem;
 }
-.cta-row{ display:flex; gap:1rem; flex-wrap:wrap; }
+.cta-row{
+  display:flex;
+  gap:1rem;
+  flex-wrap:nowrap;
+}
+.cta-row .btn-gold,
+.cta-row .btn-ghost{
+  flex-shrink:0;
+}
+
+/* Only allow the CTAs to stack once we're in the mobile/tablet nav breakpoint,
+   where hero copy also switches layout — keeps them side-by-side on every
+   desktop width instead of wrapping unpredictably based on window size. */
+@media (max-width:900px){
+  .cta-row{ flex-wrap:wrap; }
+  .cta-row .btn-gold,
+  .cta-row .btn-ghost{
+    white-space:normal;
+    flex-shrink:1;
+  }
+}
 
 /* ---------- PAGE HEADER (inner pages — About, Pricing, Terms, etc.) ---------- */
 .page-header{
@@ -638,7 +669,7 @@ footer.site-footer a:hover{ color:var(--gold); }
     display:flex; flex-direction:column; align-items:flex-start;
     padding:5rem 6vw 3rem; min-height:auto; height:auto; overflow:visible;
   }
-  #hero-canvas{ position:static; width:76px; height:76px; margin-bottom:1.2rem; opacity:1; }
+  #hero-canvas{ position:static; width:86px; height:80px; margin: bottom 0.7em; opacity:1; }
   .hero-copy{ grid-column:unset; padding-top:0; }
   .hero-copy p{ max-width:none; }
 
@@ -686,7 +717,7 @@ footer.site-footer a:hover{ color:var(--gold); }
   .page-header h1{ font-size:clamp(1.9rem,7vw,2.6rem); }
   main section, body > section{ padding:2.5rem 6vw 3rem; }
   .section-title{ font-size:clamp(1.5rem,6vw,1.9rem); margin-bottom:1.8rem; }
-  .hero-copy h1{ font-size:clamp(2rem,8vw,2.6rem); }
+  .hero-copy h1{ font-size:clamp(1.5rem,3vw,2.1rem); }
   .cta-row{ flex-direction:column; align-items:stretch; }
   .cta-row .btn-gold, .cta-row .btn-ghost{ text-align:center; }
   .btn-gold, .btn-ghost{ padding:.85rem 1.4rem; font-size:.8rem; width:100%; }
@@ -705,7 +736,7 @@ footer.site-footer a:hover{ color:var(--gold); }
 @media (max-width:360px){
   .hero-copy h1{ font-size:1.8rem; }
   .section-title{ font-size:1.4rem; }
-  .nav-logo-img{ height:24px; width:60px; }
+  .nav-logo-img{ height:auto; width:90px; }
   .plan-price{ font-size:1.7rem; }
 }
 
@@ -1258,12 +1289,29 @@ footer.site-footer a:hover{ color:var(--gold); }
   }
   #hero-canvas{ position:static; width:96px; height:96px; }
   .hero-copy{ grid-column:unset; padding-top:0; max-width:100%; width:100%; }
-  .hero-copy p{ max-width:none; }
+  .hero-copy p{ max-width:none; font-size: 0.9rem; }
   .hero-copy h1{
-    font-size: clamp(1.9rem, 6.5vw, 2.1rem);
+    font-size: clamp(1.7rem, 3.5vw, 2.1rem);
     line-height: 1.2;
     max-width:none;
     text-wrap:wrap;
   }
 }
-
+@media (max-width:900px){
+  .navbar.home .nav-logo{
+    visibility:hidden;
+    pointer-events:none;
+  }
+}
+@media (max-width:900px){
+  .navbar.home{
+    opacity:1;
+    transform:none;
+    pointer-events:auto;
+    background:rgba(10,10,10,0);
+  }
+  .navbar.home .nav-logo{
+    visibility:hidden;
+    pointer-events:none;
+  }
+}

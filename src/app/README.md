@@ -1,6 +1,6 @@
 # Zuri
 
-> **Your business, online. Beautifully.**
+> **Launch, plan, grow. All in one place. Beautifully.**
 > AI presence activation for African entrepreneurs. Powered by Gemini.
 
 Zuri takes a business owner from zero online presence to a live premium

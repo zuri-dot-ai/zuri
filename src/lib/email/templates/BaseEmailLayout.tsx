@@ -156,7 +156,7 @@ export function BaseEmailLayout({ preview, children }: BaseEmailLayoutProps) {
                 Manage notifications
               </Link>
               {" · "}
-              <Link href={`${APP_URL}/privacy`} style={{ color: "#777" }}>
+              <Link href={`${APP_URL}/privacy.html`} style={{ color: "#777" }}>
                 Privacy
               </Link>
               {" · "}

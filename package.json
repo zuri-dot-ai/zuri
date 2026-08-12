@@ -2,7 +2,7 @@
   "name": "zuri",
   "version": "0.1.0",
   "private": true,
-  "description": "Zuri — Your business, online. Beautifully. AI presence activation for African entrepreneurs.",
+  "description": "Zuri — Launch, plan, grow. All in one place. Beautifully. AI presence activation for African entrepreneurs.",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
