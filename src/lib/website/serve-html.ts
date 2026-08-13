@@ -68,6 +68,17 @@ export const SUSPENDED_PAGE_HTML = `<!DOCTYPE html>
 
 const HTML_HEADERS = {
   "Content-Type": "text/html; charset=utf-8",
+  // FIXED (2026-08): neither preview nor published serving routes set
+  // any Cache-Control, so browsers were free to apply their own
+  // heuristic caching and serve a stale document after an image swap or
+  // regenerate — confirmed via trace: the DB row and generation pipeline
+  // were both correct, only the browser's cached HTML response was
+  // stale. This route always serves the current DB state fresh
+  // (dynamic = "force-dynamic" already enforces that server-side); the
+  // browser must never cache it either, since template_html can change
+  // at any time via image swap, regenerate, or theme change with no
+  // predictable interval.
+  "Cache-Control": "no-store, must-revalidate",
 } as const;
 
 export function htmlResponse(html: string, status = 200): Response {
