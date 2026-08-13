@@ -1,7 +1,15 @@
-// POST /api/ai/generate-website
+// src/app/api/ai/generate-website/route.ts
 // docs/02_WEBSITE_BUILDER.md §4, §13
 // Auth: x-internal-secret (server-to-server) OR valid user session.
 // Generation is allowed on all plans (Free = preview; Pro+ can publish).
+//
+// CHANGED (2026-08): mapBrand() now accepts and threads through the
+// owner's first_name from profiles.full_name. Previously this was never
+// fetched or passed, so any v2 template declaring {{first_name}}
+// (luxury-aspirational + trust-professional archetypes) got no real
+// signal and Gemini invented a plausible-sounding name — confirmed via
+// production trace. profiles was already being queried for `handle`;
+// full_name is now selected in the same query, no extra round-trip.
 
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth/require-auth";
@@ -25,7 +33,8 @@ function isInternalRequest(req: Request): boolean {
 
 function mapBrand(
   row: Record<string, unknown>,
-  handle: string
+  handle: string,
+  firstName: string | null
 ): BusinessProfile {
   const services = normalizeServices(row.services);
   const platforms = Array.isArray(row.platforms)
@@ -60,6 +69,7 @@ function mapBrand(
     logo_url: row.logo_url == null ? null : String(row.logo_url),
     reference_url:
       row.reference_url == null ? null : String(row.reference_url),
+    first_name: firstName,
   };
 }
 
@@ -130,7 +140,15 @@ export async function POST(req: Request) {
       .select("*")
       .eq("user_id", userId)
       .maybeSingle(),
-    service.from("profiles").select("handle").eq("id", userId).maybeSingle(),
+    // full_name added alongside the existing handle select — same query,
+    // no extra round-trip. This is where the owner's first name lives
+    // (see Step10YourName.tsx → complete-session.ts, which writes it to
+    // profiles.full_name, not business_profiles).
+    service
+      .from("profiles")
+      .select("handle, full_name")
+      .eq("id", userId)
+      .maybeSingle(),
   ]);
 
   if (!biz) {
@@ -149,7 +167,12 @@ export async function POST(req: Request) {
       .slice(0, 30) ||
     "site";
 
-  const brand = mapBrand(biz as Record<string, unknown>, handle);
+  const firstName =
+    typeof profile?.full_name === "string" && profile.full_name.trim()
+      ? profile.full_name.trim()
+      : null;
+
+  const brand = mapBrand(biz as Record<string, unknown>, handle, firstName);
 
   try {
     const result = await generateWebsite(brand, userId, jobId!);

@@ -226,6 +226,14 @@ function genericPlaceholderFallback(
       out[key] = "";
       continue;
     }
+    if (key === "first_name") {
+      // Use the real owner name when we have it, even on the generic
+      // fallback tier — this is the one field where a real value is
+      // always better than blank, since it's specifically meant to be
+      // personal. Never invent a name here.
+      out[key] = brand.first_name?.trim() || "";
+      continue;
+    }
     if (key === "founder_title") {
       out[key] = "Founder";
       continue;
@@ -335,6 +343,15 @@ function ensureAllPlaceholders(
   if (fields.includes("active_theme") || "active_theme" in out) {
     out.active_theme = out.active_theme?.trim() || "theme-1";
   }
+  // Force the real owner name over anything Gemini may have invented —
+  // same "ground truth always wins" treatment as business_name above.
+  // Only overrides when we actually have a real name; otherwise leaves
+  // whatever Gemini/fallback produced (which should be "" per the prompt
+  // instruction and genericPlaceholderFallback(), but this doesn't
+  // second-guess an empty string into something worse).
+  if (fields.includes("first_name") && brand.first_name?.trim()) {
+    out.first_name = brand.first_name.trim();
+  }
   for (const key of fields) {
     if (out[key] === undefined) out[key] = "";
   }
@@ -345,12 +362,29 @@ function ensureAllPlaceholders(
 
 export async function selectTemplate(
   brand: BusinessProfile,
-  archetype: DesignArchetype
+  archetype: DesignArchetype,
+  options?: { excludeTemplateId?: string }
 ): Promise<TemplateMetadata> {
-  const candidates = await getTemplatesForArchetype(archetype);
-  if (candidates.length === 0) {
+  const allCandidates = await getTemplatesForArchetype(archetype);
+  if (allCandidates.length === 0) {
     throw new Error(`No templates found for archetype: ${archetype}`);
   }
+
+  // On regenerate, exclude the currently-assigned template so "Regenerate"
+  // is guaranteed to produce a visibly different layout rather than
+  // relying on Gemini Flash to happen to pick something else — confirmed
+  // via production data (2026-08) that it can converge on the identical
+  // template twice in a row for the same business signals, which made
+  // regeneration look completely broken even though copy had changed.
+  const candidates =
+    options?.excludeTemplateId && allCandidates.length > 1
+      ? allCandidates.filter((c) => c.id !== options.excludeTemplateId)
+      : allCandidates;
+
+  // If excluding the current template left zero candidates (archetype has
+  // only 1 v2 template total), fall back to the full list — better to
+  // repeat than to throw.
+  const pool = candidates.length > 0 ? candidates : allCandidates;
 
   const prompt = `
 Pick the best-fit website template for this Nigerian business.
@@ -362,7 +396,7 @@ ${brand.pitch_line ? `DIFFERENTIATOR: ${brand.pitch_line}` : ""}
 ${brand.primary_goal ? `PRIMARY GOAL: ${brand.primary_goal}` : ""}
 
 CANDIDATE TEMPLATES:
-${candidates.map((c) => `- ${c.id}: mode=${c.mode}, lean=${c.lean}, name="${c.display_name}"`).join("\n")}
+${pool.map((c) => `- ${c.id}: mode=${c.mode}, lean=${c.lean}, name="${c.display_name}"`).join("\n")}
 
 Output ONLY valid JSON: { "template_id": "..." }
 Pick "lean: african" only if the business's audience/positioning clearly benefits from it
@@ -376,13 +410,13 @@ bright/airy/approachable/clinical/trustworthy → light.
       prompt,
       "flash"
     );
-    const match = candidates.find((c) => c.id === template_id);
-    return rowToMetadata(match ?? candidates[0]);
+    const match = pool.find((c) => c.id === template_id);
+    return rowToMetadata(match ?? pool[0]);
   } catch (err) {
     console.warn(
       `[generation-pipeline] selectTemplate failed (${describeErr(err)}), using first candidate`
     );
-    return rowToMetadata(candidates[0]);
+    return rowToMetadata(pool[0]);
   }
 }
 
@@ -456,6 +490,7 @@ BRAND TONE: ${brand.brand_tone}
 ${brand.pitch_line ? `OWNER'S OWN PITCH LINE (use as a strong signal for hero/subheadline copy, do not quote verbatim unless it fits naturally): ${brand.pitch_line}` : ""}
 ${brand.primary_goal ? `PRIMARY GOAL: ${brand.primary_goal} — bias CTA copy and section emphasis toward this outcome (leads = contact/inquiry CTAs, sales = product/pricing focus, bookings = booking CTAs, credibility = trust/social proof emphasis)` : ""}
 ${brand.tone_sample_choice ? `VOICE SAMPLE THE OWNER PREFERRED (match this register throughout): "${brand.tone_sample_choice}"` : ""}
+${brand.first_name ? `OWNER'S FIRST NAME: ${brand.first_name} — if the placeholder list below includes {{first_name}} (used for founder-personalized copy like "Hi, I'm ${brand.first_name}"), use this EXACT name. Never invent a different name.` : ""}
 
 PLACEHOLDERS TO FILL (exact keys, no others): ${JSON.stringify(metadata.placeholder_fields)}
 
@@ -469,6 +504,12 @@ RULES:
 6. CTA-type fields: max 5 words, action-specific
 7. Category-specific fields (credentials, class schedule, property details, etc.): only fill
    if present in the placeholder list above — plausible, realistic values for this business
+8. If {{first_name}} is in the placeholder list and an owner's first name was provided above,
+   you MUST use that exact name — never substitute a different or invented name.${
+     brand.first_name
+       ? ""
+       : ` If {{first_name}} is requested but no owner name was provided, leave it as an empty string "" rather than inventing one.`
+   }
 
 FIELD LENGTH LIMITS (hard requirements, not suggestions):
 - tagline: maximum 8 words. This is a hero headline — it must read as a
@@ -588,19 +629,19 @@ export async function resolveTemplateImages(
           `[generation-pipeline] category_images query failed for ${archetype}/${slotType}:`,
           error.message
         );
-        resolved[slot] = getArchetypeFallback(archetype);
+        resolved[slot] = getArchetypeFallback(archetype, slot);
         return;
       }
 
       const rows = (data ?? []) as CategoryImageRow[];
       if (rows.length === 0) {
-        resolved[slot] = getArchetypeFallback(archetype);
+        resolved[slot] = getArchetypeFallback(archetype, slot);
         return;
       }
 
       const pick = rows[Math.floor(Math.random() * rows.length)];
       if (!pick.public_url || isBrokenImageUrl(pick.public_url)) {
-        resolved[slot] = getArchetypeFallback(archetype);
+        resolved[slot] = getArchetypeFallback(archetype, slot);
         return;
       }
       resolved[slot] = {
@@ -676,7 +717,7 @@ export function applyImages(
 
   for (const [slot, image] of Object.entries(images)) {
     const url = isBrokenImageUrl(image.url)
-      ? getArchetypeFallback(archetype).url
+      ? getArchetypeFallback(archetype, slot).url
       : image.url;
     out = out.replace(
       new RegExp(`(data-image-slot="${slot}"[^>]*src=")[^"]*(")`, "i"),
@@ -788,7 +829,6 @@ export function assertImageSlotsFilled(
   html: string,
   archetype: DesignArchetype = "clean-modern"
 ): string {
-  const fallback = getArchetypeFallback(archetype).url;
   let out = html;
 
   const slotRegex = /<img\b[^>]*\bdata-image-slot="([^"]+)"[^>]*>/gi;
@@ -801,12 +841,13 @@ export function assertImageSlotsFilled(
     const src = srcMatch?.[1] ?? "";
 
     if (isBrokenImageUrl(src)) {
+      const fallbackUrl = getArchetypeFallback(archetype, slot).url;
       console.error(
         `[critical] Image slot "${slot}" still empty/broken after resolution — forcing archetype fallback`
       );
       const fixed = tag.includes("src=")
-        ? tag.replace(/\bsrc="[^"]*"/i, `src="${fallback}"`)
-        : tag.replace(/<img\b/i, `<img src="${fallback}"`);
+        ? tag.replace(/\bsrc="[^"]*"/i, `src="${fallbackUrl}"`)
+        : tag.replace(/<img\b/i, `<img src="${fallbackUrl}"`);
       out = out.replace(tag, fixed);
     }
   }
@@ -849,7 +890,8 @@ export function validateFilledHtml(html: string): ValidationResult {
 // ─── Compose (stages 1–7, no persist) ────────────────────────────────────────
 
 export async function composeWebsiteHtml(
-  brand: BusinessProfile
+  brand: BusinessProfile,
+  options?: { excludeTemplateId?: string }
 ): Promise<ComposedWebsite> {
   const archetype = resolveArchetype(
     brand.business_type,
@@ -858,7 +900,9 @@ export async function composeWebsiteHtml(
     brand.brand_vibe
   );
 
-  const template = await selectTemplate(brand, archetype);
+  const template = await selectTemplate(brand, archetype, {
+    excludeTemplateId: options?.excludeTemplateId,
+  });
 
   // Stage 2b: data-driven module selection (new — TEMPLATE_PROMPTS_V2.md §2.4)
   const selectedModules = await selectModulesForWebsite(brand, template);
@@ -1055,7 +1099,21 @@ export async function regenerateWebsite(
 ): Promise<{ handle: string; needsReview: boolean; templateId: string }> {
   const supabase = createServiceClient();
 
-  const composed = await composeWebsiteHtml(brand);
+  // Read the currently-assigned template so it can be excluded from
+  // selection below — see selectTemplate()'s excludeTemplateId param.
+  // Confirmed via production data (2026-08) that without this, Gemini
+  // Flash can converge on the identical template_id twice in a row for
+  // the same business signals, making "Regenerate" visibly do nothing
+  // even though copy/images were in fact refreshed.
+  const { data: currentWebsite } = await supabase
+    .from("websites")
+    .select("template_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  const composed = await composeWebsiteHtml(brand, {
+    excludeTemplateId: currentWebsite?.template_id ?? undefined,
+  });
 
   const needsReview =
     !composed.validation.valid ||

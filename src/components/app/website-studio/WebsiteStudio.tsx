@@ -45,6 +45,7 @@ import {
 import type { LinkSlotsHealReason } from "@/lib/website/link-slots";
 import { FetchError, safeFetchJSON } from "@/lib/utils/safe-fetch";
 import { createClient as createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { RegenerationOverlay } from "./RegenerationOverlay";
 import { ContentPanel } from "./ContentPanel";
 import { ImagesPanel } from "./ImagesPanel";
 import { LinksPanel } from "./LinksPanel";
@@ -210,6 +211,9 @@ export function WebsiteStudio({
   const [regenRemaining, setRegenRemaining] = useState<number | null>(null);
   const [regenLimit, setRegenLimit] = useState<number | null>(null);
   const [regenChecked, setRegenChecked] = useState(false);
+  const [showRegenConfirm, setShowRegenConfirm] = useState(false);
+  const [regenOverlayOpen, setRegenOverlayOpen] = useState(false);
+  const [regenSucceeded, setRegenSucceeded] = useState(false);
 
   const rootDomain = getRootDomain();
   const previewHandle = handle ?? liveSlug;
@@ -449,7 +453,7 @@ export function WebsiteStudio({
     }
   }
 
-  async function regenerate() {
+  function openRegenerateConfirm() {
     if (!canRegenerate) {
       openUpgrade({
         feature: "Regenerate website",
@@ -468,40 +472,25 @@ export function WebsiteStudio({
       });
       return;
     }
-    if (
-      !window.confirm(
-        "Regenerate your website? This replaces your current template, layout, copy, and images with a brand new AI-generated version. Your link and embed customizations will be cleared. This can't be undone."
-      )
-    ) {
-      return;
-    }
+    setShowRegenConfirm(true);
+  }
+
+  async function regenerate() {
+    setShowRegenConfirm(false);
     setBusy(true);
     setBusyAction("regenerate");
+    setRegenSucceeded(false);
+    setRegenOverlayOpen(true);
     try {
       // Kicks off the job and returns immediately — the actual pipeline
-      // (template select + Gemini Pro copy fill + image resolution) runs
-      // server-to-server via an internal fire-and-forget request, exactly
-      // like initial generation already does (see
-      // src/lib/onboarding/complete-session.ts's triggerPostOnboardingJobs
-      // + src/components/app/generation-status-card.tsx's polling loop).
-      // This avoids making the browser hold one HTTP request open for the
-      // full pipeline duration, which was timing out.
+      // (template select + Gemini Pro copy fill + image resolution) now
+      // runs via Next.js's after() inside the same route, which keeps the
+      // invocation alive past the response without needing a second
+      // internal HTTP hop (see src/app/api/website/regenerate/route.ts).
       const data = await safeFetchJSON<{
         jobId: string;
         alreadyInProgress?: boolean;
-        clientMustTrigger?: boolean;
       }>("/api/website/regenerate", { method: "POST" });
-
-      if (data.clientMustTrigger) {
-        // Env not configured for server-to-server trigger (dev/local) —
-        // fire the worker route ourselves, unawaited, same fallback shape
-        // as generation-status-card.tsx's kickoffIfStuck().
-        void safeFetchJSON("/api/website/regenerate/run", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ jobId: data.jobId }),
-        }).catch(() => {});
-      }
 
       toast.info(
         data.alreadyInProgress
@@ -511,6 +500,7 @@ export function WebsiteStudio({
 
       pollRegenerationJob(data.jobId);
     } catch (e) {
+      setRegenOverlayOpen(false);
       if (e instanceof FetchError && e.status === 403) {
         let limit: number | undefined;
         try {
@@ -535,10 +525,10 @@ export function WebsiteStudio({
       setBusy(false);
       setBusyAction(null);
     }
-    // NOTE: busy/busyAction are intentionally NOT cleared in a `finally`
-    // here — they stay true until pollRegenerationJob's own completion/
-    // failure path clears them, since the operation isn't actually done
-    // when this function returns (it only just started).
+    // NOTE: busy/busyAction/regenOverlayOpen are intentionally NOT cleared
+    // in a `finally` here — they stay true/open until pollRegenerationJob's
+    // own completion/failure path clears them, since the operation isn't
+    // actually done when this function returns (it only just started).
   }
 
   /**
@@ -562,10 +552,17 @@ export function WebsiteStudio({
       if (data.status === "completed") {
         cancelled = true;
         clearInterval(timer);
-        setBusy(false);
-        setBusyAction(null);
         setLinks({});
         setEmbeds([]);
+        // Show a brief success state in the overlay before closing it,
+        // rather than snapping straight back to the studio — gives the
+        // "done" moment some weight instead of an abrupt cut.
+        setRegenSucceeded(true);
+        setTimeout(() => {
+          setRegenOverlayOpen(false);
+          setBusy(false);
+          setBusyAction(null);
+        }, 1400);
         // Full regen changes template_id/archetype/placeholders/images —
         // more than local state can safely patch — pull fresh data from
         // the server component parent.
@@ -585,6 +582,7 @@ export function WebsiteStudio({
       if (data.status === "failed") {
         cancelled = true;
         clearInterval(timer);
+        setRegenOverlayOpen(false);
         setBusy(false);
         setBusyAction(null);
         toast.error(
@@ -605,6 +603,7 @@ export function WebsiteStudio({
       if (cancelled) return;
       cancelled = true;
       clearInterval(timer);
+      setRegenOverlayOpen(false);
       setBusy(false);
       setBusyAction(null);
       toast.error(
@@ -836,7 +835,7 @@ export function WebsiteStudio({
             variant="outline"
             size="sm"
             className="active:scale-[0.96]"
-            onClick={regenerate}
+            onClick={openRegenerateConfirm}
             disabled={busy || (canRegenerate && regenRemaining === 0)}
             title={
               canRegenerate
@@ -955,6 +954,44 @@ export function WebsiteStudio({
         feature={upgradeFeature.feature}
         benefit={upgradeFeature.benefit}
         requiredPlan={upgradeFeature.requiredPlan}
+      />
+
+      {showRegenConfirm && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Confirm regeneration"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 px-6"
+        >
+          <div className="w-full max-w-sm rounded-lg border border-[var(--border-solid)] bg-[var(--bg-secondary)] p-6">
+            <h2 className="text-base font-medium text-[var(--text-primary)]">
+              Regenerate your website?
+            </h2>
+            <p className="mt-2 text-sm text-[var(--text-tertiary)]">
+              This replaces your current template, layout, copy, and images
+              with a new AI-generated version. Your link and embed
+              customizations will be cleared. This can&apos;t be undone.
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowRegenConfirm(false)}
+              >
+                Cancel
+              </Button>
+              <Button size="sm" onClick={regenerate}>
+                Regenerate
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <RegenerationOverlay
+        open={regenOverlayOpen}
+        businessName={placeholders.business_name ?? ""}
+        succeeded={regenSucceeded}
       />
     </div>
   );

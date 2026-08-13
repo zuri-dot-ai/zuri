@@ -72,6 +72,19 @@ export interface BusinessProfile {
   social_handle?: string | null;
   logo_url?: string | null;
   reference_url?: string | null;
+  /**
+   * Owner's first name, captured in onboarding Step 10 ("What should we
+   * call you?") and persisted to profiles.full_name — NOT stored on
+   * business_profiles. Callers building a BusinessProfile from a raw
+   * business_profiles row must separately fetch profiles.full_name and
+   * pass it in here; it will never appear on the business_profiles row
+   * itself. Used to fill the {{first_name}} placeholder that 18 v2
+   * templates (luxury-aspirational + trust-professional archetypes)
+   * declare for founder-personalized copy — see generation-pipeline.ts
+   * buildFillPrompt(). Without this, Gemini has no real signal for
+   * {{first_name}} and invents a plausible-sounding name instead.
+   */
+  first_name?: string | null;
 }
 
 export type Tone = "professional" | "warm" | "bold" | "playful";

@@ -41,7 +41,8 @@ export const maxDuration = 60;
 
 function mapBrand(
   row: Record<string, unknown>,
-  handle: string
+  handle: string,
+  firstName: string | null
 ): BusinessProfile {
   const services = normalizeServices(row.services);
   const platforms = Array.isArray(row.platforms)
@@ -76,6 +77,7 @@ function mapBrand(
     logo_url: row.logo_url == null ? null : String(row.logo_url),
     reference_url:
       row.reference_url == null ? null : String(row.reference_url),
+    first_name: firstName,
   };
 }
 
@@ -126,7 +128,7 @@ async function runRegeneration(userId: string, jobId: string): Promise<void> {
       .select("*")
       .eq("user_id", userId)
       .maybeSingle(),
-    service.from("profiles").select("handle").eq("id", userId).maybeSingle(),
+    service.from("profiles").select("handle, full_name").eq("id", userId).maybeSingle(),
   ]);
 
   if (!biz) {
@@ -143,7 +145,12 @@ async function runRegeneration(userId: string, jobId: string): Promise<void> {
       .slice(0, 30) ||
     "site";
 
-  const brand = mapBrand(biz as Record<string, unknown>, handle);
+  const firstName =
+    typeof profile?.full_name === "string" && profile.full_name.trim()
+      ? profile.full_name.trim()
+      : null;
+
+  const brand = mapBrand(biz as Record<string, unknown>, handle, firstName);
 
   try {
     await regenerateWebsite(brand, userId);
