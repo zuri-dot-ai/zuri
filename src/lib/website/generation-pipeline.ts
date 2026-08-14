@@ -406,23 +406,27 @@ async function claimRotationIndex(
 ): Promise<number> {
   if (poolSize <= 0) return 0;
 
-  // Read-modify-write via RPC would be ideal for true atomicity, but a
-  // plain upsert-then-read is acceptable here: worst case under a race is
-  // two generations picking the same template in the same instant, which
-  // is a cosmetic variety miss, not a correctness bug — nothing downstream
-  // depends on rotation being perfectly unique per call.
-  const { data: existing } = await supabase
+  const { data: existing, error: readError } = await supabase
     .from("template_rotation")
     .select("next_index")
     .eq("archetype", archetype)
     .eq("mode", mode)
     .maybeSingle();
 
+  if (readError) {
+    console.error(
+      `[generation-pipeline] claimRotationIndex read failed for ${archetype}/${mode}:`,
+      readError.message,
+      readError.code,
+      readError.details
+    );
+  }
+
   const currentIndex = existing?.next_index ?? 0;
   const claimed = currentIndex % poolSize;
   const nextValue = (currentIndex + 1) % poolSize;
 
-  await supabase.from("template_rotation").upsert(
+  const { error: writeError } = await supabase.from("template_rotation").upsert(
     {
       archetype,
       mode,
@@ -431,6 +435,15 @@ async function claimRotationIndex(
     },
     { onConflict: "archetype,mode" }
   );
+
+  if (writeError) {
+    console.error(
+      `[generation-pipeline] claimRotationIndex upsert failed for ${archetype}/${mode}:`,
+      writeError.message,
+      writeError.code,
+      writeError.details
+    );
+  }
 
   return claimed;
 }
