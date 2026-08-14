@@ -722,24 +722,23 @@ export function applyImages(
     const url = isBrokenImageUrl(image.url)
       ? getArchetypeFallback(archetype, slot).url
       : image.url;
+
+    // Escape slot for regex safety, and anchor on a boundary so "gallery_1"
+    // can't accidentally match "gallery_10". Added `g` flag — a slot's
+    // data-image-slot attribute can appear more than once in the template
+    // (responsive variants, srcset duplicates, etc.), and every occurrence
+    // must get the new URL, not just the first one in the document.
+    const escapedSlot = slot.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     out = out.replace(
-      new RegExp(`(data-image-slot="${slot}"[^>]*src=")[^"]*(")`, "i"),
+      new RegExp(`(data-image-slot="${escapedSlot}"[^>]*src=")[^"]*(")`, "gi"),
       `$1${url}$2`
     );
     out = out.replace(
-      new RegExp(`(src=")[^"]*("[^>]*data-image-slot="${slot}")`, "i"),
+      new RegExp(`(src=")[^"]*("[^>]*data-image-slot="${escapedSlot}")`, "gi"),
       `$1${url}$2`
     );
   }
 
-  // Assert every data-image-slot has a non-empty valid-looking src.
-  // NOTE: before/after slots with no real uploaded pair are expected to be
-  // unresolved here (see resolveTemplateImages) — but if their module
-  // wasn't correctly stripped by applyModuleVisibility(), this still
-  // guarantees no broken <img> ships, at the cost of a forced fallback
-  // image on a module that should have been excluded. Treat any
-  // [critical] log from this function on a before/after slot as a
-  // module-selector bug to investigate, not normal operation.
   out = assertImageSlotsFilled(out, archetype);
   return out;
 }
