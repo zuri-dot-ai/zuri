@@ -363,27 +363,30 @@ function ensureAllPlaceholders(
 export async function selectTemplate(
   brand: BusinessProfile,
   archetype: DesignArchetype,
-  options?: { excludeTemplateId?: string }
+  options?: { excludeTemplateIds?: string[] }
 ): Promise<TemplateMetadata> {
   const allCandidates = await getTemplatesForArchetype(archetype);
   if (allCandidates.length === 0) {
     throw new Error(`No templates found for archetype: ${archetype}`);
   }
 
-  // On regenerate, exclude the currently-assigned template so "Regenerate"
-  // is guaranteed to produce a visibly different layout rather than
-  // relying on Gemini Flash to happen to pick something else — confirmed
-  // via production data (2026-08) that it can converge on the identical
-  // template twice in a row for the same business signals, which made
-  // regeneration look completely broken even though copy had changed.
+  // On regenerate, exclude the last few templates this website has
+  // actually used — not just the single immediately-prior one. A single
+  // exclusion doesn't prevent bouncing back to a template used 2
+  // regenerations ago: confirmed in production that Gemini Flash's own
+  // judgment can be highly convergent for one business profile, quietly
+  // cycling between the same 2-3 "best fit" templates even with a full
+  // 9-10 template candidate pool. Excluding a short real history forces
+  // genuine rotation regardless of how the model would otherwise choose.
+  const excludeIds = new Set(options?.excludeTemplateIds ?? []);
   const candidates =
-    options?.excludeTemplateId && allCandidates.length > 1
-      ? allCandidates.filter((c) => c.id !== options.excludeTemplateId)
+    excludeIds.size > 0 && allCandidates.length > excludeIds.size
+      ? allCandidates.filter((c) => !excludeIds.has(c.id))
       : allCandidates;
 
-  // If excluding the current template left zero candidates (archetype has
-  // only 1 v2 template total), fall back to the full list — better to
-  // repeat than to throw.
+  // If excluding recent history left zero candidates (archetype has a
+  // very small template count relative to the exclusion window), fall
+  // back to the full list — better to repeat than to throw.
   const pool = candidates.length > 0 ? candidates : allCandidates;
 
   const prompt = `
@@ -889,9 +892,20 @@ export function validateFilledHtml(html: string): ValidationResult {
 
 // ─── Compose (stages 1–7, no persist) ────────────────────────────────────────
 
+/** Appends templateId to a recent-history list, deduped, capped at 3,
+ *  most-recent-first — used to build the exclusion set for the NEXT
+ *  regenerate call. Called after a template is actually assigned. */
+export function pushRecentTemplateId(
+  history: string[],
+  templateId: string
+): string[] {
+  const deduped = [templateId, ...history.filter((id) => id !== templateId)];
+  return deduped.slice(0, 3);
+}
+
 export async function composeWebsiteHtml(
   brand: BusinessProfile,
-  options?: { excludeTemplateId?: string }
+  options?: { excludeTemplateIds?: string[] }
 ): Promise<ComposedWebsite> {
   const archetype = resolveArchetype(
     brand.business_type,
@@ -901,7 +915,7 @@ export async function composeWebsiteHtml(
   );
 
   const template = await selectTemplate(brand, archetype, {
-    excludeTemplateId: options?.excludeTemplateId,
+    excludeTemplateIds: options?.excludeTemplateIds,
   });
 
   // Stage 2b: data-driven module selection (new — TEMPLATE_PROMPTS_V2.md §2.4)
@@ -989,6 +1003,7 @@ export async function generateWebsite(
           user_id: userId,
           handle: brand.handle,
           template_id: composed.template_id,
+          recent_template_ids: [composed.template_id],
           active_theme: "theme-1",
           template_html: composed.html,
           filled_placeholders: composed.filled_placeholders,
@@ -1099,21 +1114,30 @@ export async function regenerateWebsite(
 ): Promise<{ handle: string; needsReview: boolean; templateId: string }> {
   const supabase = createServiceClient();
 
-  // Read the currently-assigned template so it can be excluded from
-  // selection below — see selectTemplate()'s excludeTemplateId param.
-  // Confirmed via production data (2026-08) that without this, Gemini
-  // Flash can converge on the identical template_id twice in a row for
-  // the same business signals, making "Regenerate" visibly do nothing
-  // even though copy/images were in fact refreshed.
+  // Read recent template history so it can be excluded from selection —
+  // see selectTemplate()'s excludeTemplateIds param and
+  // pushRecentTemplateId(). Tracking the last 3 (not just the single
+  // current one) is what actually fixes convergent repetition — see the
+  // module comment above regenerateWebsite for the production trace that
+  // confirmed a single-template exclusion wasn't enough.
   const { data: currentWebsite } = await supabase
     .from("websites")
-    .select("template_id")
+    .select("template_id, recent_template_ids")
     .eq("user_id", userId)
     .maybeSingle();
 
+  const recentHistory = Array.isArray(currentWebsite?.recent_template_ids)
+    ? (currentWebsite.recent_template_ids as string[])
+    : [];
+
   const composed = await composeWebsiteHtml(brand, {
-    excludeTemplateId: currentWebsite?.template_id ?? undefined,
+    excludeTemplateIds: recentHistory,
   });
+
+  const updatedHistory = pushRecentTemplateId(
+    recentHistory,
+    composed.template_id
+  );
 
   const needsReview =
     !composed.validation.valid ||
@@ -1124,6 +1148,7 @@ export async function regenerateWebsite(
     .from("websites")
     .update({
       template_id: composed.template_id,
+      recent_template_ids: updatedHistory,
       active_theme: "theme-1",
       template_html: composed.html,
       filled_placeholders: composed.filled_placeholders,

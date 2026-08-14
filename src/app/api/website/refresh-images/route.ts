@@ -1,3 +1,25 @@
+// src/app/api/website/refresh-images/route.ts
+//
+// REBUILT (2026-08): the previous version only repaired slots whose URL
+// was literally malformed (picsum, Unsplash, empty, or /images/fallbacks/
+// via isBrokenImageUrl()). A slot that resolved to the archetype FALLBACK
+// POOL (source: "fallback") — because category_images had zero/thin
+// coverage for that archetype/slot_type AT GENERATION TIME — has a
+// perfectly well-formed Cloudinary URL. isBrokenImageUrl() never flags
+// it, so needsRepair was always false for these sites, and they stayed
+// permanently stuck on fallback images even after real curated images
+// were later added to category_images (confirmed via production trace:
+// FUD Republic's 4 gallery slots all resolved to the same warm-sensory
+// fallback image, and this route's imagesBroken check never caught it).
+//
+// FIX: now explicitly checks `source === "fallback"` as its own repair
+// trigger, separate from isBrokenImageUrl(). Any slot currently on
+// fallback gets re-resolved against category_images — if real coverage
+// now exists, it upgrades to a real curated image; if the library is
+// still thin, resolveTemplateImages() naturally returns the (now
+// rotating, per the earlier image-url.ts fix) fallback pool again, so
+// this is always safe to call repeatedly and never makes things worse.
+
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth/require-auth";
@@ -29,8 +51,17 @@ function htmlHasBrokenSlots(html: string | null | undefined): boolean {
 
 /**
  * Re-resolve curated/fallback images and recompose HTML.
- * Forces a full recompose when template_html still contains picsum or
- * filled_images has broken URLs — even if some slots look fine.
+ *
+ * Repair triggers, in order of severity:
+ *   1. HTML still has picsum/local-fallback references (legacy breakage)
+ *   2. filled_images has a literally malformed URL (isBrokenImageUrl)
+ *   3. filled_images has ANY slot with source === "fallback" — this is
+ *      the fix: these are valid-looking URLs that were only ever a
+ *      last-resort pick, and may now have a real curated replacement
+ *      available in category_images.
+ *
+ * A user-uploaded image (source: "user-upload") is NEVER touched by this
+ * route regardless of trigger — the owner's own photo always wins.
  */
 export async function POST() {
   const { user, error: authError } = await requireAuth();
@@ -71,25 +102,48 @@ export async function POST() {
     const imagesBroken = Object.values(existing).some((img) =>
       isBrokenImageUrl(img.url)
     );
-    const needsRepair = htmlBroken || imagesBroken;
+    // THE FIX: fallback-sourced slots are a repair trigger even though
+    // their URL is well-formed — they represent "best we had at the
+    // time," not "correct," and category_images coverage changes over
+    // time (via the Cloudinary seeding workflow).
+    const hasFallbackSlots = Object.values(existing).some(
+      (img) => img.source === "fallback"
+    );
+    const needsRepair = htmlBroken || imagesBroken || hasFallbackSlots;
+
+    // Nothing to do — every slot is either a real user upload or a
+    // confirmed curated image. Skip the recompose entirely to avoid an
+    // unnecessary DB write and Storage fetch on every studio load.
+    if (!needsRepair) {
+      return NextResponse.json({
+        success: true,
+        filledImages: existing,
+        needsReview: false,
+        repaired: false,
+      });
+    }
 
     const { metadata } = await fetchTemplate(website.template_id);
     const archetype = website.archetype as DesignArchetype;
     const resolved = await resolveTemplateImages(metadata, archetype);
 
-    // Keep valid user uploads; replace broken/missing slots with curated/fallback.
-    // When HTML itself still has picsum, replace every slot that is broken or
-    // was only a picsum/fallback source so recompose clears template_html.
+    // Build the final image set: start from freshly-resolved values for
+    // every slot the template declares, then restore any slot that's
+    // either a real user upload or an already-good curated pick —
+    // meaning only genuinely fallback/broken slots actually change.
     const filledImages: Record<string, ResolvedImage> = { ...resolved };
     for (const [slot, img] of Object.entries(existing)) {
-      if (
-        img.source === "user-upload" &&
-        !isBrokenImageUrl(img.url)
-      ) {
-        filledImages[slot] = img;
-      } else if (!needsRepair && !isBrokenImageUrl(img.url)) {
+      const isGoodUserUpload =
+        img.source === "user-upload" && !isBrokenImageUrl(img.url);
+      const isGoodCurated =
+        img.source === "curated" && !isBrokenImageUrl(img.url);
+
+      if (isGoodUserUpload || isGoodCurated) {
         filledImages[slot] = img;
       }
+      // Anything else (source === "fallback", or a broken URL of any
+      // source) is intentionally left as the freshly-resolved value from
+      // `resolved` above — this is the actual repair.
     }
 
     const placeholders =
@@ -113,11 +167,19 @@ export async function POST() {
       }
     );
 
+    // Count how many slots actually changed, for an accurate response —
+    // useful for the frontend to show "3 images upgraded" rather than a
+    // generic "repaired: true".
+    const upgradedSlots = Object.keys(filledImages).filter(
+      (slot) => existing[slot]?.url !== filledImages[slot]?.url
+    );
+
     return NextResponse.json({
       success: true,
       filledImages,
       needsReview: result.needsReview,
       repaired: needsRepair,
+      upgradedCount: upgradedSlots.length,
     });
   } catch (err) {
     const ref = generateSupportRef();

@@ -264,7 +264,16 @@ export function WebsiteStudio({
     const hasBrokenImages = Object.values(initialImages).some((img) =>
       isBrokenImageUrl(img.url)
     );
-    if (!hasBrokenImages && !initialNeedsReview) return;
+    // FIXED: a fallback-sourced image has a perfectly valid URL, so
+    // isBrokenImageUrl() alone never caught it — meaning sites generated
+    // while category_images was thin for their archetype stayed stuck on
+    // fallback images forever, even after real images were later added.
+    // Now also triggers the auto-refresh when any slot is source:
+    // "fallback", matching the same repair trigger the route itself uses.
+    const hasFallbackImages = Object.values(initialImages).some(
+      (img) => img.source === "fallback"
+    );
+    if (!hasBrokenImages && !hasFallbackImages && !initialNeedsReview) return;
     safeFetchJSON<{
       filledImages?: Record<string, ResolvedImage>;
       needsReview?: boolean;
