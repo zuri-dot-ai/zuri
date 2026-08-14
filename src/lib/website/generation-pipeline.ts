@@ -627,6 +627,8 @@ export async function resolveTemplateImages(
         .eq("slot_type", slotType)
         .limit(24);
 
+      console.log(`[IMG-DEBUG] slot=${slot} slotType=${slotType} archetype=${archetype} rowCount=${data?.length ?? 0} error=${error?.message ?? "none"}`);
+
       if (error) {
         console.warn(
           `[generation-pipeline] category_images query failed for ${archetype}/${slotType}:`,
