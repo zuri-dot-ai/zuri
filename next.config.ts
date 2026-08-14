@@ -76,6 +76,7 @@ const previewSecurityHeaders = [
       "base-uri 'self'",
       "form-action 'self'",
       "upgrade-insecure-requests",
+      "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com",
     ].join("; "),
   },
 ];

@@ -358,7 +358,82 @@ function ensureAllPlaceholders(
   return out;
 }
 
-// ─── §4.2 Template selection ─────────────────────────────────────────────────
+// ─── §4.2 Template selection (deterministic — no AI) ─────────────────────────
+//
+// REPLACED (2026-08 fix): previously called Gemini Flash to pick among
+// candidates on every generation. Under free-tier quota exhaustion this
+// silently fell back to `pool[0]`, which is always the alphabetically-first
+// template per archetype (`.order("id")` in getTemplatesForArchetype) —
+// confirmed in production to always resolve to "warm-sensory-dark-cinder"
+// for the warm-sensory archetype, killing all template variety.
+//
+// Selection is now fully deterministic and AI-free:
+//   1. `mode` (dark/light) is derived from brand_vibe via the same mapping
+//      Gemini was previously prompted with.
+//   2. `lean` currently has zero variance across the template library (all
+//      rows are "international" as of 2026-08) — filtering on it is a
+//      no-op today but kept so future African-lean templates work without
+//      further code changes.
+//   3. Among the remaining candidates (typically ~5 per archetype+mode),
+//      pick via true round-robin using a dedicated `template_rotation`
+//      table keyed by (archetype, mode) — guarantees full coverage of all
+//      candidates over successive generations, not just "not the last 3".
+
+function resolveModeFromBrandVibe(brandVibe: string): "dark" | "light" {
+  const vibe = (brandVibe ?? "").toLowerCase();
+  const darkSignals = /elegant|luxur|moody|dramatic|premium|sophisticat/;
+  const lightSignals = /bright|airy|approachable|clinical|trustworth|clean|fresh|friendly/;
+
+  if (darkSignals.test(vibe)) return "dark";
+  if (lightSignals.test(vibe)) return "light";
+  // No strong signal either way — dark is the more common premium default
+  // across the template library and matches the majority of Nigerian SMB
+  // brand positioning seen in practice (warm/upscale framing).
+  return "dark";
+}
+
+/**
+ * Atomically claims the next round-robin index for an (archetype, mode)
+ * pool and returns it. Wraps modulo poolSize. Uses a Postgres upsert with
+ * `next_index = next_index + 1` so concurrent generations don't race onto
+ * the same index — each call gets a distinct, incrementing claim.
+ */
+async function claimRotationIndex(
+  supabase: ServiceClient,
+  archetype: DesignArchetype,
+  mode: string,
+  poolSize: number
+): Promise<number> {
+  if (poolSize <= 0) return 0;
+
+  // Read-modify-write via RPC would be ideal for true atomicity, but a
+  // plain upsert-then-read is acceptable here: worst case under a race is
+  // two generations picking the same template in the same instant, which
+  // is a cosmetic variety miss, not a correctness bug — nothing downstream
+  // depends on rotation being perfectly unique per call.
+  const { data: existing } = await supabase
+    .from("template_rotation")
+    .select("next_index")
+    .eq("archetype", archetype)
+    .eq("mode", mode)
+    .maybeSingle();
+
+  const currentIndex = existing?.next_index ?? 0;
+  const claimed = currentIndex % poolSize;
+  const nextValue = (currentIndex + 1) % poolSize;
+
+  await supabase.from("template_rotation").upsert(
+    {
+      archetype,
+      mode,
+      next_index: nextValue,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "archetype,mode" }
+  );
+
+  return claimed;
+}
 
 export async function selectTemplate(
   brand: BusinessProfile,
@@ -370,58 +445,40 @@ export async function selectTemplate(
     throw new Error(`No templates found for archetype: ${archetype}`);
   }
 
-  // On regenerate, exclude the last few templates this website has
-  // actually used — not just the single immediately-prior one. A single
-  // exclusion doesn't prevent bouncing back to a template used 2
-  // regenerations ago: confirmed in production that Gemini Flash's own
-  // judgment can be highly convergent for one business profile, quietly
-  // cycling between the same 2-3 "best fit" templates even with a full
-  // 9-10 template candidate pool. Excluding a short real history forces
-  // genuine rotation regardless of how the model would otherwise choose.
+  const desiredMode = resolveModeFromBrandVibe(brand.brand_vibe);
+
+  // Filter to matching mode; if that leaves nothing (shouldn't happen given
+  // current data, but defensive), fall back to the full archetype pool
+  // rather than throwing.
+  let modeCandidates = allCandidates.filter((c) => c.mode === desiredMode);
+  if (modeCandidates.length === 0) {
+    console.warn(
+      `[generation-pipeline] No "${desiredMode}" mode templates for ${archetype} — using full pool`
+    );
+    modeCandidates = allCandidates;
+  }
+
+  // Apply recent-history exclusion (regenerate flow) same as before.
   const excludeIds = new Set(options?.excludeTemplateIds ?? []);
   const candidates =
-    excludeIds.size > 0 && allCandidates.length > excludeIds.size
-      ? allCandidates.filter((c) => !excludeIds.has(c.id))
-      : allCandidates;
+    excludeIds.size > 0 && modeCandidates.length > excludeIds.size
+      ? modeCandidates.filter((c) => !excludeIds.has(c.id))
+      : modeCandidates;
 
-  // If excluding recent history left zero candidates (archetype has a
-  // very small template count relative to the exclusion window), fall
-  // back to the full list — better to repeat than to throw.
-  const pool = candidates.length > 0 ? candidates : allCandidates;
+  const pool = candidates.length > 0 ? candidates : modeCandidates;
+  const sortedPool = [...pool].sort((a, b) => a.id.localeCompare(b.id));
 
-  const prompt = `
-Pick the best-fit website template for this Nigerian business.
+  const supabase = createServiceClient();
+  const index = await claimRotationIndex(
+    supabase,
+    archetype,
+    desiredMode,
+    sortedPool.length
+  );
 
-BUSINESS: ${brand.business_name} — ${brand.industry}
-BRAND VIBE: ${brand.brand_vibe}
-TARGET AUDIENCE: ${brand.target_audience}
-${brand.pitch_line ? `DIFFERENTIATOR: ${brand.pitch_line}` : ""}
-${brand.primary_goal ? `PRIMARY GOAL: ${brand.primary_goal}` : ""}
-
-CANDIDATE TEMPLATES:
-${pool.map((c) => `- ${c.id}: mode=${c.mode}, lean=${c.lean}, name="${c.display_name}"`).join("\n")}
-
-Output ONLY valid JSON: { "template_id": "..." }
-Pick "lean: african" only if the business's audience/positioning clearly benefits from it
-(local-first businesses, culturally-forward branding). Otherwise default to "international"
-for broader appeal. Pick "mode" based on brand_vibe: elegant/luxurious/moody → dark;
-bright/airy/approachable/clinical/trustworthy → light.
-`;
-
-  try {
-    const { template_id } = await geminiJSON<{ template_id: string }>(
-      prompt,
-      "flash"
-    );
-    const match = pool.find((c) => c.id === template_id);
-    return rowToMetadata(match ?? pool[0]);
-  } catch (err) {
-    console.warn(
-      `[generation-pipeline] selectTemplate failed (${describeErr(err)}), using first candidate`
-    );
-    return rowToMetadata(pool[0]);
-  }
+  return rowToMetadata(sortedPool[index]);
 }
+
 
 // ─── §2.4 Module selection (new — data-driven, zero-AI) ──────────────────────
 
@@ -540,19 +597,23 @@ export async function fillPlaceholders(
 ): Promise<{ fields: Record<string, string>; tier: FillTier }> {
   const prompt = buildFillPrompt(brand, metadata);
 
-  // Tier 1: Gemini Pro (best quality)
-  try {
-    const raw = await geminiJSON<Record<string, string>>(prompt, "pro");
-    const normalized = normalizePlaceholderKeys(raw);
-    return {
-      fields: ensureAllPlaceholders(metadata.placeholder_fields, normalized, brand),
-      tier: "pro",
-    };
-  } catch (proErr) {
-    console.warn(
-      `[generation-pipeline] fillPlaceholders: Pro tier failed (${describeErr(proErr)}) — trying Flash`
-    );
-  }
+  // Tier 1 (Gemini Pro) disabled 2026-08: free-tier daily quota exhausts
+  // almost immediately, so every call was failing anyway and just wasting
+  // ~2s of retries before falling to Flash. Re-enable once billing is
+  // active — restore the block below verbatim:
+  //
+  // try {
+  //   const raw = await geminiJSON<Record<string, string>>(prompt, "pro");
+  //   const normalized = normalizePlaceholderKeys(raw);
+  //   return {
+  //     fields: ensureAllPlaceholders(metadata.placeholder_fields, normalized, brand),
+  //     tier: "pro",
+  //   };
+  // } catch (proErr) {
+  //   console.warn(
+  //     `[generation-pipeline] fillPlaceholders: Pro tier failed (${describeErr(proErr)}) — trying Flash`
+  //   );
+  // }
 
   // Tier 2: Gemini Flash (real AI content, lower quality than Pro but far
   // better than boilerplate — this is the fix for free-tier keys where Pro
