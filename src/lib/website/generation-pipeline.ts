@@ -946,6 +946,8 @@ export async function composeWebsiteHtml(
   let html = applyPlaceholders(rawHtml, filledPlaceholders);
   html = applyModuleVisibility(html, selectedModules);
   html = applyImages(html, filledImages, { archetype });
+  console.log(`[IMG-DEBUG-2] gallery_1 in filledImages: ${filledImages.gallery_1?.url}`);
+  console.log(`[IMG-DEBUG-2] gallery_1 in html after applyImages: ${(html.match(/data-image-slot="gallery_1"[^>]*src="([^"]*)"/) ?? [])[1] ?? "NOT FOUND"}`);
   html = applyServiceCardVisibility(html, filledPlaceholders);
 
   const validation = validateFilledHtml(html);

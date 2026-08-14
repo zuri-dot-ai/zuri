@@ -74,6 +74,8 @@ export async function recomposeWebsiteHtml(
 
   let html = applyPlaceholders(rawHtml, input.filledPlaceholders);
   html = applyImages(html, filledImages, { archetype });
+  console.log(`[IMG-DEBUG-2] gallery_1 in filledImages: ${filledImages.gallery_1?.url}`);
+  console.log(`[IMG-DEBUG-2] gallery_1 in html after applyImages: ${(html.match(/data-image-slot="gallery_1"[^>]*src="([^"]*)"/) ?? [])[1] ?? "NOT FOUND"}`);
   html = applyServiceCardVisibility(html, input.filledPlaceholders);
   html = applyLinks(html, filledLinks);
   html = applyEmbeds(html, filledEmbeds);
