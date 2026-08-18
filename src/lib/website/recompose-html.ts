@@ -74,7 +74,8 @@ export async function recomposeWebsiteHtml(
 
   let html = applyPlaceholders(rawHtml, input.filledPlaceholders);
   html = applyImages(html, filledImages, { archetype });
-  console.log(`[IMG-DEBUG-2] gallery_1 in filledImages: ${filledImages.gallery_1?.url}`);
+  const gallery1Match = html.match(/<img\b[^>]*data-image-slot="gallery_1"[^>]*>/i);
+  console.log(`[IMG-DEBUG-3] gallery_1 full tag after applyImages: ${gallery1Match ? gallery1Match[0] : "TAG NOT FOUND AT ALL"}`);  console.log(`[IMG-DEBUG-2] gallery_1 in filledImages: ${filledImages.gallery_1?.url}`);
   console.log(`[IMG-DEBUG-2] gallery_1 in html after applyImages: ${(html.match(/data-image-slot="gallery_1"[^>]*src="([^"]*)"/) ?? [])[1] ?? "NOT FOUND"}`);
   html = applyServiceCardVisibility(html, input.filledPlaceholders);
   html = applyLinks(html, filledLinks);
