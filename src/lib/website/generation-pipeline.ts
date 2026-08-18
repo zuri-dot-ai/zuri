@@ -655,8 +655,6 @@ export async function fillPlaceholders(
   };
 }
 
-// ─── §4.5 Image resolution ───────────────────────────────────────────────────
-
 export async function resolveTemplateImages(
   metadata: TemplateMetadata,
   archetype: DesignArchetype,
@@ -666,43 +664,32 @@ export async function resolveTemplateImages(
   const resolved: Record<string, ResolvedImage> = {};
   const uploadedImages = options?.uploadedImages ?? {};
 
+  // Tracks which category_images.id values have already been assigned to a
+  // slot in THIS generation, keyed by slot_type — prevents the same photo
+  // from being picked for two different slots of the same type (e.g.
+  // gallery_5 and gallery_6 both landing on the identical row by chance).
+  // Confirmed in production: GenZee's stored filled_images had gallery_5
+  // and gallery_6 as byte-identical objects, same url/width/height, from
+  // two independent random picks off the same 21-row pool.
+  const usedIdsBySlotType: Record<string, Set<string>> = {};
+
   await Promise.all(
     metadata.image_slots.map(async (slot) => {
-      // ── Before/after hard exception (TEMPLATE_PROMPTS_V2.md §5.3) ──
-      // NEVER pull before_N/after_N/results_before_N/results_after_N from
-      // category_images stock, regardless of fallback logic elsewhere.
-      // Previously this fell through to a generic archetype hero image,
-      // silently violating the spec's explicit rule against fake
-      // "before/after" stock photos. Fixed: if a real uploaded image
-      // exists for this slot, use it; otherwise leave the slot
-      // unresolved entirely — module-selector.ts already excludes the
-      // before-after module from rendering when no real pair exists, so
-      // an unresolved slot here should never actually reach the HTML.
       if (BEFORE_AFTER_SLOT_PATTERN.test(slot)) {
         const uploaded = uploadedImages[slot];
         if (uploaded) {
           resolved[slot] = uploaded;
         }
-        // No stock fallback — intentionally leave unresolved. If this
-        // slot's module was incorrectly selected upstream despite no
-        // real pair existing, assertImageSlotsFilled() will still catch
-        // the empty src at the end of applyImages() and force the
-        // archetype fallback rather than shipping a broken <img>, but
-        // that path indicates a module-selector bug worth alerting on,
-        // not expected behavior.
         return;
       }
 
       const slotType = normalizeSlotType(slot);
-      console.log(`[IMG-DEBUG-4] archetype="${archetype}" slotType="${slotType}" supabaseUrl=${process.env.NEXT_PUBLIC_SUPABASE_URL}`);
       const { data, error } = await supabase
         .from("category_images")
         .select("*")
         .eq("archetype", archetype)
         .eq("slot_type", slotType)
         .limit(24);
-
-      console.log(`[IMG-DEBUG] slot=${slot} slotType=${slotType} archetype=${archetype} rowCount=${data?.length ?? 0} error=${error?.message ?? "none"}`);
 
       if (error) {
         console.warn(
@@ -719,11 +706,25 @@ export async function resolveTemplateImages(
         return;
       }
 
-      const pick = rows[Math.floor(Math.random() * rows.length)];
+      if (!usedIdsBySlotType[slotType]) {
+        usedIdsBySlotType[slotType] = new Set();
+      }
+      const usedIds = usedIdsBySlotType[slotType];
+
+      // Prefer rows not yet used for this slot_type in this generation.
+      // If every row has already been used (pool smaller than slot count),
+      // fall back to the full pool rather than leaving a slot unresolved —
+      // a repeated image is strictly better than a broken one.
+      const availableRows = rows.filter((r) => !usedIds.has(r.id));
+      const pickPool = availableRows.length > 0 ? availableRows : rows;
+
+      const pick = pickPool[Math.floor(Math.random() * pickPool.length)];
       if (!pick.public_url || isBrokenImageUrl(pick.public_url)) {
         resolved[slot] = getArchetypeFallback(archetype, slot);
         return;
       }
+
+      usedIds.add(pick.id);
       resolved[slot] = {
         url: pick.public_url,
         source: "curated",
