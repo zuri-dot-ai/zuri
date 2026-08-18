@@ -694,6 +694,7 @@ export async function resolveTemplateImages(
       }
 
       const slotType = normalizeSlotType(slot);
+      console.log(`[IMG-DEBUG-4] archetype="${archetype}" slotType="${slotType}" supabaseUrl=${process.env.NEXT_PUBLIC_SUPABASE_URL}`);
       const { data, error } = await supabase
         .from("category_images")
         .select("*")
